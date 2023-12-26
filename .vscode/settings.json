@@ -3,4 +3,8 @@
 	"gitlens.currentLine.enabled": false,// in modern version
 	"gitlens.codeLens.authors.enabled": false,
 	"gitlens.codeLens.recentChange.enabled": false,
+	"editor.codeLens": false,
+	"dart.showMainCodeLens": false,
+	"dart.showTestCodeLens": false,
+	"dart.showDartPadSampleCodeLens": false,
 }
