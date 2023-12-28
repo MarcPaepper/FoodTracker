@@ -7,4 +7,6 @@
 	"dart.showMainCodeLens": false,
 	"dart.showTestCodeLens": false,
 	"dart.showDartPadSampleCodeLens": false,
+	"dart.closingLabels": false,
+	"dart.flutterHotReloadOnSave": "allIfDirty",
 }
