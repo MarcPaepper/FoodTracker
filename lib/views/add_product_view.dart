@@ -2,6 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:food_tracker/data_manager.dart';
+import 'package:food_tracker/views/stats_view.dart';
+
+import 'add_meal_view.dart';
 
 class AddProductView extends StatefulWidget {
 	const AddProductView({super.key});
@@ -51,6 +54,22 @@ class _AddProductViewState extends State<AddProductView> {
 											print("name $name");
 										},
 										child: const Text("Add")
+									),
+									TextButton(
+										onPressed: () {
+											Navigator.of(context).push(
+												MaterialPageRoute(
+													builder: (context) => const AddMealView()
+												)
+											);
+										},
+										child: const Text("Add Meal")
+									),
+									TextButton(
+										onPressed: () {
+											
+										},
+										child: const Text("Stats")
 									)
 								]
 							);

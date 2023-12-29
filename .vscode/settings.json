@@ -9,4 +9,6 @@
 	"dart.showDartPadSampleCodeLens": false,
 	"dart.closingLabels": false,
 	"dart.flutterHotReloadOnSave": "allIfDirty",
+	"editor.insertSpaces": false,
+	"editor.tabSize": 3,
 }
