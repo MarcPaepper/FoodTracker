@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:food_tracker/data_manager.dart';
-import 'package:food_tracker/views/stats_view.dart';
 
 import 'add_meal_view.dart';
 
@@ -67,7 +66,7 @@ class _AddProductViewState extends State<AddProductView> {
 									),
 									TextButton(
 										onPressed: () {
-											
+											Navigator.of(context).pushNamedAndRemoveUntil("/stats/", (route) => false);
 										},
 										child: const Text("Stats")
 									)
