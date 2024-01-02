@@ -1,33 +1,36 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
-import 'package:food_tracker/views/add_meal_view.dart';
-import 'package:food_tracker/views/add_product_view.dart';
-import 'package:food_tracker/views/stats_view.dart';
+import 'views/products_view.dart';
+import 'constants/routes.dart';
+import 'views/add_meal_view.dart';
+import 'views/add_product_view.dart';
+import 'views/stats_view.dart';
 
 void main() {
 	runApp(
 		MaterialApp(
-			title: "Flutter Demo",
-			theme: 
-			ThemeData(
-				primaryColor: Colors.teal,
-				primarySwatch: Colors.teal,
+			title: "Food Tracker",
+			debugShowCheckedModeBanner: false,
+			theme: ThemeData(
+				colorSchemeSeed: Colors.teal,
 				appBarTheme: AppBarTheme(
-					backgroundColor: Colors.teal.shade200
+					backgroundColor: Colors.teal.shade400,
+					foregroundColor: Colors.white,
 				),
-				textButtonTheme: TextButtonThemeData(
-					style: TextButton.styleFrom(
-						foregroundColor: Colors.teal.shade500
-					)
-				)
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: Colors.grey),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey.shade100,
+        ),
 			),
-			home: const AddProductView(),
+			home: const ProductsView(),
 			routes: {
-				"/stats/":			(context) => const StatsView(),
-				"/meals/add/":		(context) => const AddMealView(),
-				"/products/add/":	(context) => const AddProductView()
-			}
+        addMealsRoute:		(context) => const AddMealView(),
+        productsRoute:	  (context) => const ProductsView(),
+        addProductRoute:	(context) => const AddProductView(),
+        statsRoute:		  	(context) => const StatsView(),
+      }
 		)
 	);
 }

@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+import "dart:developer" as devtools show log;
 
 enum CalcMethod {
 	manual, // the nutrional values for the product are given by the user
@@ -35,7 +35,7 @@ class NutrionalValue {
 			if (nutVal.name == name) {
 				// throw 
 				
-				//print("Error: Nutrional value name must be unique");
+				devtools.log("Error: Nutrional value name must be unique");
 			}
 		}
 	}
@@ -50,6 +50,20 @@ class Product {
 												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
 												// there can only be one conversion between weight, volume and quantity respectively
 	Map<NutrionalValue, double?> nutValues = {};
+  
+  Product(this.name) {
+    // check whether name is unique
+    for (var prod in products) {
+      if (prod.name == name) {
+				devtools.log("Error: Product name must be unique");
+      }
+    }
+  }
+  
+  @override
+  String toString() {
+    return "<Product '$name'>";
+  }
 }
 
 List<Product> products = [];
@@ -58,11 +72,18 @@ List<NutrionalValue> nutValues = [];
 Future<String> loadData() {
 	return Future.delayed(
 		const Duration(milliseconds: 500), () {
-			print("hello");
 			// create the 7 default nutrional values
 			nutValues.add(NutrionalValue(""));
 			return "data loaded";
 		});
+}
+
+List<Product> getProducts() {
+  return [
+    Product("Example Product 1"),
+    Product("Example Product 2"),
+    Product("Example Product 3"),
+  ];
 }
 
 String getFullName(String firstName, String lastName) => "$firstName $lastName";

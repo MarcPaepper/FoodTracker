@@ -1,9 +1,6 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:food_tracker/data_manager.dart';
-
-import 'add_meal_view.dart';
+import "dart:developer" as devtools show log;
 
 class AddProductView extends StatefulWidget {
 	const AddProductView({super.key});
@@ -44,32 +41,16 @@ class _AddProductViewState extends State<AddProductView> {
 									TextField(
 										controller: _name,
 										decoration: const InputDecoration(
-											hintText: "Name"
+											labelText: "Name"
 										),
 									),
 									TextButton(
 										onPressed: () {
 											final name = _name.text;
-											print("name $name");
+											devtools.log("name $name");
 										},
 										child: const Text("Add")
 									),
-									TextButton(
-										onPressed: () {
-											Navigator.of(context).push(
-												MaterialPageRoute(
-													builder: (context) => const AddMealView()
-												)
-											);
-										},
-										child: const Text("Add Meal")
-									),
-									TextButton(
-										onPressed: () {
-											Navigator.of(context).pushNamedAndRemoveUntil("/stats/", (route) => false);
-										},
-										child: const Text("Stats")
-									)
 								]
 							);
 						case ConnectionState.none:

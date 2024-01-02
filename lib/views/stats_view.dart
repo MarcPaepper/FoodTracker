@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 
 class StatsView extends StatelessWidget {
@@ -9,7 +7,8 @@ class StatsView extends StatelessWidget {
 	Widget build(BuildContext context) {
 		return Scaffold(
 			appBar: AppBar(
-				title: const Text("Stats")
+				title: const Text("Stats"),
+        automaticallyImplyLeading: false,
 			),
 			body: Center(
 				child: TextButton(
