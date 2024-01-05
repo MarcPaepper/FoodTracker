@@ -49,7 +49,7 @@ class _AddProductViewState extends State<AddProductView> {
                           labelText: "Name"
                         ),
                         validator: (String? value) {
-                          var products = DataService.debug().getProducts();
+                          var products = DataService.debug().products;
                           for (var prod in products) {
                             if (prod.name == value) {
                               return "Already taken";

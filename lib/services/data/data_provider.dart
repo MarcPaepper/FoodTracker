@@ -3,5 +3,6 @@ import 'data_objects.dart';
 
 abstract class DataProvider {
   Future<String> loadData();
-  List<Product> getProducts();
+  bool isLoaded();
+  List<Product> get products;
 }

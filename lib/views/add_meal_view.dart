@@ -13,7 +13,7 @@ class AddMealView extends StatefulWidget {
 
 List<DropdownMenuEntry<Product>> get dropdownItems{
   List<DropdownMenuEntry<Product>> menuItems = [];
-  List<Product> products = DataService.debug().getProducts();
+  List<Product> products = DataService.debug().products;
   for (final Product prod in products) {
     menuItems.add(DropdownMenuEntry(
       value: prod,
@@ -24,34 +24,90 @@ List<DropdownMenuEntry<Product>> get dropdownItems{
 }
 
 class _AddMealViewState extends State<AddMealView> {
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       title: const Text("Add meal"),
+  //     ),
+  //     body: Column(
+  //       children: [
+  //         DropdownMenu<Product>(
+  //           enableSearch: true,
+  //           hintText: "Product Name",
+  //           onSelected: (value) {
+  //             // devtools.log("selected $value");
+  //           },
+  //           dropdownMenuEntries: dropdownItems,
+  //         ),
+  //         TextButton(
+  //           onPressed: () async {
+  //             devtools.log("User chose ${await showExampleDialog(context)}");
+  //           },
+  //           child: const Text("Dialog")
+  //         )
+  //       ],
+  //     )
+  //   );
+  // }
+  
   @override
   Widget build(BuildContext context) {
-    devtools.log("test");
     return Scaffold(
       appBar: AppBar(
         title: const Text("Add meal"),
       ),
-      body: Column(
-        children: [
-          DropdownMenu<Product>(
-            enableSearch: true,
-            hintText: "Product Name",
-            onSelected: (value) {
-              devtools.log("selected $value");
-            },
-            dropdownMenuEntries: dropdownItems,
-          ),
-          TextButton(
-            onPressed: () async {
-              devtools.log("User chose ${await showExampleDialog(context)}");
-            },
-            child: const Text("Dialog")
-          )
-        ],
+      body: FutureBuilder(
+        future: DataService.debug().loadData(),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            
+            case ConnectionState.done:
+              return Padding(
+                padding: const EdgeInsets.all(7.0),
+                child: Column(
+                  children: [
+                    DropdownMenu<Product>(
+                      enableSearch: true,
+                      hintText: "Product Name",
+                      onSelected: (value) {
+                        // devtools.log("selected $value");
+                      },
+                      dropdownMenuEntries: dropdownItems,
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        devtools.log("User chose ${await showExampleDialog(context)}");
+                      },
+                      child: const Text("Dialog")
+                    )
+                  ],
+                ),
+              );
+            case ConnectionState.none:
+            case ConnectionState.waiting:
+            case ConnectionState.active:
+              return Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.all(50.0),
+                  child: SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: CircularProgressIndicator(
+                      color: Colors.teal.shade500
+                    ),
+                  ),
+                )
+              );
+          }
+        }
       )
     );
   }
 }
+
+
 
 Future<bool> showExampleDialog(BuildContext context) {
   return showDialog<bool> (
