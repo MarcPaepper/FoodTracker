@@ -22,32 +22,36 @@ void main() {
         inputDecorationTheme: InputDecorationTheme(
           isDense: true,
           filled: true,
-          fillColor: Colors.grey.withAlpha(35),
+          fillColor: MaterialStateColor.resolveWith((Set<MaterialState> states) =>
+            states.contains(MaterialState.error) ?
+              const Color.fromARGB(34, 255, 111, 0) :
+              Colors.grey.withAlpha(35)
+          ),
           enabledBorder: UnderlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
             borderSide: const BorderSide(
-              width: 3,
+              width: 3.5,
               color: Colors.grey
             )
           ),
           focusedBorder: UnderlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
             borderSide: BorderSide(
-              width: 2.5,
-              color: Colors.teal.shade400
+              width: 3.5,
+              color: Colors.teal.shade300
             )
           ),
           errorBorder: UnderlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
             borderSide: const BorderSide(
-              width: 2.5,
-              color: Color.fromARGB(211, 154, 32, 32)
+              width: 3.5,
+              color: Color.fromARGB(210, 193, 46, 27)
             )
           ),
           focusedErrorBorder: UnderlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
             borderSide: BorderSide(
-              width: 3.5,
+              width: 4,
               color: Colors.red.shade500
             )
           ),

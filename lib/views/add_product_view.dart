@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/data_manager.dart';
 import "dart:developer" as devtools show log;
+
+import 'package:food_tracker/services/data/data_service.dart';
 
 class AddProductView extends StatefulWidget {
   const AddProductView({super.key});
@@ -31,7 +32,7 @@ class _AddProductViewState extends State<AddProductView> {
         title: const Text("Add product"),
       ),
       body: FutureBuilder(
-        future: loadData(),
+        future: DataService.debug().loadData(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             
@@ -48,8 +49,8 @@ class _AddProductViewState extends State<AddProductView> {
                           labelText: "Name"
                         ),
                         validator: (String? value) {
-                          devtools.log("hey");
-                          for (var prod in getProducts()) {
+                          var products = DataService.debug().getProducts();
+                          for (var prod in products) {
                             if (prod.name == value) {
                               return "Already taken";
                             }

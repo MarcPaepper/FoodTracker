@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/data_manager.dart';
+import 'package:food_tracker/services/data/data_service.dart';
 import "dart:developer" as devtools show log;
+
+import '../services/data/data_objects.dart';
 
 class AddMealView extends StatefulWidget {
   const AddMealView({super.key});
@@ -11,7 +13,8 @@ class AddMealView extends StatefulWidget {
 
 List<DropdownMenuEntry<Product>> get dropdownItems{
   List<DropdownMenuEntry<Product>> menuItems = [];
-  for (final Product prod in getProducts()) {
+  List<Product> products = DataService.debug().getProducts();
+  for (final Product prod in products) {
     menuItems.add(DropdownMenuEntry(
       value: prod,
       label: prod.name
