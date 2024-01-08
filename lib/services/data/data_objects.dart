@@ -41,7 +41,7 @@ class Product {
 												// there can only be one conversion between weight, volume and quantity respectively
 	Map<NutrionalValue, double?> nutValues = {};
   
-  Product(this.name) {
+  Product(this.id, this.name) {
     // check whether name is unique
     // for (var prod in products) {
     //   if (prod.name == name) {
@@ -51,7 +51,13 @@ class Product {
   }
   
   @override
+  bool operator ==(covariant Product other) => id == other.id;
+  
+  @override
+  int get hashCode => id.hashCode;
+  
+  @override
   String toString() {
-    return "<Product '$name'>";
+    return "<Product #$id '$name'>";
   }
 }

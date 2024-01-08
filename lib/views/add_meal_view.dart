@@ -11,45 +11,19 @@ class AddMealView extends StatefulWidget {
   State<AddMealView> createState() => _AddMealViewState();
 }
 
-List<DropdownMenuEntry<Product>> get dropdownItems{
+Future<List<DropdownMenuEntry<Product>>> get dropdownItems async {
   List<DropdownMenuEntry<Product>> menuItems = [];
-  List<Product> products = DataService.debug().products;
-  for (final Product prod in products) {
-    menuItems.add(DropdownMenuEntry(
-      value: prod,
-      label: prod.name
-    ));
-  }
+  // List<Product> products = await DataService.debug().products;
+  // for (final Product prod in products) {
+  //   menuItems.add(DropdownMenuEntry(
+  //     value: prod,
+  //     label: prod.name
+  //   ));
+  // }
   return menuItems;
 }
 
 class _AddMealViewState extends State<AddMealView> {
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text("Add meal"),
-  //     ),
-  //     body: Column(
-  //       children: [
-  //         DropdownMenu<Product>(
-  //           enableSearch: true,
-  //           hintText: "Product Name",
-  //           onSelected: (value) {
-  //             // devtools.log("selected $value");
-  //           },
-  //           dropdownMenuEntries: dropdownItems,
-  //         ),
-  //         TextButton(
-  //           onPressed: () async {
-  //             devtools.log("User chose ${await showExampleDialog(context)}");
-  //           },
-  //           child: const Text("Dialog")
-  //         )
-  //       ],
-  //     )
-  //   );
-  // }
   
   @override
   Widget build(BuildContext context) {
@@ -58,7 +32,7 @@ class _AddMealViewState extends State<AddMealView> {
         title: const Text("Add meal"),
       ),
       body: FutureBuilder(
-        future: DataService.debug().loadData(),
+        future: null,// DataService.debug().open(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             
@@ -67,14 +41,14 @@ class _AddMealViewState extends State<AddMealView> {
                 padding: const EdgeInsets.all(7.0),
                 child: Column(
                   children: [
-                    DropdownMenu<Product>(
-                      enableSearch: true,
-                      hintText: "Product Name",
-                      onSelected: (value) {
-                        // devtools.log("selected $value");
-                      },
-                      dropdownMenuEntries: dropdownItems,
-                    ),
+                    // DropdownMenu<Product>(
+                    //   enableSearch: true,
+                    //   hintText: "Product Name",
+                    //   onSelected: (value) {
+                    //     // devtools.log("selected $value");
+                    //   },
+                    //   // dropdownMenuEntries: await dropdownItems,
+                    // ),
                     TextButton(
                       onPressed: () async {
                         devtools.log("User chose ${await showExampleDialog(context)}");

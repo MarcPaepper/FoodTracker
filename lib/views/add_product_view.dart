@@ -32,7 +32,7 @@ class _AddProductViewState extends State<AddProductView> {
         title: const Text("Add product"),
       ),
       body: FutureBuilder(
-        future: DataService.debug().loadData(),
+        future: null,//DataService.debug().open(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             
@@ -48,15 +48,15 @@ class _AddProductViewState extends State<AddProductView> {
                         decoration: const InputDecoration(
                           labelText: "Name"
                         ),
-                        validator: (String? value) {
-                          var products = DataService.debug().products;
-                          for (var prod in products) {
-                            if (prod.name == value) {
-                              return "Already taken";
-                            }
-                          }
-                          return null;
-                        },
+                        // validator: (String? value) {
+                        //   var products = DataService.debug().products;
+                        //   for (var prod in products) {
+                        //     if (prod.name == value) {
+                        //       return "Already taken";
+                        //     }
+                        //   }
+                        //   return null;
+                        // },
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
                     ),

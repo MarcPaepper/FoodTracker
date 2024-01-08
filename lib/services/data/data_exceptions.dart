@@ -2,3 +2,9 @@ class InputOutOfRangeException implements Exception {}
 class NotUniqueException implements Exception {}
 class CircularReferenceException implements Exception {}
 class DataNotLoadedException implements Exception {}
+class InvalidInsertionException implements Exception {}
+class InvalidUpdateException implements Exception {}
+class InvalidDeletionException implements Exception {}
+class NotFoundException implements Exception {}
+class DbAlreadyOpenException implements Exception {}
+class NoDocumentsDirectoryException implements Exception {}
