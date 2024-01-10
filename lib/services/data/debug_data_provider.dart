@@ -5,6 +5,8 @@ import 'package:food_tracker/services/data/data_exceptions.dart';
 import 'data_provider.dart';
 import 'data_objects.dart';
 
+import "dart:developer" as devtools show log;
+
 class DebugDataProvider implements DataProvider {
   List<Product> productsInternal = [];
   // List<NutrionalValue> _nutValues = [];
@@ -14,6 +16,7 @@ class DebugDataProvider implements DataProvider {
   
   @override
   Future<String> open(String dbName) async {
+    devtools.log("opening database $dbName");
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
       const Duration(milliseconds: 900), () {
@@ -25,7 +28,7 @@ class DebugDataProvider implements DataProvider {
           Product(3, "Example Product 3"),
         ];
         _productsStreamController.add(productsInternal);
-        
+        devtools.log("data loaded");
         loaded = true;
         return "data loaded";
       });

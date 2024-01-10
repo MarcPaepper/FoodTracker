@@ -44,15 +44,15 @@ class _ProductsViewState extends State<ProductsView> {
 			body: Column(
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: [
-          StreamBuilder(
-            stream: _dataService.products,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Text("Error: ${snapshot.error}");
-              }
-              if (snapshot.hasData) {
-                return Expanded(
-                  child: ListView.builder(
+          Expanded(
+            child: StreamBuilder(
+              stream: _dataService.products,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Text("Error: ${snapshot.error}");
+                }
+                if (snapshot.hasData) {
+                  return ListView.builder(
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       return ListTile(
@@ -62,39 +62,42 @@ class _ProductsViewState extends State<ProductsView> {
                         // },
                       );
                     }
-                  ),
+                  );
+                }
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.all(50.0),
+                    child: SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: CircularProgressIndicator(
+                        color: Colors.teal.shade500
+                      ),
+                    ),
+                  )
                 );
               }
-              return Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(50.0),
-                  child: SizedBox(
-                    width: 30,
-                    height: 30,
-                    child: CircularProgressIndicator(
-                      color: Colors.teal.shade500
-                    ),
-                  ),
-                )
-              );
-            }
+            )
           ),
-          Row(
-            children: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(addMealsRoute);
-                },
-                child: const Text("Add Meal")
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamedAndRemoveUntil(statsRoute, (route) => false);
-                },
-                child: const Text("Stats")
-              ),
-            ]
+          Align(
+            alignment: Alignment.topCenter,
+            child: Row(
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(addMealsRoute);
+                  },
+                  child: const Text("Add Meal")
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(statsRoute);
+                  },
+                  child: const Text("Stats")
+                ),
+              ]
+            ),
           ),
         ]
 			),
