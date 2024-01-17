@@ -13,13 +13,20 @@ class ProductsView extends StatefulWidget {
 }
 
 class _ProductsViewState extends State<ProductsView> {
-  
   late final DataService _dataService;
+  final ScrollController _scrollController = ScrollController();
   
   @override
   void initState() {
     _dataService = DataService.current();
     _dataService.open(dbName);
+    _dataService.streamProducts().listen((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        }
+      });
+    });
     super.initState();
   }
   
@@ -50,6 +57,7 @@ class _ProductsViewState extends State<ProductsView> {
                   products.sort((a, b) => a.id.compareTo(b.id));
                   var length = products.length + 1;
                   return ListView.builder(
+                    controller: _scrollController,
                     itemCount: length,
                     itemBuilder: (context, index) {
                       if (index < length - 1) {
@@ -98,25 +106,25 @@ class _ProductsViewState extends State<ProductsView> {
               }
             )
           ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Row(
-              children: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed(addMealsRoute);
-                  },
-                  child: const Text("Add Meal")
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed(statsRoute);
-                  },
-                  child: const Text("Stats")
-                ),
-              ]
-            ),
-          ),
+          // Align(
+          //   alignment: Alignment.topCenter,
+          //   child: Row(
+          //     children: [
+          //       TextButton(
+          //         onPressed: () {
+          //           Navigator.of(context).pushNamed(addMealsRoute);
+          //         },
+          //         child: const Text("Add Meal")
+          //       ),
+          //       TextButton(
+          //         onPressed: () {
+          //           Navigator.of(context).pushNamed(statsRoute);
+          //         },
+          //         child: const Text("Stats")
+          //       ),
+          //     ]
+          //   ),
+          // ),
         ]
 			),
 		);
