@@ -56,20 +56,37 @@ class _ProductsViewState extends State<ProductsView> {
                 if (snapshot.hasData) {
                   var products = snapshot.data as List<Product>;
                   products.sort((a, b) => a.id.compareTo(b.id));
+                  var length = products.length + 1;
                   return ListView.builder(
-                    itemCount: snapshot.data!.length,
+                    itemCount: length,
                     itemBuilder: (context, index) {
-                      var product = snapshot.data![index];
-                      return ListTile(
-                        title: Text(product.name),
-                        onTap: () {
-                          Navigator.pushNamed (
-                            context,
-                            editProductRoute,
-                            arguments: product.id,
-                          );
-                        },
-                      );
+                      if (index < length - 1) {
+                        var product = products[index];
+                        bool dark = (length - index) % 2 == 1;
+                        var color = dark ? Color.fromARGB(138, 224, 228, 231) : Colors.white;
+                        
+                        return ListTile(
+                          title: Text(product.name),
+                          tileColor: color,
+                          onTap: () {
+                            Navigator.pushNamed (
+                              context,
+                              editProductRoute,
+                              arguments: product.id,
+                            );
+                          },
+                        );
+                      } else {
+                        // List tile with green background and a "+" Icon on the left
+                        return ListTile(
+                          tileColor: const Color.fromARGB(151, 192, 223, 178),
+                          leading: const Icon(Icons.add),
+                          title: const Text("Add Product"),
+                          onTap: () {
+                            Navigator.of(context).pushNamed(addProductRoute);
+                          },
+                        );
+                      }
                     }
                   );
                 }
