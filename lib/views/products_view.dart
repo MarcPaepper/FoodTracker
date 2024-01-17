@@ -42,91 +42,83 @@ class _ProductsViewState extends State<ProductsView> {
 			appBar: AppBar(
 				title: const Text("Products")
 			),
-			body: Column(
-				crossAxisAlignment: CrossAxisAlignment.start,
-				children: [
-          Expanded(
-            child: StreamBuilder(
-              stream: _dataService.streamProducts(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text("Error: ${snapshot.error}");
-                }
-                if (snapshot.hasData) {
-                  var products = snapshot.data as List<Product>;
-                  products.sort((a, b) => a.id.compareTo(b.id));
-                  var length = products.length + 1;
-                  return ListView.builder(
-                    controller: _scrollController,
-                    itemCount: length,
-                    itemBuilder: (context, index) {
-                      if (index < length - 1) {
-                        var product = products[index];
-                        bool dark = (length - index) % 2 == 1;
-                        var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
-                        
-                        return ListTile(
-                          title: Text(product.name),
-                          tileColor: color,
-                          onTap: () {
-                            Navigator.pushNamed (
-                              context,
-                              editProductRoute,
-                              arguments: product.id,
-                            );
-                          },
-                        );
-                      } else {
-                        // List tile with green background and a "+" Icon on the left
-                        return ListTile(
-                          tileColor: const Color.fromARGB(151, 192, 223, 178),
-                          leading: const Icon(Icons.add),
-                          title: const Text("Add Product"),
-                          onTap: () {
-                            Navigator.of(context).pushNamed(addProductRoute);
-                          },
-                        );
-                      }
-                    }
-                  );
-                }
-                return Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.all(50.0),
-                    child: SizedBox(
-                      width: 30,
-                      height: 30,
-                      child: CircularProgressIndicator(
-                        color: Colors.teal.shade500
-                      ),
-                    ),
-                  )
-                );
-              }
-            )
-          ),
-          // Align(
-          //   alignment: Alignment.topCenter,
-          //   child: Row(
-          //     children: [
-          //       TextButton(
-          //         onPressed: () {
-          //           Navigator.of(context).pushNamed(addMealsRoute);
-          //         },
-          //         child: const Text("Add Meal")
-          //       ),
-          //       TextButton(
-          //         onPressed: () {
-          //           Navigator.of(context).pushNamed(statsRoute);
-          //         },
-          //         child: const Text("Stats")
-          //       ),
-          //     ]
-          //   ),
-          // ),
-        ]
-			),
+			body: StreamBuilder(
+        stream: _dataService.streamProducts(),
+        builder: (context, snapshot) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildProductList(snapshot)
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 210, 235, 198),
+                  foregroundColor: Colors.black,
+                  minimumSize: const Size(double.infinity, 56),
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+                  textStyle: Theme.of(context).textTheme.bodyLarge,
+                ),
+                icon: const Icon(Icons.add),
+                label: const Padding(
+                  padding: EdgeInsets.only(left: 5.0),
+                  child: Text("Add Product"),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pushNamed(addProductRoute);
+                },
+              )
+            ]
+          );
+        }
+			)
 		);
 	}
+  
+  Widget _buildProductList(AsyncSnapshot snapshot) {
+    if (snapshot.hasError) {
+      return Text("Error: ${snapshot.error}");
+    }
+    if (snapshot.hasData) {
+      var products = snapshot.data as List<Product>;
+      products.sort((a, b) => a.id.compareTo(b.id));
+      var length = products.length;
+      return ListView.builder(
+        controller: _scrollController,
+        itemCount: length,
+        itemBuilder: (context, index) {
+          var product = products[index];
+          bool dark = (length - index) % 2 == 1;
+          var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
+          
+          return ListTile(
+            title: Text(product.name),
+            tileColor: color,
+            onTap: () {
+              Navigator.pushNamed (
+                context,
+                editProductRoute,
+                arguments: product.id,
+              );
+            },
+          );
+        }
+      );
+    }
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.all(50.0),
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: CircularProgressIndicator(
+            color: Colors.teal.shade500
+          ),
+        ),
+      )
+    );
+  }
 }
