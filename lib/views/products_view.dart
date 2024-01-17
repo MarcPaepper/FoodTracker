@@ -15,6 +15,8 @@ class ProductsView extends StatefulWidget {
 class _ProductsViewState extends State<ProductsView> {
   late final DataService _dataService;
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
   
   @override
   void initState() {
@@ -48,6 +50,34 @@ class _ProductsViewState extends State<ProductsView> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search',
+                      suffixIcon: _isSearching
+                      ? IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _isSearching = false;
+                            });
+                          },
+                        )
+                      : const Icon(Icons.search),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _isSearching = value.isNotEmpty;
+                      });
+                    },
+                  ),
+                ),
+              ),
               Expanded(
                 child: _buildProductList(snapshot)
               ),
@@ -83,7 +113,17 @@ class _ProductsViewState extends State<ProductsView> {
     }
     if (snapshot.hasData) {
       var products = snapshot.data as List<Product>;
+      
+      // only show products that contain every word in the search
+      var search = _searchController.text.split(" ");
+      products = products.where((product) {
+        var name = product.name.toLowerCase();
+        return search.every((word) => name.contains(word.toLowerCase()));
+      }).toList();
+      
+      // sort products by id
       products.sort((a, b) => a.id.compareTo(b.id));
+      
       var length = products.length;
       return ListView.builder(
         controller: _scrollController,
@@ -94,7 +134,15 @@ class _ProductsViewState extends State<ProductsView> {
           var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
           
           return ListTile(
-            title: Text(product.name),
+            title: RichText(
+              text: TextSpan(
+                style: DefaultTextStyle.of(context).style.copyWith(
+                  color: Colors.black,
+                  fontSize: 16.5,
+                ),
+                children: highlightOccurrences(product.name, search),
+              ),
+            ),
             tileColor: color,
             onTap: () {
               Navigator.pushNamed (
@@ -120,5 +168,30 @@ class _ProductsViewState extends State<ProductsView> {
         ),
       )
     );
+  }
+  
+  List<TextSpan> highlightOccurrences(String source, List<String> search) {
+    var spans = <TextSpan>[];
+    var lowerSource = source.toLowerCase();
+    var index = 0;
+    for (var word in search) {
+      var lowerWord = word.toLowerCase();
+      var wordIndex = lowerSource.indexOf(lowerWord, index);
+      if (wordIndex == -1) {
+        continue;
+      }
+      spans.add(TextSpan(
+        text: source.substring(index, wordIndex),
+      ));
+      spans.add(TextSpan(
+        text: source.substring(wordIndex, wordIndex + word.length),
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ));
+      index = wordIndex + word.length;
+    }
+    spans.add(TextSpan(
+      text: source.substring(index),
+    ));
+    return spans;
   }
 }
