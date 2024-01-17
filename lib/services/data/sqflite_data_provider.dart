@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
   
 import 'package:food_tracker/services/data/data_exceptions.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
@@ -27,14 +28,14 @@ CREATE TABLE IF NOT EXISTS "product" (
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
-  String _dbName;
+  // String _dbName;
   
   // cached data
   List<Product> _products = [];
   
   final _productsStreamController = StreamController<List<Product>>.broadcast();
 
-  SqfliteDataProvider(this._dbName);
+  SqfliteDataProvider(String dbName);
   
   Future<void> _cacheProducts() async {
     _products = await getAllProducts() as List<Product>;
@@ -46,12 +47,16 @@ class SqfliteDataProvider implements DataProvider {
   
   @override
   Future<String> open(String dbName) async {
-    _dbName = dbName;
-    if (isLoaded()) throw DbAlreadyOpenException();
+    if (isLoaded()) return Future.value("data already loaded");
     var tables = [createProductTable];
     try {
-      final docsPath = await getApplicationDocumentsDirectory();
-      final dbPath = join(docsPath.path, dbName);
+      String dbPath;
+      if (kIsWeb) {
+        dbPath = "/assets/db";
+      } else {
+        var docsPath = await getApplicationDocumentsDirectory();
+        dbPath = join(docsPath.path, dbName);
+      }
       _db = await openDatabase(dbPath);
       
       for (final table in tables) {
@@ -87,7 +92,7 @@ class SqfliteDataProvider implements DataProvider {
         row[idColumn] as int,
         row[nameColumn] as String,
       )
-    );
+    ).toList();
   }
   
   @override

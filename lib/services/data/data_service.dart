@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:food_tracker/constants/data.dart';
 import 'package:food_tracker/services/data/data_provider.dart';
 
@@ -5,11 +7,23 @@ import 'data_objects.dart';
 import 'debug_data_provider.dart';
 import 'sqflite_data_provider.dart';
 
+const currentMode = kIsWeb ? DebugDataProvider : SqfliteDataProvider;
+
 class DataService implements DataProvider {
   final DataProvider _provider;
   const DataService(this._provider);
-  // cache data service
   static final Map<String, DataService> _cache = {};
+  
+  factory DataService.current() {
+    switch (currentMode) {
+      case DebugDataProvider:
+        return DataService.debug();
+      case SqfliteDataProvider:
+        return DataService.sqflite();
+      default:
+        throw Exception("Unknown data provider");
+    }
+  }
   
   factory DataService.debug() {
     if (!_cache.containsKey("debug")) {

@@ -18,7 +18,7 @@ class _ProductsViewState extends State<ProductsView> {
   
   @override
   void initState() {
-    _dataService = DataService.debug();
+    _dataService = DataService.current();
     _dataService.open(dbName);
     super.initState();
   }
@@ -33,15 +33,7 @@ class _ProductsViewState extends State<ProductsView> {
 	Widget build(BuildContext context) {
 		return Scaffold (
 			appBar: AppBar(
-				title: const Text("Products"),
-				actions: [
-					IconButton(
-						onPressed: () {
-							Navigator.of(context).pushNamed(addProductRoute);
-						},
-						icon: const Icon(Icons.add)
-					)
-				]
+				title: const Text("Products")
 			),
 			body: Column(
 				crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +55,7 @@ class _ProductsViewState extends State<ProductsView> {
                       if (index < length - 1) {
                         var product = products[index];
                         bool dark = (length - index) % 2 == 1;
-                        var color = dark ? Color.fromARGB(138, 224, 228, 231) : Colors.white;
+                        var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
                         
                         return ListTile(
                           title: Text(product.name),

@@ -13,7 +13,7 @@ class AddMealView extends StatefulWidget {
 
 Future<List<DropdownMenuEntry<Product>>> get dropdownItems async {
   List<DropdownMenuEntry<Product>> menuItems = [];
-  // List<Product> products = await DataService.debug().products;
+  // List<Product> products = await DataService.current().products;
   // for (final Product prod in products) {
   //   menuItems.add(DropdownMenuEntry(
   //     value: prod,
@@ -32,7 +32,7 @@ class _AddMealViewState extends State<AddMealView> {
         title: const Text("Add meal"),
       ),
       body: FutureBuilder(
-        future: null,// DataService.debug().open(),
+        future: null,
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             

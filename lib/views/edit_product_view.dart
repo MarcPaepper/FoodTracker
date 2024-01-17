@@ -16,7 +16,7 @@ class EditProductView extends StatefulWidget {
 }
 
 class _EditProductViewState extends State<EditProductView> {
-  final _dataService = DataService.debug();
+  final _dataService = DataService.current();
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final bool isEdit;
@@ -63,6 +63,37 @@ class _EditProductViewState extends State<EditProductView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? "Edit Product" : "Add Product"),
+        // show the delete button if editing
+        actions: isEdit ? [
+          IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Delete Product"),
+                  content: const Text("If you delete this product, all associated data will be lost."),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        _dataService.deleteProduct(widget.productId!);
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("Delete"),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("Cancel"),
+                    )
+                  ],
+                )
+              );
+            },
+            icon: const Icon(Icons.delete),
+          )
+        ] : null
       ),
       body: FutureBuilder(
         future: _dataService.getAllProducts(),
@@ -124,6 +155,8 @@ class _EditProductViewState extends State<EditProductView> {
           for (var prod in products) {
             if (prod.name == value && prod.id != widget.productId) {
               return "Already taken";
+            } else if (value == null || value.isEmpty) {
+              return "Product must have a name";
             }
           }
           return null;

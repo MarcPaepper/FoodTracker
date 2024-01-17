@@ -50,6 +50,10 @@ class Product {
     // }
   }
   
+  Product.empty() {
+    name = "";
+  }
+  
   @override
   bool operator ==(covariant Product other) => id == other.id;
   
