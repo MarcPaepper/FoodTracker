@@ -1,3 +1,4 @@
+import 'package:food_tracker/constants/data.dart';
 import 'package:food_tracker/services/data/data_provider.dart';
 
 import 'data_objects.dart';
@@ -25,35 +26,70 @@ class DataService implements DataProvider {
   }
 
   @override
-  Future<String> open(String dbName) => _provider.open(dbName);
-  
-  @override
-  Future<void> close() => _provider.close();
-  
-  @override
-  bool isLoaded() => _provider.isLoaded();
-  
-  @override
-  Stream<List<Product>> get products => _provider.products;
+Future<String> open(String dbName) => _provider.open(dbName);
 
-  @override
-  Future<Iterable<Product>> getAllProducts() => _provider.getAllProducts();
-  
-  @override
-  Future<Product> getProduct(int id) => _provider.getProduct(id);
-  
-  @override
-  Future<Product> getProductByName(String name) => _provider.getProductByName(name);
-  
-  @override
-  Future<Product> createProduct(String name) => _provider.createProduct(name);
-  
-  @override
-  Future<Product> updateProduct(Product product) => _provider.updateProduct(product);
-  
-  @override
-  Future<void> deleteProduct(int id) => _provider.deleteProduct(id);
-  
-  @override
-  Future<void> deleteProductWithName(String name) => _provider.deleteProductWithName(name);
+@override
+Future<void> close() => _provider.close();
+
+@override
+bool isLoaded() => _provider.isLoaded();
+
+@override
+Stream<List<Product>> streamProducts() => _provider.streamProducts();
+
+@override
+Future<Iterable<Product>> getAllProducts() {
+  if (!_provider.isLoaded()) {
+    return _provider.open(dbName).then((value) => _provider.getAllProducts());
+  }
+  return _provider.getAllProducts();
+}
+
+@override
+Future<Product> getProduct(int id) {
+  if (!_provider.isLoaded()) {
+    return _provider.open(dbName).then((value) => _provider.getProduct(id));
+  }
+  return _provider.getProduct(id);
+}
+
+@override
+Future<Product> getProductByName(String name) {
+  if (!_provider.isLoaded()) {
+    return _provider.open(dbName).then((value) => _provider.getProductByName(name));
+  }
+  return _provider.getProductByName(name);
+}
+
+@override
+Future<Product> createProduct(String name) {
+  if (!_provider.isLoaded()) {
+    return _provider.open(dbName).then((value) => _provider.createProduct(name));
+  }
+  return _provider.createProduct(name);
+}
+
+@override
+Future<Product> updateProduct(Product product) {
+  if (!_provider.isLoaded()) {
+    return _provider.open(dbName).then((value) => _provider.updateProduct(product));
+  }
+  return _provider.updateProduct(product);
+}
+
+@override
+Future<void> deleteProduct(int id) {
+  if (!_provider.isLoaded()) {
+    return _provider.open(dbName).then((value) => _provider.deleteProduct(id));
+  }
+  return _provider.deleteProduct(id);
+}
+
+@override
+Future<void> deleteProductWithName(String name) {
+  if (!_provider.isLoaded()) {
+    return _provider.open(dbName).then((value) => _provider.deleteProductWithName(name));
+  }
+  return _provider.deleteProductWithName(name);
+}
 }

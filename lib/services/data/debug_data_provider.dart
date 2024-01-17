@@ -5,7 +5,7 @@ import 'package:food_tracker/services/data/data_exceptions.dart';
 import 'data_provider.dart';
 import 'data_objects.dart';
 
-import "dart:developer" as devtools show log;
+// import "dart:developer" as devtools show log;
 
 class DebugDataProvider implements DataProvider {
   List<Product> productsInternal = [];
@@ -16,7 +16,6 @@ class DebugDataProvider implements DataProvider {
   
   @override
   Future<String> open(String dbName) async {
-    devtools.log("opening database $dbName");
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
       const Duration(milliseconds: 900), () {
@@ -28,7 +27,6 @@ class DebugDataProvider implements DataProvider {
           Product(3, "Example Product 3"),
         ];
         _productsStreamController.add(productsInternal);
-        devtools.log("data loaded");
         loaded = true;
         return "data loaded";
       });
@@ -44,7 +42,7 @@ class DebugDataProvider implements DataProvider {
   bool isLoaded() => loaded;
   
   @override
-  Stream<List<Product>> get products => _productsStreamController.stream;
+  Stream<List<Product>> streamProducts() => _productsStreamController.stream;
   
   @override
   Future<Iterable<Product>> getAllProducts() {
@@ -75,6 +73,7 @@ class DebugDataProvider implements DataProvider {
     }
     final newProduct = Product(highestId + 1, name);
     productsInternal.add(newProduct);
+    _productsStreamController.add(productsInternal);
     return Future.value(newProduct);
   }
   
@@ -85,6 +84,7 @@ class DebugDataProvider implements DataProvider {
     if (lenPrev - productsInternal.length != 1) {
       throw InvalidDeletionException();
     }
+    _productsStreamController.add(productsInternal);
     return Future.value();
   }
   
@@ -95,6 +95,7 @@ class DebugDataProvider implements DataProvider {
     if (lenPrev - productsInternal.length != 1) {
       throw InvalidDeletionException();
     }
+    _productsStreamController.add(productsInternal);
     return Future.value();
   }
   
@@ -106,6 +107,7 @@ class DebugDataProvider implements DataProvider {
     if (lenPrev - productsInternal.length != 0) {
       throw InvalidUpdateException();
     }
+    _productsStreamController.add(productsInternal);
     return Future.value(product);
   }
 }

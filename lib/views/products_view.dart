@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/constants/routes.dart';
+import 'package:food_tracker/constants/data.dart';
+import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/services/data/data_service.dart';
+// import "dart:developer" as devtools show log;
 
 class ProductsView extends StatefulWidget {
 	const ProductsView({super.key});
@@ -10,14 +13,13 @@ class ProductsView extends StatefulWidget {
 }
 
 class _ProductsViewState extends State<ProductsView> {
-  static const String _dbName = "test";
   
   late final DataService _dataService;
   
   @override
   void initState() {
     _dataService = DataService.debug();
-    _dataService.open(_dbName);
+    _dataService.open(dbName);
     super.initState();
   }
   
@@ -46,20 +48,27 @@ class _ProductsViewState extends State<ProductsView> {
 				children: [
           Expanded(
             child: StreamBuilder(
-              stream: _dataService.products,
+              stream: _dataService.streamProducts(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Text("Error: ${snapshot.error}");
                 }
                 if (snapshot.hasData) {
+                  var products = snapshot.data as List<Product>;
+                  products.sort((a, b) => a.id.compareTo(b.id));
                   return ListView.builder(
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
+                      var product = snapshot.data![index];
                       return ListTile(
-                        title: Text(snapshot.data![index].name),
-                        // onTap: () {
-                        //   Navigator.of(context).pushNamed(productRoute, arguments: snapshot.data[index]);
-                        // },
+                        title: Text(product.name),
+                        onTap: () {
+                          Navigator.pushNamed (
+                            context,
+                            editProductRoute,
+                            arguments: product.id,
+                          );
+                        },
                       );
                     }
                   );

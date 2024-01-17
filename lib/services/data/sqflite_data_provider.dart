@@ -74,7 +74,7 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
-  Stream<List<Product>> get products => _productsStreamController.stream;
+  Stream<List<Product>> streamProducts() => _productsStreamController.stream;
   
   @override
   Future<Iterable<Product>> getAllProducts() async {
