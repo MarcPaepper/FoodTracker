@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:food_tracker/constants/sqlite_tables.dart';
+import 'package:food_tracker/constants/tables.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -11,15 +11,19 @@ import 'package:food_tracker/services/data/data_exceptions.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/services/data/data_provider.dart';
 
+import "dart:developer" as devtools show log;
+
 const productTable = "product";
 const mealTable = "meal";
-const nutrionalValueTable = "nutrional_value";
+const nutrionalValueTable = "nutritional_value";
 
 const idColumn = "id";
 const nameColumn = "name";
 const dateColumn = "date";
 
 const unitNameColumn = "unit";
+
+const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
@@ -40,7 +44,10 @@ class SqfliteDataProvider implements DataProvider {
   @override
   Future<String> open(String dbName) async {
     if (isLoaded()) return Future.value("data already loaded");
-    var tables = [createProductTable, createNutrionalValueTable];
+    var tables = {
+      productTable: createProductTable,
+      nutrionalValueTable: createNutrionalValueTable,
+    };
     try {
       String dbPath;
       if (kIsWeb) {
@@ -48,11 +55,31 @@ class SqfliteDataProvider implements DataProvider {
       } else {
         var docsPath = await getApplicationDocumentsDirectory();
         dbPath = join(docsPath.path, dbName);
+        // delete file if forceReset
+        if (forceReset) {
+          try {
+            await deleteDatabase(dbPath);
+          } catch (e) {
+            devtools.log("Error deleting database: $e");
+          }
+        }
       }
       _db = await openDatabase(dbPath);
       
-      for (final table in tables) {
-        await _db!.execute(table);
+      for (final entry in tables.entries) {
+        // Check whether the table exists
+        var result = await _db!.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='${entry.key}'");
+        if (result.isEmpty) {
+          devtools.log("Creating table ${entry.key}");
+          await _db!.execute(entry.value);
+          
+          // If table is Nutrional Value, insert the default values
+          if (entry.key == nutrionalValueTable) {
+            for (var value in defaultNutrionalValues) {
+              createNutrionalValue(value);
+            }
+          }
+        }
       }
       
       // cache products
