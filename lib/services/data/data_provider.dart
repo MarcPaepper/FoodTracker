@@ -7,13 +7,20 @@ abstract class DataProvider {
   Future<String> open(String dbName);
   Future<void> close();
   bool isLoaded();
+  
   Stream<List<Product>> streamProducts();
-  void reloadStream();
+  void reloadProductStream();
   Future<Iterable<Product>> getAllProducts();
   Future<Product> getProduct(int id);
-  Future<Product> getProductByName(String name);
   Future<Product> createProduct(String name);
   Future<Product> updateProduct(Product product);
   Future<void> deleteProduct(int id);
-  Future<void> deleteProductWithName(String name);
+  
+  Stream<List<NutrionalValue>> streamNutrionalValues();
+  Future<Iterable<NutrionalValue>> getAllNutrionalValues();
+  void reloadNutrionalValueStream();
+  Future<NutrionalValue> getNutrionalValue(int id);
+  Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal);
+  Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal);
+  Future<void> deleteNutrionalValue(int id);
 }

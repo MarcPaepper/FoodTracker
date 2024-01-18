@@ -8,20 +8,19 @@ import 'data_objects.dart';
 // import "dart:developer" as devtools show log;
 
 class DebugDataProvider implements DataProvider {
-  List<Product> productsInternal = [];
-  // List<NutrionalValue> _nutValues = [];
+  List<Product> products = [];
+  List<NutrionalValue> nutValues = [];
   bool loaded = false;
   // StreamController
   final _productsStreamController = StreamController<List<Product>>.broadcast();
+  final _nutrionalValuesStreamController = StreamController<List<NutrionalValue>>.broadcast();
   
   @override
   Future<String> open(String dbName) async {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
       const Duration(milliseconds: 1000), () {
-        // create the 7 default nutrional values
-        // nutValues.add(NutrionalValue(""));
-        productsInternal = [
+        products = [
           Product(1, "Example Product 1"),
           Product(2, "Example Product 2"),
           Product(3, "Example Product 3"),
@@ -43,7 +42,19 @@ class DebugDataProvider implements DataProvider {
           Product(19, "Example Product 19"),
           Product(20, "Example Product 20"),
         ];
-        _productsStreamController.add(productsInternal);
+        // create the 7 default nutrional values
+        nutValues = [
+          NutrionalValue(1, "Calories", "kcal"),
+          NutrionalValue(2, "Protein", "g"),
+          NutrionalValue(3, "Carbohydrates", "g"),
+          NutrionalValue(4, "Fat", "g"),
+          NutrionalValue(5, "Saturated Fat", "g"),
+          NutrionalValue(6, "Sugar", "g"),
+          NutrionalValue(7, "Salt", "g"),
+        ];
+        _productsStreamController.add(products);
+        _nutrionalValuesStreamController.add(nutValues);
+        
         loaded = true;
         return "data loaded";
       });
@@ -52,37 +63,32 @@ class DebugDataProvider implements DataProvider {
   @override
   Future<void> close() {
     _productsStreamController.close();
+    _nutrionalValuesStreamController.close();
     return Future.value();
   }
   
   @override
   bool isLoaded() => loaded;
   
+  // Products
+  
   @override
   Stream<List<Product>> streamProducts() {
-    if (loaded) _productsStreamController.add(productsInternal);
+    if (loaded) _productsStreamController.add(products);
     return _productsStreamController.stream;
   }
   
   @override
-  void reloadStream() => loaded ? _productsStreamController.add(productsInternal) : {};
+  void reloadProductStream() => loaded ? _productsStreamController.add(products) : {};
   
   @override
   Future<Iterable<Product>> getAllProducts() {
-    return Future.value(productsInternal);
+    return Future.value(products);
   }
   
   @override
   Future<Product> getProduct(int id) {
-    var list = productsInternal.where((element) => element.id == id);
-    if (list.isEmpty) throw NotFoundException();
-    if (list.length > 1) throw NotUniqueException();
-    return Future.value(list.first);
-  }
-  
-  @override
-  Future<Product> getProductByName(String name) {
-    var list = productsInternal.where((element) => element.name == name);
+    var list = products.where((element) => element.id == id);
     if (list.isEmpty) throw NotFoundException();
     if (list.length > 1) throw NotUniqueException();
     return Future.value(list.first);
@@ -91,46 +97,94 @@ class DebugDataProvider implements DataProvider {
   @override
   Future<Product> createProduct(String name) {
     int highestId = 0;
-    for (final product in productsInternal) {
+    for (final product in products) {
       if (product.id > highestId) highestId = product.id;
     }
     final newProduct = Product(highestId + 1, name);
-    productsInternal.add(newProduct);
-    _productsStreamController.add(productsInternal);
+    products.add(newProduct);
+    _productsStreamController.add(products);
     return Future.value(newProduct);
   }
   
   @override
   Future<void> deleteProduct(int id) {
-    int lenPrev = productsInternal.length;
-    productsInternal.removeWhere((element) => element.id == id);
-    if (lenPrev - productsInternal.length != 1) {
+    int lenPrev = products.length;
+    products.removeWhere((element) => element.id == id);
+    if (lenPrev - products.length != 1) {
       throw InvalidDeletionException();
     }
-    _productsStreamController.add(productsInternal);
-    return Future.value();
-  }
-  
-  @override
-  Future<void> deleteProductWithName(String name) {
-    int lenPrev = productsInternal.length;
-    productsInternal.removeWhere((element) => element.name == name);
-    if (lenPrev - productsInternal.length != 1) {
-      throw InvalidDeletionException();
-    }
-    _productsStreamController.add(productsInternal);
+    _productsStreamController.add(products);
     return Future.value();
   }
   
   @override
   Future<Product> updateProduct(Product product) {
-    int lenPrev = productsInternal.length;
-    productsInternal.removeWhere((element) => element.id == product.id);
-    productsInternal.add(product);
-    if (lenPrev - productsInternal.length != 0) {
+    int lenPrev = products.length;
+    products.removeWhere((element) => element.id == product.id);
+    products.add(product);
+    if (lenPrev - products.length != 0) {
       throw InvalidUpdateException();
     }
-    _productsStreamController.add(productsInternal);
+    _productsStreamController.add(products);
     return Future.value(product);
+  }
+  
+  // Nutrional Values
+  
+  @override
+  Stream<List<NutrionalValue>> streamNutrionalValues() {
+    if (loaded) _nutrionalValuesStreamController.add(nutValues);
+    return _nutrionalValuesStreamController.stream;
+  }
+  
+  @override
+  void reloadNutrionalValueStream() => loaded ? _nutrionalValuesStreamController.add(nutValues) : {};
+  
+  @override
+  Future<Iterable<NutrionalValue>> getAllNutrionalValues() {
+    return Future.value(nutValues);
+  }
+  
+  @override
+  Future<NutrionalValue> getNutrionalValue(int id) {
+    var list = nutValues.where((element) => element.id == id);
+    if (list.isEmpty) throw NotFoundException();
+    if (list.length > 1) throw NotUniqueException();
+    return Future.value(list.first);
+  }
+  
+  @override
+  Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal) {
+    int highestId = 0;
+    for (final nutVal in nutValues) {
+      if (nutVal.id > highestId) highestId = nutVal.id;
+    }
+    final newNutVal = NutrionalValue(highestId + 1, nutVal.name, nutVal.unit);
+    nutValues.add(newNutVal);
+    _nutrionalValuesStreamController.add(nutValues);
+    return Future.value(newNutVal);
+  }
+  
+  @override
+  Future<void> deleteNutrionalValue(int id) {
+    int lenPrev = nutValues.length;
+    nutValues.removeWhere((element) => element.id == id);
+    if (lenPrev - nutValues.length != 1) {
+      throw InvalidDeletionException();
+    }
+    _nutrionalValuesStreamController.add(nutValues);
+    return Future.value();
+  }
+  
+  @override
+  Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal) {
+    int lenPrev = nutValues.length;
+    nutValues.removeWhere((element) => element.id == nutVal.id);
+    nutValues.add(nutVal);
+    if (lenPrev - nutValues.length != 0) {
+      throw InvalidUpdateException();
+    }
+    _nutrionalValuesStreamController.add(nutValues);
+    return Future.value(nutVal);
   }
 }

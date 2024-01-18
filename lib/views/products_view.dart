@@ -33,7 +33,7 @@ class _ProductsViewState extends State<ProductsView> {
     });
     // reload stream after build complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_isLoading) _dataService.reloadStream();
+      if (_isLoading) _dataService.reloadProductStream();
     });
     super.initState();
   }

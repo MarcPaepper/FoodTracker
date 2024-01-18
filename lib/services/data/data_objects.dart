@@ -18,17 +18,20 @@ class NutrionalValue {
 	int id = -1; // unique identifier
 	// the ids 0-6 are reserved for the preset nutrional values "energy", "fat", "saturated fat", "carbohydrates", "sugar", "protein", "salt"
 	String name = ""; // must be unique
+  String unit = "";
 	
-	NutrionalValue(name) {
-		// check whether name is unique
-		// for (var nutVal in nutValues) {
-		// 	if (nutVal.name == name) {
-		// 		// throw 
-				
-		// 		devtools.log("Error: Nutrional value name must be unique");
-		// 	}
-		// }
-	}
+	NutrionalValue(this.id, this.name, this.unit);
+  
+  @override
+  bool operator ==(covariant NutrionalValue other) => id == other.id;
+  
+  @override
+  int get hashCode => id.hashCode;
+  
+  @override
+  String toString() {
+    return "<NutrionalValue #$id '$name'>";
+  }
 }
 
 class Product {
@@ -41,18 +44,7 @@ class Product {
 												// there can only be one conversion between weight, volume and quantity respectively
 	Map<NutrionalValue, double?> nutValues = {};
   
-  Product(this.id, this.name) {
-    // check whether name is unique
-    // for (var prod in products) {
-    //   if (prod.name == name) {
-		// 		devtools.log("Error: Product name must be unique");
-    //   }
-    // }
-  }
-  
-  Product.empty() {
-    name = "";
-  }
+  Product(this.id, this.name);
   
   @override
   bool operator ==(covariant Product other) => id == other.id;

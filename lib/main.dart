@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/views/main_view.dart';
-import 'views/products_view.dart';
+import 'views/nutvalues_view.dart';
 import 'constants/routes.dart';
 import 'views/add_meal_view.dart';
 import 'views/edit_product_view.dart';
@@ -18,7 +18,7 @@ void main() {
       home: const MainView(),
       routes: {
         addMealsRoute:		(context) => const AddMealView(),
-        productsRoute:	  (context) => const ProductsView(),
+        productsRoute:	  (context) => const NutrionalValueView(),
         addProductRoute:	(context) => const EditProductView(isEdit: false),
         editProductRoute: (context) {
           return EditProductView(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/constants/data.dart';
 import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/views/products_view.dart';
+import 'package:food_tracker/views/nutvalues_view.dart';
 
 // import 'dart:developer' as devtools show log;
 
@@ -46,7 +47,7 @@ class _MainViewState extends State<MainView> {
           children: [
             Icon(Icons.directions_car, size: 350),
             ProductsView(),
-            Icon(Icons.directions_transit, size: 350),
+            NutrionalValueView(),
           ],
         ),
       )
@@ -57,7 +58,7 @@ class _MainViewState extends State<MainView> {
     tabs: [
       Tab(text: "Hey"),
       Tab(text: "Products"),
-      Tab(text: "Meals"),
+      Tab(text: "Nutrion"),
     ],
   );
 }
