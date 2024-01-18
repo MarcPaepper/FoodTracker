@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/theme.dart';
+import 'package:food_tracker/views/main_view.dart';
 import 'views/products_view.dart';
 import 'constants/routes.dart';
 import 'views/add_meal_view.dart';
@@ -12,54 +14,8 @@ void main() {
     MaterialApp(
       title: "Food Tracker",
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.teal,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.teal.shade400,
-          foregroundColor: Colors.white,
-        ),
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: Colors.grey),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          isDense: true,
-          filled: true,
-          fillColor: MaterialStateColor.resolveWith((Set<MaterialState> states) =>
-            states.contains(MaterialState.error) ?
-              const Color.fromARGB(34, 255, 111, 0) :
-              Colors.grey.withAlpha(35)
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: const BorderSide(
-              width: 3.5,
-              color: Colors.grey
-            )
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(
-              width: 3.5,
-              color: Colors.teal.shade300
-            )
-          ),
-          errorBorder: UnderlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: const BorderSide(
-              width: 3.5,
-              color: Color.fromARGB(210, 193, 46, 27)
-            )
-          ),
-          focusedErrorBorder: UnderlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(
-              width: 4,
-              color: Colors.red.shade500
-            )
-          ),
-        ),
-      ),
-      home: const ProductsView(),
+      theme: getTheme(),
+      home: const MainView(),
       routes: {
         addMealsRoute:		(context) => const AddMealView(),
         productsRoute:	  (context) => const ProductsView(),

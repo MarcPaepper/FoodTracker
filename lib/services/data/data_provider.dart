@@ -8,6 +8,7 @@ abstract class DataProvider {
   Future<void> close();
   bool isLoaded();
   Stream<List<Product>> streamProducts();
+  void reloadStream();
   Future<Iterable<Product>> getAllProducts();
   Future<Product> getProduct(int id);
   Future<Product> getProductByName(String name);

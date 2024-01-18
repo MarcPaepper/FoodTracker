@@ -18,7 +18,7 @@ class DebugDataProvider implements DataProvider {
   Future<String> open(String dbName) async {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
-      const Duration(milliseconds: 900), () {
+      const Duration(milliseconds: 1000), () {
         // create the 7 default nutrional values
         // nutValues.add(NutrionalValue(""));
         productsInternal = [
@@ -59,7 +59,13 @@ class DebugDataProvider implements DataProvider {
   bool isLoaded() => loaded;
   
   @override
-  Stream<List<Product>> streamProducts() => _productsStreamController.stream;
+  Stream<List<Product>> streamProducts() {
+    if (loaded) _productsStreamController.add(productsInternal);
+    return _productsStreamController.stream;
+  }
+  
+  @override
+  void reloadStream() => loaded ? _productsStreamController.add(productsInternal) : {};
   
   @override
   Future<Iterable<Product>> getAllProducts() {

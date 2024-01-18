@@ -82,6 +82,13 @@ class SqfliteDataProvider implements DataProvider {
   Stream<List<Product>> streamProducts() => _productsStreamController.stream;
   
   @override
+  void reloadStream() {
+    if (isLoaded()) {
+      _productsStreamController.add(_products);
+    }
+  }
+  
+  @override
   Future<Iterable<Product>> getAllProducts() async {
     if (!isLoaded()) throw DataNotLoadedException();
     
@@ -207,53 +214,3 @@ class SqfliteDataProvider implements DataProvider {
     _productsStreamController.add(_products);
   }
 }
-
-
-// class DatabaseProduct {
-//   final int id;
-//   final String name;
-
-//   const DatabaseProduct({
-//     required this.id,
-//     required this.name,
-//   });
-
-//   DatabaseProduct.fromRow(Map<String, Object?> map)
-//       : id = map[idColumn] as int,
-//         name = map[nameColumn] as String;
-
-//   @override
-//   String toString() => "Product, ID $id, name $name";
-
-//   @override
-//   bool operator ==(covariant DatabaseProduct other) => id == other.id;
-
-//   @override
-//   int get hashCode => id.hashCode;
-// }
-
-// class DatabaseMeal {
-//   final int id;
-//   final String date;
-//   final int productId;
-
-//   const DatabaseMeal({
-//     required this.id,
-//     required this.date,
-//     required this.productId,
-//   });
-  
-//   DatabaseMeal.fromRow(Map<String, Object?> map)
-//       : id = map[idColumn] as int,
-//         date = map[dateColumn] as String,
-//         productId = map[productIdColumn] as int;
-  
-//   @override
-//   String toString() => "Meal, ID $id, date $date, product ID $productId";
-  
-//   @override
-//   bool operator ==(covariant DatabaseMeal other) => id == other.id;
-  
-//   @override
-//   int get hashCode => id.hashCode;
-// }

@@ -52,6 +52,9 @@ bool isLoaded() => _provider.isLoaded();
 Stream<List<Product>> streamProducts() => _provider.streamProducts();
 
 @override
+void reloadStream() => _provider.reloadStream();
+
+@override
 Future<Iterable<Product>> getAllProducts() {
   if (!_provider.isLoaded()) {
     return _provider.open(dbName).then((value) => _provider.getAllProducts());
