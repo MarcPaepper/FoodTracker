@@ -3,6 +3,8 @@ import 'package:food_tracker/constants/routes.dart';
 import 'package:food_tracker/constants/data.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/services/data/data_service.dart';
+import 'package:food_tracker/utility/text_logic.dart';
+import 'package:food_tracker/widgets/loading_page.dart';
 // import "dart:developer" as devtools show log;
 
 class ProductsView extends StatefulWidget {
@@ -155,43 +157,6 @@ class _ProductsViewState extends State<ProductsView> {
         }
       );
     }
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        padding: const EdgeInsets.all(50.0),
-        child: SizedBox(
-          width: 30,
-          height: 30,
-          child: CircularProgressIndicator(
-            color: Colors.teal.shade500
-          ),
-        ),
-      )
-    );
-  }
-  
-  List<TextSpan> highlightOccurrences(String source, List<String> search) {
-    var spans = <TextSpan>[];
-    var lowerSource = source.toLowerCase();
-    var index = 0;
-    for (var word in search) {
-      var lowerWord = word.toLowerCase();
-      var wordIndex = lowerSource.indexOf(lowerWord, index);
-      if (wordIndex == -1) {
-        continue;
-      }
-      spans.add(TextSpan(
-        text: source.substring(index, wordIndex),
-      ));
-      spans.add(TextSpan(
-        text: source.substring(wordIndex, wordIndex + word.length),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ));
-      index = wordIndex + word.length;
-    }
-    spans.add(TextSpan(
-      text: source.substring(index),
-    ));
-    return spans;
+    return loadingPage();
   }
 }

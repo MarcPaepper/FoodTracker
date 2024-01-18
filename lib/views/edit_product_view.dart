@@ -4,6 +4,7 @@ import 'package:food_tracker/services/data/data_objects.dart';
 // import "dart:developer" as devtools show log;
 
 import 'package:food_tracker/services/data/data_service.dart';
+import 'package:food_tracker/widgets/loading_page.dart';
 
 class EditProductView extends StatefulWidget {
   final int? productId;
@@ -125,19 +126,7 @@ class _EditProductViewState extends State<EditProductView> {
             case ConnectionState.waiting:
             case ConnectionState.active:
             default:
-              return Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(50.0),
-                  child: SizedBox(
-                    width: 30,
-                    height: 30,
-                    child: CircularProgressIndicator(
-                      color: Colors.teal.shade500
-                    ),
-                  ),
-                )
-              );
+              return loadingPage();
           }
         }
       )
