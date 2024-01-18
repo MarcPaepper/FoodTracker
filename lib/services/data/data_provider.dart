@@ -12,7 +12,7 @@ abstract class DataProvider {
   void reloadProductStream();
   Future<Iterable<Product>> getAllProducts();
   Future<Product> getProduct(int id);
-  Future<Product> createProduct(String name);
+  Future<Product> createProduct(Product product);
   Future<Product> updateProduct(Product product);
   Future<void> deleteProduct(int id);
   

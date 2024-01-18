@@ -7,27 +7,29 @@ import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
 
-class EditProductView extends StatefulWidget {
-  final int? productId;
+class EditNutrionalValueView extends StatefulWidget {
+  final int? nutvalueId;
   final bool? isEdit;
   
-  const EditProductView({Key? key, this.isEdit, this.productId}) : super(key: key);
+  const EditNutrionalValueView({Key? key, this.isEdit, this.nutvalueId}) : super(key: key);
 
   @override
-  State<EditProductView> createState() => _EditProductViewState();
+  State<EditNutrionalValueView> createState() => _EditNutrionalValueViewState();
 }
 
-class _EditProductViewState extends State<EditProductView> {
+class _EditNutrionalValueViewState extends State<EditNutrionalValueView> {
   final _dataService = DataService.current();
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
+  late final TextEditingController _unit;
+  
   late final bool isEdit;
   
   @override
   void initState() {
-    if (widget.isEdit == null || (widget.isEdit! && widget.productId == null)) {
+    if (widget.isEdit == null || (widget.isEdit! && widget.nutvalueId == null)) {
       Future(() {
-        showErrorbar(context, "Error: Product not found");
+        showErrorbar(context, "Error: Value not found");
         Navigator.of(context).pop();
       });
     }
@@ -35,6 +37,7 @@ class _EditProductViewState extends State<EditProductView> {
     isEdit = widget.isEdit ?? false;
     
     _name = TextEditingController();
+    _unit = TextEditingController(text: "g");
     _dataService.open(dbName);
     super.initState();
   }
@@ -49,7 +52,7 @@ class _EditProductViewState extends State<EditProductView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? "Edit Product" : "Add Product"),
+        title: Text(isEdit ? "Edit Nutritional Value" : "Edit Nutritional Value"),
         // show the delete button if editing
         actions: isEdit ? [
           IconButton(
@@ -57,12 +60,12 @@ class _EditProductViewState extends State<EditProductView> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text("Delete Product"),
-                  content: const Text("If you delete this product, all associated data will be lost."),
+                  title: const Text("Delete Nutritional Value"),
+                  content: const Text("If you delete this Nutritional Value, all associated data will be lost."),
                   actions: [
                     TextButton(
                       onPressed: () {
-                        _dataService.deleteProduct(widget.productId!);
+                        _dataService.deleteNutrionalValue(widget.nutvalueId!);
                         Navigator.of(context).pop();
                         Navigator.of(context).pop();
                       },
@@ -83,17 +86,17 @@ class _EditProductViewState extends State<EditProductView> {
         ] : null
       ),
       body: FutureBuilder(
-        future: _dataService.getAllProducts(),
+        future: _dataService.getAllNutrionalValues(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
-              final products = snapshot.data as List<Product>;
+              final nutValues = snapshot.data as List<NutrionalValue>;
               if (isEdit) {
                 try {
-                  final product = products.firstWhere((prod) => prod.id == widget.productId);
-                  _name.text = product.name;
+                  final value = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
+                  _name.text = value.name;
                 } catch (e) {
-                  return const Text("Error: Product not found");
+                  return const Text("Error: Value not found");
                 }
               }
               return Padding(
@@ -102,7 +105,8 @@ class _EditProductViewState extends State<EditProductView> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      _buildNameField(products),
+                      _buildNameField(nutValues),
+                      _buildUnitField(),
                       _buildAddButton(),
                     ]
                   ),
@@ -119,7 +123,7 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildNameField(Iterable products) => Padding(
+  Widget _buildNameField(List<NutrionalValue> nutValues) => Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextFormField(
         controller: _name,
@@ -127,11 +131,28 @@ class _EditProductViewState extends State<EditProductView> {
           labelText: "Name"
         ),
         validator: (String? value) {
-          for (var prod in products) {
-            if (prod.name == value && prod.id != widget.productId) {
+          for (var prod in nutValues) {
+            if (prod.name == value && prod.id != widget.nutvalueId) {
               return "Already taken";
             }
           }
+          if (value == null || value.isEmpty) {
+            return "Required Field";
+          }
+          return null;
+        },
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+      ),
+    );
+  
+  Widget _buildUnitField() => Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextFormField(
+        controller: _unit,
+        decoration: const InputDecoration(
+          labelText: "Unit"
+        ),
+        validator: (String? value) {
           if (value == null || value.isEmpty) {
             return "Required Field";
           }
@@ -146,14 +167,15 @@ class _EditProductViewState extends State<EditProductView> {
       child: TextButton(
         onPressed: () {
           final name = _name.text;
+          final unit = _unit.text;
           final isValid = _formKey.currentState!.validate();
           if (isValid) {
             if (isEdit) {
-              var product = Product(widget.productId!, name);
-              _dataService.updateProduct(product);
+              var nval = NutrionalValue(widget.nutvalueId!, name, unit);
+              _dataService.updateNutrionalValue(nval);
             } else {
-              var product = Product(-1, name);
-              _dataService.createProduct(product);
+              var nval = NutrionalValue(-1, name, unit);
+              _dataService.createNutrionalValue(nval);
             }
             Navigator.of(context).pop();
           }

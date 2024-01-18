@@ -119,20 +119,21 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
-  Future<Product> createProduct(String name) async {
+  Future<Product> createProduct(Product product) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final results = await _db!.query(productTable, where: 'name = ?', whereArgs: [name]);
+    final results = await _db!.query(productTable, where: 'name = ?', whereArgs: [product.name]);
     if (results.isNotEmpty) throw NotUniqueException();
     
     final id = await _db!.insert(productTable, {
-      nameColumn: name,
+      nameColumn: product.name,
     });
     
-    _products.add(Product(id, name));
+    var newProduct = Product(id, product.name);
+    _products.add(newProduct);
     _productsStreamController.add(_products);
     
-    return Product(id, name);
+    return newProduct;
   }
   
   @override

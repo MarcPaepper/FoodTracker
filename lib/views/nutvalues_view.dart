@@ -59,7 +59,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
                 child: Text("Add Nutrional Value"),
               ),
               onPressed: () {
-                Navigator.of(context).pushNamed(addProductRoute);
+                Navigator.of(context).pushNamed(addNutrionalValueRoute);
               },
             )
           ]
@@ -84,7 +84,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
       return ListView.builder(
         itemCount: length,
         itemBuilder: (context, index) {
-          var product = values[index];
+          var value = values[index];
           bool dark = (length - index) % 2 == 0;
           var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
           
@@ -92,17 +92,17 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
             title: RichText(
               text: TextSpan(
                 children: [
-                  TextSpan(text: product.name),
+                  TextSpan(text: value.name),
                 ],
               ),
             ),
             tileColor: color,
             onTap: () {
-              // Navigator.pushNamed (
-              //   context,
-              //   editProductRoute,
-              //   arguments: product.id,
-              // );
+              Navigator.pushNamed (
+                context,
+                editNutrionalValueRoute,
+                arguments: value.id,
+              );
             },
           );
         }

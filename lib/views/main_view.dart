@@ -58,7 +58,7 @@ class _MainViewState extends State<MainView> {
     tabs: [
       Tab(text: "Hey"),
       Tab(text: "Products"),
-      Tab(text: "Nutrion"),
+      Tab(text: "Nutrition"),
     ],
   );
 }

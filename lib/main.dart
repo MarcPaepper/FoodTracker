@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
+import 'package:food_tracker/views/edit_nutvalue_view.dart';
 import 'package:food_tracker/views/main_view.dart';
 import 'views/nutvalues_view.dart';
 import 'constants/routes.dart';
@@ -24,6 +25,13 @@ void main() {
           return EditProductView(
             isEdit: true,
             productId: ModalRoute.of(context)!.settings.arguments as int?,
+          );
+        },
+        addNutrionalValueRoute:	(context) => const EditNutrionalValueView(isEdit: false),
+        editNutrionalValueRoute: (context) {
+          return EditNutrionalValueView(
+            isEdit: true,
+            nutvalueId: ModalRoute.of(context)!.settings.arguments as int?,
           );
         },
         statsRoute:		  	(context) => const StatsView(),

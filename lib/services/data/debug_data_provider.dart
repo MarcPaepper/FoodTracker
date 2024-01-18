@@ -95,12 +95,12 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
-  Future<Product> createProduct(String name) {
+  Future<Product> createProduct(Product product) {
     int highestId = 0;
     for (final product in products) {
       if (product.id > highestId) highestId = product.id;
     }
-    final newProduct = Product(highestId + 1, name);
+    final newProduct = Product(highestId + 1, product.name);
     products.add(newProduct);
     _productsStreamController.add(products);
     return Future.value(newProduct);
