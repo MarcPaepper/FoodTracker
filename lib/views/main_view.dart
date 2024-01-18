@@ -39,7 +39,7 @@ class _MainViewState extends State<MainView> {
           preferredSize: _tabBar.preferredSize,
           child: Material(
             color: Theme.of(context).appBarTheme.backgroundColor,
-            child: _tabBar,
+            child: SafeArea(child: _tabBar),
           )
         ),
         body: const TabBarView(
