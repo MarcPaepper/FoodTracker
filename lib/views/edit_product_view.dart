@@ -8,10 +8,10 @@ import 'package:food_tracker/utility/modals.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
 
 class EditProductView extends StatefulWidget {
-  final int? productId;
+  final String? productName;
   final bool? isEdit;
   
-  const EditProductView({Key? key, this.isEdit, this.productId}) : super(key: key);
+  const EditProductView({Key? key, this.isEdit, this.productName}) : super(key: key);
 
   @override
   State<EditProductView> createState() => _EditProductViewState();
@@ -22,10 +22,11 @@ class _EditProductViewState extends State<EditProductView> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final bool isEdit;
+  int _id = -1;
   
   @override
   void initState() {
-    if (widget.isEdit == null || (widget.isEdit! && widget.productId == null)) {
+    if (widget.isEdit == null || (widget.isEdit! && widget.productName == null)) {
       Future(() {
         showErrorbar(context, "Error: Product not found");
         Navigator.of(context).pop();
@@ -62,7 +63,7 @@ class _EditProductViewState extends State<EditProductView> {
                   actions: [
                     TextButton(
                       onPressed: () {
-                        _dataService.deleteProduct(widget.productId!);
+                        _dataService.deleteProductWithName(widget.productName!);
                         Navigator.of(context).pop();
                         Navigator.of(context).pop();
                       },
@@ -90,8 +91,9 @@ class _EditProductViewState extends State<EditProductView> {
               final products = snapshot.data as List<Product>;
               if (isEdit) {
                 try {
-                  final product = products.firstWhere((prod) => prod.id == widget.productId);
+                  final product = products.firstWhere((prod) => prod.name == widget.productName);
                   _name.text = product.name;
+                  _id = product.id;
                 } catch (e) {
                   return const Text("Error: Product not found");
                 }
@@ -128,7 +130,7 @@ class _EditProductViewState extends State<EditProductView> {
         ),
         validator: (String? value) {
           for (var prod in products) {
-            if (prod.name == value && prod.id != widget.productId) {
+            if (prod.name == value && prod.name != widget.productName) {
               return "Already taken";
             }
           }
@@ -149,7 +151,7 @@ class _EditProductViewState extends State<EditProductView> {
           final isValid = _formKey.currentState!.validate();
           if (isValid) {
             if (isEdit) {
-              var product = Product(widget.productId!, name);
+              var product = Product(_id, name);
               _dataService.updateProduct(product);
             } else {
               var product = Product(-1, name);

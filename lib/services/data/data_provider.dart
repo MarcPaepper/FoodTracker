@@ -15,6 +15,7 @@ abstract class DataProvider {
   Future<Product> createProduct(Product product);
   Future<Product> updateProduct(Product product);
   Future<void> deleteProduct(int id);
+  Future<void> deleteProductWithName(String name);
   
   Stream<List<NutrionalValue>> streamNutrionalValues();
   Future<Iterable<NutrionalValue>> getAllNutrionalValues();
@@ -23,4 +24,5 @@ abstract class DataProvider {
   Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal);
   Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal);
   Future<void> deleteNutrionalValue(int id);
+  Future<void> deleteNutrionalValueWithName(String name);
 }

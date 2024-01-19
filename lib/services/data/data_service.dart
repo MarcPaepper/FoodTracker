@@ -57,6 +57,7 @@ class DataService implements DataProvider {
   @override Future<Product> createProduct(Product product) => _condLoad().then((_) => _provider.createProduct(product));
   @override Future<Product> updateProduct(Product product) => _condLoad().then((_) => _provider.updateProduct(product));
   @override Future<void> deleteProduct(int id)             => _condLoad().then((_) => _provider.deleteProduct(id));
+  @override Future<void> deleteProductWithName(String name)=> _condLoad().then((_) => _provider.deleteProductWithName(name));
   
   // Nutrional Values
   
@@ -67,6 +68,7 @@ class DataService implements DataProvider {
   @override Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal) => _condLoad().then((_) => _provider.createNutrionalValue(nutVal));
   @override Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal) => _condLoad().then((_) => _provider.updateNutrionalValue(nutVal));
   @override Future<void> deleteNutrionalValue(int id)                          => _condLoad().then((_) => _provider.deleteNutrionalValue(id));
+  @override Future<void> deleteNutrionalValueWithName(String name)             => _condLoad().then((_) => _provider.deleteNutrionalValueWithName(name));
   
   Future _condLoad() {
     if (_provider.isLoaded()) {

@@ -107,6 +107,18 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<Product> updateProduct(Product product) {
+    int lenPrev = products.length;
+    products.removeWhere((element) => element.id == product.id);
+    products.add(product);
+    if (lenPrev - products.length != 0) {
+      throw InvalidUpdateException();
+    }
+    _productsStreamController.add(products);
+    return Future.value(product);
+  }
+  
+  @override
   Future<void> deleteProduct(int id) {
     int lenPrev = products.length;
     products.removeWhere((element) => element.id == id);
@@ -118,15 +130,14 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
-  Future<Product> updateProduct(Product product) {
+  Future<void> deleteProductWithName(String name) {
     int lenPrev = products.length;
-    products.removeWhere((element) => element.id == product.id);
-    products.add(product);
-    if (lenPrev - products.length != 0) {
-      throw InvalidUpdateException();
+    products.removeWhere((element) => element.name == name);
+    if (lenPrev - products.length != 1) {
+      throw InvalidDeletionException();
     }
     _productsStreamController.add(products);
-    return Future.value(product);
+    return Future.value();
   }
   
   // Nutrional Values
@@ -166,6 +177,18 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal) {
+    int lenPrev = nutValues.length;
+    nutValues.removeWhere((element) => element.id == nutVal.id);
+    nutValues.add(nutVal);
+    if (lenPrev - nutValues.length != 0) {
+      throw InvalidUpdateException();
+    }
+    _nutrionalValuesStreamController.add(nutValues);
+    return Future.value(nutVal);
+  }
+  
+  @override
   Future<void> deleteNutrionalValue(int id) {
     int lenPrev = nutValues.length;
     nutValues.removeWhere((element) => element.id == id);
@@ -177,14 +200,13 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
-  Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal) {
+  Future<void> deleteNutrionalValueWithName(String name) {
     int lenPrev = nutValues.length;
-    nutValues.removeWhere((element) => element.id == nutVal.id);
-    nutValues.add(nutVal);
-    if (lenPrev - nutValues.length != 0) {
-      throw InvalidUpdateException();
+    nutValues.removeWhere((element) => element.name == name);
+    if (lenPrev - nutValues.length != 1) {
+      throw InvalidDeletionException();
     }
     _nutrionalValuesStreamController.add(nutValues);
-    return Future.value(nutVal);
+    return Future.value();
   }
 }

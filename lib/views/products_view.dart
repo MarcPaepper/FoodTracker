@@ -160,4 +160,6 @@ class _ProductsViewState extends State<ProductsView> {
     }
     return loadingPage();
   }
+  
+  Widget _buildAddButton
 }

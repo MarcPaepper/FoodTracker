@@ -190,6 +190,17 @@ class SqfliteDataProvider implements DataProvider {
     _productsStreamController.add(_products);
   }
   
+  @override
+  Future<void> deleteProductWithName(String name) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final deletedCount = await _db!.delete(productTable, where: 'name = ?', whereArgs: [name]);
+    if (deletedCount != 1) throw InvalidDeletionException();
+    
+    _products.removeWhere((p) => p.name == name);
+    _productsStreamController.add(_products);
+  }
+  
   // Nutrional values
   
   Future<void> _cacheNutrionalValues() async {
@@ -280,6 +291,17 @@ class SqfliteDataProvider implements DataProvider {
     if (deletedCount != 1) throw InvalidDeletionException();
     
     _nutrionalValues.removeWhere((p) => p.id == id);
+    _nutrionalValuesStreamController.add(_nutrionalValues);
+  }
+  
+  @override
+  Future<void> deleteNutrionalValueWithName(String name) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final deletedCount = await _db!.delete(nutrionalValueTable, where: 'name = ?', whereArgs: [name]);
+    if (deletedCount != 1) throw InvalidDeletionException();
+    
+    _nutrionalValues.removeWhere((p) => p.name == name);
     _nutrionalValuesStreamController.add(_nutrionalValues);
   }
 }

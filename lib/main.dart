@@ -24,7 +24,7 @@ void main() {
         editProductRoute: (context) {
           return EditProductView(
             isEdit: true,
-            productId: ModalRoute.of(context)!.settings.arguments as int?,
+            productName: ModalRoute.of(context)!.settings.arguments as String?,
           );
         },
         addNutrionalValueRoute:	(context) => const EditNutrionalValueView(isEdit: false),
