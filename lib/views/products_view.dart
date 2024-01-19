@@ -83,25 +83,7 @@ class _ProductsViewState extends State<ProductsView> {
             Expanded(
               child: _buildProductList(snapshot)
             ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 210, 235, 198),
-                foregroundColor: Colors.black,
-                minimumSize: const Size(double.infinity, 56),
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-                textStyle: Theme.of(context).textTheme.bodyLarge,
-              ),
-              icon: const Icon(Icons.add),
-              label: const Padding(
-                padding: EdgeInsets.only(left: 5.0),
-                child: Text("Add Product"),
-              ),
-              onPressed: () {
-                Navigator.of(context).pushNamed(addProductRoute);
-              },
-            )
+            _buildAddButton(snapshot.hasData ? snapshot.data as List<Product> : []),
           ]
         );
       }
@@ -151,7 +133,7 @@ class _ProductsViewState extends State<ProductsView> {
               Navigator.pushNamed (
                 context,
                 editProductRoute,
-                arguments: product.id,
+                arguments: product.name,
               );
             },
           );
@@ -161,5 +143,36 @@ class _ProductsViewState extends State<ProductsView> {
     return loadingPage();
   }
   
-  Widget _buildAddButton
+  Widget _buildAddButton(List<Product> products) {
+    String? name;
+    // check if the search term matches one of the products
+    if (_isSearching) {
+      var index = products.indexWhere((product) => product.name == _searchController.text);
+      name = index == -1 ? '"${_searchController.text}"' : null;
+    }
+    
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 210, 235, 198),
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 56),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+        textStyle: Theme.of(context).textTheme.bodyLarge,
+      ),
+      icon: const Icon(Icons.add),
+      label: Padding(
+        padding: const EdgeInsets.only(left: 5.0),
+        child: Text("Add ${name ?? "Product"}"),
+      ),
+      onPressed: () {
+        Navigator.pushNamed (
+          context,
+          addProductRoute,
+          arguments: name,
+        );
+      },
+    );
+  }
 }

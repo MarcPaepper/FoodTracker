@@ -34,7 +34,7 @@ class _MainViewState extends State<MainView> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         appBar: PreferredSize(
           preferredSize: _tabBar.preferredSize,
@@ -45,7 +45,6 @@ class _MainViewState extends State<MainView> {
         ),
         body: const TabBarView(
           children: [
-            Icon(Icons.directions_car, size: 350),
             ProductsView(),
             NutrionalValueView(),
           ],
@@ -56,7 +55,6 @@ class _MainViewState extends State<MainView> {
   
   TabBar get _tabBar => const TabBar(
     tabs: [
-      Tab(text: "Hey"),
       Tab(text: "Products"),
       Tab(text: "Nutrition"),
     ],

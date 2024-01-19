@@ -27,7 +27,6 @@ const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
-  // String _dbName;
   
   // cached data
   List<Product> _products = [];
@@ -43,6 +42,7 @@ class SqfliteDataProvider implements DataProvider {
   
   @override
   Future<String> open(String dbName) async {
+    devtools.log("Opening sqflite database");
     if (isLoaded()) return Future.value("data already loaded");
     var tables = {
       productTable: createProductTable,
@@ -58,6 +58,7 @@ class SqfliteDataProvider implements DataProvider {
         // delete file if forceReset
         if (forceReset) {
           try {
+            devtools.log("force reset");
             await deleteDatabase(dbPath);
           } catch (e) {
             devtools.log("Error deleting database: $e");

@@ -43,25 +43,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
             Expanded(
               child: _buildListView(snapshot)
             ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 210, 235, 198),
-                foregroundColor: Colors.black,
-                minimumSize: const Size(double.infinity, 56),
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-                textStyle: Theme.of(context).textTheme.bodyLarge,
-              ),
-              icon: const Icon(Icons.add),
-              label: const Padding(
-                padding: EdgeInsets.only(left: 5.0),
-                child: Text("Add Nutrional Value"),
-              ),
-              onPressed: () {
-                Navigator.of(context).pushNamed(addNutrionalValueRoute);
-              },
-            )
+            _buildAddButton(),
           ]
         );
       }
@@ -92,7 +74,13 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
             title: RichText(
               text: TextSpan(
                 children: [
-                  TextSpan(text: value.name),
+                  TextSpan(
+                    text: value.name,
+                    style: DefaultTextStyle.of(context).style.copyWith(
+                      color: Colors.black,
+                      fontSize: 16.5,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -110,4 +98,24 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
     }
     return loadingPage();
   }
+  
+  Widget _buildAddButton() => ElevatedButton.icon(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color.fromARGB(255, 210, 235, 198),
+      foregroundColor: Colors.black,
+      minimumSize: const Size(double.infinity, 56),
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+      textStyle: Theme.of(context).textTheme.bodyLarge,
+    ),
+    icon: const Icon(Icons.add),
+    label: const Padding(
+      padding: EdgeInsets.only(left: 5.0),
+      child: Text("Add Nutrional Value"),
+    ),
+    onPressed: () {
+      Navigator.of(context).pushNamed(addNutrionalValueRoute);
+    },
+  );
 }
