@@ -66,10 +66,15 @@ class Conversion {
   final double factor;
   
   const Conversion(this.from, this.to, this.factor);
-  // input has to be of the form "xx [unit] = yy [unit]"
-  factory Conversion.fromString(String input) {
-    
-  }
+  
+  // input has to be of the form "fromUnit = factor toUnit"
+  Conversion.fromString(String input)
+    : from = unitFromString(input.split(" ")[0]),
+      to = unitFromString(input.split(" ")[2]),
+      factor = double.parse(input.split(" ")[3]);
+  
+  @override
+  String toString() => "${unitToString(from)} = $factor ${unitToString(to)}";
 }
 
 class NutrionalValue {
@@ -101,6 +106,9 @@ class Product {
 												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
   Conversion quantityConversion; // factor how much one quantity of the product weighs / contains
                         // e.g. [("kg", "quantity", 3)] means 3 kg = 1 quantity
+  
+  String quantityUnit = "x";
+  
 	Map<NutrionalValue, double?> nutValues = {};
   
   Product(this.id, this.name);
