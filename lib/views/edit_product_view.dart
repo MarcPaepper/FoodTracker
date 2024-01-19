@@ -201,23 +201,23 @@ class _EditProductViewState extends State<EditProductView> {
     );
   
   Widget _buildAddButton() => Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextButton(
-        onPressed: () {
-          final name = _name.text;
-          final isValid = _formKey.currentState!.validate();
-          if (isValid) {
-            if (isEdit) {
-              var product = Product(_id, name);
-              _dataService.updateProduct(product);
-            } else {
-              var product = Product(-1, name);
-              _dataService.createProduct(product);
-            }
-            Navigator.of(context).pop();
+    padding: const EdgeInsets.all(8.0),
+    child: TextButton(
+      onPressed: () {
+        final name = _name.text;
+        final isValid = _formKey.currentState!.validate();
+        if (isValid) {
+          if (isEdit) {
+            var product = Product(_id, name);
+            _dataService.updateProduct(product);
+          } else {
+            var product = Product(-1, name);
+            _dataService.createProduct(product);
           }
-        },
-        child: Text(isEdit ? "Update" : "Add"),
-      ),
-    );
+          Navigator.of(context).pop();
+        }
+      },
+      child: Text(isEdit ? "Update" : "Add"),
+    ),
+  );
 }
