@@ -19,10 +19,10 @@ class DebugDataProvider implements DataProvider {
   Future<String> open(String dbName) async {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
-      const Duration(milliseconds: 1000), () {
+      const Duration(milliseconds: 100), () {
         products = [];
         for (int i = 1; i <= 20; i++) {
-          products.add(Product(i, "Example $i", Unit.g, Conversion.fromString("100 ml = 100 g inactive"), Conversion.fromString("1 x = 100 g inactive"), "x"));
+          products.add(Product(i, "Example $i", Unit.g, Conversion.fromString("100 ml = 100 g disabled"), Conversion.fromString("1 x = 100 g disabled"), "x"));
         }
         // create the 7 default nutrional values
         nutValues = [

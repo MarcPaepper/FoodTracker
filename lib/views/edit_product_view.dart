@@ -30,6 +30,10 @@ class _EditProductViewState extends State<EditProductView> {
   Unit _defaultUnit = Unit.g;
   int _id = -1;
   Product? preEditProduct;
+  
+  final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
+  final _quantityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultQuantity());
+  
   var isDuplicate = ValueNotifier<bool>(false);
   
   @override
@@ -71,12 +75,14 @@ class _EditProductViewState extends State<EditProductView> {
                 try {
                   preEditProduct = products.firstWhere((prod) => prod.name == widget.productName);
                   _id = preEditProduct!.id;
+                  _defaultUnit = preEditProduct!.defaultUnit;
+                  _densityConversionNotifier.value = preEditProduct!.densityConversion;
+                  _quantityConversionNotifier.value = preEditProduct!.quantityConversion;
                 } catch (e) {
                   return const Text("Error: Product not found");
                 }
               }
               _name.text = widget.productName ?? "";
-              _defaultUnit = preEditProduct?.defaultUnit ?? Unit.g;
               
               return Padding(
                 padding: const EdgeInsets.all(7.0),
@@ -85,7 +91,9 @@ class _EditProductViewState extends State<EditProductView> {
                   child: Column(
                     children: [
                       _buildNameField(products),
-                      _buildDefaultUnitDropdown(_defaultUnit),
+                      _buildDefaultUnitDropdown(),
+                      _buildConversionField(0),
+                      _buildConversionField(1),
                       _buildAddButton(),
                     ]
                   ),
@@ -206,7 +214,7 @@ class _EditProductViewState extends State<EditProductView> {
       ),
     );
   
-  Widget _buildDefaultUnitDropdown(Unit currentDefaultUnit) {
+  Widget _buildDefaultUnitDropdown() {
     List<Unit> units = Unit.values;
     Map<Unit, Widget> items = {};
     
@@ -217,12 +225,13 @@ class _EditProductViewState extends State<EditProductView> {
           var quantityName = preEditProduct?.quantityUnit ?? "x";
           items[unit] = RichText(
             text: TextSpan(
-              text: "$quantityName ",
+              text: quantityName,
               children: const [
                 TextSpan(
-                  text: "(quantity)",
+                  text: "   (quantity)",
                   style: TextStyle(
                     fontStyle: FontStyle.italic,
+                    color: Colors.black54,
                   ),
                 ),
               ],
@@ -230,7 +239,11 @@ class _EditProductViewState extends State<EditProductView> {
           );
         }
       } else {
-        items[unit] = Text(unitToString(unit));
+        items[unit] = RichText(
+          text: TextSpan(
+            text: unitToString(unit),
+          ),
+        );
       }
     }
     
@@ -241,15 +254,23 @@ class _EditProductViewState extends State<EditProductView> {
           child: Row(
             children: [
               Expanded(
-                // black text saying "Default Unit:"
-                child: Text("  Default Unit:", style: TextStyle(color: Colors.black.withAlpha(200))),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    "Default Unit:",
+                    style: TextStyle(
+                      color: Colors.black.withAlpha(200),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
               Expanded(
                 child: DropdownButtonFormField<Unit>(
                   decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
                   ),
-                  value: currentDefaultUnit,
+                  value: _defaultUnit,
                   items: items.entries.map((entry) => DropdownMenuItem<Unit>(
                     value: entry.key,
                     child: entry.value,
@@ -267,6 +288,104 @@ class _EditProductViewState extends State<EditProductView> {
           ),
         );
       }
+    );
+  }
+  
+  Widget _buildUnitDropdown(List<Unit> availableUnits,  onChanged) {
+    
+  }
+    
+  Widget _buildConversionField(int index) {
+    var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
+    var text = checkBoxTexts[index];
+    var notifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
+    
+    // create a black rounded square as a container
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: ValueListenableBuilder(
+        valueListenable: notifier,
+        builder: (context, value, child) {
+          var enabled = value.enabled;
+          var textAlpha = enabled ? 255 : 160;
+          
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: enabled ? const Color.fromARGB(224, 25, 82, 77) : const Color.fromARGB(151, 158, 158, 158),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  value: enabled,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (bool value) => notifier.value = notifier.value.switched(value),
+                  title: Text(
+                    text,
+                    style: TextStyle(
+                      color: Colors.black.withAlpha(textAlpha),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    // amount field
+                    _buildAmountField(notifier, 1),
+                  ]
+                )
+              ],
+            ),
+          );
+        }
+      ),
+    );
+  }
+  
+  Widget _buildAmountField(ValueNotifier<Conversion> notifier, int index) {
+    var amount = index == 0 ? notifier.value.amount1 : notifier.value.amount2;
+    
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: TextFormField(
+          decoration: const InputDecoration(
+            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+          ),
+          initialValue: amount.toString(),
+          keyboardType: TextInputType.number,
+          validator: (String? value) {
+            if (value == null || value.isEmpty) {
+              return "Required Field";
+            }
+            try {
+              double.parse(value);
+              return null;
+            } catch (e) {
+              return "Invalid Number";
+            }
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          onChanged: (String? value) {
+            if (value != null && value.isNotEmpty) {
+              try {
+                var input = double.parse(value);
+                if (index == 0) {
+                  notifier.value = notifier.value.withAmount1(input);
+                } else {
+                  notifier.value = notifier.value.withAmount2(input);
+                }
+                devtools.log("Changed amount$index to $value");
+              } catch (e) {
+                devtools.log("Error: Invalid number in amount$index field");
+              }
+            }
+          },
+        ),
+      ),
     );
   }
   
