@@ -61,20 +61,22 @@ String unitToString(Unit unit) {
 }
 
 class Conversion {
+  final bool active;
   final Unit from;
   final Unit to;
   final double factor;
   
-  const Conversion(this.from, this.to, this.factor);
+  const Conversion(this.active, this.from, this.to, this.factor);
   
-  // input has to be of the form "fromUnit = factor toUnit"
+  // input has to be of the form "fromUnit = factor toUnit [active/inactive]"
   Conversion.fromString(String input)
     : from = unitFromString(input.split(" ")[0]),
       to = unitFromString(input.split(" ")[2]),
-      factor = double.parse(input.split(" ")[3]);
+      factor = double.parse(input.split(" ")[3]),
+      active = input.split(" ")[4] == "active";
   
   @override
-  String toString() => "${unitToString(from)} = $factor ${unitToString(to)}";
+  String toString() => "${unitToString(from)} = $factor ${unitToString(to)} ${active ? "active" : "inactive"}";
 }
 
 class NutrionalValue {
@@ -102,9 +104,9 @@ class Product {
 	String name = "example Product"; // must be unique
 	List<(Product, double, Unit)> ingredients = []; // How much of different products the product is composed of
 	CalcMethod nutValOrigin = CalcMethod.manual;
-	Conversion densityConversion; // factor when volume is converted to weight
+	Conversion? densityConversion; // factor when volume is converted to weight
 												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
-  Conversion quantityConversion; // factor how much one quantity of the product weighs / contains
+  Conversion? quantityConversion; // factor how much one quantity of the product weighs / contains
                         // e.g. [("kg", "quantity", 3)] means 3 kg = 1 quantity
   
   String quantityUnit = "x";
