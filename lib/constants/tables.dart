@@ -4,6 +4,10 @@ const createProductTable = '''
 CREATE TABLE IF NOT EXISTS "product" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"name"	TEXT NOT NULL UNIQUE,
+	"density_conversion"	TEXT,
+	"quantity_conversion"	TEXT,
+	"quantity_name"	TEXT,
+	"default_quantity"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 ''';

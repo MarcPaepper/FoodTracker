@@ -20,28 +20,10 @@ class DebugDataProvider implements DataProvider {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
       const Duration(milliseconds: 1000), () {
-        products = [
-          Product(1, "Example 1"),
-          Product(2, "Example 2"),
-          Product(3, "Example 3"),
-          Product(4, "Example 4"),
-          Product(5, "Example 5"),
-          Product(6, "Example 6"),
-          Product(7, "Example 7"),
-          Product(8, "Example 8"),
-          Product(9, "Example 9"),
-          Product(10, "Example 10"),
-          Product(11, "Example 11"),
-          Product(12, "Example 12"),
-          Product(13, "Example 13"),
-          Product(14, "Example 14"),
-          Product(15, "Example 15"),
-          Product(16, "Example 16"),
-          Product(17, "Example 17"),
-          Product(18, "Example 18"),
-          Product(19, "Example 19"),
-          Product(20, "Example 20"),
-        ];
+        products = [];
+        for (int i = 1; i <= 20; i++) {
+          products.add(Product(i, "Example $i", Unit.g, Conversion.fromString("100 ml = 100 g inactive"), Conversion.fromString("1 x = 100 g inactive"), "x"));
+        }
         // create the 7 default nutrional values
         nutValues = [
           NutrionalValue(1, "Calories", "kcal"),
@@ -100,7 +82,14 @@ class DebugDataProvider implements DataProvider {
     for (final product in products) {
       if (product.id > highestId) highestId = product.id;
     }
-    final newProduct = Product(highestId + 1, product.name);
+    final newProduct = Product(
+      highestId + 1,
+      product.name,
+      product.defaultUnit,
+      product.densityConversion,
+      product.quantityConversion,
+      product.quantityUnit,
+    );
     products.add(newProduct);
     _productsStreamController.add(products);
     return Future.value(newProduct);

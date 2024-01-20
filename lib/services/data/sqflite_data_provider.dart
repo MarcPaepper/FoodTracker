@@ -20,10 +20,14 @@ const nutrionalValueTable = "nutritional_value";
 const idColumn = "id";
 const nameColumn = "name";
 const dateColumn = "date";
+const quantityNameColumn = "quantity_name";
+const densityConversionColumn = "density_conversion";
+const quantityConversionColumn = "quantity_conversion";
+const defaultUnitColumn = "default_quantity";
 
 const unitNameColumn = "unit";
 
-const forceReset = false;
+const forceReset = true;
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
@@ -121,12 +125,7 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     var rows = await _db!.query(productTable);
-    return rows.map((row) => 
-      Product(
-        row[idColumn] as int,
-        row[nameColumn] as String,
-      )
-    ).toList();
+    return rows.map((row) => _dbRowToProduct(row)).toList();
   }
   
   @override
@@ -138,13 +137,22 @@ class SqfliteDataProvider implements DataProvider {
     if (results.length > 1) throw NotUniqueException();
     
     final row = results.first;
-    final name = row[nameColumn] as String;
-    final product = Product(id, name);
+    final product = _dbRowToProduct(row);
     
     _productsStreamController.add(_products);
     
     return product;
   }
+  
+  Product _dbRowToProduct(Map<String, Object?> row) =>
+    Product(
+      row[idColumn] as int,
+      row[nameColumn] as String,
+      unitFromString(row[quantityNameColumn] as String),
+      Conversion.fromString(row[densityConversionColumn] as String),
+      Conversion.fromString(row[quantityConversionColumn] as String),
+      row[unitNameColumn] as String,
+    );
   
   @override
   Future<Product> createProduct(Product product) async {
@@ -155,9 +163,13 @@ class SqfliteDataProvider implements DataProvider {
     
     final id = await _db!.insert(productTable, {
       nameColumn: product.name,
+      defaultUnitColumn: product.defaultUnit.toString(),
+      densityConversionColumn: product.densityConversion.toString(),
+      quantityConversionColumn: product.quantityConversion.toString(),
+      quantityNameColumn: product.quantityUnit,
     });
     
-    var newProduct = Product(id, product.name);
+    var newProduct = Product.copyWithDifferentId(product, id);
     _products.add(newProduct);
     _productsStreamController.add(_products);
     
@@ -170,6 +182,10 @@ class SqfliteDataProvider implements DataProvider {
     
     final updatedCount = await _db!.update(productTable, {
       nameColumn: product.name,
+      defaultUnitColumn: product.defaultUnit.toString(),
+      densityConversionColumn: product.densityConversion.toString(),
+      quantityConversionColumn: product.quantityConversion.toString(),
+      quantityNameColumn: product.quantityUnit,
     }, where: 'id = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     

@@ -39,8 +39,6 @@ Unit unitFromString(String input) {
 
 String unitToString(Unit unit) {
   switch (unit) {
-    case Unit.quantity:
-      return "x";
     case Unit.kg:
       return "kg";
     case Unit.g:
@@ -55,6 +53,8 @@ String unitToString(Unit unit) {
       return "ounce";
     case Unit.lbs:
       return "lbs";
+    case Unit.quantity:
+      return "x";
     default:
       throw ArgumentError("Invalid unit: '$unit'");
   }
@@ -62,21 +62,35 @@ String unitToString(Unit unit) {
 
 class Conversion {
   final bool active;
-  final Unit from;
-  final Unit to;
-  final double factor;
+  final Unit unit1;
+  final double amount1;
+  final Unit unit2;
+  final double amount2;
   
-  const Conversion(this.active, this.from, this.to, this.factor);
+  const Conversion(this.active, this.unit1, this.amount1, this.unit2, this.amount2);
   
-  // input has to be of the form "fromUnit = factor toUnit [active/inactive]"
-  Conversion.fromString(String input)
-    : from = unitFromString(input.split(" ")[0]),
-      to = unitFromString(input.split(" ")[2]),
-      factor = double.parse(input.split(" ")[3]),
-      active = input.split(" ")[4] == "active";
+  // input has to be of the form "xxx [fromUnit] = yyy [toUnit] [active|inactive]"
+  factory Conversion.fromString(String input) {
+    try {
+      var parts = input.split(" ");
+      if (parts.length != 6) {
+        throw ArgumentError("Invalid conversion string: '$input'");
+      }
+      
+      var amount1 = double.parse(parts[0]);
+      var unit1 = unitFromString(parts[1]);
+      var amount2 = double.parse(parts[3]);
+      var unit2 = unitFromString(parts[4]);
+      var active = parts[5] == "active";
+      
+      return Conversion(active, unit1, amount1, unit2, amount2);
+    } catch (e) {
+      throw ArgumentError("Invalid conversion string: '$input'");
+    }
+  }
   
   @override
-  String toString() => "${unitToString(from)} = $factor ${unitToString(to)} ${active ? "active" : "inactive"}";
+  String toString() => "$amount1 ${unitToString(unit1)} = $amount2 ${unitToString(unit2)} ${active ? "active" : "inactive"}";
 }
 
 class NutrionalValue {
@@ -104,16 +118,29 @@ class Product {
 	String name = "example Product"; // must be unique
 	List<(Product, double, Unit)> ingredients = []; // How much of different products the product is composed of
 	CalcMethod nutValOrigin = CalcMethod.manual;
+  
+  Unit defaultUnit = Unit.g;
 	Conversion? densityConversion; // factor when volume is converted to weight
 												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
   Conversion? quantityConversion; // factor how much one quantity of the product weighs / contains
                         // e.g. [("kg", "quantity", 3)] means 3 kg = 1 quantity
-  
   String quantityUnit = "x";
   
 	Map<NutrionalValue, double?> nutValues = {};
   
-  Product(this.id, this.name);
+  Product(this.id, this.name, this.defaultUnit, this.densityConversion, this.quantityConversion, this.quantityUnit);
+  
+  Product.copyWithDifferentId(Product product, int newId) {
+    id = newId;
+    name = product.name;
+    ingredients = product.ingredients;
+    nutValOrigin = product.nutValOrigin;
+    defaultUnit = product.defaultUnit;
+    densityConversion = product.densityConversion;
+    quantityConversion = product.quantityConversion;
+    quantityUnit = product.quantityUnit;
+    nutValues = product.nutValues;
+  }
   
   @override
   bool operator ==(covariant Product other) => id == other.id;

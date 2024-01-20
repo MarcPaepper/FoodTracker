@@ -21,11 +21,15 @@ class EditProductView extends StatefulWidget {
 
 class _EditProductViewState extends State<EditProductView> {
   final _dataService = DataService.current();
+  
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
+  
   late final bool isEdit;
   
+  Unit _defaultUnit = Unit.g;
   int _id = -1;
+  Product? preEditProduct;
   var isDuplicate = ValueNotifier<bool>(false);
   
   @override
@@ -65,13 +69,14 @@ class _EditProductViewState extends State<EditProductView> {
               final products = snapshot.data as List<Product>;
               if (isEdit) {
                 try {
-                  final product = products.firstWhere((prod) => prod.name == widget.productName);
-                  _id = product.id;
+                  preEditProduct = products.firstWhere((prod) => prod.name == widget.productName);
+                  _id = preEditProduct!.id;
                 } catch (e) {
                   return const Text("Error: Product not found");
                 }
               }
               _name.text = widget.productName ?? "";
+              _defaultUnit = preEditProduct?.defaultUnit ?? Unit.g;
               
               return Padding(
                 padding: const EdgeInsets.all(7.0),
@@ -80,6 +85,7 @@ class _EditProductViewState extends State<EditProductView> {
                   child: Column(
                     children: [
                       _buildNameField(products),
+                      _buildDefaultUnitDropdown(_defaultUnit),
                       _buildAddButton(),
                     ]
                   ),
@@ -200,20 +206,84 @@ class _EditProductViewState extends State<EditProductView> {
       ),
     );
   
+  Widget _buildDefaultUnitDropdown(Unit currentDefaultUnit) {
+    List<Unit> units = Unit.values;
+    Map<Unit, Widget> items = {};
+    
+    for (var unit in units) {
+      if (unit == Unit.quantity) {
+        // check whether the user has set up a quantity conversion
+        if (true) {
+          var quantityName = preEditProduct?.quantityUnit ?? "x";
+          items[unit] = RichText(
+            text: TextSpan(
+              text: "$quantityName ",
+              children: const [
+                TextSpan(
+                  text: "(quantity)",
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        items[unit] = Text(unitToString(unit));
+      }
+    }
+    
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Expanded(
+                // black text saying "Default Unit:"
+                child: Text("  Default Unit:", style: TextStyle(color: Colors.black.withAlpha(200))),
+              ),
+              Expanded(
+                child: DropdownButtonFormField<Unit>(
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                  value: currentDefaultUnit,
+                  items: items.entries.map((entry) => DropdownMenuItem<Unit>(
+                    value: entry.key,
+                    child: entry.value,
+                  )).toList(),
+                  onChanged: (Unit? unit) {
+                    if (unit != null) {
+                      setState(() {
+                        _defaultUnit = unit;
+                      });
+                    }
+                  },
+                ),
+              ),
+            ]
+          ),
+        );
+      }
+    );
+  }
+  
   Widget _buildAddButton() => Padding(
     padding: const EdgeInsets.all(8.0),
     child: TextButton(
       onPressed: () {
-        final name = _name.text;
+        //final name = _name.text;
         final isValid = _formKey.currentState!.validate();
         if (isValid) {
-          if (isEdit) {
-            var product = Product(_id, name);
-            _dataService.updateProduct(product);
-          } else {
-            var product = Product(-1, name);
-            _dataService.createProduct(product);
-          }
+          //if (isEdit) {
+          //  var product = Product(_id, name);
+          //  _dataService.updateProduct(product);
+          //} else {
+          //  var product = Product(-1, name);
+          //  _dataService.createProduct(product);
+          //}
           Navigator.of(context).pop();
         }
       },
