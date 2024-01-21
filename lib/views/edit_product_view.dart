@@ -92,7 +92,7 @@ class _EditProductViewState extends State<EditProductView> {
                     children: [
                       _buildNameField(products),
                       _buildDefaultUnitDropdown(),
-                      _buildConversionField(0),
+                      _buildConversionField(0, weightUnits),
                       _buildConversionField(1),
                       _buildAddButton(),
                     ]
@@ -215,14 +215,52 @@ class _EditProductViewState extends State<EditProductView> {
     );
   
   Widget _buildDefaultUnitDropdown() {
-    List<Unit> units = Unit.values;
-    Map<Unit, Widget> items = {};
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    "Default Unit:",
+                    style: TextStyle(
+                      color: Colors.black.withAlpha(200),
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _buildUnitDropdown(
+                  items: _buildUnitItems(),
+                  onChanged: (Unit? unit) {
+                    if (unit != null) {
+                      setState(() {
+                        _defaultUnit = unit;
+                      });
+                    }
+                  }
+                )
+              ),
+            ]
+          ),
+        );
+      }
+    );
+  }
+  
+  Map<Unit, Widget> _buildUnitItems({List<Unit>? units}) {
+    var items = <Unit, Widget>{};
+    units ??= Unit.values;
     
     for (var unit in units) {
       if (unit == Unit.quantity) {
-        // check whether the user has set up a quantity conversion
+        // TODO: check whether the user has set up a quantity conversion
         if (true) {
-          var quantityName = preEditProduct?.quantityUnit ?? "x";
+          var quantityName = preEditProduct?.quantityUnit ?? "x";//TODO: get quantity unit name from product
           items[unit] = RichText(
             text: TextSpan(
               text: quantityName,
@@ -247,58 +285,56 @@ class _EditProductViewState extends State<EditProductView> {
       }
     }
     
-    return StatefulBuilder(
-      builder: (BuildContext context, StateSetter setState) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    "Default Unit:",
-                    style: TextStyle(
-                      color: Colors.black.withAlpha(200),
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: DropdownButtonFormField<Unit>(
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-                  ),
-                  value: _defaultUnit,
-                  items: items.entries.map((entry) => DropdownMenuItem<Unit>(
-                    value: entry.key,
-                    child: entry.value,
-                  )).toList(),
-                  onChanged: (Unit? unit) {
-                    if (unit != null) {
-                      setState(() {
-                        _defaultUnit = unit;
-                      });
-                    }
-                  },
-                ),
-              ),
-            ]
-          ),
-        );
-      }
+    return items;
+  }
+  
+  Widget _buildUnitDropdown({required Map<Unit, Widget> items, Function(Unit? unit)? onChanged}) {
+    return DropdownButtonFormField<Unit>(
+      decoration: const InputDecoration(
+        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+      ),
+      value: _defaultUnit,
+      items: items.entries.map((entry) => DropdownMenuItem<Unit>(
+        value: entry.key,
+        child: entry.value,
+      )).toList(),
+      onChanged: onChanged,
     );
   }
   
-  Widget _buildUnitDropdown(List<Unit> availableUnits,  onChanged) {
-    
-  }
-    
-  Widget _buildConversionField(int index) {
+  Widget _buildConversionField(int index, List<Unit> applicableUnits) {
     var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
     var text = checkBoxTexts[index];
     var notifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
+    var units1 = index == 0 ? volumetricUnits : null;
+    var units2 = applicableUnits;
+    
+    // create unit dropdowns
+    var dropdown1;
+    if (units1 != null) {
+      dropdown1 = Expanded(
+        child: _buildUnitDropdown(
+          items: _buildUnitItems(units: units1),
+          onChanged: (Unit? unit) {
+            if (unit != null) {
+              notifier.value = notifier.value.withUnit1(unit);
+            }
+          }
+        ),
+      );
+    } else {
+      dropdown1 = Expanded(child: Container());
+    }
+    var dropdown2 = Expanded(
+      child: _buildUnitDropdown(
+        items: _buildUnitItems(units: units2),
+        onChanged: (Unit? unit) {
+          if (unit != null) {
+            notifier.value = notifier.value.withUnit2(unit);
+          }
+        }
+      ),
+    );
     
     // create a black rounded square as a container
     return Padding(
@@ -313,7 +349,7 @@ class _EditProductViewState extends State<EditProductView> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
-                color: enabled ? const Color.fromARGB(224, 25, 82, 77) : const Color.fromARGB(151, 158, 158, 158),
+                color: enabled ? const Color.fromARGB(200, 25, 82, 77) : const Color.fromARGB(130, 158, 158, 158),
                 width: 2,
               ),
             ),
@@ -335,6 +371,20 @@ class _EditProductViewState extends State<EditProductView> {
                   children: [
                     // amount field
                     _buildAmountField(notifier, 1),
+                    // unit dropdown
+                    dropdown1,
+                    // =
+                    Text(
+                      "=",
+                      style: TextStyle(
+                        color: Colors.black.withAlpha(textAlpha),
+                        fontSize: 16,
+                      ),
+                    ),
+                    // amount field
+                    _buildAmountField(notifier, 2),
+                    // unit dropdown
+                    dropdown2,
                   ]
                 )
               ],
@@ -352,6 +402,7 @@ class _EditProductViewState extends State<EditProductView> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: TextFormField(
+          enabled: notifier.value.enabled,
           decoration: const InputDecoration(
             contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
           ),

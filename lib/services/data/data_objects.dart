@@ -10,9 +10,9 @@ enum Unit { // measurement units which products can be given in
 	mg,
 	l,
 	ml,
-	ounce,
-	lbs,
 }
+const List<Unit> volumetricUnits = [Unit.l, Unit.ml];
+const List<Unit> weightUnits = [Unit.kg, Unit.g, Unit.mg];
 
 Unit unitFromString(String input) {
   switch (input) {
@@ -28,10 +28,6 @@ Unit unitFromString(String input) {
       return Unit.l;
     case "ml":
       return Unit.ml;
-    case "ounce":
-      return Unit.ounce;
-    case "lbs":
-      return Unit.lbs;
     default:
       throw ArgumentError("Invalid unit string: '$input'");
   }
@@ -49,10 +45,6 @@ String unitToString(Unit unit) {
       return "L";
     case Unit.ml:
       return "ml";
-    case Unit.ounce:
-      return "ounce";
-    case Unit.lbs:
-      return "lbs";
     case Unit.quantity:
       return "x";
     default:
@@ -72,10 +64,6 @@ String unitToLongString(Unit unit) {
       return "Liter";
     case Unit.ml:
       return "Milliliter";
-    case Unit.ounce:
-      return "Ounce";
-    case Unit.lbs:
-      return "Pound";
     case Unit.quantity:
       return "Quantity";
     default:
