@@ -42,7 +42,7 @@ String unitToString(Unit unit) {
     case Unit.mg:
       return "mg";
     case Unit.l:
-      return "L";
+      return "l";
     case Unit.ml:
       return "ml";
     case Unit.quantity:
@@ -108,7 +108,6 @@ class Conversion {
   Conversion withUnit2(Unit newUnit2) => Conversion(enabled, unit1, amount1, newUnit2, amount2);
   Conversion withAmount1(double newAmount1) => Conversion(enabled, unit1, newAmount1, unit2, amount2);
   Conversion withAmount2(double newAmount2) => Conversion(enabled, unit1, amount1, unit2, newAmount2);
-  
   
   factory Conversion.defaultDensity() => const Conversion(false, Unit.ml, 100, Unit.g, 100);
   

@@ -49,6 +49,13 @@ ThemeData getTheme() =>
           color: Colors.grey
         )
       ),
+      disabledBorder: UnderlineInputBorder(
+        borderRadius: BorderRadius.circular(10.0),
+        borderSide: BorderSide(
+          width: 3.5,
+          color: Colors.grey.shade300
+        )
+      ),
       focusedBorder: UnderlineInputBorder(
         borderRadius: BorderRadius.circular(10.0),
         borderSide: BorderSide(
