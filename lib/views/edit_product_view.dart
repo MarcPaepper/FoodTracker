@@ -34,12 +34,12 @@ class _EditProductViewState extends State<EditProductView> {
   
   late final bool isEdit;
   
-  Unit _defaultUnit = Unit.g;
   int _id = -1;
   Product? preEditProduct;
   
   final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
   final _quantityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultQuantity());
+  final _defaultUnitNotifier = ValueNotifier<Unit>(Unit.g);
   
   var isDuplicate = ValueNotifier<bool>(false);
   
@@ -88,7 +88,7 @@ class _EditProductViewState extends State<EditProductView> {
                 try {
                   preEditProduct = products.firstWhere((prod) => prod.name == widget.productName);
                   _id = preEditProduct!.id;
-                  _defaultUnit = preEditProduct!.defaultUnit;
+                  _defaultUnitNotifier.value = preEditProduct!.defaultUnit;
                   _densityConversionNotifier.value = preEditProduct!.densityConversion;
                   _quantityConversionNotifier.value = preEditProduct!.quantityConversion;
                 } catch (e) {
@@ -258,11 +258,11 @@ class _EditProductViewState extends State<EditProductView> {
               Expanded(
                 child: _buildUnitDropdown(
                   items: _buildUnitItems(),
-                  current: _defaultUnit,
+                  current: _defaultUnitNotifier.value,
                   onChanged: (Unit? unit) {
                     if (unit != null) {
                       setState(() {
-                        _defaultUnit = unit;
+                        _defaultUnitNotifier.value = unit;
                       });
                     }
                   }
@@ -372,124 +372,144 @@ class _EditProductViewState extends State<EditProductView> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: ValueListenableBuilder(
-        valueListenable: notifier,
-        builder: (context, value, child) {
-          // create unit dropdowns
-          Widget dropdown1;
-          if (units1 != null) {
-            dropdown1 = Expanded(
-              child: _buildUnitDropdown(
-                items: _buildUnitItems(units: units1),
-                enabled: notifier.value.enabled,
-                current: notifier.value.unit1,
-                onChanged: (Unit? unit) {
-                  if (unit != null) {
-                    notifier.value = notifier.value.withUnit1(unit);
-                  }
-                }
-              ),
-            );
-          } else {
-            // quantity name field instead of dropdown
-            dropdown1 = Expanded(
-              child: TextFormField(
-                enabled: notifier.value.enabled,
-                controller: _quantityName,
-                decoration: const InputDecoration(
-                  labelText: "Designation",
-                ),
-                validator: (String? value) {
-                  if (!notifier.value.enabled) {
-                    return null;
-                  }
-                  if (value == null || value.isEmpty) {
-                    return "Required Field";
-                  }
-                  return null;
-                },
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-              ),
-            );
-          }
-          var dropdown2 = Expanded(
-            child: _buildUnitDropdown(
-              items: _buildUnitItems(units: units2),
-              enabled: notifier.value.enabled,
-              current: notifier.value.unit2,
-              onChanged: (Unit? unit) {
-                if (unit != null) {
-                  notifier.value = notifier.value.withUnit2(unit);
-                }
-              }
-            ),
-          );
-    
-          var enabled = value.enabled;
-          var textAlpha = enabled ? 255 : 100;
-          
-          return FormField(builder: builder)(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: enabled ? const Color.fromARGB(200, 25, 82, 77) : const Color.fromARGB(130, 158, 158, 158),
-                  width: 2,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
-                child: Column(
-                  children: [
-                    SwitchListTile(
-                      value: enabled,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      onChanged: (bool value) => notifier.value = notifier.value.switched(value),
-                      title: Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
+        valueListenable: _defaultUnitNotifier,
+        builder: (contextUnit, valueUnit, childUnit) {
+          return ValueListenableBuilder(
+            valueListenable: notifier,
+            builder: (contextConv, valueConv, childConv) {
+              // create unit dropdowns
+              Widget dropdown1;
+              if (units1 != null) {
+                dropdown1 = Expanded(
+                  child: _buildUnitDropdown(
+                    items: _buildUnitItems(units: units1),
+                    enabled: notifier.value.enabled,
+                    current: notifier.value.unit1,
+                    onChanged: (Unit? unit) {
+                      if (unit != null) {
+                        notifier.value = notifier.value.withUnit1(unit);
+                      }
+                    }
+                  ),
+                );
+              } else {
+                // quantity name field instead of dropdown
+                dropdown1 = Expanded(
+                  child: TextFormField(
+                    enabled: notifier.value.enabled,
+                    controller: _quantityName,
+                    decoration: const InputDecoration(
+                      labelText: "Designation",
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildAmountField(notifier, controller1, 1),
-                        dropdown1,
-                        Padding(
-                          padding: const EdgeInsets.only(left: 12),
+                    validator: (String? value) {
+                      if (!notifier.value.enabled) {
+                        return null;
+                      }
+                      if (value == null || value.isEmpty) {
+                        return "Required Field";
+                      }
+                      return null;
+                    },
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                  ),
+                );
+              }
+              var dropdown2 = Expanded(
+                child: _buildUnitDropdown(
+                  items: _buildUnitItems(units: units2),
+                  enabled: notifier.value.enabled,
+                  current: notifier.value.unit2,
+                  onChanged: (Unit? unit) {
+                    if (unit != null) {
+                      notifier.value = notifier.value.withUnit2(unit);
+                    }
+                  }
+                ),
+              );
+        
+              var enabled = valueConv.enabled;
+              var textAlpha = enabled ? 255 : 100;
+              var color = enabled ? 
+                (
+                  valueUnit == Unit.l ?
+                  const Color.fromARGB(200, 25, 82, 77)
+                  : const Color.fromARGB(255, 230, 0, 0)
+                ): const Color.fromARGB(130, 158, 158, 158);
+              
+              return Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: color,
+                    width: 2,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        value: enabled,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        onChanged: (bool value) => notifier.value = notifier.value.switched(value),
+                        title: Padding(
+                          padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            "=",
+                            text,
                             style: TextStyle(
-                              color: Colors.black.withAlpha(textAlpha),
+                              color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
                               fontSize: 16,
                             ),
                           ),
                         ),
-                        _buildAmountField(notifier, controller2, 2),
-                        dropdown2,
-                      ]
-                    )
-                  ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildAmountField(notifier, controller1, 1),
+                          dropdown1,
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12),
+                            child: Text(
+                              "=",
+                              style: TextStyle(
+                                color: Colors.black.withAlpha(textAlpha),
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          _buildAmountField(notifier, controller2, 2),
+                          dropdown2,
+                        ]
+                      )
+                    ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            }
           );
         }
-      ),
+      )
     );
   }
+  
+  // bool validateBoxes(int index) {
+  //   // check whether all children of the conversion field are valid
+  //   var notifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
+  //   var controller1 = index == 0 ? _densityAmount1 : _quantityAmount1;
+  //   var controller2 = index == 0 ? _densityAmount2 : _quantityAmount2;
+    
+  //   var valid = true;
+  //   if (notifier.value.enabled) {
+  //     valid = valid && controller1.text.isNotEmpty && controller2.text.isNotEmpty;
+  //   }
+  // }
   
   Widget _buildAmountField(
     ValueNotifier<Conversion> notifier,
     TextEditingController controller,
     int index,
   ) {
-    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
