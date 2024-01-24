@@ -429,18 +429,26 @@ class _EditProductViewState extends State<EditProductView> {
         
               var enabled = valueConv.enabled;
               var textAlpha = enabled ? 255 : 100;
-              var color = enabled ? 
-                (
-                  valueUnit == Unit.l ?
-                  const Color.fromARGB(200, 25, 82, 77)
-                  : const Color.fromARGB(255, 230, 0, 0)
-                ): const Color.fromARGB(130, 158, 158, 158);
+              String? validationString = validateConversion(index);
+              if (validationString !=null) {
+                devtools.log("Validate Error: $validationString");
+              }
+              Color borderColor;
+              if (enabled) {
+                if (validationString != null) {
+                  borderColor = const Color.fromARGB(255, 230, 0, 0);
+                } else {
+                  borderColor = const Color.fromARGB(200, 25, 82, 77);
+                }
+              } else {
+                borderColor = const Color.fromARGB(130, 158, 158, 158);
+              }
               
               return Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(
-                    color: color,
+                    color: borderColor,
                     width: 2,
                   ),
                 ),
@@ -493,17 +501,27 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  // bool validateBoxes(int index) {
-  //   // check whether all children of the conversion field are valid
-  //   var notifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
-  //   var controller1 = index == 0 ? _densityAmount1 : _quantityAmount1;
-  //   var controller2 = index == 0 ? _densityAmount2 : _quantityAmount2;
+  String? validateConversion(int index) {
+    // check whether all children of the conversion field are valid
+    var defUnit = _defaultUnitNotifier.value;
+    var convNotifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
+    var otherConvNotifier = index == 0 ? _quantityConversionNotifier : _densityConversionNotifier;
+    devtools.log("Validateing");
+    // Check if conversion is active
+    if (convNotifier.value.enabled) {
+      // Check whether a conversion to the default unit is possible
+      if (index == 1) {
+        if (defUnit != Unit.quantity) {
+          bool different = volumetricUnits.contains(defUnit) ^ volumetricUnits.contains(convNotifier.value.unit2);
+          if (different && !otherConvNotifier.value.enabled) {
+            return "Cannot convert quantity (${_quantityName.text}) to default unit ($defUnit) without density conversion.";
+          }
+        }
+      }
+    }
     
-  //   var valid = true;
-  //   if (notifier.value.enabled) {
-  //     valid = valid && controller1.text.isNotEmpty && controller2.text.isNotEmpty;
-  //   }
-  // }
+    return null;
+  }
   
   Widget _buildAmountField(
     ValueNotifier<Conversion> notifier,
