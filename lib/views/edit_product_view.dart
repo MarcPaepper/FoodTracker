@@ -113,9 +113,6 @@ class _EditProductViewState extends State<EditProductView> {
                       const SizedBox(height: 5),
                       _buildDefaultUnitDropdown(),
                       const SizedBox(height: 10),
-                      _buildConversionField(0),
-                      const SizedBox(height: 10),
-                      _buildConversionField(1),
                       _buildAddButton(),
                     ]
                   ),
@@ -283,7 +280,7 @@ class _EditProductViewState extends State<EditProductView> {
       if (unit == Unit.quantity) {
         // TODO: check whether the user has set up a quantity conversion
         if (true) {
-          var quantityName = preEditProduct?.quantityUnit ?? "x";//TODO: get quantity unit name from product
+          var quantityName = preEditProduct?.quantityUnit ?? "x";
           items[unit] = RichText(
             text: TextSpan(
               style: TextStyle(
@@ -360,81 +357,102 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildConversionField(int index) {
-    var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
-    var text = checkBoxTexts[index];
-    var notifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
-    var controller1 = index == 0 ? _densityAmount1 : _quantityAmount1;
-    var controller2 = index == 0 ? _densityAmount2 : _quantityAmount2;
-    var units1 = index == 0 ? volumetricUnits : null;
-    var units2 = index == 0 ? weightUnits : Unit.values.where((unit) => unit != Unit.quantity).toList();
-    
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: ValueListenableBuilder(
+  Widget _buildConversionFields() {
+    return ValueListenableBuilder(
         valueListenable: _defaultUnitNotifier,
         builder: (contextUnit, valueUnit, childUnit) {
           return ValueListenableBuilder(
-            valueListenable: notifier,
-            builder: (contextConv, valueConv, childConv) {
-              // create unit dropdowns
-              Widget dropdown1;
-              if (units1 != null) {
-                dropdown1 = Expanded(
-                  child: _buildUnitDropdown(
-                    items: _buildUnitItems(units: units1),
-                    enabled: notifier.value.enabled,
-                    current: notifier.value.unit1,
-                    onChanged: (Unit? unit) {
-                      if (unit != null) {
-                        notifier.value = notifier.value.withUnit1(unit);
-                      }
-                    }
-                  ),
-                );
-              } else {
-                // quantity name field instead of dropdown
-                dropdown1 = Expanded(
-                  child: TextFormField(
-                    enabled: notifier.value.enabled,
-                    controller: _quantityName,
-                    decoration: const InputDecoration(
-                      labelText: "Designation",
-                    ),
-                    validator: (String? value) {
-                      if (!notifier.value.enabled) {
-                        return null;
-                      }
-                      if (value == null || value.isEmpty) {
-                        return "Required Field";
-                      }
-                      return null;
-                    },
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                  ),
-                );
-              }
-              var dropdown2 = Expanded(
-                child: _buildUnitDropdown(
-                  items: _buildUnitItems(units: units2),
-                  enabled: notifier.value.enabled,
-                  current: notifier.value.unit2,
-                  onChanged: (Unit? unit) {
-                    if (unit != null) {
-                      notifier.value = notifier.value.withUnit2(unit);
-                    }
-                  }
-                ),
-              );
-        
-              var enabled = valueConv.enabled;
-              var textAlpha = enabled ? 255 : 100;
-              var color = enabled ? 
-                (
-                  valueUnit == Unit.l ?
-                  const Color.fromARGB(200, 25, 82, 77)
-                  : const Color.fromARGB(255, 230, 0, 0)
-                ): const Color.fromARGB(130, 158, 158, 158);
+            valueListenable: _densityConversionNotifier,
+            builder: (contextConv1, valueConv1, childConv1) {
+               return ValueListenableBuilder(
+                valueListenable: _quantityConversionNotifier,
+                builder: (contextConv2, valueConv2, childConv2) {
+                  return Column(
+                    children: [
+                      _buildConversionField(0, _densityConversionNotifier, valueConv2, valueUnit),
+                      const SizedBox(height: 10),
+                      _buildConversionField(1, _quantityConversionNotifier, valueConv1, valueUnit),
+                    ],
+                  );
+                }
+               );
+            }
+          );
+        }
+    );
+  }
+  
+  Widget _buildConversionField(int index, ValueNotifier<Conversion> notifier, Conversion otherConversion, Unit defUnit) {
+    var conversion = notifier.value;
+    
+    var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
+    var text = checkBoxTexts[index];
+    var units1 = index == 0 ? volumetricUnits : null;
+    var units2 = index == 0 ? weightUnits : Unit.values.where((unit) => unit != Unit.quantity).toList();
+    
+    // create unit dropdowns
+    Widget dropdown1;
+    if (units1 != null) {
+      dropdown1 = Expanded(
+        child: _buildUnitDropdown(
+          items: _buildUnitItems(units: units1),
+          enabled: conversion.enabled,
+          current: conversion.unit1,
+          onChanged: (Unit? unit) {
+            if (unit != null) {
+              notifier.value = notifier.value.withUnit1(unit);
+            }
+          }
+        ),
+      );
+    } else {
+      // quantity name field instead of dropdown
+      dropdown1 = Expanded(
+        child: TextFormField(
+          enabled: conversion.enabled,
+          controller: _quantityName,
+          decoration: const InputDecoration(
+            labelText: "Designation",
+          ),
+          validator: (String? value) {
+            if (!conversion.enabled) {
+              return null;
+            }
+            if (value == null || value.isEmpty) {
+              return "Required Field";
+            }
+            return null;
+          },
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+      );
+    }
+    var dropdown2 = Expanded(
+      child: _buildUnitDropdown(
+        items: _buildUnitItems(units: units2),
+        enabled: conversion.enabled,
+        current: conversion.unit2,
+        onChanged: (Unit? unit) {
+          if (unit != null) {
+            notifier.value = notifier.value.withUnit2(unit);
+          }
+        }
+      ),
+    );
+
+    var enabled = conversion.enabled;
+    var textAlpha = enabled ? 255 : 100;
+    var color = enabled ? 
+      (
+        valueUnit == Unit.l ?
+        const Color.fromARGB(200, 25, 82, 77)
+        : const Color.fromARGB(255, 230, 0, 0)
+      ): const Color.fromARGB(130, 158, 158, 158);
+    
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: 
+              
               
               return Container(
                 decoration: BoxDecoration(
