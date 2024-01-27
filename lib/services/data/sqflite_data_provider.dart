@@ -27,7 +27,7 @@ const defaultUnitColumn = "default_quantity";
 
 const unitNameColumn = "unit";
 
-const forceReset = true;
+const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
@@ -62,7 +62,6 @@ class SqfliteDataProvider implements DataProvider {
         // delete file if forceReset
         if (forceReset) {
           try {
-            devtools.log("force reset");
             await deleteDatabase(dbPath);
           } catch (e) {
             devtools.log("Error deleting database: $e");

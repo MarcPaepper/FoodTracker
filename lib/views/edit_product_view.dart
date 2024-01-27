@@ -113,6 +113,9 @@ class _EditProductViewState extends State<EditProductView> {
                       const SizedBox(height: 5),
                       _buildDefaultUnitDropdown(),
                       const SizedBox(height: 10),
+                      _buildConversionFields(),
+                      const SizedBox(height: 5),
+                      _buildIngredientList(),
                       _buildAddButton(),
                     ]
                   ),
@@ -285,7 +288,8 @@ class _EditProductViewState extends State<EditProductView> {
             text: TextSpan(
               style: TextStyle(
                 fontFamily: GoogleFonts.nunitoSans().fontFamily,
-                fontSize: 16
+                fontSize: 16,
+                color: Colors.black,
               ),
               text: quantityName,
               children: const [
@@ -306,7 +310,8 @@ class _EditProductViewState extends State<EditProductView> {
             text: unitToString(unit),
             style: TextStyle(
               fontFamily: GoogleFonts.nunitoSans().fontFamily,
-              fontSize: 16
+              fontSize: 16,
+              color: Colors.black,
             ),
           ),
         );
@@ -387,6 +392,8 @@ class _EditProductViewState extends State<EditProductView> {
     
     var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
     var text = checkBoxTexts[index];
+    var controller1 = index == 0 ? _densityAmount1 : _quantityAmount1;
+    var controller2 = index == 0 ? _densityAmount2 : _quantityAmount2;
     var units1 = index == 0 ? volumetricUnits : null;
     var units2 = index == 0 ? weightUnits : Unit.values.where((unit) => unit != Unit.quantity).toList();
     
@@ -442,71 +449,90 @@ class _EditProductViewState extends State<EditProductView> {
 
     var enabled = conversion.enabled;
     var textAlpha = enabled ? 255 : 100;
-    var color = enabled ? 
-      (
-        valueUnit == Unit.l ?
-        const Color.fromARGB(200, 25, 82, 77)
-        : const Color.fromARGB(255, 230, 0, 0)
-      ): const Color.fromARGB(130, 158, 158, 158);
+    String? validationString = validateConversion(index);
+    Color borderColor;
+    if (enabled) {
+      if (validationString != null) {
+        borderColor = const Color.fromARGB(255, 230, 0, 0);
+      } else {
+        borderColor = const Color.fromARGB(200, 25, 82, 77);
+      }
+    } else {
+      borderColor = const Color.fromARGB(130, 158, 158, 158);
+    }
     
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: 
-              
-              
-              return Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: borderColor,
-                    width: 2,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: borderColor,
+            width: 2,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
+          child: Column(
+            children: [
+              SwitchListTile(
+                value: enabled,
+                controlAffinity: ListTileControlAffinity.leading,
+                onChanged: (bool value) {
+                  // validate form after future build
+                  if (!value) {
+                    Future(() {
+                      _formKey.currentState!.validate();
+                    });
+                  }
+                  notifier.value = notifier.value.switched(value);
+                },
+                title: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
+                      fontSize: 16,
+                    ),
                   ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
-                  child: Column(
-                    children: [
-                      SwitchListTile(
-                        value: enabled,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        onChanged: (bool value) => notifier.value = notifier.value.switched(value),
-                        title: Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            text,
-                            style: TextStyle(
-                              color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildAmountField(notifier, controller1, 1),
+                  dropdown1,
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: Text(
+                      "=",
+                      style: TextStyle(
+                        color: Colors.black.withAlpha(textAlpha),
+                        fontSize: 16,
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _buildAmountField(notifier, controller1, 1),
-                          dropdown1,
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12),
-                            child: Text(
-                              "=",
-                              style: TextStyle(
-                                color: Colors.black.withAlpha(textAlpha),
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                          _buildAmountField(notifier, controller2, 2),
-                          dropdown2,
-                        ]
-                      )
-                    ],
+                    ),
+                  ),
+                  _buildAmountField(notifier, controller2, 2),
+                  dropdown2,
+                ]
+              ),
+              // Text for validation message
+              if (validationString != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                  child: 
+                  Text(
+                    validationString,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
-              );
-            }
-          );
-        }
+            ],
+          ),
+        ),
       )
     );
   }
@@ -516,7 +542,7 @@ class _EditProductViewState extends State<EditProductView> {
     var defUnit = _defaultUnitNotifier.value;
     var convNotifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
     var otherConvNotifier = index == 0 ? _quantityConversionNotifier : _densityConversionNotifier;
-    devtools.log("Validateing");
+    
     // Check if conversion is active
     if (convNotifier.value.enabled) {
       // Check whether a conversion to the default unit is possible
@@ -524,8 +550,12 @@ class _EditProductViewState extends State<EditProductView> {
         if (defUnit != Unit.quantity) {
           bool different = volumetricUnits.contains(defUnit) ^ volumetricUnits.contains(convNotifier.value.unit2);
           if (different && !otherConvNotifier.value.enabled) {
-            return "Cannot convert quantity (${_quantityName.text}) to default unit ($defUnit) without density conversion.";
+            return "Cannot convert quantity (${_quantityName.text}) to default unit (${unitToString(defUnit)}) without density conversion.";
           }
+        }
+      } else {
+        if (defUnit == Unit.quantity && !otherConvNotifier.value.enabled) {
+          return "If the default unit is quantity (${_quantityName.text}), the quantity conversion must be enabled.";
         }
       }
     }
@@ -538,6 +568,16 @@ class _EditProductViewState extends State<EditProductView> {
     TextEditingController controller,
     int index,
   ) {
+    validator(String? value) {
+      if (!notifier.value.enabled) {
+        return null;
+      }
+      if (value == null || value.isEmpty) {
+        return "Required Field";
+      }
+      return null;
+    }
+    
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -548,18 +588,8 @@ class _EditProductViewState extends State<EditProductView> {
           ),
           controller: controller,
           keyboardType: TextInputType.number,
-          validator: (String? value) {
-            if (value == null || value.isEmpty) {
-              return "Required Field";
-            }
-            try {
-              double.parse(value);
-              return null;
-            } catch (e) {
-              return "Invalid Number";
-            }
-          },
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: notifier.value.enabled ? validator : null,
+          autovalidateMode: AutovalidateMode.always,
           onChanged: (String? value) {
             if (value != null && value.isNotEmpty) {
               try {
@@ -569,7 +599,7 @@ class _EditProductViewState extends State<EditProductView> {
                 controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
                 
                 var input = double.parse(value);
-                if (index == 0) {
+                if (index == 1) {
                   notifier.value = notifier.value.withAmount1(input);
                 } else {
                   notifier.value = notifier.value.withAmount2(input);
@@ -584,20 +614,28 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
+  Widget _buildIngredientList() {
+    return const Text("Ingredients");
+  }
+  
   Widget _buildAddButton() => Padding(
     padding: const EdgeInsets.all(8.0),
     child: TextButton(
       onPressed: () {
-        //final name = _name.text;
-        final isValid = _formKey.currentState!.validate();
+        final name = _name.text;
+        final defUnit = _defaultUnitNotifier.value;
+        final densityConversion = _densityConversionNotifier.value;
+        final quantityConversion = _quantityConversionNotifier.value;
+        final quantityName = _quantityName.text;
+        final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
         if (isValid) {
-          //if (isEdit) {
-          //  var product = Product(_id, name);
-          //  _dataService.updateProduct(product);
-          //} else {
-          //  var product = Product(-1, name);
-          //  _dataService.createProduct(product);
-          //}
+          if (isEdit) {
+            var product = Product(_id, name, defUnit, densityConversion, quantityConversion, quantityName);
+            _dataService.updateProduct(product);
+          } else {
+            var product = Product(-1, name, defUnit, densityConversion, quantityConversion, quantityName);
+            _dataService.createProduct(product);
+          }
           Navigator.of(context).pop();
         }
       },
