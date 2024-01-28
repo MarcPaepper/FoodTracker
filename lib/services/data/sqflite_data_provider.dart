@@ -124,7 +124,13 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     var rows = await _db!.query(productTable);
-    return rows.map((row) => _dbRowToProduct(row)).toList();
+    // same as below but two lines
+     var products = <Product>[];
+     for (var row in rows) {
+       products.add(_dbRowToProduct(row));
+     }
+     return products;
+    //return rows.map((row) => _dbRowToProduct(row)).toList();
   }
   
   @override
@@ -147,10 +153,10 @@ class SqfliteDataProvider implements DataProvider {
     Product(
       row[idColumn] as int,
       row[nameColumn] as String,
-      unitFromString(row[quantityNameColumn] as String),
+      unitFromString(row[defaultUnitColumn] as String),
       Conversion.fromString(row[densityConversionColumn] as String),
       Conversion.fromString(row[quantityConversionColumn] as String),
-      row[unitNameColumn] as String,
+      row[quantityNameColumn] as String,
     );
   
   @override
@@ -162,7 +168,7 @@ class SqfliteDataProvider implements DataProvider {
     
     final id = await _db!.insert(productTable, {
       nameColumn: product.name,
-      defaultUnitColumn: product.defaultUnit.toString(),
+      defaultUnitColumn: unitToString(product.defaultUnit),
       densityConversionColumn: product.densityConversion.toString(),
       quantityConversionColumn: product.quantityConversion.toString(),
       quantityNameColumn: product.quantityUnit,
@@ -181,7 +187,7 @@ class SqfliteDataProvider implements DataProvider {
     
     final updatedCount = await _db!.update(productTable, {
       nameColumn: product.name,
-      defaultUnitColumn: product.defaultUnit.toString(),
+      defaultUnitColumn: unitToString(product.defaultUnit),
       densityConversionColumn: product.densityConversion.toString(),
       quantityConversionColumn: product.quantityConversion.toString(),
       quantityNameColumn: product.quantityUnit,

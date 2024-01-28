@@ -81,6 +81,10 @@ class _EditProductViewState extends State<EditProductView> {
       body: FutureBuilder(
         future: _dataService.getAllProducts(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            devtools.log("Error: ${snapshot.error}");
+            return const Text("Error");
+          }
           switch (snapshot.connectionState) {
             case ConnectionState.done:
               final products = snapshot.data as List<Product>;
