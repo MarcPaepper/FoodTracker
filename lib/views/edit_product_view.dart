@@ -106,22 +106,24 @@ class _EditProductViewState extends State<EditProductView> {
               _quantityAmount2.text = preEditProduct?.quantityConversion.amount2.toString() ?? Conversion.defaultQuantity().amount2.toString();
               _quantityName.text = preEditProduct?.quantityUnit ?? "x";
               
-              return Padding(
-                padding: const EdgeInsets.all(7.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    
-                    children: [
-                      _buildNameField(products),
-                      const SizedBox(height: 5),
-                      _buildDefaultUnitDropdown(),
-                      const SizedBox(height: 10),
-                      _buildConversionFields(),
-                      const SizedBox(height: 5),
-                      _buildIngredientList(),
-                      _buildAddButton(),
-                    ]
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(7.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      
+                      children: [
+                        _buildNameField(products),
+                        const SizedBox(height: 5),
+                        _buildDefaultUnitDropdown(),
+                        const SizedBox(height: 10),
+                        _buildConversionFields(),
+                        const SizedBox(height: 5),
+                        _buildIngredientList(),
+                        _buildAddButton(),
+                      ]
+                    ),
                   ),
                 ),
               );

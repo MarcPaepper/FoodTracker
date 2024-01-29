@@ -78,7 +78,16 @@ class Conversion {
   final Unit unit2;
   final double amount2;
   
-  const Conversion(this.enabled, this.unit1, this.amount1, this.unit2, this.amount2);
+  //const Conversion(this.enabled, this.unit1, this.amount1, this.unit2, this.amount2);
+  
+  // same as above but with named required parameters
+  const Conversion({
+    required this.enabled,
+    required this.unit1,
+    required this.amount1,
+    required this.unit2,
+    required this.amount2,
+  });
   
   // input has to be of the form "xxx [fromUnit] = yyy [toUnit] [enabled|disabled]"
   factory Conversion.fromString(String input) {
@@ -94,7 +103,13 @@ class Conversion {
       var unit2 = unitFromString(parts[4]);
       var enabled = parts[5] == "enabled";
       
-      return Conversion(enabled, unit1, amount1, unit2, amount2);
+      return Conversion(
+        enabled: enabled,
+        unit1: unit1,
+        amount1: amount1,
+        unit2: unit2,
+        amount2: amount2,
+      );
     } catch (e) {
       throw ArgumentError("Invalid conversion string: '$input'");
     }
@@ -103,15 +118,61 @@ class Conversion {
   @override
   String toString() => "$amount1 ${unitToString(unit1)} = $amount2 ${unitToString(unit2)} ${enabled ? "enabled" : "disabled"}";
   
-  Conversion switched(bool newEnabled) => Conversion(newEnabled, unit1, amount1, unit2, amount2);
-  Conversion withUnit1(Unit newUnit1) => Conversion(enabled, newUnit1, amount1, unit2, amount2);
-  Conversion withUnit2(Unit newUnit2) => Conversion(enabled, unit1, amount1, newUnit2, amount2);
-  Conversion withAmount1(double newAmount1) => Conversion(enabled, unit1, newAmount1, unit2, amount2);
-  Conversion withAmount2(double newAmount2) => Conversion(enabled, unit1, amount1, unit2, newAmount2);
+  Conversion switched(bool newEnabled) => Conversion(
+    enabled: newEnabled,
+    unit1: unit1,
+    amount1: amount1,
+    unit2: unit2,
+    amount2: amount2,
+  );
   
-  factory Conversion.defaultDensity() => const Conversion(false, Unit.ml, 100, Unit.g, 100);
+  Conversion withUnit1(Unit newUnit1) => Conversion(
+    enabled: enabled,
+    unit1: newUnit1,
+    amount1: amount1,
+    unit2: unit2,
+    amount2: amount2,
+  );
   
-  factory Conversion.defaultQuantity() => const Conversion(false, Unit.quantity, 1, Unit.g, 100);
+  Conversion withUnit2(Unit newUnit2) => Conversion(
+    enabled: enabled,
+    unit1: unit1,
+    amount1: amount1,
+    unit2: newUnit2,
+    amount2: amount2,
+  );
+  
+  Conversion withAmount1(double newAmount1) => Conversion(
+    enabled: enabled,
+    unit1: unit1,
+    amount1: newAmount1,
+    unit2: unit2,
+    amount2: amount2,
+  );
+  
+  Conversion withAmount2(double newAmount2) => Conversion(
+    enabled: enabled,
+    unit1: unit1,
+    amount1: amount1,
+    unit2: unit2,
+    amount2: newAmount2,
+  );
+  
+  factory Conversion.defaultDensity() => const Conversion(
+    enabled: false,
+    unit1: Unit.ml,
+    amount1: 100,
+    unit2: Unit.g,
+    amount2: 100,
+  );
+  
+  factory Conversion.defaultQuantity() => const Conversion(
+    enabled: false,
+    unit1: Unit.quantity,
+    amount1: 1,
+    unit2: Unit.g,
+    amount2: 100,
+  );
 }
 
 class NutrionalValue {
