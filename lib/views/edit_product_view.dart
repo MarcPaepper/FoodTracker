@@ -402,6 +402,20 @@ class _EditProductViewState extends State<EditProductView> {
     var controller2 = index == 0 ? _densityAmount2 : _quantityAmount2;
     var units1 = index == 0 ? volumetricUnits : null;
     var units2 = index == 0 ? weightUnits : Unit.values.where((unit) => unit != Unit.quantity).toList();
+
+    var enabled = conversion.enabled;
+    var textAlpha = enabled ? 255 : 100;
+    String? validationString = validateConversion(index);
+    Color borderColor;
+    if (enabled) {
+      if (validationString != null) {
+        borderColor = const Color.fromARGB(255, 230, 0, 0);
+      } else {
+        borderColor = const Color.fromARGB(200, 25, 82, 77);
+      }
+    } else {
+      borderColor = const Color.fromARGB(130, 158, 158, 158);
+    }
     
     // create unit dropdowns
     Widget dropdown1;
@@ -452,20 +466,53 @@ class _EditProductViewState extends State<EditProductView> {
         }
       ),
     );
-
-    var enabled = conversion.enabled;
-    var textAlpha = enabled ? 255 : 100;
-    String? validationString = validateConversion(index);
-    Color borderColor;
-    if (enabled) {
-      if (validationString != null) {
-        borderColor = const Color.fromARGB(255, 230, 0, 0);
-      } else {
-        borderColor = const Color.fromARGB(200, 25, 82, 77);
-      }
-    } else {
-      borderColor = const Color.fromARGB(130, 158, 158, 158);
-    }
+    
+    var equalSign = Padding(
+      padding: const EdgeInsets.only(left: 12),
+      child: Text(
+        "=",
+        style: TextStyle(
+          color: Colors.black.withAlpha(textAlpha),
+          fontSize: 16,
+        ),
+      ),
+    );
+    
+    bool isWide = MediaQuery.of(context).size.width > 600;
+    devtools.log("width = ${MediaQuery.of(context).size.width}");
+    
+    Widget inputFields = isWide
+      ? Row(
+        children: [
+          _buildAmountField(notifier, controller1, 1),
+          dropdown1,
+          equalSign,
+          _buildAmountField(notifier, controller2, 2),
+          dropdown2,
+        ]
+      )
+      : GridView.count(
+        
+        // physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 2,
+        children: [
+          const SizedBox.shrink(),
+          const SizedBox.shrink(),
+          // // Row(
+          // //   children: [
+          //     _buildAmountField(notifier, controller1, 1),
+          //     dropdown1,
+          // //   ],
+          // // ),
+          // equalSign,
+          // // Row(
+          // //   children: [
+          //     _buildAmountField(notifier, controller2, 2),
+          //     dropdown2,
+          // //   ],
+          // // ),
+        ]
+      );
     
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -505,24 +552,7 @@ class _EditProductViewState extends State<EditProductView> {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildAmountField(notifier, controller1, 1),
-                  dropdown1,
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: Text(
-                      "=",
-                      style: TextStyle(
-                        color: Colors.black.withAlpha(textAlpha),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  _buildAmountField(notifier, controller2, 2),
-                  dropdown2,
-                ]
-              ),
+              inputFields,
               // Text for validation message
               if (validationString != null)
                 Padding(
