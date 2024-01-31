@@ -106,6 +106,15 @@ class _EditProductViewState extends State<EditProductView> {
               _quantityAmount2.text = preEditProduct?.quantityConversion.amount2.toString() ?? Conversion.defaultQuantity().amount2.toString();
               _quantityName.text = preEditProduct?.quantityUnit ?? "x";
               
+              // remove ".0" from amount fields if it is the end of the string
+              var amountFields = [_densityAmount1, _densityAmount2, _quantityAmount1, _quantityAmount2];
+              for (var field in amountFields) {
+                var text = field.text;
+                if (text.endsWith(".0")) {
+                  field.text = text.substring(0, text.length - 2);
+                }
+              }
+              
               return SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(7.0),
@@ -287,29 +296,26 @@ class _EditProductViewState extends State<EditProductView> {
     
     for (var unit in units) {
       if (unit == Unit.quantity) {
-        // TODO: check whether the user has set up a quantity conversion
-        if (true) {
-          var quantityName = preEditProduct?.quantityUnit ?? "x";
-          items[unit] = RichText(
-            text: TextSpan(
-              style: TextStyle(
-                fontFamily: GoogleFonts.nunitoSans().fontFamily,
-                fontSize: 16,
-                color: Colors.black,
-              ),
-              text: quantityName,
-              children: const [
-                TextSpan(
-                  text: "  (quantity)",
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
+        var quantityName = preEditProduct?.quantityUnit ?? "x";
+        items[unit] = RichText(
+          text: TextSpan(
+            style: TextStyle(
+              fontFamily: GoogleFonts.nunitoSans().fontFamily,
+              fontSize: 16,
+              color: Colors.black,
             ),
-          );
-        }
+            text: quantityName,
+            children: const [
+              TextSpan(
+                text: "  (quantity)",
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        );
       } else {
         items[unit] = RichText(
           text: TextSpan(
@@ -420,51 +426,45 @@ class _EditProductViewState extends State<EditProductView> {
     // create unit dropdowns
     Widget dropdown1;
     if (units1 != null) {
-      dropdown1 = Expanded(
-        child: _buildUnitDropdown(
-          items: _buildUnitItems(units: units1),
-          enabled: conversion.enabled,
-          current: conversion.unit1,
-          onChanged: (Unit? unit) {
-            if (unit != null) {
-              notifier.value = notifier.value.withUnit1(unit);
-            }
+      dropdown1 = _buildUnitDropdown(
+        items: _buildUnitItems(units: units1),
+        enabled: conversion.enabled,
+        current: conversion.unit1,
+        onChanged: (Unit? unit) {
+          if (unit != null) {
+            notifier.value = notifier.value.withUnit1(unit);
           }
-        ),
+        }
       );
     } else {
       // quantity name field instead of dropdown
-      dropdown1 = Expanded(
-        child: TextFormField(
-          enabled: conversion.enabled,
-          controller: _quantityName,
-          decoration: const InputDecoration(
-            labelText: "Designation",
-          ),
-          validator: (String? value) {
-            if (!conversion.enabled) {
-              return null;
-            }
-            if (value == null || value.isEmpty) {
-              return "Required Field";
-            }
-            return null;
-          },
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+      dropdown1 = TextFormField(
+        enabled: conversion.enabled,
+        controller: _quantityName,
+        decoration: const InputDecoration(
+          labelText: "Designation",
         ),
+        validator: (String? value) {
+          if (!conversion.enabled) {
+            return null;
+          }
+          if (value == null || value.isEmpty) {
+            return "Required Field";
+          }
+          return null;
+        },
+        autovalidateMode: AutovalidateMode.onUserInteraction,
       );
     }
-    var dropdown2 = Expanded(
-      child: _buildUnitDropdown(
-        items: _buildUnitItems(units: units2),
-        enabled: conversion.enabled,
-        current: conversion.unit2,
-        onChanged: (Unit? unit) {
-          if (unit != null) {
-            notifier.value = notifier.value.withUnit2(unit);
-          }
+    var dropdown2 = _buildUnitDropdown(
+      items: _buildUnitItems(units: units2),
+      enabled: conversion.enabled,
+      current: conversion.unit2,
+      onChanged: (Unit? unit) {
+        if (unit != null) {
+          notifier.value = notifier.value.withUnit2(unit);
         }
-      ),
+      }
     );
     
     var equalSign = Padding(
@@ -479,16 +479,15 @@ class _EditProductViewState extends State<EditProductView> {
     );
     
     bool isWide = MediaQuery.of(context).size.width > 450;
-    devtools.log("width = ${MediaQuery.of(context).size.width}");
     
     Widget inputFields = isWide
       ? Row(
         children: [
-          _buildAmountField(notifier, controller1, 1),
-          dropdown1,
+          Expanded(child: _buildAmountField(notifier, controller1, 1)),
+          Expanded(child: dropdown1),
           equalSign,
-          _buildAmountField(notifier, controller2, 2),
-          dropdown2,
+          Expanded(child: _buildAmountField(notifier, controller2, 2)),
+          Expanded(child: dropdown2),
         ]
       )
       : Table(
@@ -498,7 +497,7 @@ class _EditProductViewState extends State<EditProductView> {
           2: FlexColumnWidth(1),
         },
         children: [
-           TableRow(
+          TableRow(
             children: [
               const SizedBox.shrink(),
               _buildAmountField(notifier, controller1, 1),
@@ -626,38 +625,37 @@ class _EditProductViewState extends State<EditProductView> {
       return null;
     }
     
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: TextFormField(
-          enabled: notifier.value.enabled,
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-          ),
-          controller: controller,
-          keyboardType: TextInputType.number,
-          validator: notifier.value.enabled ? validator : null,
-          autovalidateMode: AutovalidateMode.always,
-          onChanged: (String? value) {
-            if (value != null && value.isNotEmpty) {
-              try {
-                value = value.replaceAll(",", ".");
-                var cursorPos = controller.selection.baseOffset;
-                controller.text = value;
-                controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
-                
-                var input = double.parse(value);
-                if (index == 1) {
-                  notifier.value = notifier.value.withAmount1(input);
-                } else {
-                  notifier.value = notifier.value.withAmount2(input);
-                }
-              } catch (e) {
-                devtools.log("Error: Invalid number in amount$index field");
-              }
-            }
-          },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: TextFormField(
+        enabled: notifier.value.enabled,
+        decoration: const InputDecoration(
+          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
         ),
+        controller: controller,
+        keyboardType: TextInputType.number,
+        validator: notifier.value.enabled ? validator : null,
+        autovalidateMode: AutovalidateMode.always,
+        onChanged: (String? value) {
+          if (value != null && value.isNotEmpty) {
+            try {
+              value = value.replaceAll(",", ".");
+              var cursorPos = controller.selection.baseOffset;
+              controller.text = value;
+              controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
+              
+              var input = double.parse(value);
+              if (index == 1) {
+                notifier.value = notifier.value.withAmount1(input);
+              } else {
+                notifier.value = notifier.value.withAmount2(input);
+              }
+            } catch (e) {
+              devtools.log("Error: Invalid number in amount$index field");
+            }
+          }
+        },
+        onTap: () => controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.value.text.length),
       ),
     );
   }
