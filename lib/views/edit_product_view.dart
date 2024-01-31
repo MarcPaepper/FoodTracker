@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/widgets/border_box.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -25,12 +26,13 @@ class _EditProductViewState extends State<EditProductView> {
   final _dataService = DataService.current();
   
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _name;
-  late final TextEditingController _densityAmount1;
-  late final TextEditingController _densityAmount2;
-  late final TextEditingController _quantityAmount1;
-  late final TextEditingController _quantityAmount2;
-  late final TextEditingController _quantityName;
+  late final TextEditingController _productNameController;
+  late final TextEditingController _densityAmount1Controller;
+  late final TextEditingController _densityAmount2Controller;
+  late final TextEditingController _quantityAmount1Controller;
+  late final TextEditingController _quantityAmount2Controller;
+  late final TextEditingController _quantityNameController;
+  late final TextEditingController _amountForIngredientsController;
   
   late final bool isEdit;
   
@@ -41,7 +43,9 @@ class _EditProductViewState extends State<EditProductView> {
   final _quantityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultQuantity());
   final _defaultUnitNotifier = ValueNotifier<Unit>(Unit.g);
   
-  var isDuplicate = ValueNotifier<bool>(false);
+  final _autoCalcAmountNotifier = ValueNotifier<bool>(false);
+  
+  final _isDuplicateNotifier = ValueNotifier<bool>(false);
   
   @override
   void initState() {
@@ -54,12 +58,13 @@ class _EditProductViewState extends State<EditProductView> {
     
     isEdit = widget.isEdit ?? false;
     
-    _name = TextEditingController();
-    _densityAmount1 = TextEditingController();
-    _densityAmount2 = TextEditingController();
-    _quantityAmount1 = TextEditingController();
-    _quantityAmount2 = TextEditingController();
-    _quantityName = TextEditingController();
+    _productNameController = TextEditingController();
+    _densityAmount1Controller = TextEditingController();
+    _densityAmount2Controller = TextEditingController();
+    _quantityAmount1Controller = TextEditingController();
+    _quantityAmount2Controller = TextEditingController();
+    _quantityNameController = TextEditingController();
+    _amountForIngredientsController = TextEditingController();
     
     _dataService.open(dbName);
     super.initState();
@@ -67,7 +72,13 @@ class _EditProductViewState extends State<EditProductView> {
   
   @override
   void dispose() {
-    _name.dispose();
+    _productNameController.dispose();
+    _densityAmount1Controller.dispose();
+    _densityAmount2Controller.dispose();
+    _quantityAmount1Controller.dispose();
+    _quantityAmount2Controller.dispose();
+    _quantityNameController.dispose();
+    _amountForIngredientsController.dispose();
     super.dispose();
   }
   
@@ -95,19 +106,21 @@ class _EditProductViewState extends State<EditProductView> {
                   _defaultUnitNotifier.value = preEditProduct!.defaultUnit;
                   _densityConversionNotifier.value = preEditProduct!.densityConversion;
                   _quantityConversionNotifier.value = preEditProduct!.quantityConversion;
+                  _autoCalcAmountNotifier.value = preEditProduct!.autoCalcAmount;
                 } catch (e) {
                   return const Text("Error: Product not found");
                 }
               }
-              _name.text = widget.productName ?? "";
-              _densityAmount1.text = preEditProduct?.densityConversion.amount1.toString() ?? Conversion.defaultDensity().amount1.toString();
-              _densityAmount2.text = preEditProduct?.densityConversion.amount2.toString() ?? Conversion.defaultDensity().amount2.toString();
-              _quantityAmount1.text = preEditProduct?.quantityConversion.amount1.toString() ?? Conversion.defaultQuantity().amount1.toString();
-              _quantityAmount2.text = preEditProduct?.quantityConversion.amount2.toString() ?? Conversion.defaultQuantity().amount2.toString();
-              _quantityName.text = preEditProduct?.quantityUnit ?? "x";
+              _productNameController.text = widget.productName ?? "";
+              _densityAmount1Controller.text = preEditProduct?.densityConversion.amount1.toString() ?? Conversion.defaultDensity().amount1.toString();
+              _densityAmount2Controller.text = preEditProduct?.densityConversion.amount2.toString() ?? Conversion.defaultDensity().amount2.toString();
+              _quantityAmount1Controller.text = preEditProduct?.quantityConversion.amount1.toString() ?? Conversion.defaultQuantity().amount1.toString();
+              _quantityAmount2Controller.text = preEditProduct?.quantityConversion.amount2.toString() ?? Conversion.defaultQuantity().amount2.toString();
+              _quantityNameController.text = preEditProduct?.quantityName ?? "x";
+              _amountForIngredientsController.text = preEditProduct?.amountForIngredients.toString() ?? "100";
               
               // remove ".0" from amount fields if it is the end of the string
-              var amountFields = [_densityAmount1, _densityAmount2, _quantityAmount1, _quantityAmount2];
+              var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
               for (var field in amountFields) {
                 var text = field.text;
                 if (text.endsWith(".0")) {
@@ -181,7 +194,7 @@ class _EditProductViewState extends State<EditProductView> {
     var textField = Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextFormField(
-        controller: _name,
+        controller: _productNameController,
         decoration: const InputDecoration(
           labelText: "Name"
         ),
@@ -189,17 +202,17 @@ class _EditProductViewState extends State<EditProductView> {
           for (var prod in products) {
             if (prod.name == value && prod.name != widget.productName) {
               // change notifier after build complete
-              if (!isDuplicate.value) {
+              if (!_isDuplicateNotifier.value) {
                 Future(() {
-                  isDuplicate.value = true;
+                  _isDuplicateNotifier.value = true;
                 });
               }
               return "Already taken";
             }
           }
-          if (isDuplicate.value) {
+          if (_isDuplicateNotifier.value) {
             Future(() {
-              isDuplicate.value = false;
+              _isDuplicateNotifier.value = false;
             });
           }
           if (value == null || value.isEmpty) {
@@ -212,7 +225,7 @@ class _EditProductViewState extends State<EditProductView> {
     );
     
     return ValueListenableBuilder<bool>(
-      valueListenable: isDuplicate,
+      valueListenable: _isDuplicateNotifier,
       builder: (context, value, child) {
         return Column(
           children: [
@@ -230,7 +243,7 @@ class _EditProductViewState extends State<EditProductView> {
       padding: const EdgeInsets.all(8.0),
       child: TextButton(
         onPressed: () {
-          final name = _name.text;
+          final name = _productNameController.text;
           // navigate to edit view of duplicate product
           try {
             final product = products.firstWhere((prod) => prod.name == name);
@@ -296,7 +309,7 @@ class _EditProductViewState extends State<EditProductView> {
     
     for (var unit in units) {
       if (unit == Unit.quantity) {
-        var quantityName = preEditProduct?.quantityUnit ?? "x";
+        var quantityName = preEditProduct?.quantityName ?? "x";
         items[unit] = RichText(
           text: TextSpan(
             style: TextStyle(
@@ -404,20 +417,20 @@ class _EditProductViewState extends State<EditProductView> {
     
     var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
     var text = checkBoxTexts[index];
-    var controller1 = index == 0 ? _densityAmount1 : _quantityAmount1;
-    var controller2 = index == 0 ? _densityAmount2 : _quantityAmount2;
+    var controller1 = index == 0 ? _densityAmount1Controller : _quantityAmount1Controller;
+    var controller2 = index == 0 ? _densityAmount2Controller : _quantityAmount2Controller;
     var units1 = index == 0 ? volumetricUnits : null;
     var units2 = index == 0 ? weightUnits : Unit.values.where((unit) => unit != Unit.quantity).toList();
 
     var enabled = conversion.enabled;
     var textAlpha = enabled ? 255 : 100;
     String? validationString = validateConversion(index);
-    Color borderColor;
+    Color? borderColor;
     if (enabled) {
       if (validationString != null) {
         borderColor = const Color.fromARGB(255, 230, 0, 0);
       } else {
-        borderColor = const Color.fromARGB(200, 25, 82, 77);
+        borderColor = null; // default
       }
     } else {
       borderColor = const Color.fromARGB(130, 158, 158, 158);
@@ -440,7 +453,7 @@ class _EditProductViewState extends State<EditProductView> {
       // quantity name field instead of dropdown
       dropdown1 = TextFormField(
         enabled: conversion.enabled,
-        controller: _quantityName,
+        controller: _quantityNameController,
         decoration: const InputDecoration(
           labelText: "Designation",
         ),
@@ -525,62 +538,53 @@ class _EditProductViewState extends State<EditProductView> {
         ],
       );
     
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: borderColor,
-            width: 2,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
-          child: Column(
-            children: [
-              SwitchListTile(
-                value: enabled,
-                controlAffinity: ListTileControlAffinity.leading,
-                onChanged: (bool value) {
-                  // validate form after future build
-                  if (!value) {
-                    Future(() {
-                      _formKey.currentState!.validate();
-                    });
-                  }
-                  notifier.value = notifier.value.switched(value);
-                },
-                title: Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(
-                    text,
-                    style: TextStyle(
-                      color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
-                      fontSize: 16,
-                    ),
+    return BorderBox(
+      borderColor: borderColor,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
+        child: Column(
+          children: [
+            SwitchListTile(
+              value: enabled,
+              controlAffinity: ListTileControlAffinity.leading,
+              onChanged: (bool value) {
+                // validate form after future build
+                if (!value) {
+                  Future(() {
+                    _formKey.currentState!.validate();
+                  });
+                }
+                notifier.value = notifier.value.switched(value);
+              },
+              title: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
+                    fontSize: 16,
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              inputFields,
-              // Text for validation message
-              if (validationString != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                  child: 
-                  Text(
-                    validationString,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 15,
-                    ),
+            ),
+            const SizedBox(height: 8),
+            inputFields,
+            // Text for validation message
+            if (validationString != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                child: 
+                Text(
+                  validationString,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 15,
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
-      )
+      ),
     );
   }
   
@@ -597,12 +601,12 @@ class _EditProductViewState extends State<EditProductView> {
         if (defUnit != Unit.quantity) {
           bool different = volumetricUnits.contains(defUnit) ^ volumetricUnits.contains(convNotifier.value.unit2);
           if (different && !otherConvNotifier.value.enabled) {
-            return "Cannot convert quantity (${_quantityName.text}) to default unit (${unitToString(defUnit)}) without density conversion.";
+            return "Cannot convert quantity (${_quantityNameController.text}) to default unit (${unitToString(defUnit)}) without density conversion.";
           }
         }
       } else {
         if (defUnit == Unit.quantity && !otherConvNotifier.value.enabled) {
-          return "If the default unit is quantity (${_quantityName.text}), the quantity conversion must be enabled.";
+          return "If the default unit is quantity (${_quantityNameController.text}), the quantity conversion must be enabled.";
         }
       }
     }
@@ -621,6 +625,11 @@ class _EditProductViewState extends State<EditProductView> {
       }
       if (value == null || value.isEmpty) {
         return "Required Field";
+      }
+      try {
+        double.parse(value);
+      } catch (e) {
+        return "Invalid Number";
       }
       return null;
     }
@@ -661,27 +670,109 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Widget _buildIngredientList() {
-    return const Text("Ingredients");
+    
+    return ValueListenableBuilder(
+      valueListenable: _productNameController,
+      builder: (contextName, valueName, childName) {
+        return ValueListenableBuilder(
+          valueListenable: _defaultUnitNotifier,
+            builder: (contextUnit, valueUnit, childUnit) {
+            return ValueListenableBuilder(
+              valueListenable: _quantityNameController,
+              builder: (contextQuantityName, valueQuantityName, childQuantityName) {
+                return ValueListenableBuilder(
+                  valueListenable: _autoCalcAmountNotifier,
+                  builder: (contextAutoCalc, valueAutoCalc, childAutoCalc) {
+                    var productName = valueName.text != "" ? "'${valueName.text}'" : "the product";
+                    var quantityName = valueQuantityName.text != "" ? valueQuantityName.text : "quantities";
+                    
+                    return BorderBox(
+                      title: "Ingredients",
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            SwitchListTile(
+                              value: valueAutoCalc,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              onChanged: (bool value) {
+                                _autoCalcAmountNotifier.value = value;
+                              },
+                              title: const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Text(
+                                  "Auto calculate the resulting amount",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                // text input for amount for ingredients
+                                TextFormField(
+                                  enabled: !valueAutoCalc,
+                                  controller: _amountForIngredientsController,
+                                  keyboardType: TextInputType.number,
+                                  validator: (String? value) {
+                                    if (valueAutoCalc) {
+                                      return null;
+                                    }
+                                    if (value == null || value.isEmpty) {
+                                      return "Required Field";
+                                    }
+                                    return null;
+                                  },
+                                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    );
   }
   
   Widget _buildAddButton() => Padding(
     padding: const EdgeInsets.all(8.0),
     child: TextButton(
       onPressed: () {
-        final name = _name.text;
+        final name = _productNameController.text;
         final defUnit = _defaultUnitNotifier.value;
         final densityConversion = _densityConversionNotifier.value;
         final quantityConversion = _quantityConversionNotifier.value;
-        final quantityName = _quantityName.text;
+        final quantityName = _quantityNameController.text;
+        final autoCalcAmount = _autoCalcAmountNotifier.value;
+        final amountForIngredients = _amountForIngredientsController.text;
+        
         final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
         if (isValid) {
+          var product = Product(
+            id:                    isEdit ? _id : -1,
+            name:                  name,
+            defaultUnit:           defUnit,
+            densityConversion:     densityConversion,
+            quantityConversion:    quantityConversion,
+            quantityName:          quantityName,
+            autoCalcAmount:        autoCalcAmount,
+            amountForIngredients:  100, // TODO: calculate this
+          );
+          
           if (isEdit) {
-            var product = Product(_id, name, defUnit, densityConversion, quantityConversion, quantityName);
             _dataService.updateProduct(product);
           } else {
-            var product = Product(-1, name, defUnit, densityConversion, quantityConversion, quantityName);
             _dataService.createProduct(product);
           }
+          
           Navigator.of(context).pop();
         }
       },

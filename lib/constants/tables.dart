@@ -7,7 +7,9 @@ CREATE TABLE IF NOT EXISTS "product" (
 	"density_conversion"	TEXT,
 	"quantity_conversion"	TEXT,
 	"quantity_name"	TEXT,
-	"default_quantity"	TEXT,
+	"default_unit"	TEXT,
+	"auto_calc_amount"	INTEGER,
+	"amount_for_ingredients"	INTEGER,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 ''';

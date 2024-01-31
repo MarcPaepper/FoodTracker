@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:food_tracker/services/data/data_exceptions.dart';
+import 'package:food_tracker/utility/random.dart';
 
 import 'data_provider.dart';
 import 'data_objects.dart';
@@ -22,7 +23,18 @@ class DebugDataProvider implements DataProvider {
       const Duration(milliseconds: 100), () {
         products = [];
         for (int i = 1; i <= 20; i++) {
-          products.add(Product(i, "Example $i", Unit.g, Conversion.fromString("100 ml = 100 g disabled"), Conversion.fromString("1 x = 100 g disabled"), "x"));
+        products.add(
+          Product(
+            id: i,
+            name:                 "Example $i",
+            defaultUnit:          Unit.g,
+            densityConversion:    Conversion.fromString("100 ml = 100 g disabled"),
+            quantityConversion:   Conversion.fromString("1 x = 100 g disabled"),
+            quantityName:         "x",
+            autoCalcAmount:       false,
+            amountForIngredients: 100,
+          )
+        );
         }
         // create the 7 default nutrional values
         nutValues = [
@@ -83,12 +95,14 @@ class DebugDataProvider implements DataProvider {
       if (product.id > highestId) highestId = product.id;
     }
     final newProduct = Product(
-      highestId + 1,
-      product.name,
-      product.defaultUnit,
-      product.densityConversion,
-      product.quantityConversion,
-      product.quantityUnit,
+      id:                  highestId + 1,
+      name:                product.name,
+      defaultUnit:         product.defaultUnit,
+      densityConversion:   product.densityConversion,
+      quantityConversion:  product.quantityConversion,
+      quantityName:        product.quantityName,
+      autoCalcAmount:      product.autoCalcAmount,
+      amountForIngredients:product.amountForIngredients,
     );
     products.add(newProduct);
     _productsStreamController.add(products);

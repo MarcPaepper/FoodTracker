@@ -17,13 +17,15 @@ const productTable = "product";
 const mealTable = "meal";
 const nutrionalValueTable = "nutritional_value";
 
-const idColumn = "id";
-const nameColumn = "name";
-const dateColumn = "date";
-const quantityNameColumn = "quantity_name";
-const densityConversionColumn = "density_conversion";
-const quantityConversionColumn = "quantity_conversion";
-const defaultUnitColumn = "default_quantity";
+const idColumn                    = "id";
+const nameColumn                  = "name";
+const dateColumn                  = "date";
+const quantityNameColumn          = "quantity_name";
+const densityConversionColumn     = "density_conversion";
+const quantityConversionColumn    = "quantity_conversion";
+const defaultUnitColumn           = "default_unit";
+const autoCalcAmountColumn        = "auto_calc_amount";
+const amountForIngredientsColumn  = "amount_for_ingredients";
 
 const unitNameColumn = "unit";
 
@@ -151,12 +153,14 @@ class SqfliteDataProvider implements DataProvider {
   
   Product _dbRowToProduct(Map<String, Object?> row) =>
     Product(
-      row[idColumn] as int,
-      row[nameColumn] as String,
-      unitFromString(row[defaultUnitColumn] as String),
-      Conversion.fromString(row[densityConversionColumn] as String),
-      Conversion.fromString(row[quantityConversionColumn] as String),
-      row[quantityNameColumn] as String,
+      id:                    row[idColumn] as int,
+      name:                  row[nameColumn] as String,
+      defaultUnit:           unitFromString(row[defaultUnitColumn] as String),
+      densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
+      quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
+      quantityName:          row[quantityNameColumn] as String,
+      autoCalcAmount:        row[autoCalcAmountColumn] == 1,
+      amountForIngredients:  row[amountForIngredientsColumn] as double,
     );
   
   @override
@@ -171,7 +175,9 @@ class SqfliteDataProvider implements DataProvider {
       defaultUnitColumn: unitToString(product.defaultUnit),
       densityConversionColumn: product.densityConversion.toString(),
       quantityConversionColumn: product.quantityConversion.toString(),
-      quantityNameColumn: product.quantityUnit,
+      quantityNameColumn: product.quantityName,
+      autoCalcAmountColumn: product.autoCalcAmount ? 1 : 0,
+      amountForIngredientsColumn: product.amountForIngredients,
     });
     
     var newProduct = Product.copyWithDifferentId(product, id);
@@ -190,7 +196,9 @@ class SqfliteDataProvider implements DataProvider {
       defaultUnitColumn: unitToString(product.defaultUnit),
       densityConversionColumn: product.densityConversion.toString(),
       quantityConversionColumn: product.quantityConversion.toString(),
-      quantityNameColumn: product.quantityUnit,
+      quantityNameColumn: product.quantityName,
+      autoCalcAmountColumn: product.autoCalcAmount ? 1 : 0,
+      amountForIngredientsColumn: product.amountForIngredients,
     }, where: 'id = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     

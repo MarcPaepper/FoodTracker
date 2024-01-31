@@ -78,9 +78,6 @@ class Conversion {
   final Unit unit2;
   final double amount2;
   
-  //const Conversion(this.enabled, this.unit1, this.amount1, this.unit2, this.amount2);
-  
-  // same as above but with named required parameters
   const Conversion({
     required this.enabled,
     required this.unit1,
@@ -205,21 +202,35 @@ class Product {
 												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
   Conversion quantityConversion; // factor how much one quantity of the product weighs / contains
                         // e.g. [("kg", "quantity", 3)] means 3 kg = 1 quantity
-  String quantityUnit;
+  String quantityName;
+  bool autoCalcAmount; // if true, the amount of the product is calculated automatically from the ingredients list
+  double amountForIngredients; // How much of the product is made out of the ingredients
   
 	Map<NutrionalValue, double?> nutValues = {};
   
-  Product(this.id, this.name, this.defaultUnit, this.densityConversion, this.quantityConversion, this.quantityUnit);
+  // same as above but with named parameters
+  Product({
+    required this.id,
+    required this.name,
+    required this.defaultUnit,
+    required this.densityConversion,
+    required this.quantityConversion,
+    required this.quantityName,
+    required this.autoCalcAmount,
+    required this.amountForIngredients,
+  });
   
   // same as above but as factory constructor
   factory Product.copyWithDifferentId(Product product, int newId) {
     return Product(
-      newId,
-      product.name,
-      product.defaultUnit,
-      product.densityConversion,
-      product.quantityConversion,
-      product.quantityUnit,
+      id: newId,
+      name:                 product.name,
+      defaultUnit:          product.defaultUnit,
+      densityConversion:    product.densityConversion,
+      quantityConversion:   product.quantityConversion,
+      quantityName:         product.quantityName,
+      autoCalcAmount:       product.autoCalcAmount,
+      amountForIngredients: product.amountForIngredients,
     );
   }
   
