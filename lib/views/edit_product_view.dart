@@ -478,7 +478,7 @@ class _EditProductViewState extends State<EditProductView> {
       ),
     );
     
-    bool isWide = MediaQuery.of(context).size.width > 600;
+    bool isWide = MediaQuery.of(context).size.width > 450;
     devtools.log("width = ${MediaQuery.of(context).size.width}");
     
     Widget inputFields = isWide
@@ -491,27 +491,39 @@ class _EditProductViewState extends State<EditProductView> {
           dropdown2,
         ]
       )
-      : GridView.count(
-        
-        // physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
+      : Table(
+        columnWidths: const {
+          0: IntrinsicColumnWidth(),
+          1: FlexColumnWidth(1),
+          2: FlexColumnWidth(1),
+        },
         children: [
-          const SizedBox.shrink(),
-          const SizedBox.shrink(),
-          // // Row(
-          // //   children: [
-          //     _buildAmountField(notifier, controller1, 1),
-          //     dropdown1,
-          // //   ],
-          // // ),
-          // equalSign,
-          // // Row(
-          // //   children: [
-          //     _buildAmountField(notifier, controller2, 2),
-          //     dropdown2,
-          // //   ],
-          // // ),
-        ]
+           TableRow(
+            children: [
+              const SizedBox.shrink(),
+              _buildAmountField(notifier, controller1, 1),
+              dropdown1,
+            ]
+          ),
+          // spacing
+          const TableRow(
+            children: [
+              SizedBox(height: 15),
+              SizedBox(height: 15),
+              SizedBox(height: 15),
+            ]
+          ),
+          TableRow(
+            children: [
+              TableCell(
+                verticalAlignment: TableCellVerticalAlignment.middle,
+                child: equalSign,
+              ),
+              _buildAmountField(notifier, controller2, 2),
+              dropdown2,
+            ]
+          ),
+        ],
       );
     
     return Padding(
