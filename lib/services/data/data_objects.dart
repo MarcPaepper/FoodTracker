@@ -205,6 +205,7 @@ class Product {
   String quantityName;
   bool autoCalcAmount; // if true, the amount of the product is calculated automatically from the ingredients list
   double amountForIngredients; // How much of the product is made out of the ingredients
+  final Unit ingredientsUnit;
   
 	Map<NutrionalValue, double?> nutValues = {};
   
@@ -218,6 +219,7 @@ class Product {
     required this.quantityName,
     required this.autoCalcAmount,
     required this.amountForIngredients,
+    required this.ingredientsUnit,
   });
   
   // same as above but as factory constructor
@@ -231,6 +233,7 @@ class Product {
       quantityName:         product.quantityName,
       autoCalcAmount:       product.autoCalcAmount,
       amountForIngredients: product.amountForIngredients,
+      ingredientsUnit:      product.ingredientsUnit,
     );
   }
   

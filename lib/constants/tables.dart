@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS "product" (
 	"default_unit"	TEXT,
 	"auto_calc_amount"	INTEGER,
 	"amount_for_ingredients"	INTEGER,
+	"ingredients_unit"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 ''';

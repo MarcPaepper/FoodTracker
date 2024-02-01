@@ -26,6 +26,7 @@ const quantityConversionColumn    = "quantity_conversion";
 const defaultUnitColumn           = "default_unit";
 const autoCalcAmountColumn        = "auto_calc_amount";
 const amountForIngredientsColumn  = "amount_for_ingredients";
+const ingredientsUnitColumn       = "ingredients_unit";
 
 const unitNameColumn = "unit";
 
@@ -161,6 +162,7 @@ class SqfliteDataProvider implements DataProvider {
       quantityName:          row[quantityNameColumn] as String,
       autoCalcAmount:        row[autoCalcAmountColumn] == 1,
       amountForIngredients:  row[amountForIngredientsColumn] as double,
+      ingredientsUnit:       unitFromString(row[ingredientsUnitColumn] as String),
     );
   
   @override
@@ -171,13 +173,14 @@ class SqfliteDataProvider implements DataProvider {
     if (results.isNotEmpty) throw NotUniqueException();
     
     final id = await _db!.insert(productTable, {
-      nameColumn: product.name,
-      defaultUnitColumn: unitToString(product.defaultUnit),
-      densityConversionColumn: product.densityConversion.toString(),
-      quantityConversionColumn: product.quantityConversion.toString(),
-      quantityNameColumn: product.quantityName,
-      autoCalcAmountColumn: product.autoCalcAmount ? 1 : 0,
-      amountForIngredientsColumn: product.amountForIngredients,
+      nameColumn:                  product.name,
+      defaultUnitColumn:           unitToString(product.defaultUnit),
+      densityConversionColumn:     product.densityConversion.toString(),
+      quantityConversionColumn:    product.quantityConversion.toString(),
+      quantityNameColumn:          product.quantityName,
+      autoCalcAmountColumn:        product.autoCalcAmount ? 1 : 0,
+      amountForIngredientsColumn:  product.amountForIngredients,
+      ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
     });
     
     var newProduct = Product.copyWithDifferentId(product, id);
@@ -192,13 +195,13 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     final updatedCount = await _db!.update(productTable, {
-      nameColumn: product.name,
-      defaultUnitColumn: unitToString(product.defaultUnit),
-      densityConversionColumn: product.densityConversion.toString(),
-      quantityConversionColumn: product.quantityConversion.toString(),
-      quantityNameColumn: product.quantityName,
-      autoCalcAmountColumn: product.autoCalcAmount ? 1 : 0,
-      amountForIngredientsColumn: product.amountForIngredients,
+      nameColumn:                  product.name,
+      defaultUnitColumn:           unitToString(product.defaultUnit),
+      densityConversionColumn:     product.densityConversion.toString(),
+      quantityConversionColumn:    product.quantityConversion.toString(),
+      quantityNameColumn:          product.quantityName,
+      autoCalcAmountColumn:        product.autoCalcAmount ? 1 : 0,
+      amountForIngredientsColumn:  product.amountForIngredients,
     }, where: 'id = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     

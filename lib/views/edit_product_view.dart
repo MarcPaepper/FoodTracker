@@ -44,6 +44,7 @@ class _EditProductViewState extends State<EditProductView> {
   final _defaultUnitNotifier = ValueNotifier<Unit>(Unit.g);
   
   final _autoCalcAmountNotifier = ValueNotifier<bool>(false);
+  final _ingredientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
   
   final _isDuplicateNotifier = ValueNotifier<bool>(false);
   
@@ -107,6 +108,7 @@ class _EditProductViewState extends State<EditProductView> {
                   _densityConversionNotifier.value = preEditProduct!.densityConversion;
                   _quantityConversionNotifier.value = preEditProduct!.quantityConversion;
                   _autoCalcAmountNotifier.value = preEditProduct!.autoCalcAmount;
+                  _ingredientsUnitNotifier.value = preEditProduct!.ingredientsUnit;
                 } catch (e) {
                   return const Text("Error: Product not found");
                 }
@@ -130,7 +132,7 @@ class _EditProductViewState extends State<EditProductView> {
               
               return SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(7.0),
+                  padding: const EdgeInsets.all(6.0),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -139,9 +141,9 @@ class _EditProductViewState extends State<EditProductView> {
                         _buildNameField(products),
                         const SizedBox(height: 5),
                         _buildDefaultUnitDropdown(),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         _buildConversionFields(),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 14),
                         _buildIngredientList(),
                         _buildAddButton(),
                       ]
@@ -303,13 +305,13 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Map<Unit, Widget> _buildUnitItems({List<Unit>? units}) {
+  Map<Unit, Widget> _buildUnitItems({List<Unit>? units, bool verbose = true}) {
     var items = <Unit, Widget>{};
     units ??= Unit.values;
     
     for (var unit in units) {
-      if (unit == Unit.quantity) {
-        var quantityName = preEditProduct?.quantityName ?? "x";
+      if (unit == Unit.quantity && verbose) {
+        var quantityName = _quantityNameController.text;
         items[unit] = RichText(
           text: TextSpan(
             style: TextStyle(
@@ -332,7 +334,7 @@ class _EditProductViewState extends State<EditProductView> {
       } else {
         items[unit] = RichText(
           text: TextSpan(
-            text: unitToString(unit),
+            text: unit == Unit.quantity ? _quantityNameController.text : unitToString(unit),
             style: TextStyle(
               fontFamily: GoogleFonts.nunitoSans().fontFamily,
               fontSize: 16,
@@ -689,7 +691,7 @@ class _EditProductViewState extends State<EditProductView> {
                     return BorderBox(
                       title: "Ingredients",
                       child: Padding(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(0),
                         child: Column(
                           children: [
                             SwitchListTile(
@@ -708,25 +710,67 @@ class _EditProductViewState extends State<EditProductView> {
                                 ),
                               ),
                             ),
-                            Row(
-                              children: [
-                                // text input for amount for ingredients
-                                TextFormField(
-                                  enabled: !valueAutoCalc,
-                                  controller: _amountForIngredientsController,
-                                  keyboardType: TextInputType.number,
-                                  validator: (String? value) {
-                                    if (valueAutoCalc) {
-                                      return null;
-                                    }
-                                    if (value == null || value.isEmpty) {
-                                      return "Required Field";
-                                    }
-                                    return null;
-                                  },
-                                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                                ),
-                              ],
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(4, 0, 8, 8),
+                              child: Row(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 12),
+                                    child: valueAutoCalc ? 
+                                      Text(
+                                        _amountForIngredientsController.text,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                        )
+                                      )
+                                      : SizedBox(
+                                        width: 70,
+                                        child: TextFormField(
+                                          enabled: !valueAutoCalc,
+                                          controller: _amountForIngredientsController,
+                                          keyboardType: TextInputType.number,
+                                          decoration: const InputDecoration(
+                                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                                          ),
+                                          validator: (String? value) {
+                                            if (valueAutoCalc) {
+                                              return null;
+                                            }
+                                            if (value == null || value.isEmpty) {
+                                              return "Required Field";
+                                            }
+                                            try {
+                                              double.parse(value);
+                                            } catch (e) {
+                                              return "Invalid Number";
+                                            }
+                                            return null;
+                                          },
+                                          autovalidateMode: AutovalidateMode.onUserInteraction,
+                                        )
+                                      ),
+                                  ),
+                                  SizedBox(
+                                    width: 95,
+                                    child: _buildUnitDropdown(
+                                      items: _buildUnitItems(verbose: false), 
+                                      current: _ingredientsUnitNotifier.value,
+                                      onChanged: (Unit? unit) => _ingredientsUnitNotifier.value = unit ?? Unit.g,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      "of $productName contains:",
+                                      maxLines: 3,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             )
                           ],
                         ),
@@ -753,6 +797,7 @@ class _EditProductViewState extends State<EditProductView> {
         final quantityName = _quantityNameController.text;
         final autoCalcAmount = _autoCalcAmountNotifier.value;
         final amountForIngredients = _amountForIngredientsController.text;
+        final ingredientsUnit = _ingredientsUnitNotifier.value;
         
         final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
         if (isValid) {
@@ -765,6 +810,7 @@ class _EditProductViewState extends State<EditProductView> {
             quantityName:          quantityName,
             autoCalcAmount:        autoCalcAmount,
             amountForIngredients:  100, // TODO: calculate this
+            ingredientsUnit:       ingredientsUnit,
           );
           
           if (isEdit) {

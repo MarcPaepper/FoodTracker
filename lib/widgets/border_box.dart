@@ -54,21 +54,24 @@ class _BorderBoxState extends State<BorderBox> {
           : CrossAxisAlignment.center,
         children: [
           Container(
-              transform: Matrix4.translationValues(
-                widget.titlePosition == TitlePosition.left
-                  ? 18
-                  : 0,
-                -13,
-                0,
-              ),
+            transform: Matrix4.translationValues(
+              widget.titlePosition == TitlePosition.left
+                ? 18
+                : 0,
+              -13,
+              0,
+            ),
             // background color
             color: widget.titleBgColor,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 7.0),
-              child: titleWidget!,
+              child: titleWidget!
             )
           ),
-          widget.child!,
+          Container(
+            transform: widget.title == null ? null : Matrix4.translationValues(0, -8, 0),
+            child: widget.child!,
+          )
         ],
       );
     }

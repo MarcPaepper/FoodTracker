@@ -33,6 +33,7 @@ class DebugDataProvider implements DataProvider {
             quantityName:         "x",
             autoCalcAmount:       false,
             amountForIngredients: 100,
+            ingredientsUnit:      Unit.g,
           )
         );
         }
@@ -103,6 +104,7 @@ class DebugDataProvider implements DataProvider {
       quantityName:        product.quantityName,
       autoCalcAmount:      product.autoCalcAmount,
       amountForIngredients:product.amountForIngredients,
+      ingredientsUnit:     product.ingredientsUnit,
     );
     products.add(newProduct);
     _productsStreamController.add(products);
