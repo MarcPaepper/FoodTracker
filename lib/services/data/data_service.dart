@@ -7,6 +7,8 @@ import 'data_objects.dart';
 import 'debug_data_provider.dart';
 import 'sqflite_data_provider.dart';
 
+import "dart:developer" as devtools show log;
+
 const currentMode = kIsWeb ? DebugDataProvider : SqfliteDataProvider;
 
 class DataService implements DataProvider {
@@ -51,7 +53,6 @@ class DataService implements DataProvider {
   // Products
 
   @override Stream<List<Product>> streamProducts()         => _provider.streamProducts();
-  @override void reloadProductStream()                     => _provider.reloadProductStream();
   @override Future<Iterable<Product>> getAllProducts()     => _condLoad().then((_) => _provider.getAllProducts());
   @override Future<Product> getProduct(int id)             => _condLoad().then((_) => _provider.getProduct(id));
   @override Future<Product> createProduct(Product product) => _condLoad().then((_) => _provider.createProduct(product));
@@ -74,6 +75,7 @@ class DataService implements DataProvider {
     if (_provider.isLoaded()) {
       return Future.value();
     } else {
+      devtools.log("Loading data");
       return _provider.open(dbName);
     }
   }

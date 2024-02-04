@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:food_tracker/services/data/data_exceptions.dart';
-import 'package:food_tracker/utility/random.dart';
 
 import 'data_provider.dart';
 import 'data_objects.dart';
@@ -12,7 +11,7 @@ class DebugDataProvider implements DataProvider {
   List<Product> products = [];
   List<NutrionalValue> nutValues = [];
   bool loaded = false;
-  // StreamController
+  
   final _productsStreamController = StreamController<List<Product>>.broadcast();
   final _nutrionalValuesStreamController = StreamController<List<NutrionalValue>>.broadcast();
   
@@ -72,9 +71,6 @@ class DebugDataProvider implements DataProvider {
     if (loaded) _productsStreamController.add(products);
     return _productsStreamController.stream;
   }
-  
-  @override
-  void reloadProductStream() => loaded ? _productsStreamController.add(products) : {};
   
   @override
   Future<Iterable<Product>> getAllProducts() {

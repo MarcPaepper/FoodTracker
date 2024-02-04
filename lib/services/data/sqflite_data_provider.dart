@@ -118,11 +118,6 @@ class SqfliteDataProvider implements DataProvider {
   Stream<List<Product>> streamProducts() => _productsStreamController.stream;
   
   @override
-  void reloadProductStream() {
-    if (isLoaded()) _productsStreamController.add(_products);
-  }
-  
-  @override
   Future<Iterable<Product>> getAllProducts() async {
     if (!isLoaded()) throw DataNotLoadedException();
     
@@ -161,7 +156,9 @@ class SqfliteDataProvider implements DataProvider {
       quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
       quantityName:          row[quantityNameColumn] as String,
       autoCalcAmount:        row[autoCalcAmountColumn] == 1,
-      amountForIngredients:  row[amountForIngredientsColumn] as double,
+      amountForIngredients:  row[amountForIngredientsColumn] is double ?
+                              row[amountForIngredientsColumn] as double :
+                              (row[amountForIngredientsColumn] as int).toDouble(),
       ingredientsUnit:       unitFromString(row[ingredientsUnitColumn] as String),
     );
   

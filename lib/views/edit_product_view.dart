@@ -25,7 +25,7 @@ class EditProductView extends StatefulWidget {
 class _EditProductViewState extends State<EditProductView> {
   final _dataService = DataService.current();
   
-  final _formKey = GlobalKey<FormState>();
+  late final GlobalKey<FormState> _formKey;
   late final TextEditingController _productNameController;
   late final TextEditingController _densityAmount1Controller;
   late final TextEditingController _densityAmount2Controller;
@@ -57,6 +57,8 @@ class _EditProductViewState extends State<EditProductView> {
       });
     }
     
+    _formKey = GlobalKey<FormState>();
+    
     isEdit = widget.isEdit ?? false;
     
     _productNameController = TextEditingController();
@@ -67,7 +69,6 @@ class _EditProductViewState extends State<EditProductView> {
     _quantityNameController = TextEditingController();
     _amountForIngredientsController = TextEditingController();
     
-    _dataService.open(dbName);
     super.initState();
   }
   
@@ -305,7 +306,7 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Map<Unit, Widget> _buildUnitItems({List<Unit>? units, bool verbose = true}) {
+  Map<Unit, Widget> _buildUnitItems({List<Unit>? units, bool verbose = true, int? maxWidth}) {
     var items = <Unit, Widget>{};
     units ??= Unit.values;
     
@@ -341,6 +342,14 @@ class _EditProductViewState extends State<EditProductView> {
               color: Colors.black,
             ),
           ),
+        );
+      }
+      
+      // limit width of items if maxWidth is set
+      if (maxWidth != null) {
+        items[unit] = SizedBox(
+          width: maxWidth.toDouble(),
+          child: items[unit],
         );
       }
     }
@@ -380,6 +389,7 @@ class _EditProductViewState extends State<EditProductView> {
     
     return DropdownButtonFormField<Unit>(
       decoration: decoration,
+      isExpanded: true,
       value: current,
       items: items.entries.map((entry) => DropdownMenuItem<Unit>(
         value: entry.key,
@@ -415,178 +425,182 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Widget _buildConversionField(int index, ValueNotifier<Conversion> notifier, Conversion otherConversion, Unit defUnit) {
-    var conversion = notifier.value;
-    
-    var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
-    var text = checkBoxTexts[index];
-    var controller1 = index == 0 ? _densityAmount1Controller : _quantityAmount1Controller;
-    var controller2 = index == 0 ? _densityAmount2Controller : _quantityAmount2Controller;
-    var units1 = index == 0 ? volumetricUnits : null;
-    var units2 = index == 0 ? weightUnits : Unit.values.where((unit) => unit != Unit.quantity).toList();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var conversion = notifier.value;
+        
+        var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
+        var text = checkBoxTexts[index];
+        var controller1 = index == 0 ? _densityAmount1Controller : _quantityAmount1Controller;
+        var controller2 = index == 0 ? _densityAmount2Controller : _quantityAmount2Controller;
+        var units1 = index == 0 ? volumetricUnits : null;
+        var units2 = index == 0 ? weightUnits : Unit.values.where((unit) => unit != Unit.quantity).toList();
 
-    var enabled = conversion.enabled;
-    var textAlpha = enabled ? 255 : 100;
-    String? validationString = validateConversion(index);
-    Color? borderColor;
-    if (enabled) {
-      if (validationString != null) {
-        borderColor = const Color.fromARGB(255, 230, 0, 0);
-      } else {
-        borderColor = null; // default
-      }
-    } else {
-      borderColor = const Color.fromARGB(130, 158, 158, 158);
-    }
-    
-    // create unit dropdowns
-    Widget dropdown1;
-    if (units1 != null) {
-      dropdown1 = _buildUnitDropdown(
-        items: _buildUnitItems(units: units1),
-        enabled: conversion.enabled,
-        current: conversion.unit1,
-        onChanged: (Unit? unit) {
-          if (unit != null) {
-            notifier.value = notifier.value.withUnit1(unit);
+        var enabled = conversion.enabled;
+        var textAlpha = enabled ? 255 : 100;
+        String? validationString = validateConversion(index);
+        Color? borderColor;
+        if (enabled) {
+          if (validationString != null) {
+            borderColor = const Color.fromARGB(255, 230, 0, 0);
+          } else {
+            borderColor = null; // default
           }
+        } else {
+          borderColor = const Color.fromARGB(130, 158, 158, 158);
         }
-      );
-    } else {
-      // quantity name field instead of dropdown
-      dropdown1 = TextFormField(
-        enabled: conversion.enabled,
-        controller: _quantityNameController,
-        decoration: const InputDecoration(
-          labelText: "Designation",
-        ),
-        validator: (String? value) {
-          if (!conversion.enabled) {
-            return null;
-          }
-          if (value == null || value.isEmpty) {
-            return "Required Field";
-          }
-          return null;
-        },
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-      );
-    }
-    var dropdown2 = _buildUnitDropdown(
-      items: _buildUnitItems(units: units2),
-      enabled: conversion.enabled,
-      current: conversion.unit2,
-      onChanged: (Unit? unit) {
-        if (unit != null) {
-          notifier.value = notifier.value.withUnit2(unit);
-        }
-      }
-    );
-    
-    var equalSign = Padding(
-      padding: const EdgeInsets.only(left: 12),
-      child: Text(
-        "=",
-        style: TextStyle(
-          color: Colors.black.withAlpha(textAlpha),
-          fontSize: 16,
-        ),
-      ),
-    );
-    
-    bool isWide = MediaQuery.of(context).size.width > 450;
-    
-    Widget inputFields = isWide
-      ? Row(
-        children: [
-          Expanded(child: _buildAmountField(notifier, controller1, 1)),
-          Expanded(child: dropdown1),
-          equalSign,
-          Expanded(child: _buildAmountField(notifier, controller2, 2)),
-          Expanded(child: dropdown2),
-        ]
-      )
-      : Table(
-        columnWidths: const {
-          0: IntrinsicColumnWidth(),
-          1: FlexColumnWidth(1),
-          2: FlexColumnWidth(1),
-        },
-        children: [
-          TableRow(
-            children: [
-              const SizedBox.shrink(),
-              _buildAmountField(notifier, controller1, 1),
-              dropdown1,
-            ]
-          ),
-          // spacing
-          const TableRow(
-            children: [
-              SizedBox(height: 15),
-              SizedBox(height: 15),
-              SizedBox(height: 15),
-            ]
-          ),
-          TableRow(
-            children: [
-              TableCell(
-                verticalAlignment: TableCellVerticalAlignment.middle,
-                child: equalSign,
-              ),
-              _buildAmountField(notifier, controller2, 2),
-              dropdown2,
-            ]
-          ),
-        ],
-      );
-    
-    return BorderBox(
-      borderColor: borderColor,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
-        child: Column(
-          children: [
-            SwitchListTile(
-              value: enabled,
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: (bool value) {
-                // validate form after future build
-                if (!value) {
-                  Future(() {
-                    _formKey.currentState!.validate();
-                  });
-                }
-                notifier.value = notifier.value.switched(value);
-              },
-              title: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
-                    fontSize: 16,
-                  ),
-                ),
-              ),
+        
+        // create unit dropdowns
+        Widget dropdown1;
+        if (units1 != null) {
+          dropdown1 = _buildUnitDropdown(
+            items: _buildUnitItems(units: units1),
+            enabled: conversion.enabled,
+            current: conversion.unit1,
+            onChanged: (Unit? unit) {
+              if (unit != null) {
+                notifier.value = notifier.value.withUnit1(unit);
+              }
+            }
+          );
+        } else {
+          // quantity name field instead of dropdown
+          dropdown1 = TextFormField(
+            enabled: conversion.enabled,
+            controller: _quantityNameController,
+            decoration: const InputDecoration(
+              labelText: "Designation",
             ),
-            const SizedBox(height: 8),
-            inputFields,
-            // Text for validation message
-            if (validationString != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: 
-                Text(
-                  validationString,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 15,
+            validator: (String? value) {
+              if (!conversion.enabled) {
+                return null;
+              }
+              if (value == null || value.isEmpty) {
+                return "Required Field";
+              }
+              return null;
+            },
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+          );
+        }
+        var dropdown2 = _buildUnitDropdown(
+          items: _buildUnitItems(units: units2),
+          enabled: conversion.enabled,
+          current: conversion.unit2,
+          onChanged: (Unit? unit) {
+            if (unit != null) {
+              notifier.value = notifier.value.withUnit2(unit);
+            }
+          }
+        );
+        
+        var equalSign = Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Text(
+            "=",
+            style: TextStyle(
+              color: Colors.black.withAlpha(textAlpha),
+              fontSize: 16,
+            ),
+          ),
+        );
+        
+        bool isWide = constraints.maxWidth > 450;
+        
+        Widget inputFields = isWide
+          ? Row(
+            children: [
+              Expanded(child: _buildAmountField(notifier, controller1, 1)),
+              Expanded(child: dropdown1),
+              equalSign,
+              Expanded(child: _buildAmountField(notifier, controller2, 2)),
+              Expanded(child: dropdown2),
+            ]
+          )
+          : Table(
+            columnWidths: const {
+              0: IntrinsicColumnWidth(),
+              1: FlexColumnWidth(1),
+              2: FlexColumnWidth(1),
+            },
+            children: [
+              TableRow(
+                children: [
+                  const SizedBox.shrink(),
+                  _buildAmountField(notifier, controller1, 1),
+                  dropdown1,
+                ]
+              ),
+              // spacing
+              const TableRow(
+                children: [
+                  SizedBox(height: 15),
+                  SizedBox(height: 15),
+                  SizedBox(height: 15),
+                ]
+              ),
+              TableRow(
+                children: [
+                  TableCell(
+                    verticalAlignment: TableCellVerticalAlignment.middle,
+                    child: equalSign,
+                  ),
+                  _buildAmountField(notifier, controller2, 2),
+                  dropdown2,
+                ]
+              ),
+            ],
+          );
+        
+        return BorderBox(
+          borderColor: borderColor,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
+            child: Column(
+              children: [
+                SwitchListTile(
+                  value: enabled,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  onChanged: (bool value) {
+                    // validate form after future build
+                    if (!value) {
+                      Future(() {
+                        _formKey.currentState!.validate();
+                      });
+                    }
+                    notifier.value = notifier.value.switched(value);
+                  },
+                  title: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
+                const SizedBox(height: 8),
+                inputFields,
+                // Text for validation message
+                if (validationString != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    child: 
+                    Text(
+                      validationString,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      }
     );
   }
   
@@ -754,7 +768,7 @@ class _EditProductViewState extends State<EditProductView> {
                                   SizedBox(
                                     width: 95,
                                     child: _buildUnitDropdown(
-                                      items: _buildUnitItems(verbose: false), 
+                                      items: _buildUnitItems(verbose: true), 
                                       current: _ingredientsUnitNotifier.value,
                                       onChanged: (Unit? unit) => _ingredientsUnitNotifier.value = unit ?? Unit.g,
                                     ),
@@ -796,7 +810,7 @@ class _EditProductViewState extends State<EditProductView> {
         final quantityConversion = _quantityConversionNotifier.value;
         final quantityName = _quantityNameController.text;
         final autoCalcAmount = _autoCalcAmountNotifier.value;
-        final amountForIngredients = _amountForIngredientsController.text;
+        final amountForIngredients = double.parse(_amountForIngredientsController.text);
         final ingredientsUnit = _ingredientsUnitNotifier.value;
         
         final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
@@ -809,7 +823,7 @@ class _EditProductViewState extends State<EditProductView> {
             quantityConversion:    quantityConversion,
             quantityName:          quantityName,
             autoCalcAmount:        autoCalcAmount,
-            amountForIngredients:  100, // TODO: calculate this
+            amountForIngredients:  amountForIngredients,
             ingredientsUnit:       ingredientsUnit,
           );
           

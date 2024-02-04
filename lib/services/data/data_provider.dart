@@ -1,7 +1,5 @@
 
 import 'data_objects.dart';
-// ignore: unused_import
-import 'sqflite_data_provider.dart';
 
 abstract class DataProvider {
   Future<String> open(String dbName);
@@ -9,7 +7,6 @@ abstract class DataProvider {
   bool isLoaded();
   
   Stream<List<Product>> streamProducts();
-  void reloadProductStream();
   Future<Iterable<Product>> getAllProducts();
   Future<Product> getProduct(int id);
   Future<Product> createProduct(Product product);
