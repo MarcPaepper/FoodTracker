@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/services/data/data_service.dart';
 import "dart:developer" as devtools show log;
 
 import '../services/data/data_objects.dart';

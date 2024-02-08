@@ -1,3 +1,90 @@
+
+
+class Product {
+	int id = -1; // unique identifier
+	String name = "example Product"; // must be unique
+	List<(Product, double, Unit)> ingredients = []; // How much of different products the product is composed of
+	CalcMethod nutValOrigin = CalcMethod.manual;
+  
+  Unit defaultUnit;
+	Conversion densityConversion; // factor when volume is converted to weight
+												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
+  Conversion quantityConversion; // factor how much one quantity of the product weighs / contains
+                        // e.g. [("kg", "quantity", 3)] means 3 kg = 1 quantity
+  String quantityName;
+  bool autoCalcAmount; // if true, the amount of the product is calculated automatically from the ingredients list
+  double amountForIngredients; // How much of the product is made out of the ingredients
+  final Unit ingredientsUnit;
+  
+	Map<NutrionalValue, double?> nutValues = {};
+  
+  // same as above but with named parameters
+  Product({
+    required this.id,
+    required this.name,
+    required this.defaultUnit,
+    required this.densityConversion,
+    required this.quantityConversion,
+    required this.quantityName,
+    required this.autoCalcAmount,
+    required this.amountForIngredients,
+    required this.ingredientsUnit,
+  });
+  
+  // default values
+  factory Product.defaultValues() {
+    return Product(
+      id: -1,
+      name: "",
+      defaultUnit: Unit.g,
+      densityConversion: Conversion.defaultDensity(),
+      quantityConversion: Conversion.defaultQuantity(),
+      quantityName: "x",
+      autoCalcAmount: false,
+      amountForIngredients: 100,
+      ingredientsUnit: Unit.g,
+    );
+  }
+  
+  // same as above but as factory constructor
+  factory Product.copyWithDifferentId(Product product, int newId) {
+    return Product(
+      id: newId,
+      name:                 product.name,
+      defaultUnit:          product.defaultUnit,
+      densityConversion:    product.densityConversion,
+      quantityConversion:   product.quantityConversion,
+      quantityName:         product.quantityName,
+      autoCalcAmount:       product.autoCalcAmount,
+      amountForIngredients: product.amountForIngredients,
+      ingredientsUnit:      product.ingredientsUnit,
+    );
+  }
+  
+  @override
+  bool operator ==(covariant Product other) => id == other.id;
+  
+  bool equals(Product other) {
+    return id == other.id &&
+           name == other.name &&
+           defaultUnit == other.defaultUnit &&
+           densityConversion == other.densityConversion &&
+           quantityConversion == other.quantityConversion &&
+           quantityName == other.quantityName &&
+           autoCalcAmount == other.autoCalcAmount &&
+           amountForIngredients == other.amountForIngredients &&
+           ingredientsUnit == other.ingredientsUnit;
+  }
+  
+  @override
+  int get hashCode => id.hashCode;
+  
+  @override
+  String toString() {
+    return "<Product #$id '$name'>";
+  }
+}
+
 enum CalcMethod {
 	manual, // the nutrional values for the product are given by the user
 	auto, // the nutrional values are calculated automatically from the ingredients list
@@ -170,6 +257,12 @@ class Conversion {
     unit2: Unit.g,
     amount2: 100,
   );
+  
+  @override
+  bool operator ==(covariant Conversion other) => toString() == other.toString();
+  
+  @override
+  int get hashCode => toString().hashCode;
 }
 
 class NutrionalValue {
@@ -188,63 +281,5 @@ class NutrionalValue {
   @override
   String toString() {
     return "<NutrionalValue #$id '$name'>";
-  }
-}
-
-class Product {
-	int id = -1; // unique identifier
-	String name = "example Product"; // must be unique
-	List<(Product, double, Unit)> ingredients = []; // How much of different products the product is composed of
-	CalcMethod nutValOrigin = CalcMethod.manual;
-  
-  Unit defaultUnit;
-	Conversion densityConversion; // factor when volume is converted to weight
-												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
-  Conversion quantityConversion; // factor how much one quantity of the product weighs / contains
-                        // e.g. [("kg", "quantity", 3)] means 3 kg = 1 quantity
-  String quantityName;
-  bool autoCalcAmount; // if true, the amount of the product is calculated automatically from the ingredients list
-  double amountForIngredients; // How much of the product is made out of the ingredients
-  final Unit ingredientsUnit;
-  
-	Map<NutrionalValue, double?> nutValues = {};
-  
-  // same as above but with named parameters
-  Product({
-    required this.id,
-    required this.name,
-    required this.defaultUnit,
-    required this.densityConversion,
-    required this.quantityConversion,
-    required this.quantityName,
-    required this.autoCalcAmount,
-    required this.amountForIngredients,
-    required this.ingredientsUnit,
-  });
-  
-  // same as above but as factory constructor
-  factory Product.copyWithDifferentId(Product product, int newId) {
-    return Product(
-      id: newId,
-      name:                 product.name,
-      defaultUnit:          product.defaultUnit,
-      densityConversion:    product.densityConversion,
-      quantityConversion:   product.quantityConversion,
-      quantityName:         product.quantityName,
-      autoCalcAmount:       product.autoCalcAmount,
-      amountForIngredients: product.amountForIngredients,
-      ingredientsUnit:      product.ingredientsUnit,
-    );
-  }
-  
-  @override
-  bool operator ==(covariant Product other) => id == other.id;
-  
-  @override
-  int get hashCode => id.hashCode;
-  
-  @override
-  String toString() {
-    return "<Product #$id '$name'>";
   }
 }

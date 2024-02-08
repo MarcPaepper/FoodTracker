@@ -3,7 +3,6 @@ import 'package:food_tracker/widgets/border_box.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:food_tracker/constants/data.dart';
 import 'package:food_tracker/constants/routes.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/services/data/data_service.dart';
@@ -37,7 +36,7 @@ class _EditProductViewState extends State<EditProductView> {
   late final bool isEdit;
   
   int _id = -1;
-  Product? preEditProduct;
+  late Product prevProduct;
   
   final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
   final _quantityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultQuantity());
@@ -86,81 +85,123 @@ class _EditProductViewState extends State<EditProductView> {
   
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? "Edit Product" : "Add Product"),
-        actions: isEdit ? [_buildDeleteButton()] : null
-      ),
-      body: FutureBuilder(
-        future: _dataService.getAllProducts(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            devtools.log("Error: ${snapshot.error}");
-            return const Text("Error");
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              final products = snapshot.data as List<Product>;
-              if (isEdit) {
-                try {
-                  preEditProduct = products.firstWhere((prod) => prod.name == widget.productName);
-                  _id = preEditProduct!.id;
-                  _defaultUnitNotifier.value = preEditProduct!.defaultUnit;
-                  _densityConversionNotifier.value = preEditProduct!.densityConversion;
-                  _quantityConversionNotifier.value = preEditProduct!.quantityConversion;
-                  _autoCalcAmountNotifier.value = preEditProduct!.autoCalcAmount;
-                  _ingredientsUnitNotifier.value = preEditProduct!.ingredientsUnit;
-                } catch (e) {
-                  return const Text("Error: Product not found");
+    return PopScope(
+      canPop: false,
+      onPopInvoked: _onPopInvoked,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isEdit ? "Edit Product" : "Add Product"),
+          actions: isEdit ? [_buildDeleteButton()] : null
+        ),
+        body: FutureBuilder(
+          future: _dataService.getAllProducts(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              devtools.log("Error: ${snapshot.error}");
+              return const Text("Error");
+            }
+            switch (snapshot.connectionState) {
+              case ConnectionState.done:
+                final products = snapshot.data as List<Product>;
+                if (isEdit) {
+                  try {
+                    prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
+                    _id = prevProduct.id;
+                  } catch (e) {
+                    return const Text("Error: Product not found");
+                  }
+                } else {
+                  prevProduct = Product.defaultValues();
                 }
-              }
-              _productNameController.text = widget.productName ?? "";
-              _densityAmount1Controller.text = preEditProduct?.densityConversion.amount1.toString() ?? Conversion.defaultDensity().amount1.toString();
-              _densityAmount2Controller.text = preEditProduct?.densityConversion.amount2.toString() ?? Conversion.defaultDensity().amount2.toString();
-              _quantityAmount1Controller.text = preEditProduct?.quantityConversion.amount1.toString() ?? Conversion.defaultQuantity().amount1.toString();
-              _quantityAmount2Controller.text = preEditProduct?.quantityConversion.amount2.toString() ?? Conversion.defaultQuantity().amount2.toString();
-              _quantityNameController.text = preEditProduct?.quantityName ?? "x";
-              _amountForIngredientsController.text = preEditProduct?.amountForIngredients.toString() ?? "100";
-              
-              // remove ".0" from amount fields if it is the end of the string
-              var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
-              for (var field in amountFields) {
-                var text = field.text;
-                if (text.endsWith(".0")) {
-                  field.text = text.substring(0, text.length - 2);
+                
+                _productNameController.text = widget.productName ?? prevProduct.name;
+                _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
+                _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
+                _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
+                _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
+                _quantityNameController.text = prevProduct.quantityName;
+                _amountForIngredientsController.text = prevProduct.amountForIngredients.toString();
+                
+                // remove ".0" from amount fields if it is the end of the string
+                var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
+                for (var field in amountFields) {
+                  var text = field.text;
+                  if (text.endsWith(".0")) {
+                    field.text = text.substring(0, text.length - 2);
+                  }
                 }
-              }
-              
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      
-                      children: [
-                        _buildNameField(products),
-                        const SizedBox(height: 5),
-                        _buildDefaultUnitDropdown(),
-                        const SizedBox(height: 8),
-                        _buildConversionFields(),
-                        const SizedBox(height: 14),
-                        _buildIngredientList(),
-                        _buildAddButton(),
-                      ]
+                
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        
+                        children: [
+                          _buildNameField(products),
+                          const SizedBox(height: 5),
+                          _buildDefaultUnitDropdown(),
+                          const SizedBox(height: 8),
+                          _buildConversionFields(),
+                          const SizedBox(height: 14),
+                          _buildIngredientList(),
+                          _buildAddButton(),
+                        ]
+                      ),
                     ),
                   ),
-                ),
-              );
-            case ConnectionState.none:
-            case ConnectionState.waiting:
-            case ConnectionState.active:
-            default:
-              return loadingPage();
+                );
+              case ConnectionState.none:
+              case ConnectionState.waiting:
+              case ConnectionState.active:
+              default:
+                return loadingPage();
+            }
           }
-        }
-      )
+        )
+      ),
     );
+  }
+  
+  Future _onPopInvoked(bool didPop) async {
+    devtools.log("pop invoked");
+    
+    if (didPop) return;
+    
+    final NavigatorState navigator = Navigator.of(context);
+    
+    // test whether the product has been changed compared to the prevProduct
+    var product = getProductFromForm();
+    
+    if (product != null && product.equals(prevProduct)) {
+      Future(() => navigator.pop());
+      return;
+    }
+    
+    
+    bool willPop = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Are you sure?'),
+        content: const Text('Unsaved changes will be lost.'),
+        surfaceTintColor: Colors.transparent,
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    
+    if (willPop) {
+      Future(() => navigator.pop());
+    }
   }
   
   Widget _buildDeleteButton() => 
@@ -171,6 +212,7 @@ class _EditProductViewState extends State<EditProductView> {
           builder: (context) => AlertDialog(
             title: const Text("Delete Product"),
             content: const Text("If you delete this product, all associated data will be lost."),
+            surfaceTintColor: Colors.transparent,
             actions: [
               TextButton(
                 onPressed: () {
@@ -700,7 +742,6 @@ class _EditProductViewState extends State<EditProductView> {
                   valueListenable: _autoCalcAmountNotifier,
                   builder: (contextAutoCalc, valueAutoCalc, childAutoCalc) {
                     var productName = valueName.text != "" ? "'${valueName.text}'" : "the product";
-                    var quantityName = valueQuantityName.text != "" ? valueQuantityName.text : "quantities";
                     
                     return BorderBox(
                       title: "Ingredients",
@@ -804,30 +845,11 @@ class _EditProductViewState extends State<EditProductView> {
     padding: const EdgeInsets.all(8.0),
     child: TextButton(
       onPressed: () {
-        final name = _productNameController.text;
-        final defUnit = _defaultUnitNotifier.value;
-        final densityConversion = _densityConversionNotifier.value;
-        final quantityConversion = _quantityConversionNotifier.value;
-        final quantityName = _quantityNameController.text;
-        final autoCalcAmount = _autoCalcAmountNotifier.value;
-        final amountForIngredients = double.parse(_amountForIngredientsController.text);
-        final ingredientsUnit = _ingredientsUnitNotifier.value;
+        var product = getProductFromForm();
         
-        final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
-        if (isValid) {
-          var product = Product(
-            id:                    isEdit ? _id : -1,
-            name:                  name,
-            defaultUnit:           defUnit,
-            densityConversion:     densityConversion,
-            quantityConversion:    quantityConversion,
-            quantityName:          quantityName,
-            autoCalcAmount:        autoCalcAmount,
-            amountForIngredients:  amountForIngredients,
-            ingredientsUnit:       ingredientsUnit,
-          );
-          
+        if (product != null) {
           if (isEdit) {
+            devtools.log("Updating product");
             _dataService.updateProduct(product);
           } else {
             _dataService.createProduct(product);
@@ -839,4 +861,32 @@ class _EditProductViewState extends State<EditProductView> {
       child: Text(isEdit ? "Update" : "Add"),
     ),
   );
+  
+  Product? getProductFromForm() {
+    final name = _productNameController.text;
+    final defUnit = _defaultUnitNotifier.value;
+    final densityConversion = _densityConversionNotifier.value;
+    final quantityConversion = _quantityConversionNotifier.value;
+    final quantityName = _quantityNameController.text;
+    final autoCalcAmount = _autoCalcAmountNotifier.value;
+    final amountForIngredients = double.parse(_amountForIngredientsController.text);
+    final ingredientsUnit = _ingredientsUnitNotifier.value;
+    
+    final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
+    if (isValid) {
+      return Product(
+        id:                    isEdit ? _id : -1,
+        name:                  name,
+        defaultUnit:           defUnit,
+        densityConversion:     densityConversion,
+        quantityConversion:    quantityConversion,
+        quantityName:          quantityName,
+        autoCalcAmount:        autoCalcAmount,
+        amountForIngredients:  amountForIngredients,
+        ingredientsUnit:       ingredientsUnit,
+      );
+    } else {
+      return null;
+    }
+  }
 }

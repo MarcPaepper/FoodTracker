@@ -19,7 +19,6 @@ class _ProductsViewState extends State<ProductsView> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
-  bool _isLoading = true;
   
   @override
   void initState() {
@@ -91,8 +90,6 @@ class _ProductsViewState extends State<ProductsView> {
       return Text("Error: ${snapshot.error}");
     }
     if (snapshot.hasData) {
-      _isLoading = false;
-      
       var products = snapshot.data as List<Product>;
       
       // only show products that contain every word in the search
