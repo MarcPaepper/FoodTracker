@@ -24,3 +24,14 @@ List<TextSpan> highlightOccurrences(String source, List<String> search) {
   ));
   return spans;
 }
+
+// convert a double or int to double
+double toDouble(dynamic value) {
+  if (value is int) {
+    return value.toDouble();
+  } else if (value is double) {
+    return value;
+  } else {
+    throw ArgumentError("Value is not a number");
+  }
+}

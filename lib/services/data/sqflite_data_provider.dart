@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:food_tracker/constants/tables.dart';
+import 'package:food_tracker/utility/text_logic.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -18,6 +19,9 @@ import "dart:developer" as devtools show log;
 const productTable = "product";
 const mealTable = "meal";
 const nutrionalValueTable = "nutritional_value";
+const ingredientTable = "ingredient";
+
+// product table
 
 const idColumn                    = "id";
 const nameColumn                  = "name";
@@ -30,9 +34,18 @@ const autoCalcAmountColumn        = "auto_calc_amount";
 const amountForIngredientsColumn  = "amount_for_ingredients";
 const ingredientsUnitColumn       = "ingredients_unit";
 
-const unitNameColumn = "unit";
+// nutrional value table
 
-const forceReset = false;
+const unitNameColumn              = "unit";
+
+// ingredient table
+
+const ingredientIdColumn          = "ingredient_id";
+const isContainedInIdColumn       = "is_contained_in_id";
+const amountColumn                = "amount";
+const unitColumn                  = "unit";
+
+const forceReset = true;
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
@@ -91,10 +104,6 @@ class SqfliteDataProvider implements DataProvider {
         }
       }
       
-      // cache products
-      await _cacheProducts();
-      await _cacheNutrionalValues();
-      
       return "data loaded";
     } on MissingPlatformDirectoryException {
        throw NoDocumentsDirectoryException();
@@ -111,11 +120,6 @@ class SqfliteDataProvider implements DataProvider {
   
   // Products
   
-  Future<void> _cacheProducts() async {
-    _products = await getAllProducts() as List<Product>;
-    _productsStreamController.add(_products);
-  }
-  
   @override
   Stream<List<Product>> streamProducts() => _productsStreamController.stream;
   
@@ -123,28 +127,38 @@ class SqfliteDataProvider implements DataProvider {
   Future<Iterable<Product>> getAllProducts() async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    var rows = await _db!.query(productTable);
-    // same as below but two lines
-     var products = <Product>[];
-     for (var row in rows) {
-       products.add(_dbRowToProduct(row));
-     }
-     return products;
-    //return rows.map((row) => _dbRowToProduct(row)).toList();
+    var productRows = await _db!.query(productTable);
+    _products = <Product>[];
+    for (var row in productRows) {
+      _products.add(_dbRowToProduct(row));
+    }
+    // add ingredients to products
+    var ingredientRows = await _db!.query(ingredientTable);
+    for (var row in ingredientRows) {
+      var containedInProduct = _products.firstWhere((p) => p.id == row[isContainedInIdColumn]);
+      containedInProduct.ingredients.add(await _dbRowToProductQuantity(row, _products));
+    }
+    
+    _productsStreamController.add(_products);
+    
+    return _products;
   }
   
   @override
   Future<Product> getProduct(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final results = await _db!.query(productTable, where: 'id = ?', whereArgs: [id]);
-    if (results.isEmpty) throw NotFoundException();
-    if (results.length > 1) throw NotUniqueException();
+    // check whether cached already
+    if (_products.isNotEmpty) return _products.firstWhere((p) => p.id == id, orElse: () => throw NotFoundException());
     
-    final row = results.first;
-    final product = _dbRowToProduct(row);
+    final productResults = await _db!.query(productTable, where: '$idColumn = ?', whereArgs: [id]);
+    if (productResults.isEmpty) throw NotFoundException();
+    if (productResults.length > 1) throw NotUniqueException();
     
-    _productsStreamController.add(_products);
+    final product = _dbRowToProduct(productResults.first);
+    
+    var ingredientRows = await _db!.query(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [id]);
+    product.ingredients = await Future.wait(ingredientRows.map((row) => _dbRowToProductQuantity(row, _products)));
     
     return product;
   }
@@ -158,17 +172,16 @@ class SqfliteDataProvider implements DataProvider {
       quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
       quantityName:          row[quantityNameColumn] as String,
       autoCalcAmount:        row[autoCalcAmountColumn] == 1,
-      amountForIngredients:  row[amountForIngredientsColumn] is double ?
-                              row[amountForIngredientsColumn] as double :
-                              (row[amountForIngredientsColumn] as int).toDouble(),
+      amountForIngredients:  toDouble(row[amountForIngredientsColumn]),
       ingredientsUnit:       unitFromString(row[ingredientsUnitColumn] as String),
+      ingredients:           [],
     );
   
   @override
   Future<Product> createProduct(Product product) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final results = await _db!.query(productTable, where: 'name = ?', whereArgs: [product.name]);
+    final results = await _db!.query(productTable, where: '$nameColumn = ?', whereArgs: [product.name]);
     if (results.isNotEmpty) throw NotUniqueException();
     
     final id = await _db!.insert(productTable, {
@@ -181,6 +194,8 @@ class SqfliteDataProvider implements DataProvider {
       amountForIngredientsColumn:  product.amountForIngredients,
       ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
     });
+    
+    _addIngredients(product: product, containedInId: id);
     
     var newProduct = Product.copyWithDifferentId(product, id);
     _products.add(newProduct);
@@ -201,8 +216,11 @@ class SqfliteDataProvider implements DataProvider {
       quantityNameColumn:          product.quantityName,
       autoCalcAmountColumn:        product.autoCalcAmount ? 1 : 0,
       amountForIngredientsColumn:  product.amountForIngredients,
-    }, where: 'id = ?', whereArgs: [product.id]);
+    }, where: '$idColumn = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
+    
+    await _deleteIngredients(containedInId: product.id);
+    await _addIngredients(product: product, containedInId: product.id);
     
     _products.removeWhere((p) => p.id == product.id);
     _products.add(product);
@@ -215,8 +233,10 @@ class SqfliteDataProvider implements DataProvider {
   Future<void> deleteProduct(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final deletedCount = await _db!.delete(productTable, where: 'id = ?', whereArgs: [id]);
+    final deletedCount = await _db!.delete(productTable, where: '$idColumn = ?', whereArgs: [id]);
     if (deletedCount != 1) throw InvalidDeletionException();
+    
+    _deleteIngredients(containedInId: id);
     
     _products.removeWhere((p) => p.id == id);
     _productsStreamController.add(_products);
@@ -226,19 +246,50 @@ class SqfliteDataProvider implements DataProvider {
   Future<void> deleteProductWithName(String name) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final deletedCount = await _db!.delete(productTable, where: 'name = ?', whereArgs: [name]);
-    if (deletedCount != 1) throw InvalidDeletionException();
+    final results = await _db!.query(productTable, where: '$nameColumn = ?', whereArgs: [name]);
+    if (results.isEmpty) throw NotFoundException();
+    if (results.length > 1) throw NotUniqueException();
+    final id = results.first[idColumn] as int;
     
-    _products.removeWhere((p) => p.name == name);
-    _productsStreamController.add(_products);
+    return deleteProduct(id);
+  }
+  
+  // Ingredients
+  
+  Future<ProductQuantity> _dbRowToProductQuantity(Map<String, Object?> row, List<Product>? products) async {
+    late final Product ingredientProduct;
+    if (products == null || products.isEmpty) {
+      final results = await _db!.query(productTable, where: '$idColumn = ?', whereArgs: [row[ingredientIdColumn]]);
+      if (results.isEmpty) throw NotFoundException();
+      if (results.length > 1) throw NotUniqueException();
+      ingredientProduct = _dbRowToProduct(results.first);
+    } else {
+      ingredientProduct = products.firstWhere((p) => p.id == row[ingredientIdColumn]);
+    }
+    
+    return ProductQuantity(
+      product: ingredientProduct,
+      amount:  toDouble(row[amountColumn]),
+      unit:    unitFromString(row[unitColumn] as String),
+    );
+  }
+  
+  Future<void> _addIngredients({required Product product, required int containedInId}) async {
+    for (final ingredient in product.ingredients) {
+      await _db!.insert(ingredientTable, {
+        ingredientIdColumn:     ingredient.product.id,
+        isContainedInIdColumn:  containedInId,
+        amountColumn:           ingredient.amount,
+        unitColumn:             unitToString(ingredient.unit),
+      });
+    }
+  }
+  
+  Future<void> _deleteIngredients({required int containedInId}) async {
+    await _db!.delete(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [containedInId]);
   }
   
   // Nutrional values
-  
-  Future<void> _cacheNutrionalValues() async {
-    _nutrionalValues = await getAllNutrionalValues() as List<NutrionalValue>;
-    _nutrionalValuesStreamController.add(_nutrionalValues);
-  }
   
   @override
   Stream<List<NutrionalValue>> streamNutrionalValues() => _nutrionalValuesStreamController.stream;
@@ -266,7 +317,7 @@ class SqfliteDataProvider implements DataProvider {
   Future<NutrionalValue> getNutrionalValue(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final results = await _db!.query(nutrionalValueTable, where: 'id = ?', whereArgs: [id]);
+    final results = await _db!.query(nutrionalValueTable, where: '$idColumn = ?', whereArgs: [id]);
     if (results.isEmpty) throw NotFoundException();
     if (results.length > 1) throw NotUniqueException();
     
@@ -284,7 +335,7 @@ class SqfliteDataProvider implements DataProvider {
   Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final results = await _db!.query(nutrionalValueTable, where: 'name = ?', whereArgs: [nutVal.name]);
+    final results = await _db!.query(nutrionalValueTable, where: '$nameColumn = ?', whereArgs: [nutVal.name]);
     if (results.isNotEmpty) throw NotUniqueException();
     
     final id = await _db!.insert(nutrionalValueTable, {
@@ -305,7 +356,7 @@ class SqfliteDataProvider implements DataProvider {
     final updatedCount = await _db!.update(nutrionalValueTable, {
       nameColumn: nutVal.name,
       unitNameColumn: nutVal.unit,
-    }, where: 'id = ?', whereArgs: [nutVal.id]);
+    }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
     _nutrionalValues.removeWhere((p) => p.id == nutVal.id);
@@ -319,7 +370,7 @@ class SqfliteDataProvider implements DataProvider {
   Future<void> deleteNutrionalValue(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final deletedCount = await _db!.delete(nutrionalValueTable, where: 'id = ?', whereArgs: [id]);
+    final deletedCount = await _db!.delete(nutrionalValueTable, where: '$idColumn = ?', whereArgs: [id]);
     if (deletedCount != 1) throw InvalidDeletionException();
     
     _nutrionalValues.removeWhere((p) => p.id == id);
@@ -330,7 +381,7 @@ class SqfliteDataProvider implements DataProvider {
   Future<void> deleteNutrionalValueWithName(String name) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final deletedCount = await _db!.delete(nutrionalValueTable, where: 'name = ?', whereArgs: [name]);
+    final deletedCount = await _db!.delete(nutrionalValueTable, where: '$nameColumn = ?', whereArgs: [name]);
     if (deletedCount != 1) throw InvalidDeletionException();
     
     _nutrionalValues.removeWhere((p) => p.name == name);

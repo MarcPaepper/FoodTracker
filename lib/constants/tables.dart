@@ -22,6 +22,15 @@ CREATE TABLE IF NOT EXISTS "nutritional_value" (
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 ''';
+const createIngredientTable = '''
+CREATE TABLE "ingredient" (
+	"ingredient_id"	INTEGER,
+	"is_contained_in_id"	INTEGER,
+	"amount"	INTEGER,
+	"unit"	TEXT,
+	FOREIGN KEY("ingredient_id") REFERENCES "product"("id")
+);
+''';
 
 final defaultNutrionalValues = [
   NutrionalValue(1, "Calories", "kcal"),

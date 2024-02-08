@@ -1,9 +1,8 @@
-
+import 'package:collection/collection.dart';
 
 class Product {
 	int id = -1; // unique identifier
 	String name = "example Product"; // must be unique
-	List<(Product, double, Unit)> ingredients = []; // How much of different products the product is composed of
 	CalcMethod nutValOrigin = CalcMethod.manual;
   
   Unit defaultUnit;
@@ -15,6 +14,8 @@ class Product {
   bool autoCalcAmount; // if true, the amount of the product is calculated automatically from the ingredients list
   double amountForIngredients; // How much of the product is made out of the ingredients
   final Unit ingredientsUnit;
+  
+  List<ProductQuantity> ingredients;
   
 	Map<NutrionalValue, double?> nutValues = {};
   
@@ -29,6 +30,7 @@ class Product {
     required this.autoCalcAmount,
     required this.amountForIngredients,
     required this.ingredientsUnit,
+    required this.ingredients,
   });
   
   // default values
@@ -43,6 +45,7 @@ class Product {
       autoCalcAmount: false,
       amountForIngredients: 100,
       ingredientsUnit: Unit.g,
+      ingredients: [],
     );
   }
   
@@ -58,6 +61,7 @@ class Product {
       autoCalcAmount:       product.autoCalcAmount,
       amountForIngredients: product.amountForIngredients,
       ingredientsUnit:      product.ingredientsUnit,
+      ingredients:           product.ingredients,
     );
   }
   
@@ -73,7 +77,8 @@ class Product {
            quantityName == other.quantityName &&
            autoCalcAmount == other.autoCalcAmount &&
            amountForIngredients == other.amountForIngredients &&
-           ingredientsUnit == other.ingredientsUnit;
+           ingredientsUnit == other.ingredientsUnit &&
+           const ListEquality().equals(ingredients, other.ingredients);
   }
   
   @override
@@ -82,6 +87,29 @@ class Product {
   @override
   String toString() {
     return "<Product #$id '$name'>";
+  }
+}
+
+class ProductQuantity {
+  final Product product;
+  final double amount;
+  final Unit unit;
+  
+  ProductQuantity({
+    required this.product,
+    required this.amount,
+    required this.unit,
+  });
+  
+  @override
+  bool operator ==(covariant ProductQuantity other) => product == other.product && amount == other.amount && unit == other.unit;
+  
+  @override
+  int get hashCode => product.hashCode ^ amount.hashCode ^ unit.hashCode;
+  
+  @override
+  String toString() {
+    return "<ProductQuantity $amount ${unitToString(unit)} of $product>";
   }
 }
 

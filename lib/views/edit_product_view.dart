@@ -149,7 +149,7 @@ class _EditProductViewState extends State<EditProductView> {
                           const SizedBox(height: 8),
                           _buildConversionFields(),
                           const SizedBox(height: 14),
-                          _buildIngredientList(),
+                          _buildIngredientBox(),
                           _buildAddButton(),
                         ]
                       ),
@@ -730,7 +730,7 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildIngredientList() {
+  Widget _buildIngredientBox() {
     
     return ValueListenableBuilder(
       valueListenable: _productNameController,
@@ -829,7 +829,8 @@ class _EditProductViewState extends State<EditProductView> {
                                   ),
                                 ],
                               ),
-                            )
+                            ),
+                            _buildIngredientsList(),
                           ],
                         ),
                       ),
@@ -841,6 +842,19 @@ class _EditProductViewState extends State<EditProductView> {
           }
         );
       }
+    );
+  }
+  
+  Widget _buildIngredientsList() {
+    List<Widget> children = [];
+    
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      child: Column(
+        children: [
+          Text("Hello")
+        ],
+      ),
     );
   }
   
