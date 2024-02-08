@@ -5,6 +5,8 @@ import 'package:food_tracker/services/data/data_exceptions.dart';
 import 'data_provider.dart';
 import 'data_objects.dart';
 
+import 'package:rxdart/rxdart.dart';
+
 // import "dart:developer" as devtools show log;
 
 class DebugDataProvider implements DataProvider {
@@ -12,14 +14,14 @@ class DebugDataProvider implements DataProvider {
   List<NutrionalValue> nutValues = [];
   bool loaded = false;
   
-  final _productsStreamController = StreamController<List<Product>>.broadcast();
-  final _nutrionalValuesStreamController = StreamController<List<NutrionalValue>>.broadcast();
+  final _productsStreamController = BehaviorSubject<List<Product>>();
+  final _nutrionalValuesStreamController = BehaviorSubject<List<NutrionalValue>>();
   
   @override
   Future<String> open(String dbName) async {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
-      const Duration(milliseconds: 100), () {
+      const Duration(milliseconds: 0), () {
         products = [];
         for (int i = 1; i <= 20; i++) {
         products.add(

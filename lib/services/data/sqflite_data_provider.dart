@@ -6,6 +6,8 @@ import 'package:sqflite/sqflite.dart';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+
+import 'package:rxdart/rxdart.dart';
   
 import 'package:food_tracker/services/data/data_exceptions.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
@@ -39,8 +41,8 @@ class SqfliteDataProvider implements DataProvider {
   List<Product> _products = [];
   List<NutrionalValue> _nutrionalValues = [];
   
-  final _productsStreamController = StreamController<List<Product>>.broadcast();
-  final _nutrionalValuesStreamController = StreamController<List<NutrionalValue>>.broadcast();
+  final _productsStreamController = BehaviorSubject<List<Product>>();
+  final _nutrionalValuesStreamController = BehaviorSubject<List<NutrionalValue>>();
 
   SqfliteDataProvider(String dbName);
   

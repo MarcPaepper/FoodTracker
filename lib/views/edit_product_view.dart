@@ -114,6 +114,7 @@ class _EditProductViewState extends State<EditProductView> {
                   prevProduct = Product.defaultValues();
                 }
                 
+                // set initial values
                 _productNameController.text = widget.productName ?? prevProduct.name;
                 _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
                 _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
@@ -121,6 +122,9 @@ class _EditProductViewState extends State<EditProductView> {
                 _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
                 _quantityNameController.text = prevProduct.quantityName;
                 _amountForIngredientsController.text = prevProduct.amountForIngredients.toString();
+                
+                _densityConversionNotifier.value = prevProduct.densityConversion;
+                _quantityConversionNotifier.value = prevProduct.quantityConversion;
                 
                 // remove ".0" from amount fields if it is the end of the string
                 var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
@@ -172,13 +176,12 @@ class _EditProductViewState extends State<EditProductView> {
     final NavigatorState navigator = Navigator.of(context);
     
     // test whether the product has been changed compared to the prevProduct
-    var product = getProductFromForm();
+    var (product, _) = getProductFromForm();
     
-    if (product != null && product.equals(prevProduct)) {
+    if (product.equals(prevProduct)) {
       Future(() => navigator.pop());
       return;
     }
-    
     
     bool willPop = await showDialog(
       context: context,
@@ -845,9 +848,9 @@ class _EditProductViewState extends State<EditProductView> {
     padding: const EdgeInsets.all(8.0),
     child: TextButton(
       onPressed: () {
-        var product = getProductFromForm();
+        var (product, isValid) = getProductFromForm();
         
-        if (product != null) {
+        if (isValid) {
           if (isEdit) {
             devtools.log("Updating product");
             _dataService.updateProduct(product);
@@ -862,7 +865,7 @@ class _EditProductViewState extends State<EditProductView> {
     ),
   );
   
-  Product? getProductFromForm() {
+  (Product, bool) getProductFromForm() {
     final name = _productNameController.text;
     final defUnit = _defaultUnitNotifier.value;
     final densityConversion = _densityConversionNotifier.value;
@@ -873,8 +876,8 @@ class _EditProductViewState extends State<EditProductView> {
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     
     final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
-    if (isValid) {
-      return Product(
+    return (
+      Product(
         id:                    isEdit ? _id : -1,
         name:                  name,
         defaultUnit:           defUnit,
@@ -884,9 +887,8 @@ class _EditProductViewState extends State<EditProductView> {
         autoCalcAmount:        autoCalcAmount,
         amountForIngredients:  amountForIngredients,
         ingredientsUnit:       ingredientsUnit,
-      );
-    } else {
-      return null;
-    }
+      ),
+      isValid,
+    );
   }
 }
