@@ -23,21 +23,32 @@ class DebugDataProvider implements DataProvider {
     return Future.delayed(
       const Duration(milliseconds: 0), () {
         products = [];
+        List<ProductQuantity> firstProducts = [];
         for (int i = 1; i <= 20; i++) {
-        products.add(
-          Product(
-            id: i,
-            name:                 "Example $i",
-            defaultUnit:          Unit.g,
-            densityConversion:    Conversion.fromString("100 ml = 100 g disabled"),
-            quantityConversion:   Conversion.fromString("1 x = 100 g disabled"),
-            quantityName:         "x",
-            autoCalcAmount:       false,
-            amountForIngredients: 100,
-            ingredientsUnit:      Unit.g,
-            ingredients:          [],
-          )
-        );
+          var product = 
+            Product(
+              id: i,
+              name:                 "Example $i",
+              defaultUnit:          Unit.g,
+              densityConversion:    Conversion.fromString("100 ml = 100 g disabled"),
+              quantityConversion:   Conversion.fromString("1 x = 100 g disabled"),
+              quantityName:         "x",
+              autoCalcAmount:       false,
+              amountForIngredients: 100,
+              ingredientsUnit:      Unit.g,
+              ingredients:          List.from(firstProducts),
+            );
+          
+          if (i <= 3) { 
+            firstProducts.add(
+              ProductQuantity(
+                product: product,
+                amount: 100,
+                unit: Unit.g,
+              )
+            );
+          }
+          products.add(product);
         }
         // create the 7 default nutrional values
         nutValues = [

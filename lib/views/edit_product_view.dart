@@ -44,6 +44,7 @@ class _EditProductViewState extends State<EditProductView> {
   
   final _autoCalcAmountNotifier = ValueNotifier<bool>(false);
   final _ingredientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
+  final _ingredientsNotifier = ValueNotifier<List<ProductQuantity>>([]);
   
   final _isDuplicateNotifier = ValueNotifier<bool>(false);
   
@@ -80,6 +81,13 @@ class _EditProductViewState extends State<EditProductView> {
     _quantityAmount2Controller.dispose();
     _quantityNameController.dispose();
     _amountForIngredientsController.dispose();
+    _densityConversionNotifier.dispose();
+    _quantityConversionNotifier.dispose();
+    _defaultUnitNotifier.dispose();
+    _autoCalcAmountNotifier.dispose();
+    _ingredientsUnitNotifier.dispose();
+    _ingredientsNotifier.dispose();
+    _isDuplicateNotifier.dispose();
     super.dispose();
   }
   
@@ -125,6 +133,10 @@ class _EditProductViewState extends State<EditProductView> {
                 
                 _densityConversionNotifier.value = prevProduct.densityConversion;
                 _quantityConversionNotifier.value = prevProduct.quantityConversion;
+                _defaultUnitNotifier.value = prevProduct.defaultUnit;
+                _autoCalcAmountNotifier.value = prevProduct.autoCalcAmount;
+                _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
+                _ingredientsNotifier.value = prevProduct.ingredients;
                 
                 // remove ".0" from amount fields if it is the end of the string
                 var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
@@ -169,8 +181,6 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Future _onPopInvoked(bool didPop) async {
-    devtools.log("pop invoked");
-    
     if (didPop) return;
     
     final NavigatorState navigator = Navigator.of(context);
@@ -744,96 +754,98 @@ class _EditProductViewState extends State<EditProductView> {
                 return ValueListenableBuilder(
                   valueListenable: _autoCalcAmountNotifier,
                   builder: (contextAutoCalc, valueAutoCalc, childAutoCalc) {
-                    var productName = valueName.text != "" ? "'${valueName.text}'" : "the product";
-                    
-                    return BorderBox(
-                      title: "Ingredients",
-                      child: Padding(
-                        padding: const EdgeInsets.all(0),
-                        child: Column(
-                          children: [
-                            SwitchListTile(
-                              value: valueAutoCalc,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              onChanged: (bool value) {
-                                _autoCalcAmountNotifier.value = value;
-                              },
-                              title: const Padding(
-                                padding: EdgeInsets.only(top: 2),
-                                child: Text(
-                                  "Auto calculate the resulting amount",
-                                  style: TextStyle(
-                                    fontSize: 16,
+                    return ValueListenableBuilder(
+                      valueListenable: _ingredientsNotifier,
+                      builder: (contextIngredients, valueIngredients, childIngredients) {
+                        var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
+                        
+                        return BorderBox(
+                          title: "Ingredients",
+                          child: Column(
+                            children: [
+                              SwitchListTile(
+                                value: valueAutoCalc,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                onChanged: (bool value) {
+                                  _autoCalcAmountNotifier.value = value;
+                                },
+                                title: const Padding(
+                                  padding: EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    "Auto calculate the resulting amount",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(4, 0, 8, 8),
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 12),
-                                    child: valueAutoCalc ? 
-                                      Text(
-                                        _amountForIngredientsController.text,
-                                        textAlign: TextAlign.center,
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(4, 0, 8, 8),
+                                child: Row(
+                                  children: [
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 12),
+                                      child: valueAutoCalc ? 
+                                        Text(
+                                          _amountForIngredientsController.text,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                          )
+                                        )
+                                        : SizedBox(
+                                          width: 70,
+                                          child: TextFormField(
+                                            enabled: !valueAutoCalc,
+                                            controller: _amountForIngredientsController,
+                                            keyboardType: TextInputType.number,
+                                            decoration: const InputDecoration(
+                                              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                                            ),
+                                            validator: (String? value) {
+                                              if (valueAutoCalc) {
+                                                return null;
+                                              }
+                                              if (value == null || value.isEmpty) {
+                                                return "Required Field";
+                                              }
+                                              try {
+                                                double.parse(value);
+                                              } catch (e) {
+                                                return "Invalid Number";
+                                              }
+                                              return null;
+                                            },
+                                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                                          )
+                                        ),
+                                    ),
+                                    SizedBox(
+                                      width: 95,
+                                      child: _buildUnitDropdown(
+                                        items: _buildUnitItems(verbose: true), 
+                                        current: _ingredientsUnitNotifier.value,
+                                        onChanged: (Unit? unit) => _ingredientsUnitNotifier.value = unit ?? Unit.g,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        "of $productName contains:",
+                                        maxLines: 3,
                                         style: const TextStyle(
                                           fontSize: 16,
-                                        )
-                                      )
-                                      : SizedBox(
-                                        width: 70,
-                                        child: TextFormField(
-                                          enabled: !valueAutoCalc,
-                                          controller: _amountForIngredientsController,
-                                          keyboardType: TextInputType.number,
-                                          decoration: const InputDecoration(
-                                            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-                                          ),
-                                          validator: (String? value) {
-                                            if (valueAutoCalc) {
-                                              return null;
-                                            }
-                                            if (value == null || value.isEmpty) {
-                                              return "Required Field";
-                                            }
-                                            try {
-                                              double.parse(value);
-                                            } catch (e) {
-                                              return "Invalid Number";
-                                            }
-                                            return null;
-                                          },
-                                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                                        )
-                                      ),
-                                  ),
-                                  SizedBox(
-                                    width: 95,
-                                    child: _buildUnitDropdown(
-                                      items: _buildUnitItems(verbose: true), 
-                                      current: _ingredientsUnitNotifier.value,
-                                      onChanged: (Unit? unit) => _ingredientsUnitNotifier.value = unit ?? Unit.g,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      "of $productName contains:",
-                                      maxLines: 3,
-                                      style: const TextStyle(
-                                        fontSize: 16,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            _buildIngredientsList(),
-                          ],
-                        ),
-                      ),
+                              _buildIngredientsList(valueIngredients),
+                            ],
+                          ),
+                        );
+                      }
                     );
                   }
                 );
@@ -845,16 +857,39 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildIngredientsList() {
-    List<Widget> children = [];
-    
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      child: Column(
-        children: [
-          Text("Hello")
-        ],
-      ),
+  Widget _buildIngredientsList(List<ProductQuantity> ingredients) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: ingredients.length,
+      itemBuilder: (context, index) {
+        var ingredient = ingredients[index];
+        
+        bool dark = (ingredients.length - index) % 2 == 0;
+        var color = dark ? const Color.fromARGB(17, 0, 0, 255) : const Color.fromARGB(20, 150, 150, 150);
+        
+        return ListTile(
+          title: Text(
+            ingredient.product.name,
+            style: const TextStyle(
+              fontSize: 16,
+            ),
+          ),
+          subtitle: Text(
+            "${ingredient.amount} ${unitToString(ingredient.unit)}",
+            style: const TextStyle(
+              fontSize: 14,
+            ),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              ingredients.removeAt(index);
+              _ingredientsNotifier.value = ingredients;
+            },
+          ),
+          tileColor: color,
+        );
+      },
     );
   }
   
@@ -888,6 +923,7 @@ class _EditProductViewState extends State<EditProductView> {
     final autoCalcAmount = _autoCalcAmountNotifier.value;
     final amountForIngredients = double.parse(_amountForIngredientsController.text);
     final ingredientsUnit = _ingredientsUnitNotifier.value;
+    final ingredients = _ingredientsNotifier.value;
     
     final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
     return (
@@ -901,6 +937,7 @@ class _EditProductViewState extends State<EditProductView> {
         autoCalcAmount:        autoCalcAmount,
         amountForIngredients:  amountForIngredients,
         ingredientsUnit:       ingredientsUnit,
+        ingredients:           ingredients,
       ),
       isValid,
     );

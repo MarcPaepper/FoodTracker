@@ -77,10 +77,10 @@ class _BorderBoxState extends State<BorderBox> {
     }
     
     return Padding(
-      padding: EdgeInsets.fromLTRB(8, widget.title == null ? 8 : 11, 8, 8),
+      padding: EdgeInsets.fromLTRB(8, widget.title == null ? 8 : 11, 8, 0),
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(0), //15
           border: Border.all(
             color: borderColor,
             width: 2,
