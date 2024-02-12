@@ -779,6 +779,8 @@ class _EditProductViewState extends State<EditProductView> {
                                   ),
                                 ),
                               ),
+                              // 10 px margin
+                              const SizedBox(height: 10),
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(4, 0, 8, 8),
                                 child: Row(
@@ -841,6 +843,7 @@ class _EditProductViewState extends State<EditProductView> {
                                   ],
                                 ),
                               ),
+                              const SizedBox(height: 8),
                               _buildIngredientsList(valueIngredients),
                             ],
                           ),
@@ -858,37 +861,90 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Widget _buildIngredientsList(List<ProductQuantity> ingredients) {
-    return ListView.builder(
+    // add one empty ingredient to the list which adds the "Add" button
+    var ingredients_plus = List.from(ingredients) + [null];
+    
+    return ReorderableListView.builder(
       shrinkWrap: true,
-      itemCount: ingredients.length,
+      itemCount: ingredients_plus.length,
       itemBuilder: (context, index) {
-        var ingredient = ingredients[index];
+        var ingredient = ingredients_plus[index];
         
-        bool dark = (ingredients.length - index) % 2 == 0;
-        var color = dark ? const Color.fromARGB(17, 0, 0, 255) : const Color.fromARGB(20, 150, 150, 150);
+        if (ingredient != null) {
+          bool dark = (ingredients.length - index) % 2 == 1;
+          var color = dark ? const Color.fromARGB(14, 0, 0, 255) : const Color.fromARGB(14, 200, 255, 0);
+          
+          return _buildIngredientTile(
+            ingredient: ingredient,
+            ingredients: ingredients,
+            index: index,
+            color: color,
+          );
+        } else {
+          return _buildAddIngredientButton();
+        }
+      },
+      onReorder: (oldIndex, newIndex) {
+        if (newIndex == ingredients.length) return;
+        var ingredient = ingredients.removeAt(oldIndex);
+        ingredients.insert(newIndex, ingredient);
+        _ingredientsNotifier.value = ingredients;
+      },
+    );
+  }
+  
+  Widget _buildIngredientTile(
+    {
+      required ProductQuantity ingredient,
+      required List<ProductQuantity> ingredients,
+      required int index,
+      required Color color,
+    }
+  ) {
+    return ListTile(
+      key: ValueKey("ingredient ${ingredient.product.name}"),
+      title: Text(
+        ingredient.product.name,
+        style: const TextStyle(
+          fontSize: 16,
+        ),
+      ),
+      subtitle: Text(
+        "${ingredient.amount} ${unitToString(ingredient.unit)}",
+        style: const TextStyle(
+          fontSize: 14,
+        ),
+      ),
+      trailing: IconButton(
+        icon: const Icon(Icons.delete),
+        onPressed: () {
+          ingredients.removeAt(index);
+          _ingredientsNotifier.value = ingredients;
+        },
+      ),
+      tileColor: color,
+    );
+  }
+  
+  Widget _buildAddIngredientButton() {
+    return ElevatedButton.icon(
+      key: const ValueKey("add"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 210, 235, 198),
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 70),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+        textStyle: Theme.of(context).textTheme.bodyLarge,
+      ),
+      icon: const Icon(Icons.add),
+      label: const Padding(
+        padding: EdgeInsets.only(left: 5.0),
+        child: Text("Add Ingredient"),
+      ),
+      onPressed: () {
         
-        return ListTile(
-          title: Text(
-            ingredient.product.name,
-            style: const TextStyle(
-              fontSize: 16,
-            ),
-          ),
-          subtitle: Text(
-            "${ingredient.amount} ${unitToString(ingredient.unit)}",
-            style: const TextStyle(
-              fontSize: 14,
-            ),
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              ingredients.removeAt(index);
-              _ingredientsNotifier.value = ingredients;
-            },
-          ),
-          tileColor: color,
-        );
       },
     );
   }

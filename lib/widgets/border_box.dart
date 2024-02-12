@@ -30,7 +30,6 @@ class _BorderBoxState extends State<BorderBox> {
   
   @override
   Widget build(BuildContext context) {
-    // default values
     var borderColor = widget.borderColor ?? const Color.fromARGB(200, 25, 82, 77);
     
     var titleWidget = widget.title != null
@@ -39,55 +38,39 @@ class _BorderBoxState extends State<BorderBox> {
         style: const TextStyle(
           fontSize: 16,
         ),
-      ) : null;
+      ) : const SizedBox.shrink();
     
-    // If the title is null, just use the widget.child as the container child
-    // If the title is not null, use a Column as the container child
-
-    late final Widget child;
-    if (widget.title == null) {
-      child = widget.child!;
-    } else {
-      child = Column(
-        crossAxisAlignment: widget.titlePosition == TitlePosition.left
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.center,
-        children: [
-          Container(
-            transform: Matrix4.translationValues(
-              widget.titlePosition == TitlePosition.left
-                ? 18
-                : 0,
-              -13,
-              0,
+    return Stack(
+      alignment: widget.titlePosition == TitlePosition.left
+        ? Alignment.topLeft
+        : Alignment.topCenter,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(8, widget.title == null ? 8 : 11, 8, 0),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: borderColor,
+                width: 2,
+              ),
             ),
-            // background color
-            color: widget.titleBgColor,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 7.0),
-              child: titleWidget!
-            )
-          ),
-          Container(
-            transform: widget.title == null ? null : Matrix4.translationValues(0, -8, 0),
-            child: widget.child!,
-          )
-        ],
-      );
-    }
-    
-    return Padding(
-      padding: EdgeInsets.fromLTRB(8, widget.title == null ? 8 : 11, 8, 0),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(0), //15
-          border: Border.all(
-            color: borderColor,
-            width: 2,
+              padding: EdgeInsets.only(top: widget.title == null ? 0 : 17),
+              child: widget.child,
+            ),
           ),
         ),
-        child: child,
-      ),
+        widget.title == null ? const SizedBox.shrink() :
+          Container(
+            transform: Matrix4.translationValues(widget.titlePosition == TitlePosition.left ? 18 : 0, 0, 0),
+            color: widget.titleBgColor,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9.0),
+              child: titleWidget,
+            )
+          ),
+      ],
     );
   }
 }
