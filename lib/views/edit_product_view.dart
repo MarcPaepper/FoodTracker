@@ -845,6 +845,7 @@ class _EditProductViewState extends State<EditProductView> {
                               ),
                               const SizedBox(height: 8),
                               _buildIngredientsList(valueIngredients),
+                              _buildAddIngredientButton()
                             ],
                           ),
                         );
@@ -861,28 +862,21 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Widget _buildIngredientsList(List<ProductQuantity> ingredients) {
-    // add one empty ingredient to the list which adds the "Add" button
-    var ingredients_plus = List.from(ingredients) + [null];
-    
     return ReorderableListView.builder(
       shrinkWrap: true,
-      itemCount: ingredients_plus.length,
+      itemCount: ingredients.length,
       itemBuilder: (context, index) {
-        var ingredient = ingredients_plus[index];
+        var ingredient = ingredients[index];
         
-        if (ingredient != null) {
-          bool dark = (ingredients.length - index) % 2 == 1;
-          var color = dark ? const Color.fromARGB(14, 0, 0, 255) : const Color.fromARGB(14, 200, 255, 0);
-          
-          return _buildIngredientTile(
-            ingredient: ingredient,
-            ingredients: ingredients,
-            index: index,
-            color: color,
-          );
-        } else {
-          return _buildAddIngredientButton();
-        }
+        bool dark = (ingredients.length - index) % 2 == 1;
+        var color = dark ? const Color.fromARGB(14, 0, 0, 255) : const Color.fromARGB(14, 200, 255, 0);
+        
+        return _buildIngredientTile(
+          ingredient: ingredient,
+          ingredients: ingredients,
+          index: index,
+          color: color,
+        );
       },
       onReorder: (oldIndex, newIndex) {
         if (newIndex == ingredients.length) return;
@@ -927,25 +921,29 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Widget _buildAddIngredientButton() {
-    return ElevatedButton.icon(
-      key: const ValueKey("add"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color.fromARGB(255, 210, 235, 198),
-        foregroundColor: Colors.black,
-        minimumSize: const Size(double.infinity, 70),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-        textStyle: Theme.of(context).textTheme.bodyLarge,
+    return Container(
+      // rounded corners on bottom
+      decoration: {}
+      child: ElevatedButton.icon(
+        key: const ValueKey("add"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 210, 235, 198),
+          foregroundColor: Colors.black,
+          minimumSize: const Size(double.infinity, 60),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+          textStyle: Theme.of(context).textTheme.bodyLarge,
+        ),
+        icon: const Icon(Icons.add),
+        label: const Padding(
+          padding: EdgeInsets.only(left: 5.0),
+          child: Text("Add Ingredient"),
+        ),
+        onPressed: () {
+          
+        },
       ),
-      icon: const Icon(Icons.add),
-      label: const Padding(
-        padding: EdgeInsets.only(left: 5.0),
-        child: Text("Add Ingredient"),
-      ),
-      onPressed: () {
-        
-      },
     );
   }
   
