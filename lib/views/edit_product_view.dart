@@ -881,12 +881,13 @@ class _EditProductViewState extends State<EditProductView> {
     }
     return ReorderableListView.builder(
       shrinkWrap: true,
+      buildDefaultDragHandles: false,
       itemCount: ingredients.length,
       itemBuilder: (context, index) {
         var ingredient = ingredients[index];
         
         bool dark = (ingredients.length - index) % 2 == 1;
-        var color = dark ? const Color.fromARGB(14, 0, 0, 255) : const Color.fromARGB(14, 200, 255, 0);
+        var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(7, 100, 100, 100);
         
         return _buildIngredientTile(
           ingredient: ingredient,
@@ -896,10 +897,11 @@ class _EditProductViewState extends State<EditProductView> {
         );
       },
       onReorder: (oldIndex, newIndex) {
-        if (newIndex == ingredients.length) return;
+        if (oldIndex < newIndex) {
+          newIndex -= 1;
+        }
         var ingredient = ingredients.removeAt(oldIndex);
         ingredients.insert(newIndex, ingredient);
-        _ingredientsNotifier.value = ingredients;
       },
     );
   }
@@ -912,28 +914,31 @@ class _EditProductViewState extends State<EditProductView> {
       required Color color,
     }
   ) {
-    return ListTile(
+    return ReorderableDelayedDragStartListener(
+      index: index,
       key: ValueKey("ingredient ${ingredient.product.name}"),
-      title: Text(
-        ingredient.product.name,
-        style: const TextStyle(
-          fontSize: 16,
+      child: ListTile(
+        title: Text(
+          ingredient.product.name,
+          style: const TextStyle(
+            fontSize: 16,
+          ),
         ),
-      ),
-      subtitle: Text(
-        "${ingredient.amount} ${unitToString(ingredient.unit)}",
-        style: const TextStyle(
-          fontSize: 14,
+        subtitle: Text(
+          "${ingredient.amount} ${unitToString(ingredient.unit)}",
+          style: const TextStyle(
+            fontSize: 14,
+          ),
         ),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete),
+          onPressed: () {
+            ingredients.removeAt(index);
+            _ingredientsNotifier.value = ingredients;
+          },
+        ),
+        tileColor: color,
       ),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete),
-        onPressed: () {
-          ingredients.removeAt(index);
-          _ingredientsNotifier.value = ingredients;
-        },
-      ),
-      tileColor: color,
     );
   }
   
