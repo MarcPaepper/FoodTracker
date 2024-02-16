@@ -862,6 +862,23 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Widget _buildIngredientsList(List<ProductQuantity> ingredients) {
+    // if ingredients is empty, return a single list tile with a message
+    
+    if (ingredients.isEmpty) {
+      return const ListTile(
+        title: Center(
+          child: Text(
+            "No ingredients yet",
+            style: TextStyle(
+              fontSize: 16,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+        titleAlignment: ListTileTitleAlignment.center,
+        tileColor: Color.fromARGB(14, 0, 0, 255),
+      );
+    }
     return ReorderableListView.builder(
       shrinkWrap: true,
       itemCount: ingredients.length,
@@ -921,29 +938,30 @@ class _EditProductViewState extends State<EditProductView> {
   }
   
   Widget _buildAddIngredientButton() {
-    return Container(
-      // rounded corners on bottom
-      decoration: {}
-      child: ElevatedButton.icon(
-        key: const ValueKey("add"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromARGB(255, 210, 235, 198),
-          foregroundColor: Colors.black,
-          minimumSize: const Size(double.infinity, 60),
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-          textStyle: Theme.of(context).textTheme.bodyLarge,
+    return ElevatedButton.icon(
+      key: const ValueKey("add"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 210, 235, 198),
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 60),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(15),
+            bottomRight: Radius.circular(15),
+          ),
         ),
-        icon: const Icon(Icons.add),
-        label: const Padding(
-          padding: EdgeInsets.only(left: 5.0),
-          child: Text("Add Ingredient"),
-        ),
-        onPressed: () {
-          
-        },
+        textStyle: Theme.of(context).textTheme.bodyLarge,
       ),
+      icon: const Icon(Icons.add),
+      label: const Padding(
+        padding: EdgeInsets.only(left: 5.0),
+        child: Text("Add Ingredient"),
+      ),
+      onPressed: () {
+        
+      },
     );
   }
   
