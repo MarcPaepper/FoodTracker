@@ -4,6 +4,12 @@ const tabColorActive = Color.fromARGB(255, 193, 255, 253);
 
 ThemeData getTheme() =>
   ThemeData(
+    // red popup menu button
+    popupMenuTheme: const PopupMenuThemeData(
+      // from hex
+      color: Color.fromARGB(249, 242, 255, 250),
+      surfaceTintColor: Colors.white,
+    ),
     colorSchemeSeed: Colors.teal,
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.teal.shade400,
@@ -31,23 +37,6 @@ ThemeData getTheme() =>
           Colors.white.withAlpha(20)
       ),
     ),
-    // textTheme: const TextTheme(
-    //   bodySmall: TextStyle(color: Colors.black),
-    //   bodyMedium: TextStyle(color: Colors.black),
-    //   bodyLarge: TextStyle(color: Colors.black),
-    //   displayLarge: TextStyle(color: Colors.black),
-    //   displayMedium: TextStyle(color: Colors.black),
-    //   displaySmall: TextStyle(color: Colors.black),
-    //   headlineLarge: TextStyle(color: Colors.black),
-    //   headlineMedium: TextStyle(color: Colors.black),
-    //   headlineSmall: TextStyle(color: Colors.black),
-    //   labelLarge: TextStyle(color: Colors.black),
-    //   labelMedium: TextStyle(color: Colors.black),
-    //   labelSmall: TextStyle(color: Colors.black),
-    // ).apply(
-    //   bodyColor: Colors.black,
-    //   displayColor: Colors.black,
-    // ),
     inputDecorationTheme: InputDecorationTheme(
       isDense: true,
       filled: true,

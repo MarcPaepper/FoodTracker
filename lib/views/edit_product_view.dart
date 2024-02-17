@@ -8,6 +8,7 @@ import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
+import 'package:food_tracker/utility/multi_value_listenable_builder.dart';
 
 import "dart:developer" as devtools show log;
 
@@ -454,28 +455,52 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
+  // Widget _buildConversionFields() {
+  //   return ValueListenableBuilder(
+  //       valueListenable: _defaultUnitNotifier,
+  //       builder: (contextUnit, valueUnit, childUnit) {
+  //         return ValueListenableBuilder(
+  //           valueListenable: _densityConversionNotifier,
+  //           builder: (contextConv1, valueConv1, childConv1) {
+  //              return ValueListenableBuilder(
+  //               valueListenable: _quantityConversionNotifier,
+  //               builder: (contextConv2, valueConv2, childConv2) {
+  //                 return Column(
+  //                   children: [
+  //                     _buildConversionField(0, _densityConversionNotifier, valueConv2, valueUnit),
+  //                     const SizedBox(height: 10),
+  //                     _buildConversionField(1, _quantityConversionNotifier, valueConv1, valueUnit),
+  //                   ],
+  //                 );
+  //               }
+  //              );
+  //           }
+  //         );
+  //       }
+  //   );
+  // }
+  
+  // same as above but with MultiValueListenableBuilder
   Widget _buildConversionFields() {
-    return ValueListenableBuilder(
-        valueListenable: _defaultUnitNotifier,
-        builder: (contextUnit, valueUnit, childUnit) {
-          return ValueListenableBuilder(
-            valueListenable: _densityConversionNotifier,
-            builder: (contextConv1, valueConv1, childConv1) {
-               return ValueListenableBuilder(
-                valueListenable: _quantityConversionNotifier,
-                builder: (contextConv2, valueConv2, childConv2) {
-                  return Column(
-                    children: [
-                      _buildConversionField(0, _densityConversionNotifier, valueConv2, valueUnit),
-                      const SizedBox(height: 10),
-                      _buildConversionField(1, _quantityConversionNotifier, valueConv1, valueUnit),
-                    ],
-                  );
-                }
-               );
-            }
-          );
-        }
+    return MultiValueListenableBuilder(
+      listenables: [
+        _defaultUnitNotifier,
+        _densityConversionNotifier,
+        _quantityConversionNotifier,
+      ],
+      builder: (context, values, child) {
+        var valueUnit = values[0] as Unit;
+        var valueConv1 = values[1] as Conversion;
+        var valueConv2 = values[2] as Conversion;
+        
+        return Column(
+          children: [
+            _buildConversionField(0, _densityConversionNotifier, valueConv2, valueUnit),
+            const SizedBox(height: 10),
+            _buildConversionField(1, _quantityConversionNotifier, valueConv1, valueUnit),
+          ],
+        );
+      },
     );
   }
   
@@ -930,11 +955,37 @@ class _EditProductViewState extends State<EditProductView> {
             fontSize: 14,
           ),
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete),
-          onPressed: () {
-            ingredients.removeAt(index);
-            _ingredientsNotifier.value = ingredients;
+        // trailing three dot menu through which you can delete or edit the ingredient
+        trailing: PopupMenuButton(
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: "edit",
+              // Text "Edit" with a pencil on the left
+              child: ListTile(
+                leading: Icon(Icons.edit),
+                title: Text("Edit Product"),
+              ),
+            ),
+            const PopupMenuItem(
+              value: "delete",
+              // Text "Delete" with a bin on the left
+              child: ListTile(
+                leading: Icon(Icons.delete),
+                title: Text("Delete Ingredient"),
+              ),
+            ),
+          ],
+          onSelected: (String value) {
+            if (value == "edit") {
+              // navigate to edit the product
+              Navigator.of(context).pushNamed(
+                editProductRoute,
+                arguments: ingredient.product.name,
+              );
+            } else if (value == "delete") {
+              ingredients.removeAt(index);
+              _ingredientsNotifier.value = ingredients;
+            }
           },
         ),
         tileColor: color,
