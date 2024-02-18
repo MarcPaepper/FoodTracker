@@ -743,12 +743,13 @@ class _EditProductViewState extends State<EditProductView> {
         _ingredientsNotifier,
       ],
       builder: (context, values, child) {
-        var valueName = values[0] as TextEditingValue;
+        var valueName = _productNameController.value.text;
         var valueAutoCalc = values[3] as bool;
         var valueIngredients = values[4] as List<ProductQuantity>;
         
-        var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
-        
+        var productName = valueName != "" ? "'$valueName'" : "  the product";
+        devtools.log("Name: $valueName");
+        devtools.log("DefUnit: ${_defaultUnitNotifier.value}");
         return BorderBox(
           title: "Ingredients",
           child: Column(
@@ -979,6 +980,7 @@ class _EditProductViewState extends State<EditProductView> {
         }
         var ingredient = ingredients.removeAt(oldIndex);
         ingredients.insert(newIndex, ingredient);
+        _ingredientsNotifier.value = List.from(ingredients);
       },
     );
   }
@@ -1012,19 +1014,34 @@ class _EditProductViewState extends State<EditProductView> {
         ),
         menuItems: [
           Container(
-            color: const Color.fromARGB(255, 0, 94, 255),
-            child: IconButton(
-              color: Colors.white,
-              icon: const Icon(Icons.more_horiz),
-              onPressed: () {},
+            color: const Color.fromARGB(255, 90, 150, 255),
+            child: Tooltip(
+              message: "Edit Product",
+              child: IconButton(
+                color: Colors.white,
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  // navigate to edit the product
+                  Navigator.of(context).pushNamed(
+                    editProductRoute,
+                    arguments: ingredient.product.name,
+                  );
+                },
+              ),
             ),
           ),
           Container(
             color: Colors.red,
-            child: IconButton(
-              color: Colors.white,
-              icon: const Icon(Icons.delete),
-              onPressed: () {},
+            child: Tooltip(
+              message: "Delete Ingredient",
+              child: IconButton(
+                color: Colors.white,
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  ingredients.removeAt(index);
+                  _ingredientsNotifier.value = List.from(ingredients);
+                },
+              ),
             ),
           ),
         ],

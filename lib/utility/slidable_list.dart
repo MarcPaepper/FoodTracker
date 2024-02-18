@@ -28,23 +28,45 @@ class _SlidableListState extends State<SlidableList> {
         var menuItems = entry.menuItems;
         var child = entry.child;
         
-        menuItems = <Widget>[
-          Container(
-            color: Colors.black12,
-            child: IconButton(
-              icon: const Icon(Icons.more_horiz),
-              onPressed: () {},
-            ),
-          ),
-          Container(
-            color: Colors.red,
-            child: IconButton(
-              color: Colors.white,
-              icon: const Icon(Icons.delete),
-              onPressed: () {},
-            ),
-          ),
-        ];
+        return SlideMenu(
+          menuItems: menuItems,
+          menuWidth: widget.menuWidth,
+          child: child,
+        );
+      }).toList(),
+    );
+  }
+}
+
+class SlidableReordableList extends StatefulWidget {
+  final List<SlidableListEntry> entries;
+  final double menuWidth;
+  final bool buildDefaultDragHandles;
+  final void Function(int oldIndex, int newIndex) onReorder;
+  
+  const SlidableReordableList({
+    required this.entries,
+    required this.menuWidth,
+    this.buildDefaultDragHandles = true,
+    required this.onReorder,
+    Key? key
+  }) : super(key: key);
+
+  @override
+  State<SlidableReordableList> createState() => _SlidableReordableListState();
+}
+
+class _SlidableReordableListState extends State<SlidableReordableList> {
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableListView(
+      shrinkWrap: true,
+      buildDefaultDragHandles: widget.buildDefaultDragHandles,
+      onReorder: widget.onReorder,
+      children: List.generate(widget.entries.length, (index) {
+        var entry = widget.entries[index];
+        var menuItems = entry.menuItems;
+        var child = entry.child;
         
         return SlideMenu(
           menuItems: menuItems,
