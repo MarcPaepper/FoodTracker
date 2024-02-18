@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/text_logic.dart';
 import 'package:food_tracker/widgets/border_box.dart';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -103,82 +104,86 @@ class _EditProductViewState extends State<EditProductView> {
           title: Text(isEdit ? "Edit Product" : "Add Product"),
           actions: isEdit ? [_buildDeleteButton()] : null
         ),
-        body: FutureBuilder(
-          future: _dataService.getAllProducts(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              devtools.log("Error: ${snapshot.error}");
-              return const Text("Error");
-            }
-            switch (snapshot.connectionState) {
-              case ConnectionState.done:
-                final products = snapshot.data as List<Product>;
-                if (isEdit) {
-                  try {
-                    prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
-                    _id = prevProduct.id;
-                  } catch (e) {
-                    return const Text("Error: Product not found");
+        body: ScrollConfiguration(
+          // clamping scroll physics to avoid overscroll
+          behavior: const ScrollBehavior().copyWith(overscroll: false),
+          child: FutureBuilder(
+            future: _dataService.getAllProducts(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                devtools.log("Error: ${snapshot.error}");
+                return const Text("Error");
+              }
+              switch (snapshot.connectionState) {
+                case ConnectionState.done:
+                  final products = snapshot.data as List<Product>;
+                  if (isEdit) {
+                    try {
+                      prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
+                      _id = prevProduct.id;
+                    } catch (e) {
+                      return const Text("Error: Product not found");
+                    }
+                  } else {
+                    prevProduct = Product.defaultValues();
                   }
-                } else {
-                  prevProduct = Product.defaultValues();
-                }
-                
-                // set initial values
-                _productNameController.text = widget.productName ?? prevProduct.name;
-                _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
-                _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
-                _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
-                _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
-                _quantityNameController.text = prevProduct.quantityName;
-                _amountForIngredientsController.text = prevProduct.amountForIngredients.toString();
-                
-                _densityConversionNotifier.value = prevProduct.densityConversion;
-                _quantityConversionNotifier.value = prevProduct.quantityConversion;
-                _defaultUnitNotifier.value = prevProduct.defaultUnit;
-                _autoCalcAmountNotifier.value = prevProduct.autoCalcAmount;
-                _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
-                _ingredientsNotifier.value = prevProduct.ingredients;
-                
-                // remove ".0" from amount fields if it is the end of the string
-                var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
-                for (var field in amountFields) {
-                  var text = field.text;
-                  if (text.endsWith(".0")) {
-                    field.text = text.substring(0, text.length - 2);
+                  
+                  // set initial values
+                  _productNameController.text = widget.productName ?? prevProduct.name;
+                  _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
+                  _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
+                  _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
+                  _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
+                  _quantityNameController.text = prevProduct.quantityName;
+                  _amountForIngredientsController.text = prevProduct.amountForIngredients.toString();
+                  
+                  _densityConversionNotifier.value = prevProduct.densityConversion;
+                  _quantityConversionNotifier.value = prevProduct.quantityConversion;
+                  _defaultUnitNotifier.value = prevProduct.defaultUnit;
+                  _autoCalcAmountNotifier.value = prevProduct.autoCalcAmount;
+                  _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
+                  _ingredientsNotifier.value = prevProduct.ingredients;
+                  
+                  // remove ".0" from amount fields if it is the end of the string
+                  var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
+                  for (var field in amountFields) {
+                    var text = field.text;
+                    if (text.endsWith(".0")) {
+                      field.text = text.substring(0, text.length - 2);
+                    }
                   }
-                }
-                
-                return SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        
-                        children: [
-                          _buildNameField(products),
-                          const SizedBox(height: 5),
-                          _buildDefaultUnitDropdown(),
-                          const SizedBox(height: 8),
-                          _buildConversionFields(),
-                          const SizedBox(height: 14),
-                          _buildIngredientBox(),
-                          const SizedBox(height: 14),
-                          _buildIngredientBox2(),
-                          _buildAddButton(),
-                        ]
+                  
+                  return SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          
+                          children: [
+                            _buildNameField(products),
+                            const SizedBox(height: 5),
+                            _buildDefaultUnitDropdown(),
+                            const SizedBox(height: 8),
+                            _buildConversionFields(),
+                            const SizedBox(height: 14),
+                            _buildIngredientBox(),
+                            const SizedBox(height: 14),
+                            _buildIngredientBox2(),
+                            _buildAddButton(),
+                          ]
+                        ),
                       ),
                     ),
-                  ),
-                );
-              case ConnectionState.none:
-              case ConnectionState.waiting:
-              case ConnectionState.active:
-              default:
-                return loadingPage();
+                  );
+                case ConnectionState.none:
+                case ConnectionState.waiting:
+                case ConnectionState.active:
+                default:
+                  return loadingPage();
+              }
             }
-          }
+          ),
         )
       ),
     );
@@ -693,21 +698,6 @@ class _EditProductViewState extends State<EditProductView> {
     TextEditingController controller,
     int index,
   ) {
-    validator(String? value) {
-      if (!notifier.value.enabled) {
-        return null;
-      }
-      if (value == null || value.isEmpty) {
-        return "Required Field";
-      }
-      try {
-        double.parse(value);
-      } catch (e) {
-        return "Invalid Number";
-      }
-      return null;
-    }
-    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: TextFormField(
@@ -717,7 +707,7 @@ class _EditProductViewState extends State<EditProductView> {
         ),
         controller: controller,
         keyboardType: TextInputType.number,
-        validator: notifier.value.enabled ? validator : null,
+        validator: (String? value) => notifier.value.enabled ? numberValidator(value) : null,
         autovalidateMode: AutovalidateMode.always,
         onChanged: (String? value) {
           if (value != null && value.isNotEmpty) {
@@ -803,20 +793,7 @@ class _EditProductViewState extends State<EditProductView> {
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
                             ),
-                            validator: (String? value) {
-                              if (valueAutoCalc) {
-                                return null;
-                              }
-                              if (value == null || value.isEmpty) {
-                                return "Required Field";
-                              }
-                              try {
-                                double.parse(value);
-                              } catch (e) {
-                                return "Invalid Number";
-                              }
-                              return null;
-                            },
+                            validator: (String? value) => valueAutoCalc ? null : numberValidator(value),
                             autovalidateMode: AutovalidateMode.onUserInteraction,
                           )
                         ),
@@ -866,6 +843,18 @@ class _EditProductViewState extends State<EditProductView> {
         var valueAutoCalc = values[3] as bool;
         var valueIngredients = values[4] as List<ProductQuantity>;
         
+        //// debug example ingredients
+        //valueIngredients.add(ProductQuantity(
+        //  product: Product.defaultValues(),
+        //  amount: 100,
+        //  unit: Unit.g,
+        //));
+        //valueIngredients.add(ProductQuantity(
+        //  product: Product.defaultValues(),
+        //  amount: 100,
+        //  unit: Unit.g,
+        //));
+        
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
         
         return BorderBox(
@@ -912,20 +901,7 @@ class _EditProductViewState extends State<EditProductView> {
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
                             ),
-                            validator: (String? value) {
-                              if (valueAutoCalc) {
-                                return null;
-                              }
-                              if (value == null || value.isEmpty) {
-                                return "Required Field";
-                              }
-                              try {
-                                double.parse(value);
-                              } catch (e) {
-                                return "Invalid Number";
-                              }
-                              return null;
-                            },
+                            validator: (String? value) => valueAutoCalc ? null : numberValidator(value),
                             autovalidateMode: AutovalidateMode.onUserInteraction,
                           )
                         ),
@@ -953,6 +929,7 @@ class _EditProductViewState extends State<EditProductView> {
               ),
               const SizedBox(height: 8),
               _buildIngredientsListSlidable(valueIngredients),
+              _buildAddIngredientButton(),
             ],
           ),
         );
@@ -979,6 +956,7 @@ class _EditProductViewState extends State<EditProductView> {
       );
     }
     return ReorderableListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       buildDefaultDragHandles: false,
       itemCount: ingredients.length,
@@ -1005,17 +983,54 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildIngredientsListSlidable() {
+  Widget _buildIngredientsListSlidable(List<ProductQuantity> ingredients) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      // null decoration
       decoration: const BoxDecoration(),
-      child: SlidableList(entries: _getSlideableEntries()),
+      child: SlidableList(
+        entries: _getSlideableEntries(ingredients),
+        menuWidth: 90,
+      ),
     );
   }
   
-  List<SlidableListEntry> _getSlideableEntries() {
-    
+  List<SlidableListEntry> _getSlideableEntries(List<ProductQuantity> ingredients) {
+    var entries = <SlidableListEntry>[];
+    for (int index = 0; index < ingredients.length; index++) {
+      var ingredient = ingredients[index];
+      bool dark = (ingredients.length - index) % 2 == 1;
+      var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(7, 100, 100, 100);
+      
+      entries.add(SlidableListEntry(
+        child: ListTile(
+          tileColor: color,
+          contentPadding: EdgeInsets.zero,
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(ingredient.product.name),
+          ),
+        ),
+        menuItems: [
+          Container(
+            color: const Color.fromARGB(255, 0, 94, 255),
+            child: IconButton(
+              color: Colors.white,
+              icon: const Icon(Icons.more_horiz),
+              onPressed: () {},
+            ),
+          ),
+          Container(
+            color: Colors.red,
+            child: IconButton(
+              color: Colors.white,
+              icon: const Icon(Icons.delete),
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ));
+    }
+    return entries;
   }
   
   Widget _buildIngredientTile(
@@ -1082,7 +1097,6 @@ class _EditProductViewState extends State<EditProductView> {
   
   Widget _buildAddIngredientButton() {
     return ElevatedButton.icon(
-      key: const ValueKey("add"),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 210, 235, 198),
         foregroundColor: Colors.black,
@@ -1091,8 +1105,8 @@ class _EditProductViewState extends State<EditProductView> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(15),
-            bottomRight: Radius.circular(15),
+            bottomLeft: Radius.circular(14),
+            bottomRight: Radius.circular(14),
           ),
         ),
         textStyle: Theme.of(context).textTheme.bodyLarge,

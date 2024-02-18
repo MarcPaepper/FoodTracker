@@ -45,14 +45,14 @@ const isContainedInIdColumn       = "is_contained_in_id";
 const amountColumn                = "amount";
 const unitColumn                  = "unit";
 
-const forceReset = true;
+const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
   
   // cached data
   List<Product> _products = [];
-  List<NutrionalValue> _nutrionalValues = [];
+  List<NutrionalValue> _nutritionalValues = [];
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
   final _nutrionalValuesStreamController = BehaviorSubject<List<NutrionalValue>>();
@@ -69,8 +69,10 @@ class SqfliteDataProvider implements DataProvider {
     var tables = {
       productTable: createProductTable,
       nutrionalValueTable: createNutrionalValueTable,
+      ingredientTable: createIngredientTable,
     };
     try {
+      // Find file
       String dbPath;
       if (kIsWeb) {
         dbPath = "/assets/db";
@@ -103,6 +105,9 @@ class SqfliteDataProvider implements DataProvider {
           }
         }
       }
+      
+      getAllProducts();
+      getAllNutrionalValues();
       
       return "data loaded";
     } on MissingPlatformDirectoryException {
@@ -296,7 +301,7 @@ class SqfliteDataProvider implements DataProvider {
   
   @override
   void reloadNutrionalValueStream() {
-    if (isLoaded()) _nutrionalValuesStreamController.add(_nutrionalValues);
+    if (isLoaded()) _nutrionalValuesStreamController.add(_nutritionalValues);
   }
   
   @override
@@ -326,7 +331,7 @@ class SqfliteDataProvider implements DataProvider {
     final unitName = row[unitNameColumn] as String;
     final nutrionalValue = NutrionalValue(id, name, unitName);
     
-    _nutrionalValuesStreamController.add(_nutrionalValues);
+    _nutrionalValuesStreamController.add(_nutritionalValues);
     
     return nutrionalValue;
   }
@@ -343,8 +348,8 @@ class SqfliteDataProvider implements DataProvider {
       unitNameColumn: nutVal.unit,
     });
     
-    _nutrionalValues.add(NutrionalValue(id, nutVal.name, nutVal.unit));
-    _nutrionalValuesStreamController.add(_nutrionalValues);
+    _nutritionalValues.add(NutrionalValue(id, nutVal.name, nutVal.unit));
+    _nutrionalValuesStreamController.add(_nutritionalValues);
     
     return NutrionalValue(id, nutVal.name, nutVal.unit);
   }
@@ -359,9 +364,9 @@ class SqfliteDataProvider implements DataProvider {
     }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
-    _nutrionalValues.removeWhere((p) => p.id == nutVal.id);
-    _nutrionalValues.add(nutVal);
-    _nutrionalValuesStreamController.add(_nutrionalValues);
+    _nutritionalValues.removeWhere((p) => p.id == nutVal.id);
+    _nutritionalValues.add(nutVal);
+    _nutrionalValuesStreamController.add(_nutritionalValues);
     
     return nutVal;
   }
@@ -373,8 +378,8 @@ class SqfliteDataProvider implements DataProvider {
     final deletedCount = await _db!.delete(nutrionalValueTable, where: '$idColumn = ?', whereArgs: [id]);
     if (deletedCount != 1) throw InvalidDeletionException();
     
-    _nutrionalValues.removeWhere((p) => p.id == id);
-    _nutrionalValuesStreamController.add(_nutrionalValues);
+    _nutritionalValues.removeWhere((p) => p.id == id);
+    _nutrionalValuesStreamController.add(_nutritionalValues);
   }
   
   @override
@@ -384,7 +389,7 @@ class SqfliteDataProvider implements DataProvider {
     final deletedCount = await _db!.delete(nutrionalValueTable, where: '$nameColumn = ?', whereArgs: [name]);
     if (deletedCount != 1) throw InvalidDeletionException();
     
-    _nutrionalValues.removeWhere((p) => p.name == name);
-    _nutrionalValuesStreamController.add(_nutrionalValues);
+    _nutritionalValues.removeWhere((p) => p.name == name);
+    _nutrionalValuesStreamController.add(_nutritionalValues);
   }
 }

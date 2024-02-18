@@ -35,3 +35,15 @@ double toDouble(dynamic value) {
     throw ArgumentError("Value is not a number");
   }
 }
+
+String? numberValidator(String? value) {
+  if (value == null || value.isEmpty) {
+    return "Required Field";
+  }
+  try {
+    double.parse(value);
+  } catch (e) {
+    return "Invalid Number";
+  }
+  return null;
+}

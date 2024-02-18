@@ -33,23 +33,27 @@ class _MainViewState extends State<MainView> {
   
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: _tabBar.preferredSize,
-          child: Material(
-            color: Theme.of(context).appBarTheme.backgroundColor,
-            child: SafeArea(child: _tabBar),
-          )
-        ),
-        body: const TabBarView(
-          children: [
-            ProductsView(),
-            NutrionalValueView(),
-          ],
-        ),
-      )
+    return ScrollConfiguration(
+      // clamping scroll physics to avoid overscroll
+      behavior: const ScrollBehavior().copyWith(overscroll: false),
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: PreferredSize(
+            preferredSize: _tabBar.preferredSize,
+            child: Material(
+              color: Theme.of(context).appBarTheme.backgroundColor,
+              child: SafeArea(child: _tabBar),
+            )
+          ),
+          body: const TabBarView(
+            children: [
+              ProductsView(),
+              NutrionalValueView(),
+            ],
+          ),
+        )
+      ),
     );
   }
   

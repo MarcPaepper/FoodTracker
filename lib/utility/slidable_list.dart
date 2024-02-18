@@ -2,11 +2,15 @@
 
 import 'package:flutter/material.dart';
 
+//import "dart:developer" as devtools show log;
+
 class SlidableList extends StatefulWidget {
   final List<SlidableListEntry> entries;
+  final double menuWidth;
   
   const SlidableList({
     required this.entries,
+    required this.menuWidth,
     Key? key
   }) : super(key: key);
 
@@ -24,9 +28,6 @@ class _SlidableListState extends State<SlidableList> {
         var menuItems = entry.menuItems;
         var child = entry.child;
         
-        child = const ListTile(
-          title: Text("Just drag me"),
-        );
         menuItems = <Widget>[
           Container(
             color: Colors.black12,
@@ -47,6 +48,7 @@ class _SlidableListState extends State<SlidableList> {
         
         return SlideMenu(
           menuItems: menuItems,
+          menuWidth: widget.menuWidth,
           child: child,
         );
       }).toList(),
@@ -57,9 +59,12 @@ class _SlidableListState extends State<SlidableList> {
 class SlideMenu extends StatefulWidget {
   final Widget child;
   final List<Widget> menuItems;
+  final double menuWidth;
 
   const SlideMenu({Key? key,
-    required this.child, required this.menuItems
+    required this.child,
+    required this.menuWidth,
+    required this.menuItems
   }) : super(key: key);
 
   @override
@@ -84,34 +89,36 @@ class _SlideMenuState extends State<SlideMenu> with SingleTickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    //Here the end field will determine the size of buttons which will appear after sliding
-    //If you need to appear them at the beginning, you need to change to "+" Offset coordinates (0.2, 0.0)
-    final animation =
-    Tween(begin: const Offset(0.0, 0.0),
-        end: const Offset(-0.2, 0.0))
-        .animate(CurveTween(curve: Curves.decelerate).animate(_controller));
+    return LayoutBuilder(builder: (context, constraint) {
+      //Here the end field will determine the size of buttons which will appear after sliding
+      //If you need to appear them at the beginning, you need to change to "+" Offset coordinates (0.2, 0.0)
+      double maxSlide = widget.menuWidth / constraint.maxWidth;
+      
+      final animation =
+      Tween(begin: const Offset(0.0, 0.0),
+          end: Offset(-maxSlide, 0.0)) // -0.2
+          .animate(CurveTween(curve: Curves.decelerate).animate(_controller));
 
-    return GestureDetector(
-      onHorizontalDragUpdate: (data) {
-        // we can access context.size here
-        setState(() {
-          //Here we set value of Animation controller depending on our finger move in horizontal axis
-          //If you want to slide to the right, change "-" to "+"
-          _controller.value -= (data.primaryDelta! / (context.size!.width*0.2));
-        });
-      },
-      onHorizontalDragEnd: (data) {
-        //To change slide direction, change to data.primaryVelocity! < -1500
-        if (data.primaryVelocity! > 1500)
-          _controller.animateTo(.0); //close menu on fast swipe in the right direction
-        //To change slide direction, change to data.primaryVelocity! > 1500
-        else if (_controller.value >= .5 || data.primaryVelocity! < -1500)
-          _controller.animateTo(1.0); // fully open if dragged a lot to left or on fast swipe to left
-        else // close if none of above
-          _controller.animateTo(.0);
-      },
-      child: LayoutBuilder(builder: (context, constraint) {
-        return Stack(
+      return GestureDetector(
+        onHorizontalDragUpdate: (data) {
+          // we can access context.size here
+          setState(() {
+            //Here we set value of Animation controller depending on our finger move in horizontal axis
+            //If you want to slide to the right, change "-" to "+"
+            _controller.value -= (data.primaryDelta! / (context.size!.width*maxSlide));//(data.primaryDelta! / widget.menuWidth);
+          });
+        },
+        onHorizontalDragEnd: (data) {
+          //To change slide direction, change to data.primaryVelocity! < -1500
+          if (data.primaryVelocity! > 1500)
+            _controller.animateTo(.0); //close menu on fast swipe in the right direction
+          //To change slide direction, change to data.primaryVelocity! > 1500
+          else if (_controller.value >= .5 || data.primaryVelocity! < -1500)
+            _controller.animateTo(1.0); // fully open if dragged a lot to left or on fast swipe to left
+          else // close if none of above
+            _controller.animateTo(.0);
+        },
+        child: Stack(
           children: [
             SlideTransition(
               position: animation,
@@ -124,9 +131,10 @@ class _SlideMenuState extends State<SlideMenu> with SingleTickerProviderStateMix
                 return Positioned(
                   right: .0,
                   top: .0,
-                  bottom: .0,
-                  width: constraint.maxWidth * animation.value.dx * -1,
+                  bottom: 0.0,
+                  width: animation.value.dx * -1 * constraint.maxWidth, // * widget.menuWidth,
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: widget.menuItems.map((child) {
                       return Expanded(
                         child: child,
@@ -134,11 +142,12 @@ class _SlideMenuState extends State<SlideMenu> with SingleTickerProviderStateMix
                     }).toList(),
                   ),
                 );
-              })
+              }
+            )
           ],
-        );
-      })
-    );
+        )
+      );
+    });
   }
 }
 

@@ -104,6 +104,7 @@ class _ProductsViewState extends State<ProductsView> {
       
       var length = products.length;
       return ListView.builder(
+        physics: const ClampingScrollPhysics(),
         controller: _scrollController,
         itemCount: length,
         itemBuilder: (context, index) {
