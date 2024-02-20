@@ -1007,11 +1007,20 @@ class _EditProductViewState extends State<EditProductView> {
             index: index,
             child: ListTile(
               key: Key("tile for ${ingredient.product.name} at $index of ${ingredients.length}"),
-              tileColor: color,
               contentPadding: EdgeInsets.zero,
-              title: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text(ingredient.product.name),
+              minVerticalPadding: 0,
+              visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+              title: Container(
+                color: color,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Text(
+                    ingredient.product.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

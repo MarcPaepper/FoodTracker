@@ -60,6 +60,7 @@ class _SlidableReorderableListState extends State<SlidableReorderableList> {
   @override
   Widget build(BuildContext context) {
     return ReorderableListView(
+      clipBehavior: Clip.antiAlias,
       shrinkWrap: true,
       buildDefaultDragHandles: widget.buildDefaultDragHandles,
       onReorder: widget.onReorder,
