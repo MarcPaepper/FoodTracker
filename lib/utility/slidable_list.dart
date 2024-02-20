@@ -38,25 +38,25 @@ class _SlidableListState extends State<SlidableList> {
   }
 }
 
-class SlidableReordableList extends StatefulWidget {
+class SlidableReorderableList extends StatefulWidget {
   final List<SlidableListEntry> entries;
   final double menuWidth;
   final bool buildDefaultDragHandles;
   final void Function(int oldIndex, int newIndex) onReorder;
   
-  const SlidableReordableList({
+  const SlidableReorderableList({
+    required key,
     required this.entries,
     required this.menuWidth,
     this.buildDefaultDragHandles = true,
     required this.onReorder,
-    Key? key
   }) : super(key: key);
 
   @override
-  State<SlidableReordableList> createState() => _SlidableReordableListState();
+  State<SlidableReorderableList> createState() => _SlidableReorderableListState();
 }
 
-class _SlidableReordableListState extends State<SlidableReordableList> {
+class _SlidableReorderableListState extends State<SlidableReorderableList> {
   @override
   Widget build(BuildContext context) {
     return ReorderableListView(
@@ -67,8 +67,10 @@ class _SlidableReordableListState extends State<SlidableReordableList> {
         var entry = widget.entries[index];
         var menuItems = entry.menuItems;
         var child = entry.child;
+        var key = entry.key;
         
         return SlideMenu(
+          key: key,
           menuItems: menuItems,
           menuWidth: widget.menuWidth,
           child: child,
@@ -79,14 +81,14 @@ class _SlidableReordableListState extends State<SlidableReordableList> {
 }
 
 class SlideMenu extends StatefulWidget {
-  final Widget child;
   final List<Widget> menuItems;
   final double menuWidth;
+  final Widget child;
 
   const SlideMenu({Key? key,
-    required this.child,
     required this.menuWidth,
-    required this.menuItems
+    required this.menuItems,
+    required this.child,
   }) : super(key: key);
 
   @override
@@ -176,9 +178,11 @@ class _SlideMenuState extends State<SlideMenu> with SingleTickerProviderStateMix
 class SlidableListEntry {
   final Widget child;
   final List<Widget> menuItems;
+  final Key key;
   
   SlidableListEntry({
     required this.child,
-    required this.menuItems
+    required this.menuItems,
+    required this.key,
   });
 }

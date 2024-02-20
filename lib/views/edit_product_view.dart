@@ -748,8 +748,7 @@ class _EditProductViewState extends State<EditProductView> {
         var valueIngredients = values[4] as List<ProductQuantity>;
         
         var productName = valueName != "" ? "'$valueName'" : "  the product";
-        devtools.log("Name: $valueName");
-        devtools.log("DefUnit: ${_defaultUnitNotifier.value}");
+        
         return BorderBox(
           title: "Ingredients",
           child: Column(
@@ -843,18 +842,6 @@ class _EditProductViewState extends State<EditProductView> {
         var valueName = values[0] as TextEditingValue;
         var valueAutoCalc = values[3] as bool;
         var valueIngredients = values[4] as List<ProductQuantity>;
-        
-        //// debug example ingredients
-        //valueIngredients.add(ProductQuantity(
-        //  product: Product.defaultValues(),
-        //  amount: 100,
-        //  unit: Unit.g,
-        //));
-        //valueIngredients.add(ProductQuantity(
-        //  product: Product.defaultValues(),
-        //  amount: 100,
-        //  unit: Unit.g,
-        //));
         
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
         
@@ -989,9 +976,19 @@ class _EditProductViewState extends State<EditProductView> {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(),
-      child: SlidableList(
+      child: SlidableReorderableList(
+        key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
+        buildDefaultDragHandles: false,
         entries: _getSlideableEntries(ingredients),
         menuWidth: 90,
+        onReorder: ((oldIndex, newIndex) {
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+          var ingredient = ingredients.removeAt(oldIndex);
+          ingredients.insert(newIndex, ingredient);
+          _ingredientsNotifier.value = List.from(ingredients);
+        }),
       ),
     );
   }
@@ -1000,52 +997,59 @@ class _EditProductViewState extends State<EditProductView> {
     var entries = <SlidableListEntry>[];
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
-      bool dark = (ingredients.length - index) % 2 == 1;
+      bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(7, 100, 100, 100);
       
-      entries.add(SlidableListEntry(
-        child: ListTile(
-          tileColor: color,
-          contentPadding: EdgeInsets.zero,
-          title: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(ingredient.product.name),
-          ),
-        ),
-        menuItems: [
-          Container(
-            color: const Color.fromARGB(255, 90, 150, 255),
-            child: Tooltip(
-              message: "Edit Product",
-              child: IconButton(
-                color: Colors.white,
-                icon: const Icon(Icons.edit),
-                onPressed: () {
-                  // navigate to edit the product
-                  Navigator.of(context).pushNamed(
-                    editProductRoute,
-                    arguments: ingredient.product.name,
-                  );
-                },
+      entries.add(
+        SlidableListEntry(
+          key: Key("ingredient ${ingredient.product.name} at $index of ${ingredients.length}"),
+          child: ReorderableDelayedDragStartListener(
+            index: index,
+            child: ListTile(
+              key: Key("tile for ${ingredient.product.name} at $index of ${ingredients.length}"),
+              tileColor: color,
+              contentPadding: EdgeInsets.zero,
+              title: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(ingredient.product.name),
               ),
             ),
           ),
-          Container(
-            color: Colors.red,
-            child: Tooltip(
-              message: "Delete Ingredient",
-              child: IconButton(
-                color: Colors.white,
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  ingredients.removeAt(index);
-                  _ingredientsNotifier.value = List.from(ingredients);
-                },
+          menuItems: [
+            Container(
+              color: const Color.fromARGB(255, 90, 150, 255),
+              child: Tooltip(
+                message: "Edit Product",
+                child: IconButton(
+                  color: Colors.white,
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    // navigate to edit the product
+                    Navigator.of(context).pushNamed(
+                      editProductRoute,
+                      arguments: ingredient.product.name,
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-        ],
-      ));
+            Container(
+              color: Colors.red,
+              child: Tooltip(
+                message: "Delete Ingredient",
+                child: IconButton(
+                  color: Colors.white,
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    ingredients.removeAt(index);
+                    _ingredientsNotifier.value = List.from(ingredients);
+                  },
+                ),
+              ),
+            ),
+          ],
+        )
+      );
     }
     return entries;
   }
@@ -1060,7 +1064,7 @@ class _EditProductViewState extends State<EditProductView> {
   ) {
     return ReorderableDelayedDragStartListener(
       index: index,
-      key: ValueKey("ingredient ${ingredient.product.name}"),
+      key: ValueKey("ingredient ${ingredient.product.name} at $index"),
       child: ListTile(
         title: Text(
           ingredient.product.name,
