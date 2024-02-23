@@ -139,10 +139,12 @@ class _ProductsViewState extends State<ProductsView> {
   
   Widget _buildAddButton(List<Product> products) {
     String? name;
+    String? nameQuotation;
     // check if the search term matches one of the products
     if (_isSearching) {
       var index = products.indexWhere((product) => product.name == _searchController.text);
-      name = index == -1 ? '"${_searchController.text}"' : null;
+      name = index == -1 ? _searchController.text : null;
+      nameQuotation = index == -1 ? "\"${_searchController.text}\"" : null;
     }
     
     return ElevatedButton.icon(
@@ -158,7 +160,7 @@ class _ProductsViewState extends State<ProductsView> {
       icon: const Icon(Icons.add),
       label: Padding(
         padding: const EdgeInsets.only(left: 5.0),
-        child: Text("Add ${name ?? "Product"}"),
+        child: Text("Add ${nameQuotation ?? "Product"}"),
       ),
       onPressed: () {
         Navigator.pushNamed (
