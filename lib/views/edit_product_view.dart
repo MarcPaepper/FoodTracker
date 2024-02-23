@@ -845,6 +845,13 @@ class _EditProductViewState extends State<EditProductView> {
         
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
         
+        devtools.log(" ------ box 2 value ------ ");
+        devtools.log(values.length.toString());
+        // for (var value in values) {
+        //   devtools.log(value.toString());
+        // }
+        devtools.log(" ------------------------- ");
+        
         return BorderBox(
           title: "Ingredients",
           child: Column(

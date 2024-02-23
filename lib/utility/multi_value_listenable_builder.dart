@@ -29,7 +29,11 @@ class MultiValueListenableBuilder extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: listenables[index],
       builder: (context, value, childBuilder) {
-        values.add(value);
+        if (index < values.length) {
+          values[index] = value;
+        } else {
+          values.add(value);
+        }
         return _buildListenableBuilder(index + 1, values, context);
       },
     );
