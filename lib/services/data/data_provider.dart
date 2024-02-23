@@ -8,6 +8,7 @@ abstract class DataProvider {
   
   Stream<List<Product>> streamProducts();
   Future<Iterable<Product>> getAllProducts();
+  void reloadProductStream();
   Future<Product> getProduct(int id);
   Future<Product> createProduct(Product product);
   Future<Product> updateProduct(Product product);

@@ -21,7 +21,7 @@ class DebugDataProvider implements DataProvider {
   Future<String> open(String dbName) async {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
-      const Duration(milliseconds: 0), () {
+      const Duration(milliseconds: 100), () {
         products = [];
         List<ProductQuantity> firstProducts = [];
         for (int i = 1; i <= 20; i++) {
@@ -85,6 +85,9 @@ class DebugDataProvider implements DataProvider {
     if (loaded) _productsStreamController.add(products);
     return _productsStreamController.stream;
   }
+  
+  @override
+  void reloadProductStream() => loaded ? _productsStreamController.add(products) : {};
   
   @override
   Future<Iterable<Product>> getAllProducts() {

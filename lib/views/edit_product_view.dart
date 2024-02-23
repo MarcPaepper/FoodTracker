@@ -25,6 +25,9 @@ class EditProductView extends StatefulWidget {
 }
 
 class _EditProductViewState extends State<EditProductView> {
+  bool _loaded = false;
+  bool _error = false;
+  
   final _dataService = DataService.current();
   
   late final GlobalKey<FormState> _formKey;
@@ -72,6 +75,11 @@ class _EditProductViewState extends State<EditProductView> {
     _quantityNameController = TextEditingController();
     _amountForIngredientsController = TextEditingController();
     
+    // reload product stream
+    Future(() {
+      _dataService.reloadProductStream();
+    });
+    
     super.initState();
   }
   
@@ -107,80 +115,72 @@ class _EditProductViewState extends State<EditProductView> {
         body: ScrollConfiguration(
           // clamping scroll physics to avoid overscroll
           behavior: const ScrollBehavior().copyWith(overscroll: false),
-          child: FutureBuilder(
-            future: _dataService.getAllProducts(),
+          child: StreamBuilder(
+            stream: _dataService.streamProducts(),
             builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                devtools.log("Error: ${snapshot.error}");
-                return const Text("Error");
-              }
-              switch (snapshot.connectionState) {
-                case ConnectionState.done:
-                  final products = snapshot.data as List<Product>;
-                  if (isEdit) {
-                    try {
-                      prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
-                      _id = prevProduct.id;
-                    } catch (e) {
-                      return const Text("Error: Product not found");
-                    }
-                  } else {
-                    prevProduct = Product.defaultValues();
+              if (snapshot.hasData) {
+                _loaded = true;
+                final products = snapshot.data as List<Product>;
+                if (isEdit) {
+                  try {
+                    prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
+                    _id = prevProduct.id;
+                  } catch (e) {
+                    _error = true;
+                    return const Text("Error: Product not found");
                   }
-                  
-                  // set initial values
-                  _productNameController.text = widget.productName ?? prevProduct.name;
-                  _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
-                  _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
-                  _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
-                  _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
-                  _quantityNameController.text = prevProduct.quantityName;
-                  _amountForIngredientsController.text = prevProduct.amountForIngredients.toString();
-                  
-                  _densityConversionNotifier.value = prevProduct.densityConversion;
-                  _quantityConversionNotifier.value = prevProduct.quantityConversion;
-                  _defaultUnitNotifier.value = prevProduct.defaultUnit;
-                  _autoCalcAmountNotifier.value = prevProduct.autoCalcAmount;
-                  _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
-                  _ingredientsNotifier.value = prevProduct.ingredients;
-                  
-                  // remove ".0" from amount fields if it is the end of the string
-                  var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
-                  for (var field in amountFields) {
-                    var text = field.text;
-                    if (text.endsWith(".0")) {
-                      field.text = text.substring(0, text.length - 2);
-                    }
+                } else {
+                  prevProduct = Product.defaultValues();
+                }
+                
+                // set initial values
+                _productNameController.text = widget.productName ?? prevProduct.name;
+                _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
+                _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
+                _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
+                _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
+                _quantityNameController.text = prevProduct.quantityName;
+                _amountForIngredientsController.text = prevProduct.amountForIngredients.toString();
+                
+                _densityConversionNotifier.value = prevProduct.densityConversion;
+                _quantityConversionNotifier.value = prevProduct.quantityConversion;
+                _defaultUnitNotifier.value = prevProduct.defaultUnit;
+                _autoCalcAmountNotifier.value = prevProduct.autoCalcAmount;
+                _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
+                _ingredientsNotifier.value = prevProduct.ingredients;
+                
+                // remove ".0" from amount fields if it is the end of the string
+                var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
+                for (var field in amountFields) {
+                  var text = field.text;
+                  if (text.endsWith(".0")) {
+                    field.text = text.substring(0, text.length - 2);
                   }
-                  
-                  return SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          
-                          children: [
-                            _buildNameField(products),
-                            const SizedBox(height: 5),
-                            _buildDefaultUnitDropdown(),
-                            const SizedBox(height: 8),
-                            _buildConversionFields(),
-                            const SizedBox(height: 14),
-                            _buildIngredientBox(),
-                            const SizedBox(height: 14),
-                            _buildIngredientBox2(),
-                            _buildAddButton(),
-                          ]
-                        ),
+                }
+                
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        
+                        children: [
+                          _buildNameField(products),
+                          const SizedBox(height: 5),
+                          _buildDefaultUnitDropdown(),
+                          const SizedBox(height: 8),
+                          _buildConversionFields(),
+                          const SizedBox(height: 14),
+                          _buildIngredientBox(products),
+                          _buildAddButton(),
+                        ]
                       ),
                     ),
-                  );
-                case ConnectionState.none:
-                case ConnectionState.waiting:
-                case ConnectionState.active:
-                default:
-                  return loadingPage();
+                  ),
+                );
+              } else {
+                return const LoadingPage();
               }
             }
           ),
@@ -191,6 +191,11 @@ class _EditProductViewState extends State<EditProductView> {
   
   Future _onPopInvoked(bool didPop) async {
     if (didPop) return;
+    if (!_loaded || _error) {
+      // if the data is not loaded yet, pop immediately 
+      Navigator.of(context).pop(true);
+      return;
+    }
     
     final NavigatorState navigator = Navigator.of(context);
     
@@ -733,7 +738,7 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildIngredientBox() {
+  Widget _buildIngredientBox(List<Product> products) {
     return MultiValueListenableBuilder(
       listenables: [
         _productNameController,
@@ -741,116 +746,15 @@ class _EditProductViewState extends State<EditProductView> {
         _quantityNameController,
         _autoCalcAmountNotifier,
         _ingredientsNotifier,
-      ],
-      builder: (context, values, child) {
-        var valueName = _productNameController.value.text;
-        var valueAutoCalc = values[3] as bool;
-        var valueIngredients = values[4] as List<ProductQuantity>;
-        
-        var productName = valueName != "" ? "'$valueName'" : "  the product";
-        
-        return BorderBox(
-          title: "Ingredients",
-          child: Column(
-            children: [
-              SwitchListTile(
-                value: valueAutoCalc,
-                controlAffinity: ListTileControlAffinity.leading,
-                onChanged: (bool value) {
-                  _autoCalcAmountNotifier.value = value;
-                },
-                title: const Padding(
-                  padding: EdgeInsets.only(top: 2),
-                  child: Text(
-                    "Auto calculate the resulting amount",
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 8, 8),
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 12),
-                      child: valueAutoCalc ? 
-                        Text(
-                          _amountForIngredientsController.text,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                          )
-                        )
-                        : SizedBox(
-                          width: 70,
-                          child: TextFormField(
-                            enabled: !valueAutoCalc,
-                            controller: _amountForIngredientsController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-                            ),
-                            validator: (String? value) => valueAutoCalc ? null : numberValidator(value),
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
-                          )
-                        ),
-                    ),
-                    SizedBox(
-                      width: 95,
-                      child: _buildUnitDropdown(
-                        items: _buildUnitItems(verbose: true), 
-                        current: _ingredientsUnitNotifier.value,
-                        onChanged: (Unit? unit) => _ingredientsUnitNotifier.value = unit ?? Unit.g,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "of $productName contains:",
-                        maxLines: 3,
-                        style: const TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildIngredientsList(valueIngredients),
-              _buildAddIngredientButton(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildIngredientBox2() {
-    return MultiValueListenableBuilder(
-      listenables: [
-        _productNameController,
-        _defaultUnitNotifier,
-        _quantityNameController,
-        _autoCalcAmountNotifier,
-        _ingredientsNotifier,
+        _ingredientsUnitNotifier,
       ],
       builder: (context, values, child) {
         var valueName = values[0] as TextEditingValue;
         var valueAutoCalc = values[3] as bool;
         var valueIngredients = values[4] as List<ProductQuantity>;
+        var valueUnit = values[5] as Unit;
         
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
-        
-        devtools.log(" ------ box 2 value ------ ");
-        devtools.log(values.length.toString());
-        // for (var value in values) {
-        //   devtools.log(value.toString());
-        // }
-        devtools.log(" ------------------------- ");
         
         return BorderBox(
           title: "Ingredients",
@@ -905,7 +809,7 @@ class _EditProductViewState extends State<EditProductView> {
                       width: 95,
                       child: _buildUnitDropdown(
                         items: _buildUnitItems(verbose: true), 
-                        current: _ingredientsUnitNotifier.value,
+                        current: valueUnit,
                         onChanged: (Unit? unit) => _ingredientsUnitNotifier.value = unit ?? Unit.g,
                       ),
                     ),
@@ -923,7 +827,7 @@ class _EditProductViewState extends State<EditProductView> {
                 ),
               ),
               const SizedBox(height: 8),
-              _buildIngredientsListSlidable(valueIngredients),
+              _buildIngredientsList(products, valueIngredients),
               _buildAddIngredientButton(),
             ],
           ),
@@ -932,9 +836,8 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildIngredientsList(List<ProductQuantity> ingredients) {
+  Widget _buildIngredientsList(List<Product> products, List<ProductQuantity> ingredients) {
     // if ingredients is empty, return a single list tile with a message
-    
     if (ingredients.isEmpty) {
       return const ListTile(
         title: Center(
@@ -950,43 +853,13 @@ class _EditProductViewState extends State<EditProductView> {
         tileColor: Color.fromARGB(14, 0, 0, 255),
       );
     }
-    return ReorderableListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      buildDefaultDragHandles: false,
-      itemCount: ingredients.length,
-      itemBuilder: (context, index) {
-        var ingredient = ingredients[index];
-        
-        bool dark = (ingredients.length - index) % 2 == 1;
-        var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(7, 100, 100, 100);
-        
-        return _buildIngredientTile(
-          ingredient: ingredient,
-          ingredients: ingredients,
-          index: index,
-          color: color,
-        );
-      },
-      onReorder: (oldIndex, newIndex) {
-        if (oldIndex < newIndex) {
-          newIndex -= 1;
-        }
-        var ingredient = ingredients.removeAt(oldIndex);
-        ingredients.insert(newIndex, ingredient);
-        _ingredientsNotifier.value = List.from(ingredients);
-      },
-    );
-  }
-  
-  Widget _buildIngredientsListSlidable(List<ProductQuantity> ingredients) {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(),
       child: SlidableReorderableList(
         key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
         buildDefaultDragHandles: false,
-        entries: _getSlideableEntries(ingredients),
+        entries: _getIngredientEntries(products, ingredients),
         menuWidth: 90,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
@@ -1000,20 +873,23 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  List<SlidableListEntry> _getSlideableEntries(List<ProductQuantity> ingredients) {
+  List<SlidableListEntry> _getIngredientEntries(List<Product> products, List<ProductQuantity> ingredients) {
     var entries = <SlidableListEntry>[];
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(7, 100, 100, 100);
       
+      // find product by id
+      var product = products.firstWhere((prod) => prod.id == ingredient.product.id);
+      
       entries.add(
         SlidableListEntry(
-          key: Key("ingredient ${ingredient.product.name} at $index of ${ingredients.length}"),
+          key: Key("ingredient ${product.name} at $index of ${ingredients.length}"),
           child: ReorderableDelayedDragStartListener(
             index: index,
             child: ListTile(
-              key: Key("tile for ${ingredient.product.name} at $index of ${ingredients.length}"),
+              key: Key("tile for ${product.name} at $index of ${ingredients.length}"),
               contentPadding: EdgeInsets.zero,
               minVerticalPadding: 0,
               visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
@@ -1022,7 +898,7 @@ class _EditProductViewState extends State<EditProductView> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   child: Text(
-                    ingredient.product.name,
+                    product.name,
                     style: const TextStyle(
                       fontSize: 16,
                     ),
@@ -1043,7 +919,7 @@ class _EditProductViewState extends State<EditProductView> {
                     // navigate to edit the product
                     Navigator.of(context).pushNamed(
                       editProductRoute,
-                      arguments: ingredient.product.name,
+                      arguments: product.name,
                     );
                   },
                 ),
@@ -1068,68 +944,6 @@ class _EditProductViewState extends State<EditProductView> {
       );
     }
     return entries;
-  }
-  
-  Widget _buildIngredientTile(
-    {
-      required ProductQuantity ingredient,
-      required List<ProductQuantity> ingredients,
-      required int index,
-      required Color color,
-    }
-  ) {
-    return ReorderableDelayedDragStartListener(
-      index: index,
-      key: ValueKey("ingredient ${ingredient.product.name} at $index"),
-      child: ListTile(
-        title: Text(
-          ingredient.product.name,
-          style: const TextStyle(
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Text(
-          "${ingredient.amount} ${unitToString(ingredient.unit)}",
-          style: const TextStyle(
-            fontSize: 14,
-          ),
-        ),
-        // trailing three dot menu through which you can delete or edit the ingredient
-        trailing: PopupMenuButton(
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: "edit",
-              // Text "Edit" with a pencil on the left
-              child: ListTile(
-                leading: Icon(Icons.edit),
-                title: Text("Edit Product"),
-              ),
-            ),
-            const PopupMenuItem(
-              value: "delete",
-              // Text "Delete" with a bin on the left
-              child: ListTile(
-                leading: Icon(Icons.delete),
-                title: Text("Delete Ingredient"),
-              ),
-            ),
-          ],
-          onSelected: (String value) {
-            if (value == "edit") {
-              // navigate to edit the product
-              Navigator.of(context).pushNamed(
-                editProductRoute,
-                arguments: ingredient.product.name,
-              );
-            } else if (value == "delete") {
-              ingredients.removeAt(index);
-              _ingredientsNotifier.value = ingredients;
-            }
-          },
-        ),
-        tileColor: color,
-      ),
-    );
   }
   
   Widget _buildAddIngredientButton() {

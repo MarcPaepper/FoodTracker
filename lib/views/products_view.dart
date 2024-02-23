@@ -129,12 +129,12 @@ class _ProductsViewState extends State<ProductsView> {
                 editProductRoute,
                 arguments: product.name,
               );
-            },
+            }
           );
         }
       );
     }
-    return loadingPage();
+    return const LoadingPage();
   }
   
   Widget _buildAddButton(List<Product> products) {

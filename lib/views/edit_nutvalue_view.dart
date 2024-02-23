@@ -116,7 +116,7 @@ class _EditNutrionalValueViewState extends State<EditNutrionalValueView> {
             case ConnectionState.waiting:
             case ConnectionState.active:
             default:
-              return loadingPage();
+              return const LoadingPage();
           }
         }
       )

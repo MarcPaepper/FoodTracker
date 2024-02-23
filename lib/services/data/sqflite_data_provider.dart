@@ -129,6 +129,11 @@ class SqfliteDataProvider implements DataProvider {
   Stream<List<Product>> streamProducts() => _productsStreamController.stream;
   
   @override
+  void reloadProductStream() {
+    if (isLoaded()) _productsStreamController.add(_products);
+  }
+  
+  @override
   Future<Iterable<Product>> getAllProducts() async {
     if (!isLoaded()) throw DataNotLoadedException();
     

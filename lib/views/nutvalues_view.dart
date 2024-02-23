@@ -96,7 +96,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
         }
       );
     }
-    return loadingPage();
+    return const LoadingPage();
   }
   
   Widget _buildAddButton() => ElevatedButton.icon(

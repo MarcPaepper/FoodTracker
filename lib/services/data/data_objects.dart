@@ -119,7 +119,7 @@ enum CalcMethod {
 }
 
 enum Unit { // measurement units which products can be given in
-	quantity, // the number of objects used / consumed, e.g. "3 bananas"
+	quantity, // the number of objects, e.g. "3 bananas"
 	kg,
 	g,
 	mg,

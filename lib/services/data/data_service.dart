@@ -53,6 +53,7 @@ class DataService implements DataProvider {
   // Products
 
   @override Stream<List<Product>> streamProducts()         => _provider.streamProducts();
+  @override void reloadProductStream()                     => _provider.reloadProductStream();
   @override Future<Iterable<Product>> getAllProducts()     => _condLoad().then((_) => _provider.getAllProducts());
   @override Future<Product> getProduct(int id)             => _condLoad().then((_) => _provider.getProduct(id));
   @override Future<Product> createProduct(Product product) => _condLoad().then((_) => _provider.createProduct(product));
