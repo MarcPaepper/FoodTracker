@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/widgets/product_dropdown.dart';
 import 'package:food_tracker/utility/text_logic.dart';
 import 'package:food_tracker/widgets/border_box.dart';
+import 'package:food_tracker/widgets/unit_dropdown.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -9,8 +11,8 @@ import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
-import 'package:food_tracker/utility/multi_value_listenable_builder.dart';
-import 'package:food_tracker/utility/slidable_list.dart';
+import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
+import 'package:food_tracker/widgets/slidable_list.dart';
 
 import "dart:developer" as devtools show log;
 
@@ -356,7 +358,7 @@ class _EditProductViewState extends State<EditProductView> {
                 ),
               ),
               Expanded(
-                child: _buildUnitDropdown(
+                child: UnitDropdown(
                   items: _buildUnitItems(),
                   current: _defaultUnitNotifier.value,
                   onChanged: (Unit? unit) {
@@ -426,48 +428,6 @@ class _EditProductViewState extends State<EditProductView> {
     return items;
   }
   
-  Widget _buildUnitDropdown({
-    required Map<Unit, Widget> items,
-    required Unit current,
-    bool enabled = true,
-    Function(Unit? unit)? onChanged,
-  }) {
-    var decoration = enabled
-      ? const InputDecoration(
-        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-      ) 
-      : InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-        // no enabled border
-        enabledBorder: UnderlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide(
-            width: 3.5,
-            color: Colors.grey.shade300
-          )
-        ),
-      );
-    
-    if (!enabled) {
-      // reduce opacity of items
-      items = items.map((key, value) => MapEntry(key, Opacity(
-        opacity: 0.4,
-        child: value,
-      )));
-    }
-    
-    return DropdownButtonFormField<Unit>(
-      decoration: decoration,
-      isExpanded: true,
-      value: current,
-      items: items.entries.map((entry) => DropdownMenuItem<Unit>(
-        value: entry.key,
-        child: entry.value,
-      )).toList(),
-      onChanged: enabled ? onChanged : null,
-    );
-  }
-  
   // same as above but with MultiValueListenableBuilder
   Widget _buildConversionFields() {
     return MultiValueListenableBuilder(
@@ -521,7 +481,7 @@ class _EditProductViewState extends State<EditProductView> {
         // create unit dropdowns
         Widget dropdown1;
         if (units1 != null) {
-          dropdown1 = _buildUnitDropdown(
+          dropdown1 = UnitDropdown(
             items: _buildUnitItems(units: units1),
             enabled: conversion.enabled,
             current: conversion.unit1,
@@ -551,7 +511,7 @@ class _EditProductViewState extends State<EditProductView> {
             autovalidateMode: AutovalidateMode.onUserInteraction,
           );
         }
-        var dropdown2 = _buildUnitDropdown(
+        var dropdown2 = UnitDropdown(
           items: _buildUnitItems(units: units2),
           enabled: conversion.enabled,
           current: conversion.unit2,
@@ -807,7 +767,7 @@ class _EditProductViewState extends State<EditProductView> {
                     ),
                     SizedBox(
                       width: 95,
-                      child: _buildUnitDropdown(
+                      child: UnitDropdown(
                         items: _buildUnitItems(verbose: true), 
                         current: valueUnit,
                         onChanged: (Unit? unit) => _ingredientsUnitNotifier.value = unit ?? Unit.g,
@@ -897,11 +857,18 @@ class _EditProductViewState extends State<EditProductView> {
                 color: color,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Text(
-                    product.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                    ),
+                  // child: Text(
+                  //   product.name,
+                  //   style: const TextStyle(
+                  //     fontSize: 16,
+                  //   ),
+                  // ),
+                  child: ProductDropdown(
+                    products: products,
+                    selectedProduct: product,
+                    onChanged: (Product? product) {
+                      
+                    },
                   ),
                 ),
               ),
