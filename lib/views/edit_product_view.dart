@@ -209,24 +209,7 @@ class _EditProductViewState extends State<EditProductView> {
       return;
     }
     
-    bool willPop = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Are you sure?'),
-        content: const Text('Unsaved changes will be lost.'),
-        surfaceTintColor: Colors.transparent,
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Yes'),
-          ),
-        ],
-      ),
-    );
+    bool willPop = await showContinueWithoutSavingDialog(context);
     
     if (willPop) {
       Future(() => navigator.pop());
@@ -466,7 +449,7 @@ class _EditProductViewState extends State<EditProductView> {
 
         var enabled = conversion.enabled;
         var textAlpha = enabled ? 255 : 100;
-        String? validationString = validateConversion(index);
+        String? validationString = validateConversionBox(index);
         Color? borderColor;
         if (enabled) {
           if (validationString != null) {
@@ -632,7 +615,7 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  String? validateConversion(int index) {
+  String? validateConversionBox(int index) {
     // check whether all children of the conversion field are valid
     var defUnit = _defaultUnitNotifier.value;
     var convNotifier = index == 0 ? _densityConversionNotifier : _quantityConversionNotifier;
@@ -838,37 +821,54 @@ class _EditProductViewState extends State<EditProductView> {
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
-      var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(7, 100, 100, 100);
+      var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(6, 200, 200, 200);
       
-      // find product by id
-      var product = products.firstWhere((prod) => prod.id == ingredient.product.id);
+      var product = ingredient.product != null 
+        ? products.firstWhere((prod) => prod.id == ingredient.product!.id)
+        : null;
       
       entries.add(
         SlidableListEntry(
-          key: Key("ingredient ${product.name} at $index of ${ingredients.length}"),
+          key: Key("${product == null ? "unnamed " : ""}ingredient ${product?.name} at $index of ${ingredients.length}"),
           child: ReorderableDelayedDragStartListener(
             index: index,
             child: ListTile(
-              key: Key("tile for ${product.name} at $index of ${ingredients.length}"),
+              key: Key("tile for the ${product == null ? "unnamed " : ""} ingredient ${product?.name} at $index of ${ingredients.length}"),
               contentPadding: EdgeInsets.zero,
               minVerticalPadding: 0,
               visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
               title: Container(
                 color: color,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  // child: Text(
-                  //   product.name,
-                  //   style: const TextStyle(
-                  //     fontSize: 16,
-                  //   ),
-                  // ),
-                  child: ProductDropdown(
-                    products: products,
-                    selectedProduct: product,
-                    onChanged: (Product? product) {
-                      
-                    },
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  child: Column(
+                    children: [
+                      ProductDropdown(
+                        products: products,
+                        selectedProduct: product,
+                        ingredients: ingredients,
+                        index: index,
+                        ingredientsNotifier: _ingredientsNotifier,
+                        onChanged: (Product? newProduct) {
+                          if (newProduct != null) {
+                            // Check whether the new product supports the current unit
+                            late Unit newUnit;
+                            if (ingredient.product != null && newProduct.getAvailableUnits().contains(ingredient.product!.defaultUnit)) {
+                              newUnit = ingredient.product!.defaultUnit;
+                            } else {
+                              newUnit = newProduct.defaultUnit;
+                            }
+                            
+                            ingredients[index] = ProductQuantity(
+                              product: newProduct,
+                              amount: ingredient.amount,
+                              unit: newUnit,
+                            );
+                            _ingredientsNotifier.value = List.from(ingredients);
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -884,10 +884,12 @@ class _EditProductViewState extends State<EditProductView> {
                   icon: const Icon(Icons.edit),
                   onPressed: () {
                     // navigate to edit the product
-                    Navigator.of(context).pushNamed(
-                      editProductRoute,
-                      arguments: product.name,
-                    );
+                    if (product != null) {
+                      Navigator.of(context).pushNamed(
+                        editProductRoute,
+                        arguments: product.name,
+                      );
+                    }
                   },
                 ),
               ),
@@ -972,7 +974,7 @@ class _EditProductViewState extends State<EditProductView> {
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     final ingredients = _ingredientsNotifier.value;
     
-    final isValid = _formKey.currentState!.validate() && validateConversion(0) == null && validateConversion(1) == null;
+    final isValid = _formKey.currentState!.validate() && validateConversionBox(0) == null && validateConversionBox(1) == null;
     return (
       Product(
         id:                    isEdit ? _id : -1,

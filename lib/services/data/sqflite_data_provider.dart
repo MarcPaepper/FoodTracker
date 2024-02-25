@@ -286,8 +286,9 @@ class SqfliteDataProvider implements DataProvider {
   
   Future<void> _addIngredients({required Product product, required int containedInId}) async {
     for (final ingredient in product.ingredients) {
+      if (ingredient.product == null) throw ArgumentError("Ingredient product is null");
       await _db!.insert(ingredientTable, {
-        ingredientIdColumn:     ingredient.product.id,
+        ingredientIdColumn:     ingredient.product!.id,
         isContainedInIdColumn:  containedInId,
         amountColumn:           ingredient.amount,
         unitColumn:             unitToString(ingredient.unit),

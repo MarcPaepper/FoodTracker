@@ -88,10 +88,40 @@ class Product {
   String toString() {
     return "<Product #$id '$name'>";
   }
+  
+  List<Unit> getAvailableUnits() {
+    Set<Unit> availableUnits = {};
+    
+    if (defaultUnit == Unit.quantity) {
+      availableUnits.add(Unit.quantity);
+    } else if (weightUnits.contains(defaultUnit)) {
+      availableUnits.addAll(weightUnits);
+    } else if (volumetricUnits.contains(defaultUnit)) {
+      availableUnits.addAll(volumetricUnits);
+    } else {
+      throw ArgumentError("Invalid default unit: '$defaultUnit'");
+    }
+    
+    if (densityConversion.enabled) {
+      availableUnits.addAll(weightUnits);
+      availableUnits.addAll(volumetricUnits);
+    }
+    
+    if (quantityConversion.enabled) {
+      availableUnits.add(Unit.quantity);
+      if (weightUnits.contains(quantityConversion.unit2)) {
+        availableUnits.addAll(weightUnits);
+      } else {
+        availableUnits.addAll(volumetricUnits);
+      }
+    }
+    
+    return availableUnits.toList();
+  }
 }
 
 class ProductQuantity {
-  final Product product;
+  final Product? product;
   final double amount;
   final Unit unit;
   

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
+import '../utility/modals.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
-final fillColor = Colors.grey.withAlpha(35);
+final fillColor = Colors.grey.shade400.withAlpha(60);
 const fillColorError = Color.fromARGB(34, 255, 111, 0);
 
 const underlineColorEnabled = Colors.grey;
@@ -14,18 +15,22 @@ const underlineColorError = Color.fromARGB(210, 193, 46, 27);
 
 class ProductDropdown extends StatefulWidget {
   final List<Product> products;
-  final Product selectedProduct;
-  final bool? enabled;
-  final void Function(Product?)? onChanged;
+  final Product? selectedProduct;
+  final List<ProductQuantity> ingredients;
+  final int index;
+  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier;
+  final void Function(Product?) onChanged;
   
-  Color _fillColor = fillColor;
-  Color _underlineColor = underlineColorEnabled;
+  final Color _fillColor = fillColor;
+  final Color _underlineColor = underlineColorEnabled;
 
   ProductDropdown({
     required this.products,
     required this.selectedProduct,
-    this.enabled,
-    this.onChanged,
+    required this.ingredients,
+    required this.index,
+    required this.ingredientsNotifier,
+    required this.onChanged,
     Key? key,
   }) : super(key: key);
   
@@ -50,95 +55,67 @@ class _ProductDropdownState extends State<ProductDropdown> {
   
   @override
   Widget build(BuildContext context) {
-    bool enabled = widget.enabled ?? true;
-    
-    
-    var decoration = enabled
-      ? const InputDecoration(
-        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-      ) 
-      : InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-        // no enabled border
-        enabledBorder: UnderlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide(
-            width: 3.5,
-            color: Colors.grey.shade300
-          )
-        ),
-      );
-    
+    var textColor = Theme.of(context).textTheme.bodyMedium!.color ?? Colors.black;
     var fillColor = widget._fillColor;
-    var underlineColor = enabled
-      ? widget._underlineColor
-      : underlineColorDisabled;
+    var underlineColor = widget._underlineColor;
     
-    return Column(
-      children: [
-        DropdownButtonFormField<Product>(
-          value: widget.selectedProduct,
-          onChanged: widget.onChanged,
-          decoration: decoration,
-          items: widget.products
-            .map<DropdownMenuItem<Product>>(
-              (Product product) => DropdownMenuItem<Product>(
-                value: product,
-                child: Text(product.name),
-              ),
-            )
-            .toList(),
-        ),
-        const SizedBox(height: 10),
-        // button acting the same as above Dropdown
-        InkWell(
+    return InkWell(
+      borderRadius: BorderRadius.circular(10.0),
+      focusNode: _focusNode,
+      onTap: () {
+        setState(() {
+          FocusScope.of(context).requestFocus(_focusNode);
+        });
+        // show dialog to choose product
+        showProductDialog(context, widget.products, widget.selectedProduct, (newProduct) => widget.onChanged(newProduct));
+      },
+      child: Container(
+        // 10px border radius
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.0),
-          focusNode: _focusNode,
-          onTap: () {
-            setState(() {
-              FocusScope.of(context).requestFocus(_focusNode);
-            });
-          },
-          child: Container(
-            // 10px border radius
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.0),
-              color: fillColor,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              // decoration: border only on bottom (like UnderlineInputBorder)
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    width: 2,
-                    color: _focusNode.hasFocus
-                      ? underlineColorFocused
-                      : underlineColor,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    widget.selectedProduct.name,
-                    style: TextStyle(
-                      color: enabled ? Colors.black : Colors.grey,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    Icons.arrow_drop_down,
-                    color: enabled ? Colors.black : Colors.grey,
-                  ),
-                ],
+          color: fillColor,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 13, 10),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                width: 1.75,
+                color: _focusNode.hasFocus
+                  ? underlineColorFocused
+                  : underlineColor,
               ),
             ),
           ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              widget.selectedProduct != null
+                ? Text(
+                    widget.selectedProduct!.name,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 16,
+                    ),
+                  )
+                : Text(
+                    'Choose a product',
+                    style: TextStyle(
+                      color: textColor,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 16,
+                    ),
+                  ),
+              const Spacer(),
+              Icon(
+                Icons.arrow_drop_down,
+                color: textColor.withAlpha(170),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 }
-
