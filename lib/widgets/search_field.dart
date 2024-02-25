@@ -12,27 +12,21 @@ class SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: TextField(
-          controller: searchController,
-          decoration: InputDecoration(
-            hintText: 'Search',
-            suffixIcon: searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    searchController.clear();
-                    onChanged('');
-                  },
-                )
-              : const Icon(Icons.search),
-          ),
-          onChanged: (value) => onChanged(value),
-        ),
+    return TextField(
+      controller: searchController,
+      decoration: InputDecoration(
+        hintText: 'Search',
+        suffixIcon: searchController.text.isNotEmpty
+          ? IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                searchController.clear();
+                onChanged('');
+              },
+            )
+          : const Icon(Icons.search),
       ),
+      onChanged: (value) => onChanged(value),
     );
   }
 }

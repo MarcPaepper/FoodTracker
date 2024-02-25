@@ -49,11 +49,17 @@ class _ProductsViewState extends State<ProductsView> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SearchField(
-              searchController: _searchController,
-              onChanged: (value) => setState(() {
-                _isSearching = value.isNotEmpty;
-              }),
+            Container(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: SearchField(
+                  searchController: _searchController,
+                  onChanged: (value) => setState(() {
+                    _isSearching = value.isNotEmpty;
+                  }),
+                ),
+              ),
             ),
             Expanded(
               child: _buildProductList(snapshot)
