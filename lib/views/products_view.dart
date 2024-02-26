@@ -77,10 +77,10 @@ class _ProductsViewState extends State<ProductsView> {
     }
     if (snapshot.hasData) {
       var products = snapshot.data as List<Product>;
-      return ProductList(
-        products: products,
-        search: _searchController.text,
-        scrollController: _scrollController,
+      return ListView(
+        physics: const ClampingScrollPhysics(),
+        controller: _scrollController,
+        children: getProductTiles(context, products, _searchController.text),
       );
     }
     return const LoadingPage();

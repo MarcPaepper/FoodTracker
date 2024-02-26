@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/widgets/search_field.dart';
 
 import '../services/data/data_objects.dart';
 
 import 'dart:developer' as devtools show log;
+
+import '../widgets/products_list.dart';
 
 void showErrorbar(BuildContext context, String msg) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -19,7 +22,8 @@ void showErrorbar(BuildContext context, String msg) {
   );
 }
 
-Future showContinueWithoutSavingDialog(BuildContext context) => showDialog(
+Future showContinueWithoutSavingDialog(BuildContext context) => 
+  showDialog(
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Are you sure?'),
@@ -54,31 +58,7 @@ void showProductDialog(
     builder: (BuildContext context) {
       return AlertDialog(
         title: const Text('Choose a product'),
-        content: Column(
-          children: [
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Filter products',
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: (value) {}
-            ),
-            ListView.builder(
-              itemCount: products.length,
-              itemBuilder: (BuildContext context, int index) {
-                var product = products[index];
-                return ListTile(
-                  title: Text(product.name),
-                  onTap: () {
-                    onChanged(product);
-                    Navigator.of(context).pop();
-                  },
-                  selected: product == selectedProduct,
-                );
-              }
-            ),
-          ],
-        ),
+        content: _ProductList(products: products),
         actions: [
           TextButton(
             onPressed: () {
@@ -91,4 +71,38 @@ void showProductDialog(
       );
     }
   );
+}
+
+class _ProductList extends StatefulWidget {
+  final List<Product> products;
+  
+  const _ProductList({
+    required this.products,
+  });
+
+  @override
+  State<_ProductList> createState() => __ProductListState();
+}
+
+class __ProductListState extends State<_ProductList> {
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SearchField(
+            searchController: _searchController,
+            onChanged: (value) => setState(() {
+              _isSearching = value.isNotEmpty;
+            }),
+          ),
+          ...getProductTiles(context, widget.products, _searchController.text)
+        ],
+      ),
+    );
+  }
 }
