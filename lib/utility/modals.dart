@@ -3,7 +3,7 @@ import 'package:food_tracker/widgets/search_field.dart';
 
 import '../services/data/data_objects.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 import '../widgets/products_list.dart';
 
@@ -52,22 +52,31 @@ void showProductDialog(
   Product? selectedProduct,
   void Function(Product?) onChanged
 ) {
-  devtools.log("showProductDialog");
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Choose a product'),
-        content: _ProductList(products: products),
-        actions: [
-          TextButton(
-            onPressed: () {
-              onChanged(null);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-        ],
+      return Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Choose a product'),
+            Expanded(
+              child: _ProductList(products: products),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    onChanged(null);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ]
+            )
+          ]
+        )
       );
     }
   );
@@ -86,23 +95,27 @@ class _ProductList extends StatefulWidget {
 
 class __ProductListState extends State<_ProductList> {
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
   
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SearchField(
-            searchController: _searchController,
-            onChanged: (value) => setState(() {
-              _isSearching = value.isNotEmpty;
-            }),
+    return Column(
+      children: [
+        Container(
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SearchField(
+              searchController: _searchController,
+              onChanged: (value) => setState(() {}),
+            )
+          )
+        ),
+        Expanded(
+          child: ListView(
+            children: getProductTiles(context, widget.products, _searchController.text),
           ),
-          ...getProductTiles(context, widget.products, _searchController.text)
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

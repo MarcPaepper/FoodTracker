@@ -70,7 +70,6 @@ class _ProductDropdownState extends State<ProductDropdown> {
         showProductDialog(context, widget.products, widget.selectedProduct, (newProduct) => widget.onChanged(newProduct));
       },
       child: Container(
-        // 10px border radius
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.0),
           color: fillColor,

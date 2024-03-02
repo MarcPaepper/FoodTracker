@@ -4,6 +4,8 @@ import 'package:food_tracker/services/data/data_objects.dart';
 import '../constants/routes.dart';
 import '../utility/text_logic.dart';
 
+import 'dart:developer' as devtools show log;
+
 List<Widget> getProductTiles(BuildContext context, List<Product> products, String search) {
   var searchWords = search.split(" ");
   
@@ -21,24 +23,75 @@ List<Widget> getProductTiles(BuildContext context, List<Product> products, Strin
     bool dark = (length - index) % 2 == 0;
     var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
     
-    return ListTile(
-      title: RichText(
-        text: TextSpan(
-          style: DefaultTextStyle.of(context).style.copyWith(
-            color: Colors.black,
-            fontSize: 16.5,
-          ),
-          children: highlightOccurrences(product.name, searchWords),
-        ),
-      ),
-      tileColor: color,
-      onTap: () {
-        Navigator.pushNamed (
-          context,
-          editProductRoute,
-          arguments: product.name,
-        );
-      }
+    return ProductTile(
+      product: product,
+      searchWords: searchWords,
+      color: color,
+      key: ValueKey(product.id),
     );
   });
+}
+
+class ProductTile extends StatefulWidget {
+  final Product product;
+  final List<String> searchWords;
+  final Color color;
+  
+  const ProductTile({
+    required this.product,
+    required this.searchWords,
+    required this.color,
+    super.key,
+  });
+
+  @override
+  State<ProductTile> createState() => _ProductTileState();
+}
+
+class _ProductTileState extends State<ProductTile> {
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: widget.color,
+      child: InkWell(
+        focusNode: _focusNode,
+        onTap: () {
+          setState(() {
+            FocusScope.of(context).requestFocus(_focusNode);
+          });
+          devtools.log("ProductTile: onTap");
+          Navigator.pushNamed (
+            context,
+            editProductRoute,
+            arguments: widget.product.name,
+          );
+        },
+        child: ListTile(
+          title: RichText(
+            text: TextSpan(
+              style: DefaultTextStyle.of(context).style.copyWith(
+                color: Colors.black,
+                fontSize: 16.5,
+              ),
+              children: highlightOccurrences(widget.product.name, widget.searchWords),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
