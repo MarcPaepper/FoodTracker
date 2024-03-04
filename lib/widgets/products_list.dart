@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
 
-import '../constants/routes.dart';
 import '../utility/text_logic.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
-List<Widget> getProductTiles(BuildContext context, List<Product> products, String search) {
+List<Widget> getProductTiles({
+  required BuildContext context,
+  required List<Product> products,
+  required String search,
+  required Function(String, int) onSelected,
+}) {
   var searchWords = search.split(" ");
   
   products = products.where((product) {
@@ -27,6 +31,7 @@ List<Widget> getProductTiles(BuildContext context, List<Product> products, Strin
       product: product,
       searchWords: searchWords,
       color: color,
+      onSelected: onSelected,
       key: ValueKey(product.id),
     );
   });
@@ -36,11 +41,13 @@ class ProductTile extends StatefulWidget {
   final Product product;
   final List<String> searchWords;
   final Color color;
+  final Function(String, int) onSelected;
   
   const ProductTile({
     required this.product,
     required this.searchWords,
     required this.color,
+    required this.onSelected,
     super.key,
   });
 
@@ -73,12 +80,7 @@ class _ProductTileState extends State<ProductTile> {
           setState(() {
             FocusScope.of(context).requestFocus(_focusNode);
           });
-          devtools.log("ProductTile: onTap");
-          Navigator.pushNamed (
-            context,
-            editProductRoute,
-            arguments: widget.product.name,
-          );
+          widget.onSelected(widget.product.name, widget.product.id);
         },
         child: ListTile(
           title: RichText(

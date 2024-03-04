@@ -61,7 +61,7 @@ void showProductDialog(
           children: [
             const Text('Choose a product'),
             Expanded(
-              child: _ProductList(products: products),
+              child: _ProductList(products: products, onSelected: onChanged),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -84,9 +84,11 @@ void showProductDialog(
 
 class _ProductList extends StatefulWidget {
   final List<Product> products;
+  final Function(Product) onSelected;
   
   const _ProductList({
     required this.products,
+    required this.onSelected,
   });
 
   @override
@@ -112,7 +114,19 @@ class __ProductListState extends State<_ProductList> {
         ),
         Expanded(
           child: ListView(
-            children: getProductTiles(context, widget.products, _searchController.text),
+            children: getProductTiles(
+              context: context,
+              products: widget.products,
+              search: _searchController.text,
+              onSelected: (name, id) {
+                var product = widget.products.firstWhere((element) => element.id == id);
+                Navigator.of(context).pop();
+                setState(() {
+                  _searchController.clear();
+                });
+                widget.onSelected(product);
+              }
+            ),
           ),
         ),
       ],

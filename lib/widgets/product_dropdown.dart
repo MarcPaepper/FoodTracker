@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/data/data_objects.dart';
 import '../utility/modals.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 final fillColor = Colors.grey.shade400.withAlpha(60);
 const fillColorError = Color.fromARGB(34, 255, 111, 0);
@@ -20,6 +20,7 @@ class ProductDropdown extends StatefulWidget {
   final int index;
   final ValueNotifier<List<ProductQuantity>> ingredientsNotifier;
   final void Function(Product?) onChanged;
+  final FocusNode? focusNode;
   
   final Color _fillColor = fillColor;
   final Color _underlineColor = underlineColorEnabled;
@@ -31,6 +32,7 @@ class ProductDropdown extends StatefulWidget {
     required this.index,
     required this.ingredientsNotifier,
     required this.onChanged,
+    this.focusNode,
     Key? key,
   }) : super(key: key);
   
@@ -39,18 +41,18 @@ class ProductDropdown extends StatefulWidget {
 }
 
 class _ProductDropdownState extends State<ProductDropdown> {
-  late FocusNode _focusNode;
+  FocusNode? _focusNode;
   
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
+    _focusNode = widget.focusNode ?? FocusNode();
   }
   
   @override
   void dispose() {
-    _focusNode.dispose();
     super.dispose();
+    _focusNode?.dispose();
   }
   
   @override
@@ -66,8 +68,32 @@ class _ProductDropdownState extends State<ProductDropdown> {
         setState(() {
           FocusScope.of(context).requestFocus(_focusNode);
         });
-        // show dialog to choose product
-        showProductDialog(context, widget.products, widget.selectedProduct, (newProduct) => widget.onChanged(newProduct));
+        showProductDialog(
+          context,
+          widget.products,
+          widget.selectedProduct,
+          (newProduct) {
+            widget.onChanged(newProduct);
+            // request focus after 1ms
+            // Future(
+            //   // unfocus
+            //   () => setState(() {
+            //     FocusScope.of(context).unfocus();
+            //     FocusScope.of(context).requestFocus(_focusNode);
+            //   })
+            // );
+            
+            // request after 1 ms
+            // Future.delayed(
+            //   const Duration(milliseconds: 100),
+            //   () => setState(() {
+            //     FocusScope.of(context).unfocus();
+            //     FocusScope.of(context).requestFocus(_focusNode);
+            //     devtools.log('requesting focus');
+            //   }),
+            // );
+          },
+        );
       },
       child: Container(
         decoration: BoxDecoration(
@@ -81,7 +107,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
             border: Border(
               bottom: BorderSide(
                 width: 1.75,
-                color: _focusNode.hasFocus
+                color: (_focusNode != null ? _focusNode!.hasFocus : false)
                   ? underlineColorFocused
                   : underlineColor,
               ),

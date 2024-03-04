@@ -44,6 +44,7 @@ class _EditProductViewState extends State<EditProductView> {
   late final bool isEdit;
   
   int _id = -1;
+  List<FocusNode> _ingredientFocusNodes = [];
   late Product prevProduct;
   
   final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
@@ -818,10 +819,13 @@ class _EditProductViewState extends State<EditProductView> {
   
   List<SlidableListEntry> _getIngredientEntries(List<Product> products, List<ProductQuantity> ingredients) {
     var entries = <SlidableListEntry>[];
+    _ingredientFocusNodes = <FocusNode>[];
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(6, 200, 200, 200);
+      var focusNode = FocusNode();
+      _ingredientFocusNodes.add(focusNode);
       
       var product = ingredient.product != null 
         ? products.firstWhere((prod) => prod.id == ingredient.product!.id)
@@ -849,6 +853,7 @@ class _EditProductViewState extends State<EditProductView> {
                         ingredients: ingredients,
                         index: index,
                         ingredientsNotifier: _ingredientsNotifier,
+                        focusNode: focusNode,
                         onChanged: (Product? newProduct) {
                           if (newProduct != null) {
                             // Check whether the new product supports the current unit
@@ -865,6 +870,7 @@ class _EditProductViewState extends State<EditProductView> {
                               unit: newUnit,
                             );
                             _ingredientsNotifier.value = List.from(ingredients);
+                            WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index));
                           }
                         },
                       ),
@@ -962,6 +968,12 @@ class _EditProductViewState extends State<EditProductView> {
       child: Text(isEdit ? "Update" : "Add"),
     ),
   );
+  
+  void _requestIngredientFocus(int index) {
+    if (index < _ingredientFocusNodes.length && _ingredientFocusNodes[index].canRequestFocus) {
+      FocusScope.of(context).requestFocus(_ingredientFocusNodes[index]);
+    }
+  }
   
   (Product, bool) getProductFromForm() {
     final name = _productNameController.text;

@@ -80,7 +80,16 @@ class _ProductsViewState extends State<ProductsView> {
       return ListView(
         physics: const ClampingScrollPhysics(),
         controller: _scrollController,
-        children: getProductTiles(context, products, _searchController.text),
+        children: getProductTiles(
+          context: context,
+          products: products,
+          search: _searchController.text,
+          onSelected: (name, id) => Navigator.pushNamed (
+            context,
+            editProductRoute,
+            arguments: name,
+          )
+        ),
       );
     }
     return const LoadingPage();
