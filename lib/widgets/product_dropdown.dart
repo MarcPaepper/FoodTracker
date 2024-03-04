@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/data/data_objects.dart';
 import '../utility/modals.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 final fillColor = Colors.grey.shade400.withAlpha(60);
 const fillColorError = Color.fromARGB(34, 255, 111, 0);
@@ -42,6 +42,7 @@ class ProductDropdown extends StatefulWidget {
 
 class _ProductDropdownState extends State<ProductDropdown> {
   FocusNode? _focusNode;
+  bool _hasFocus = false;
   
   @override
   void initState() {
@@ -64,6 +65,11 @@ class _ProductDropdownState extends State<ProductDropdown> {
     return InkWell(
       borderRadius: BorderRadius.circular(10.0),
       focusNode: _focusNode,
+      onFocusChange: (hasFocus) {
+        setState(() {
+          _hasFocus = hasFocus;
+        });
+      },
       onTap: () {
         setState(() {
           FocusScope.of(context).requestFocus(_focusNode);
@@ -72,27 +78,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
           context,
           widget.products,
           widget.selectedProduct,
-          (newProduct) {
-            widget.onChanged(newProduct);
-            // request focus after 1ms
-            // Future(
-            //   // unfocus
-            //   () => setState(() {
-            //     FocusScope.of(context).unfocus();
-            //     FocusScope.of(context).requestFocus(_focusNode);
-            //   })
-            // );
-            
-            // request after 1 ms
-            // Future.delayed(
-            //   const Duration(milliseconds: 100),
-            //   () => setState(() {
-            //     FocusScope.of(context).unfocus();
-            //     FocusScope.of(context).requestFocus(_focusNode);
-            //     devtools.log('requesting focus');
-            //   }),
-            // );
-          },
+          (newProduct) => widget.onChanged(newProduct),
         );
       },
       child: Container(
@@ -101,43 +87,45 @@ class _ProductDropdownState extends State<ProductDropdown> {
           color: fillColor,
         ),
         clipBehavior: Clip.antiAlias,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 12, 13, 10),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                width: 1.75,
-                color: (_focusNode != null ? _focusNode!.hasFocus : false)
-                  ? underlineColorFocused
-                  : underlineColor,
+        child: Focus(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 12, 13, 10),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  width: 1.75,
+                  color: (_hasFocus)
+                    ? underlineColorFocused
+                    : underlineColor,
+                ),
               ),
             ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              widget.selectedProduct != null
-                ? Text(
-                    widget.selectedProduct!.name,
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 16,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                widget.selectedProduct != null
+                  ? Text(
+                      widget.selectedProduct!.name,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 16,
+                      ),
+                    )
+                  : Text(
+                      'Choose a product',
+                      style: TextStyle(
+                        color: textColor,
+                        fontStyle: FontStyle.italic,
+                        fontSize: 16,
+                      ),
                     ),
-                  )
-                : Text(
-                    'Choose a product',
-                    style: TextStyle(
-                      color: textColor,
-                      fontStyle: FontStyle.italic,
-                      fontSize: 16,
-                    ),
-                  ),
-              const Spacer(),
-              Icon(
-                Icons.arrow_drop_down,
-                color: textColor.withAlpha(170),
-              ),
-            ],
+                const Spacer(),
+                Icon(
+                  Icons.arrow_drop_down,
+                  color: textColor.withAlpha(170),
+                ),
+              ],
+            ),
           ),
         ),
       ),

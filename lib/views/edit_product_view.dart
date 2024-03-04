@@ -424,7 +424,6 @@ class _EditProductViewState extends State<EditProductView> {
         var valueUnit = values[0] as Unit;
         var valueConv1 = values[1] as Conversion;
         var valueConv2 = values[2] as Conversion;
-        
         return Column(
           children: [
             _buildConversionField(0, _densityConversionNotifier, valueConv2, valueUnit),
@@ -971,7 +970,7 @@ class _EditProductViewState extends State<EditProductView> {
   
   void _requestIngredientFocus(int index) {
     if (index < _ingredientFocusNodes.length && _ingredientFocusNodes[index].canRequestFocus) {
-      FocusScope.of(context).requestFocus(_ingredientFocusNodes[index]);
+      _ingredientFocusNodes[index].requestFocus();
     }
   }
   
