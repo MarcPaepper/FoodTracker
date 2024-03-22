@@ -89,35 +89,41 @@ class Product {
     return "<Product #$id '$name'>";
   }
   
-  List<Unit> getAvailableUnits() {
-    Set<Unit> availableUnits = {};
-    
-    if (defaultUnit == Unit.quantity) {
-      availableUnits.add(Unit.quantity);
-    } else if (weightUnits.contains(defaultUnit)) {
-      availableUnits.addAll(weightUnits);
-    } else if (volumetricUnits.contains(defaultUnit)) {
-      availableUnits.addAll(volumetricUnits);
-    } else {
-      throw ArgumentError("Invalid default unit: '$defaultUnit'");
-    }
-    
-    if (densityConversion.enabled) {
-      availableUnits.addAll(weightUnits);
-      availableUnits.addAll(volumetricUnits);
-    }
-    
-    if (quantityConversion.enabled) {
-      availableUnits.add(Unit.quantity);
-      if (weightUnits.contains(quantityConversion.unit2)) {
-        availableUnits.addAll(weightUnits);
-      } else {
-        availableUnits.addAll(volumetricUnits);
-      }
-    }
-    
-    return availableUnits.toList();
+  List<Unit> getAvailableUnits() => getAvailableUnitsForConversions(defaultUnit, densityConversion, quantityConversion);
+}
+  
+List<Unit> getAvailableUnitsForConversions(
+  Unit defaultUnit,
+  Conversion densityConversion,
+  Conversion quantityConversion,
+) {
+  Set<Unit> availableUnits = {};
+  
+  if (defaultUnit == Unit.quantity) {
+    availableUnits.add(Unit.quantity);
+  } else if (weightUnits.contains(defaultUnit)) {
+    availableUnits.addAll(weightUnits);
+  } else if (volumetricUnits.contains(defaultUnit)) {
+    availableUnits.addAll(volumetricUnits);
+  } else {
+    throw ArgumentError("Invalid default unit: '$defaultUnit'");
   }
+  
+  if (densityConversion.enabled) {
+    availableUnits.addAll(weightUnits);
+    availableUnits.addAll(volumetricUnits);
+  }
+  
+  if (quantityConversion.enabled) {
+    availableUnits.add(Unit.quantity);
+    if (weightUnits.contains(quantityConversion.unit2)) {
+      availableUnits.addAll(weightUnits);
+    } else {
+      availableUnits.addAll(volumetricUnits);
+    }
+  }
+  
+  return availableUnits.toList();
 }
 
 class ProductQuantity {
@@ -156,6 +162,26 @@ enum Unit { // measurement units which products can be given in
 	l,
 	ml,
 }
+enum UnitType {
+  weight,
+  volumetric,
+  quantity,
+}
+const Map<Unit, UnitType> unitTypes = {
+  Unit.quantity: UnitType.quantity,
+  Unit.kg: UnitType.weight,
+  Unit.g: UnitType.weight,
+  Unit.mg: UnitType.weight,
+  Unit.l: UnitType.volumetric,
+  Unit.ml: UnitType.volumetric,
+};
+const Map<Unit, double> unitTypeFactors = {
+  Unit.kg: 1,
+  Unit.g: 0.001,
+  Unit.mg: 0.000001,
+  Unit.l: 1000,
+  Unit.ml: 1,
+};
 const List<Unit> volumetricUnits = [Unit.l, Unit.ml];
 const List<Unit> weightUnits = [Unit.kg, Unit.g, Unit.mg];
 

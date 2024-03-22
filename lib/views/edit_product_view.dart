@@ -16,6 +16,8 @@ import 'package:food_tracker/widgets/slidable_list.dart';
 
 import "dart:developer" as devtools show log;
 
+import '../utility/data_logic.dart';
+
 class EditProductView extends StatefulWidget {
   final String? productName;
   final bool? isEdit;
@@ -39,7 +41,9 @@ class _EditProductViewState extends State<EditProductView> {
   late final TextEditingController _quantityAmount1Controller;
   late final TextEditingController _quantityAmount2Controller;
   late final TextEditingController _quantityNameController;
-  late final TextEditingController _amountForIngredientsController;
+  late final TextEditingController _resultingAmountController;
+  
+  final List<TextEditingController> _ingredientAmountControllers = [];
   
   late final bool isEdit;
   
@@ -52,6 +56,7 @@ class _EditProductViewState extends State<EditProductView> {
   final _defaultUnitNotifier = ValueNotifier<Unit>(Unit.g);
   
   final _autoCalcAmountNotifier = ValueNotifier<bool>(false);
+  final _resultingAmountNotifier = ValueNotifier<double>(0);
   final _ingredientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
   final _ingredientsNotifier = ValueNotifier<List<ProductQuantity>>([]);
   
@@ -76,7 +81,7 @@ class _EditProductViewState extends State<EditProductView> {
     _quantityAmount1Controller = TextEditingController();
     _quantityAmount2Controller = TextEditingController();
     _quantityNameController = TextEditingController();
-    _amountForIngredientsController = TextEditingController();
+    _resultingAmountController = TextEditingController();
     
     // reload product stream
     Future(() {
@@ -94,11 +99,12 @@ class _EditProductViewState extends State<EditProductView> {
     _quantityAmount1Controller.dispose();
     _quantityAmount2Controller.dispose();
     _quantityNameController.dispose();
-    _amountForIngredientsController.dispose();
+    _resultingAmountController.dispose();
     _densityConversionNotifier.dispose();
     _quantityConversionNotifier.dispose();
     _defaultUnitNotifier.dispose();
     _autoCalcAmountNotifier.dispose();
+    _resultingAmountNotifier.dispose();
     _ingredientsUnitNotifier.dispose();
     _ingredientsNotifier.dispose();
     _isDuplicateNotifier.dispose();
@@ -143,7 +149,6 @@ class _EditProductViewState extends State<EditProductView> {
                 _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
                 _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
                 _quantityNameController.text = prevProduct.quantityName;
-                _amountForIngredientsController.text = prevProduct.amountForIngredients.toString();
                 
                 _densityConversionNotifier.value = prevProduct.densityConversion;
                 _quantityConversionNotifier.value = prevProduct.quantityConversion;
@@ -152,8 +157,19 @@ class _EditProductViewState extends State<EditProductView> {
                 _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
                 _ingredientsNotifier.value = prevProduct.ingredients;
                 
+                _resultingAmountController.text = prevProduct.amountForIngredients.toString();
+                _resultingAmountNotifier.value = prevProduct.amountForIngredients;
+                
+                // populate ingredient amount controllers
+                _ingredientAmountControllers.clear();
+                for (var ingredient in prevProduct.ingredients) {
+                  var controller = TextEditingController();
+                  controller.text = ingredient.amount.toString();
+                  _ingredientAmountControllers.add(controller);
+                }
+                
                 // remove ".0" from amount fields if it is the end of the string
-                var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _amountForIngredientsController];
+                var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _resultingAmountController, ..._ingredientAmountControllers];
                 for (var field in amountFields) {
                   var text = field.text;
                   if (text.endsWith(".0")) {
@@ -176,6 +192,7 @@ class _EditProductViewState extends State<EditProductView> {
                           _buildConversionFields(),
                           const SizedBox(height: 14),
                           _buildIngredientBox(products),
+                          const SizedBox(height: 8),
                           _buildAddButton(),
                         ]
                       ),
@@ -521,10 +538,10 @@ class _EditProductViewState extends State<EditProductView> {
         Widget inputFields = isWide
           ? Row(
             children: [
-              Expanded(child: _buildAmountField(notifier, controller1, 1)),
+              Expanded(child: _buildConversionAmountField(notifier: notifier, controller: controller1, index: 1)),
               Expanded(child: dropdown1),
               equalSign,
-              Expanded(child: _buildAmountField(notifier, controller2, 2)),
+              Expanded(child: _buildConversionAmountField(notifier: notifier, controller: controller2, index: 2)),
               Expanded(child: dropdown2),
             ]
           )
@@ -538,7 +555,7 @@ class _EditProductViewState extends State<EditProductView> {
               TableRow(
                 children: [
                   const SizedBox.shrink(),
-                  _buildAmountField(notifier, controller1, 1),
+                  _buildConversionAmountField(notifier: notifier, controller: controller1, index: 1),
                   dropdown1,
                 ]
               ),
@@ -556,7 +573,7 @@ class _EditProductViewState extends State<EditProductView> {
                     verticalAlignment: TableCellVerticalAlignment.middle,
                     child: equalSign,
                   ),
-                  _buildAmountField(notifier, controller2, 2),
+                  _buildConversionAmountField(notifier: notifier, controller: controller2, index: 2),
                   dropdown2,
                 ]
               ),
@@ -641,21 +658,43 @@ class _EditProductViewState extends State<EditProductView> {
     return null;
   }
   
-  Widget _buildAmountField(
-    ValueNotifier<Conversion> notifier,
-    TextEditingController controller,
-    int index,
-  ) {
+  /* 
+  *  Amount field for the conversion fields
+  */
+  _buildConversionAmountField({
+    required ValueNotifier<Conversion> notifier,
+    required TextEditingController controller,
+    required int index,
+  }) {
+    return _buildAmountField(
+      controller: controller,
+      enabled: notifier.value.enabled,
+      onChangedAndParsed: (value) {
+        if (index == 1) {
+          notifier.value = notifier.value.withAmount1(value);
+        } else {
+          notifier.value = notifier.value.withAmount2(value);
+        }
+      }
+    );
+  }
+  
+  Widget _buildAmountField({
+    required TextEditingController controller,
+    bool enabled = true,
+    Function(double)? onChangedAndParsed,
+    double? padding,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: padding ?? 12),
       child: TextFormField(
-        enabled: notifier.value.enabled,
+        enabled: enabled,
         decoration: const InputDecoration(
           contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
         ),
         controller: controller,
         keyboardType: TextInputType.number,
-        validator: (String? value) => notifier.value.enabled ? numberValidator(value) : null,
+        validator: (String? value) => enabled ? numberValidator(value) : null,
         autovalidateMode: AutovalidateMode.always,
         onChanged: (String? value) {
           if (value != null && value.isNotEmpty) {
@@ -666,13 +705,11 @@ class _EditProductViewState extends State<EditProductView> {
               controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
               
               var input = double.parse(value);
-              if (index == 1) {
-                notifier.value = notifier.value.withAmount1(input);
-              } else {
-                notifier.value = notifier.value.withAmount2(input);
+              if (onChangedAndParsed != null) {
+                onChangedAndParsed(input);
               }
             } catch (e) {
-              devtools.log("Error: Invalid number in amount$index field");
+              devtools.log("Error: Invalid number in amount field");
             }
           }
         },
@@ -690,14 +727,47 @@ class _EditProductViewState extends State<EditProductView> {
         _autoCalcAmountNotifier,
         _ingredientsNotifier,
         _ingredientsUnitNotifier,
+        _densityConversionNotifier,
+        _quantityConversionNotifier,
+        _resultingAmountNotifier
       ],
       builder: (context, values, child) {
         var valueName = values[0] as TextEditingValue;
+        var valueDefUnit = values[1] as Unit;
         var valueAutoCalc = values[3] as bool;
         var valueIngredients = values[4] as List<ProductQuantity>;
         var valueUnit = values[5] as Unit;
+        var valueDensityConversion = values[6] as Conversion;
+        var valueQuantityConversion = values[7] as Conversion;
+        var valueResultingAmount = values[8] as double;
         
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
+        
+        // check whether the ingredient unit is compatible with the default unit
+        
+        var validUnit = conversionToUnitPossible(valueUnit, valueDefUnit, valueDensityConversion, valueQuantityConversion);
+        
+        // calculate the resulting amount
+        List<double>? amounts;
+        if (valueAutoCalc) {
+          amounts = valueIngredients.map((ingr) => convertBetweenProducts(
+            targetUnit: valueUnit,
+            conversion1: valueDensityConversion,
+            conversion2: valueQuantityConversion,
+            ingredient: ingr,
+            products: products,
+          )).toList();
+          // sum up all non-NaN amounts to get the resulting amount
+          var resultingAmount = amounts.where((amount) => !amount.isNaN).fold(0.0, (prev, amount) => prev + amount);
+          
+          if (!resultingAmount.isNaN && resultingAmount != valueResultingAmount) {
+            // after frame callback to avoid changing the value during build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _resultingAmountNotifier.value = resultingAmount;
+              _resultingAmountController.text = resultingAmount.toString();
+            });
+          }
+        }
         
         return BorderBox(
           title: "Ingredients",
@@ -724,11 +794,11 @@ class _EditProductViewState extends State<EditProductView> {
                 padding: const EdgeInsets.fromLTRB(4, 0, 8, 8),
                 child: Row(
                   children: [
-                    Padding(
+                    Padding( // resulting ingredient amount field
                       padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 12),
                       child: valueAutoCalc ? 
                         Text(
-                          _amountForIngredientsController.text,
+                          valueResultingAmount.isNaN ? "NaN" : valueResultingAmount.toString(),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 16,
@@ -738,17 +808,37 @@ class _EditProductViewState extends State<EditProductView> {
                           width: 70,
                           child: TextFormField(
                             enabled: !valueAutoCalc,
-                            controller: _amountForIngredientsController,
+                            controller: _resultingAmountController,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
                             ),
                             validator: (String? value) => valueAutoCalc ? null : numberValidator(value),
                             autovalidateMode: AutovalidateMode.onUserInteraction,
+                            onChanged: (String? value) {
+                              if (value != null && value.isNotEmpty) {
+                                try {
+                                  value = value.replaceAll(",", ".");
+                                  
+                                  
+                                  
+                                  var input = double.parse(value);
+                                  if (input.isFinite) {
+                                    _resultingAmountNotifier.value = input;
+                                    
+                                    var cursorPos = _resultingAmountController.selection.baseOffset;
+                                    _resultingAmountController.text = value;
+                                    _resultingAmountController.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
+                                  }
+                                } catch (e) {
+                                  devtools.log("Error: Invalid number in amount field");
+                                }
+                              }
+                            },
                           )
                         ),
                     ),
-                    SizedBox(
+                    SizedBox( // ingredient unit dropdown
                       width: 95,
                       child: UnitDropdown(
                         items: _buildUnitItems(verbose: true), 
@@ -770,7 +860,7 @@ class _EditProductViewState extends State<EditProductView> {
                 ),
               ),
               const SizedBox(height: 8),
-              _buildIngredientsList(products, valueIngredients),
+              _buildIngredientsList(products, valueIngredients, amounts, valueUnit),
               _buildAddIngredientButton(),
             ],
           ),
@@ -779,7 +869,7 @@ class _EditProductViewState extends State<EditProductView> {
     );
   }
   
-  Widget _buildIngredientsList(List<Product> products, List<ProductQuantity> ingredients) {
+  Widget _buildIngredientsList(List<Product> products, List<ProductQuantity> ingredients, List<double>? amounts, Unit targetUnit) {
     // if ingredients is empty, return a single list tile with a message
     if (ingredients.isEmpty) {
       return const ListTile(
@@ -802,7 +892,7 @@ class _EditProductViewState extends State<EditProductView> {
       child: SlidableReorderableList(
         key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
         buildDefaultDragHandles: false,
-        entries: _getIngredientEntries(products, ingredients),
+        entries: _getIngredientEntries(products, ingredients, amounts, targetUnit),
         menuWidth: 90,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
@@ -811,16 +901,20 @@ class _EditProductViewState extends State<EditProductView> {
           var ingredient = ingredients.removeAt(oldIndex);
           ingredients.insert(newIndex, ingredient);
           _ingredientsNotifier.value = List.from(ingredients);
+          
+          var controller = _ingredientAmountControllers.removeAt(oldIndex);
+          _ingredientAmountControllers.insert(newIndex, controller);
         }),
       ),
     );
   }
   
-  List<SlidableListEntry> _getIngredientEntries(List<Product> products, List<ProductQuantity> ingredients) {
+  List<SlidableListEntry> _getIngredientEntries(List<Product> products, List<ProductQuantity> ingredients, List<double>? amounts, Unit targetUnit) {
     var entries = <SlidableListEntry>[];
     _ingredientFocusNodes = <FocusNode>[];
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
+      bool conversionPossible = amounts == null || !amounts[index].isNaN;
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(6, 200, 200, 200);
       var focusNode = FocusNode();
@@ -845,6 +939,7 @@ class _EditProductViewState extends State<EditProductView> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ProductDropdown(
                         products: products,
@@ -872,6 +967,54 @@ class _EditProductViewState extends State<EditProductView> {
                             WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index));
                           }
                         },
+                      ),
+                      const SizedBox(height: 15),
+                      Row(children: [
+                        // amount field
+                        Expanded(
+                          child: _buildAmountField(
+                            controller: _ingredientAmountControllers[index],
+                            padding: 0,
+                            onChangedAndParsed: (value) {
+                              var prev = ingredients[index];
+                              ingredients[index] = ProductQuantity(
+                                product: prev.product,
+                                amount: value,
+                                unit: prev.unit,
+                              );
+                              _ingredientsNotifier.value = List.from(ingredients);
+                            }
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // unit dropdown
+                        Expanded(
+                          child: UnitDropdown(
+                            items: _buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values),
+                            current: ingredient.unit,
+                            onChanged: (Unit? unit) {
+                              if (unit != null) {
+                                var prev = ingredients[index];
+                                ingredients[index] = ProductQuantity(
+                                  product: prev.product,
+                                  amount: prev.amount,
+                                  unit: unit,
+                                );
+                                _ingredientsNotifier.value = List.from(ingredients);
+                              }
+                            }
+                          ),
+                        ),
+                      ]),
+                      SizedBox(height: conversionPossible ? 0 : 10),
+                      conversionPossible
+                        ? const SizedBox()
+                        : Text(
+                          " ⚠ Conversion to ${unitToLongString(targetUnit)} not possible",
+                          style: TextStyle(
+                            color: Colors.amber.shade900,
+                            fontSize: 16,
+                          ),
                       ),
                     ],
                   ),
@@ -909,6 +1052,7 @@ class _EditProductViewState extends State<EditProductView> {
                   onPressed: () {
                     ingredients.removeAt(index);
                     _ingredientsNotifier.value = List.from(ingredients);
+                    _ingredientAmountControllers.removeAt(index).dispose();
                   },
                 ),
               ),
@@ -949,13 +1093,21 @@ class _EditProductViewState extends State<EditProductView> {
   
   Widget _buildAddButton() => Padding(
     padding: const EdgeInsets.all(8.0),
-    child: TextButton(
+    child: ElevatedButton(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all(Colors.teal.shade400),
+        foregroundColor: MaterialStateProperty.all(Colors.white),
+        minimumSize: MaterialStateProperty.all(const Size(double.infinity, 60)),
+        textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16)),
+        shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(14)),
+        )),
+      ),
       onPressed: () {
         var (product, isValid) = getProductFromForm();
         
         if (isValid) {
           if (isEdit) {
-            devtools.log("Updating product");
             _dataService.updateProduct(product);
           } else {
             _dataService.createProduct(product);
@@ -964,7 +1116,7 @@ class _EditProductViewState extends State<EditProductView> {
           Navigator.of(context).pop();
         }
       },
-      child: Text(isEdit ? "Update" : "Add"),
+      child: Text(isEdit ? "Update Product" : "Add Product"),
     ),
   );
   
@@ -981,7 +1133,7 @@ class _EditProductViewState extends State<EditProductView> {
     final quantityConversion = _quantityConversionNotifier.value;
     final quantityName = _quantityNameController.text;
     final autoCalcAmount = _autoCalcAmountNotifier.value;
-    final amountForIngredients = double.parse(_amountForIngredientsController.text);
+    final amountForIngredients = double.parse(_resultingAmountController.text);
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     final ingredients = _ingredientsNotifier.value;
     
