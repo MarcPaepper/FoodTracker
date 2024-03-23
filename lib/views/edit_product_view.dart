@@ -687,33 +687,39 @@ class _EditProductViewState extends State<EditProductView> {
   }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: padding ?? 12),
-      child: TextFormField(
-        enabled: enabled,
-        decoration: const InputDecoration(
-          contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-        ),
-        controller: controller,
-        keyboardType: TextInputType.number,
-        validator: (String? value) => enabled ? numberValidator(value) : null,
-        autovalidateMode: AutovalidateMode.always,
-        onChanged: (String? value) {
-          if (value != null && value.isNotEmpty) {
-            try {
-              value = value.replaceAll(",", ".");
-              var cursorPos = controller.selection.baseOffset;
-              controller.text = value;
-              controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
-              
-              var input = double.parse(value);
-              if (onChangedAndParsed != null) {
-                onChangedAndParsed(input);
-              }
-            } catch (e) {
-              devtools.log("Error: Invalid number in amount field");
-            }
+      child: Focus(
+        onFocusChange: (bool hasFocus) {
+          if (hasFocus) {
+            controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.value.text.length);
           }
         },
-        onTap: () => controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.value.text.length),
+        child: TextFormField(
+          enabled: enabled,
+          decoration: const InputDecoration(
+            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+          ),
+          controller: controller,
+          keyboardType: TextInputType.number,
+          validator: (String? value) => enabled ? numberValidator(value) : null,
+          autovalidateMode: AutovalidateMode.always,
+          onChanged: (String? value) {
+            if (value != null && value.isNotEmpty) {
+              try {
+                value = value.replaceAll(",", ".");
+                var cursorPos = controller.selection.baseOffset;
+                controller.text = value;
+                controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
+                
+                var input = double.parse(value);
+                if (input.isFinite && onChangedAndParsed != null) {
+                  onChangedAndParsed(input);
+                }
+              } catch (e) {
+                devtools.log("Error: Invalid number in amount field");
+              }
+            }
+          },
+        ),
       ),
     );
   }
@@ -806,36 +812,42 @@ class _EditProductViewState extends State<EditProductView> {
                         )
                         : SizedBox(
                           width: 70,
-                          child: TextFormField(
-                            enabled: !valueAutoCalc,
+                          child:_buildAmountField(
                             controller: _resultingAmountController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-                            ),
-                            validator: (String? value) => valueAutoCalc ? null : numberValidator(value),
-                            autovalidateMode: AutovalidateMode.onUserInteraction,
-                            onChanged: (String? value) {
-                              if (value != null && value.isNotEmpty) {
-                                try {
-                                  value = value.replaceAll(",", ".");
-                                  
-                                  
-                                  
-                                  var input = double.parse(value);
-                                  if (input.isFinite) {
-                                    _resultingAmountNotifier.value = input;
-                                    
-                                    var cursorPos = _resultingAmountController.selection.baseOffset;
-                                    _resultingAmountController.text = value;
-                                    _resultingAmountController.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
-                                  }
-                                } catch (e) {
-                                  devtools.log("Error: Invalid number in amount field");
-                                }
-                              }
-                            },
+                            enabled: !valueAutoCalc,
+                            onChangedAndParsed: (value) => _resultingAmountNotifier.value = value,
+                            padding: 0,
                           )
+                          //child: TextFormField(
+                          //  enabled: !valueAutoCalc,
+                          //  controller: _resultingAmountController,
+                          //  keyboardType: TextInputType.number,
+                          //  decoration: const InputDecoration(
+                          //    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                          //  ),
+                          //  validator: (String? value) => valueAutoCalc ? null : numberValidator(value),
+                          //  autovalidateMode: AutovalidateMode.onUserInteraction,
+                          //  onChanged: (String? value) {
+                          //    if (value != null && value.isNotEmpty) {
+                          //      try {
+                          //        value = value.replaceAll(",", ".");
+                                  
+                                  
+                                  
+                          //        var input = double.parse(value);
+                          //        if (input.isFinite) {
+                          //          _resultingAmountNotifier.value = input;
+                                    
+                          //          var cursorPos = _resultingAmountController.selection.baseOffset;
+                          //          _resultingAmountController.text = value;
+                          //          _resultingAmountController.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
+                          //        }
+                          //      } catch (e) {
+                          //        devtools.log("Error: Invalid number in amount field");
+                          //      }
+                          //    }
+                          //  },
+                          //)
                         ),
                     ),
                     SizedBox( // ingredient unit dropdown
@@ -969,43 +981,46 @@ class _EditProductViewState extends State<EditProductView> {
                         },
                       ),
                       const SizedBox(height: 15),
-                      Row(children: [
-                        // amount field
-                        Expanded(
-                          child: _buildAmountField(
-                            controller: _ingredientAmountControllers[index],
-                            padding: 0,
-                            onChangedAndParsed: (value) {
-                              var prev = ingredients[index];
-                              ingredients[index] = ProductQuantity(
-                                product: prev.product,
-                                amount: value,
-                                unit: prev.unit,
-                              );
-                              _ingredientsNotifier.value = List.from(ingredients);
-                            }
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // unit dropdown
-                        Expanded(
-                          child: UnitDropdown(
-                            items: _buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values),
-                            current: ingredient.unit,
-                            onChanged: (Unit? unit) {
-                              if (unit != null) {
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // amount field
+                          Expanded(
+                            child: _buildAmountField(
+                              controller: _ingredientAmountControllers[index],
+                              padding: 0,
+                              onChangedAndParsed: (value) {
                                 var prev = ingredients[index];
                                 ingredients[index] = ProductQuantity(
                                   product: prev.product,
-                                  amount: prev.amount,
-                                  unit: unit,
+                                  amount: value,
+                                  unit: prev.unit,
                                 );
                                 _ingredientsNotifier.value = List.from(ingredients);
                               }
-                            }
+                            ),
                           ),
-                        ),
-                      ]),
+                          const SizedBox(width: 12),
+                          // unit dropdown
+                          Expanded(
+                            child: UnitDropdown(
+                              items: _buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values),
+                              current: ingredient.unit,
+                              onChanged: (Unit? unit) {
+                                if (unit != null) {
+                                  var prev = ingredients[index];
+                                  ingredients[index] = ProductQuantity(
+                                    product: prev.product,
+                                    amount: prev.amount,
+                                    unit: unit,
+                                  );
+                                  _ingredientsNotifier.value = List.from(ingredients);
+                                }
+                              }
+                            ),
+                          ),
+                        ]
+                      ),
                       SizedBox(height: conversionPossible ? 0 : 10),
                       conversionPossible
                         ? const SizedBox()
