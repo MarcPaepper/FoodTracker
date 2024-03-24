@@ -770,7 +770,7 @@ class _EditProductViewState extends State<EditProductView> {
             // after frame callback to avoid changing the value during build
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _resultingAmountNotifier.value = resultingAmount;
-              _resultingAmountController.text = resultingAmount.toString();
+              _resultingAmountController.text = roundDouble(resultingAmount);
             });
           }
         }
@@ -804,7 +804,7 @@ class _EditProductViewState extends State<EditProductView> {
                       padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 12),
                       child: valueAutoCalc ? 
                         Text(
-                          valueResultingAmount.isNaN ? "NaN" : valueResultingAmount.toString(),
+                          valueResultingAmount.isNaN ? "NaN" : roundDouble(valueResultingAmount),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 16,
@@ -818,36 +818,6 @@ class _EditProductViewState extends State<EditProductView> {
                             onChangedAndParsed: (value) => _resultingAmountNotifier.value = value,
                             padding: 0,
                           )
-                          //child: TextFormField(
-                          //  enabled: !valueAutoCalc,
-                          //  controller: _resultingAmountController,
-                          //  keyboardType: TextInputType.number,
-                          //  decoration: const InputDecoration(
-                          //    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-                          //  ),
-                          //  validator: (String? value) => valueAutoCalc ? null : numberValidator(value),
-                          //  autovalidateMode: AutovalidateMode.onUserInteraction,
-                          //  onChanged: (String? value) {
-                          //    if (value != null && value.isNotEmpty) {
-                          //      try {
-                          //        value = value.replaceAll(",", ".");
-                                  
-                                  
-                                  
-                          //        var input = double.parse(value);
-                          //        if (input.isFinite) {
-                          //          _resultingAmountNotifier.value = input;
-                                    
-                          //          var cursorPos = _resultingAmountController.selection.baseOffset;
-                          //          _resultingAmountController.text = value;
-                          //          _resultingAmountController.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
-                          //        }
-                          //      } catch (e) {
-                          //        devtools.log("Error: Invalid number in amount field");
-                          //      }
-                          //    }
-                          //  },
-                          //)
                         ),
                     ),
                     SizedBox( // ingredient unit dropdown
@@ -1148,7 +1118,7 @@ class _EditProductViewState extends State<EditProductView> {
     final quantityConversion = _quantityConversionNotifier.value;
     final quantityName = _quantityNameController.text;
     final autoCalcAmount = _autoCalcAmountNotifier.value;
-    final amountForIngredients = double.parse(_resultingAmountController.text);
+    final amountForIngredients = _resultingAmountNotifier.value;
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     final ingredients = _ingredientsNotifier.value;
     

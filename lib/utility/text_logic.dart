@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
   
 List<TextSpan> highlightOccurrences(String source, List<String> search) {
@@ -46,4 +48,13 @@ String? numberValidator(String? value) {
     return "Invalid Number";
   }
   return null;
+}
+
+String roundDouble(double value) {
+  var order = (log(value) / ln10).floor();
+  if (order >= 3) {
+    return value.toInt().toString();
+  } else {
+    return value.toStringAsFixed(4 - order);
+  }
 }
