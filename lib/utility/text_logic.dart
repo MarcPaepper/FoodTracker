@@ -55,6 +55,11 @@ String roundDouble(double value) {
   if (order >= 3) {
     return value.toInt().toString();
   } else {
-    return value.toStringAsFixed(4 - order);
+    var str = value.toStringAsFixed(4 - order);
+    // regex to remove trailing zeros after the decimal point
+    str = str.replaceAll(r"\.0+$", "");
+    var regex = RegExp(r"^(.*\.\d+)0+$");
+    // if there is a match, only keep the first group
+    return regex.hasMatch(str) ? regex.firstMatch(str)!.group(1)! : str;
   }
 }
