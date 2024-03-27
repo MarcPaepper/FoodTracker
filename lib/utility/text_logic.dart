@@ -56,10 +56,12 @@ String roundDouble(double value) {
     return value.toInt().toString();
   } else {
     var str = value.toStringAsFixed(4 - order);
-    // regex to remove trailing zeros after the decimal point
-    str = str.replaceAll(r"\.0+$", "");
+    
+    // delete decimal point if only zeros follow
+    str = str.replaceAll(RegExp(r"\.0+$"), "");
+    
+    // delete trailing zeros after a number
     var regex = RegExp(r"^(.*\.\d+)0+$");
-    // if there is a match, only keep the first group
     return regex.hasMatch(str) ? regex.firstMatch(str)!.group(1)! : str;
   }
 }
