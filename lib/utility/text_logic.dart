@@ -51,17 +51,22 @@ String? numberValidator(String? value) {
 }
 
 String roundDouble(double value) {
+  if (value == 0) return "0";
+  if (value.isNaN) return "NaN";
+  if (value.isInfinite) return "∞";
   var order = (log(value) / ln10).floor();
   if (order >= 3) {
     return value.toInt().toString();
   } else {
-    var str = value.toStringAsFixed(4 - order);
+    var str = value.toStringAsFixed(3 - order);
     
     // delete decimal point if only zeros follow
     str = str.replaceAll(RegExp(r"\.0+$"), "");
     
     // delete trailing zeros after a number
-    var regex = RegExp(r"^(.*\.\d+)0+$");
+    var regex = RegExp(r"^(.*\.\d*[1-9])0+$");
+    var hasMatch = regex.hasMatch(str);
+    var match = hasMatch ? regex.firstMatch(str)!.group(1)! : null;
     return regex.hasMatch(str) ? regex.firstMatch(str)!.group(1)! : str;
   }
 }

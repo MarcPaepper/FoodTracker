@@ -753,6 +753,11 @@ class _EditProductViewState extends State<EditProductView> {
         
         var validUnit = conversionToUnitPossible(valueUnit, valueDefUnit, valueDensityConversion, valueQuantityConversion);
         
+        Widget errorText = 
+          validUnit
+            ? const SizedBox()
+            : Text("A conversion to the default unit (${unitToString(valueDefUnit)}) is not possible", style: const TextStyle(color: Colors.red, fontSize: 16));
+        
         // calculate the resulting amount
         List<double>? amounts;
         if (valueAutoCalc) {
@@ -841,6 +846,7 @@ class _EditProductViewState extends State<EditProductView> {
                   ],
                 ),
               ),
+              errorText,
               const SizedBox(height: 8),
               _buildIngredientsList(products, valueIngredients, amounts, valueUnit),
               _buildAddIngredientButton(),
@@ -996,8 +1002,8 @@ class _EditProductViewState extends State<EditProductView> {
                         ? const SizedBox()
                         : Text(
                           " ⚠ Conversion to ${unitToLongString(targetUnit)} not possible",
-                          style: TextStyle(
-                            color: Colors.amber.shade900,
+                          style: const TextStyle(
+                            color: Color.fromARGB(255, 255, 174, 0),
                             fontSize: 16,
                           ),
                       ),
