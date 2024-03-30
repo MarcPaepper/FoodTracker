@@ -11,7 +11,7 @@ class Product {
   Conversion quantityConversion; // factor how much one quantity of the product weighs / contains
                         // e.g. [("kg", "quantity", 3)] means 3 kg = 1 quantity
   String quantityName;
-  bool autoCalcAmount; // if true, the amount of the product is calculated automatically from the ingredients list
+  bool autoCalc; // if true, the amount of the product is calculated automatically from the ingredients list
   double amountForIngredients; // How much of the product is made out of the ingredients
   final Unit ingredientsUnit;
   
@@ -27,7 +27,7 @@ class Product {
     required this.densityConversion,
     required this.quantityConversion,
     required this.quantityName,
-    required this.autoCalcAmount,
+    required this.autoCalc,
     required this.amountForIngredients,
     required this.ingredientsUnit,
     required this.ingredients,
@@ -42,7 +42,7 @@ class Product {
       densityConversion: Conversion.defaultDensity(),
       quantityConversion: Conversion.defaultQuantity(),
       quantityName: "x",
-      autoCalcAmount: false,
+      autoCalc: false,
       amountForIngredients: 100,
       ingredientsUnit: Unit.g,
       ingredients: [],
@@ -58,7 +58,7 @@ class Product {
       densityConversion:    product.densityConversion,
       quantityConversion:   product.quantityConversion,
       quantityName:         product.quantityName,
-      autoCalcAmount:       product.autoCalcAmount,
+      autoCalc:       product.autoCalc,
       amountForIngredients: product.amountForIngredients,
       ingredientsUnit:      product.ingredientsUnit,
       ingredients:           product.ingredients,
@@ -75,7 +75,7 @@ class Product {
            densityConversion == other.densityConversion &&
            quantityConversion == other.quantityConversion &&
            quantityName == other.quantityName &&
-           autoCalcAmount == other.autoCalcAmount &&
+           autoCalc == other.autoCalc &&
            amountForIngredients == other.amountForIngredients &&
            ingredientsUnit == other.ingredientsUnit &&
            const ListEquality().equals(ingredients, other.ingredients);

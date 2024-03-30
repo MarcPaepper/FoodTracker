@@ -65,8 +65,6 @@ String roundDouble(double value) {
     
     // delete trailing zeros after a number
     var regex = RegExp(r"^(.*\.\d*[1-9])0+$");
-    var hasMatch = regex.hasMatch(str);
-    var match = hasMatch ? regex.firstMatch(str)!.group(1)! : null;
     return regex.hasMatch(str) ? regex.firstMatch(str)!.group(1)! : str;
   }
 }

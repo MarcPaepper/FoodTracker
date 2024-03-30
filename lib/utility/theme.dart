@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 const tabColorActive = Color.fromARGB(255, 193, 255, 253);
+const warningColor = Color.fromARGB(255, 255, 174, 0);
+
+const errorBorderColor = Color.fromARGB(255, 230, 0, 0);
+const disabledBorderColor = Color.fromARGB(130, 158, 158, 158);
 
 ThemeData getTheme() =>
   ThemeData(

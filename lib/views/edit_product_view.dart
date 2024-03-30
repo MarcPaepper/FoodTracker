@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/product_dropdown.dart';
 import 'package:food_tracker/utility/text_logic.dart';
 import 'package:food_tracker/widgets/border_box.dart';
@@ -153,7 +154,7 @@ class _EditProductViewState extends State<EditProductView> {
                 _densityConversionNotifier.value = prevProduct.densityConversion;
                 _quantityConversionNotifier.value = prevProduct.quantityConversion;
                 _defaultUnitNotifier.value = prevProduct.defaultUnit;
-                _autoCalcAmountNotifier.value = prevProduct.autoCalcAmount;
+                _autoCalcAmountNotifier.value = prevProduct.autoCalc;
                 _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
                 _ingredientsNotifier.value = prevProduct.ingredients;
                 
@@ -342,37 +343,42 @@ class _EditProductViewState extends State<EditProductView> {
   Widget _buildDefaultUnitDropdown() {
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    "Default Unit:",
-                    style: TextStyle(
-                      color: Colors.black.withAlpha(200),
-                      fontSize: 16,
+        return ValueListenableBuilder(
+          valueListenable: _quantityNameController,
+          builder: (context, value, child) {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        "Default Unit:",
+                        style: TextStyle(
+                          color: Colors.black.withAlpha(200),
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  Expanded(
+                    child: UnitDropdown(
+                      items: _buildUnitItems(),
+                      current: _defaultUnitNotifier.value,
+                      onChanged: (Unit? unit) {
+                        if (unit != null) {
+                          setState(() {
+                            _defaultUnitNotifier.value = unit;
+                          });
+                        }
+                      }
+                    )
+                  ),
+                ]
               ),
-              Expanded(
-                child: UnitDropdown(
-                  items: _buildUnitItems(),
-                  current: _defaultUnitNotifier.value,
-                  onChanged: (Unit? unit) {
-                    if (unit != null) {
-                      setState(() {
-                        _defaultUnitNotifier.value = unit;
-                      });
-                    }
-                  }
-                )
-              ),
-            ]
-          ),
+            );
+          }
         );
       }
     );
@@ -469,13 +475,9 @@ class _EditProductViewState extends State<EditProductView> {
         String? validationString = validateConversionBox(index);
         Color? borderColor;
         if (enabled) {
-          if (validationString != null) {
-            borderColor = const Color.fromARGB(255, 230, 0, 0);
-          } else {
-            borderColor = null; // default
-          }
+          borderColor = validationString == null ? null : errorBorderColor;
         } else {
-          borderColor = const Color.fromARGB(130, 158, 158, 158);
+          borderColor = disabledBorderColor;
         }
         
         // create unit dropdowns
@@ -738,25 +740,42 @@ class _EditProductViewState extends State<EditProductView> {
         _resultingAmountNotifier
       ],
       builder: (context, values, child) {
-        var valueName = values[0] as TextEditingValue;
-        var valueDefUnit = values[1] as Unit;
-        var valueAutoCalc = values[3] as bool;
-        var valueIngredients = values[4] as List<ProductQuantity>;
-        var valueUnit = values[5] as Unit;
-        var valueDensityConversion = values[6] as Conversion;
+        var valueName               = values[0] as TextEditingValue;
+        var valueDefUnit            = values[1] as Unit;
+        var valueAutoCalc           = values[3] as bool;
+        var valueIngredients        = values[4] as List<ProductQuantity>;
+        var valueUnit               = values[5] as Unit;
+        var valueDensityConversion  = values[6] as Conversion;
         var valueQuantityConversion = values[7] as Conversion;
-        var valueResultingAmount = values[8] as double;
+        var valueResultingAmount    = values[8] as double;
         
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
         
         // check whether the ingredient unit is compatible with the default unit
         
-        var validUnit = conversionToUnitPossible(valueUnit, valueDefUnit, valueDensityConversion, valueQuantityConversion);
+        ErrorType errorType = ErrorType.none;
+        String? errorMsg;
+        
+        if (valueUnit == Unit.quantity && valueAutoCalc) {
+          errorMsg = "Auto calculation is not possible with quantity units";
+          errorType = ErrorType.error;
+        } else if (!conversionToUnitPossible(valueUnit, valueDefUnit, valueDensityConversion, valueQuantityConversion)) {
+          errorMsg = "A conversion to the default unit (${unitToString(valueDefUnit)}) is not possible";
+          errorType = valueIngredients.isEmpty ? ErrorType.warning : ErrorType.error;
+        }
         
         Widget errorText = 
-          validUnit
+          errorType == ErrorType.none
             ? const SizedBox()
-            : Text("A conversion to the default unit (${unitToString(valueDefUnit)}) is not possible", style: const TextStyle(color: Colors.red, fontSize: 16));
+            : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Text(
+                errorMsg!,
+                style: TextStyle(
+                  color: errorType == ErrorType.warning ? warningColor : Colors.red,
+                  fontSize: 16)
+                ),
+            );
         
         // calculate the resulting amount
         List<double>? amounts;
@@ -782,6 +801,7 @@ class _EditProductViewState extends State<EditProductView> {
         
         return BorderBox(
           title: "Ingredients",
+          borderColor: errorType == ErrorType.error ? errorBorderColor : null,
           child: Column(
             children: [
               SwitchListTile(
@@ -1003,7 +1023,7 @@ class _EditProductViewState extends State<EditProductView> {
                         : Text(
                           " ⚠ Conversion to ${unitToLongString(targetUnit)} not possible",
                           style: const TextStyle(
-                            color: Color.fromARGB(255, 255, 174, 0),
+                            color: warningColor,
                             fontSize: 16,
                           ),
                       ),
@@ -1053,6 +1073,20 @@ class _EditProductViewState extends State<EditProductView> {
       );
     }
     return entries;
+  }
+  
+  String? validateIngredientBox(
+    bool autoCalc,
+    List<ProductQuantity> ingredients,
+    Unit unit,
+    Unit defUnit,
+    Conversion densityConversion,
+    Conversion quantityConversion,
+  ) {
+    if (!autoCalc) return null;
+    if (ingredients.isNotEmpty && !conversionToUnitPossible(unit, defUnit, densityConversion, quantityConversion)) return "invalid";
+    if (unit == Unit.quantity) return "invalid";
+    return null;
   }
   
   Widget _buildAddIngredientButton() {
@@ -1123,12 +1157,17 @@ class _EditProductViewState extends State<EditProductView> {
     final densityConversion = _densityConversionNotifier.value;
     final quantityConversion = _quantityConversionNotifier.value;
     final quantityName = _quantityNameController.text;
-    final autoCalcAmount = _autoCalcAmountNotifier.value;
+    final autoCalc = _autoCalcAmountNotifier.value;
     final amountForIngredients = _resultingAmountNotifier.value;
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     final ingredients = _ingredientsNotifier.value;
     
-    final isValid = _formKey.currentState!.validate() && validateConversionBox(0) == null && validateConversionBox(1) == null;
+    final isValid = _formKey.currentState!.validate()
+      && validateConversionBox(0) == null
+      && validateConversionBox(1) == null
+      && validateIngredientBox(autoCalc, ingredients, ingredientsUnit, defUnit, densityConversion, quantityConversion) == null;
+    // var result = validateIngredientBox(ingredients, ingredientsUnit, defUnit, densityConversion, quantityConversion);
+    // devtools.log("Validation result: $result");
     return (
       Product(
         id:                    isEdit ? _id : -1,
@@ -1137,7 +1176,7 @@ class _EditProductViewState extends State<EditProductView> {
         densityConversion:     densityConversion,
         quantityConversion:    quantityConversion,
         quantityName:          quantityName,
-        autoCalcAmount:        autoCalcAmount,
+        autoCalc:              autoCalc,
         amountForIngredients:  amountForIngredients,
         ingredientsUnit:       ingredientsUnit,
         ingredients:           ingredients,

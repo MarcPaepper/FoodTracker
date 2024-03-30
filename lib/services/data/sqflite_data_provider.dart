@@ -181,7 +181,7 @@ class SqfliteDataProvider implements DataProvider {
       densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
       quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
       quantityName:          row[quantityNameColumn] as String,
-      autoCalcAmount:        row[autoCalcAmountColumn] == 1,
+      autoCalc:        row[autoCalcAmountColumn] == 1,
       amountForIngredients:  toDouble(row[amountForIngredientsColumn]),
       ingredientsUnit:       unitFromString(row[ingredientsUnitColumn] as String),
       ingredients:           [],
@@ -200,7 +200,7 @@ class SqfliteDataProvider implements DataProvider {
       densityConversionColumn:     product.densityConversion.toString(),
       quantityConversionColumn:    product.quantityConversion.toString(),
       quantityNameColumn:          product.quantityName,
-      autoCalcAmountColumn:        product.autoCalcAmount ? 1 : 0,
+      autoCalcAmountColumn:        product.autoCalc ? 1 : 0,
       amountForIngredientsColumn:  product.amountForIngredients,
       ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
     });
@@ -224,7 +224,7 @@ class SqfliteDataProvider implements DataProvider {
       densityConversionColumn:     product.densityConversion.toString(),
       quantityConversionColumn:    product.quantityConversion.toString(),
       quantityNameColumn:          product.quantityName,
-      autoCalcAmountColumn:        product.autoCalcAmount ? 1 : 0,
+      autoCalcAmountColumn:        product.autoCalc ? 1 : 0,
       amountForIngredientsColumn:  product.amountForIngredients,
     }, where: '$idColumn = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();

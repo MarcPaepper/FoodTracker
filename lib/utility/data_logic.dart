@@ -2,6 +2,12 @@
 
 import '../services/data/data_objects.dart';
 
+enum ErrorType {
+  none,
+  warning,
+  error,
+}
+
 String? validateIngredient({
   required Product productToCheck,
   required Product ingredient,
@@ -120,8 +126,8 @@ bool conversionToUnitPossible(
   Conversion densityConversion,
   Conversion quantityConversion,
 ) => convertToUnit(
-  unit2,
+  unit1,
   densityConversion,
   quantityConversion,
-  ProductQuantity(product: null, amount: 1, unit: unit1),
+  ProductQuantity(product: null, amount: 1, unit: unit2),
 ).isFinite;
