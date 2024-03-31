@@ -762,6 +762,9 @@ class _EditProductViewState extends State<EditProductView> {
         } else if (!conversionToUnitPossible(valueUnit, valueDefUnit, valueDensityConversion, valueQuantityConversion)) {
           errorMsg = "A conversion to the default unit (${unitToString(valueDefUnit)}) is not possible";
           errorType = valueIngredients.isEmpty ? ErrorType.warning : ErrorType.error;
+        } else if (errorType != ErrorType.error && valueIngredients.isNotEmpty && valueResultingAmount == 0) {
+          errorMsg = "Amount must be greater than 0";
+          errorType = ErrorType.error;
         }
         
         Widget errorText = 
@@ -771,6 +774,7 @@ class _EditProductViewState extends State<EditProductView> {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Text(
                 errorMsg!,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: errorType == ErrorType.warning ? warningColor : Colors.red,
                   fontSize: 16)
@@ -803,6 +807,7 @@ class _EditProductViewState extends State<EditProductView> {
           title: "Ingredients",
           borderColor: errorType == ErrorType.error ? errorBorderColor : null,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SwitchListTile(
                 value: valueAutoCalc,
