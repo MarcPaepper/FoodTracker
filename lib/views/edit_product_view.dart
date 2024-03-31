@@ -29,7 +29,10 @@ class EditProductView extends StatefulWidget {
   State<EditProductView> createState() => _EditProductViewState();
 }
 
-class _EditProductViewState extends State<EditProductView> {
+class _EditProductViewState extends State<EditProductView> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+  
   bool _loaded = false;
   bool _error = false;
   
@@ -114,6 +117,7 @@ class _EditProductViewState extends State<EditProductView> {
   
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return PopScope(
       canPop: false,
       onPopInvoked: _onPopInvoked,
@@ -753,19 +757,15 @@ class _EditProductViewState extends State<EditProductView> {
         
         // check whether the ingredient unit is compatible with the default unit
         
-        ErrorType errorType = ErrorType.none;
-        String? errorMsg;
-        
-        if (valueUnit == Unit.quantity && valueAutoCalc) {
-          errorMsg = "Auto calculation is not possible with quantity units";
-          errorType = ErrorType.error;
-        } else if (!conversionToUnitPossible(valueUnit, valueDefUnit, valueDensityConversion, valueQuantityConversion)) {
-          errorMsg = "A conversion to the default unit (${unitToString(valueDefUnit)}) is not possible";
-          errorType = valueIngredients.isEmpty ? ErrorType.warning : ErrorType.error;
-        } else if (errorType != ErrorType.error && valueIngredients.isNotEmpty && valueResultingAmount == 0) {
-          errorMsg = "Amount must be greater than 0";
-          errorType = ErrorType.error;
-        }
+        var (errorType, errorMsg) = validateResultingAmount(
+          valueUnit,
+          valueDefUnit,
+          valueAutoCalc,
+          valueIngredients,
+          valueResultingAmount,
+          valueDensityConversion,
+          valueQuantityConversion,
+        );
         
         Widget errorText = 
           errorType == ErrorType.none
@@ -1080,20 +1080,6 @@ class _EditProductViewState extends State<EditProductView> {
     return entries;
   }
   
-  String? validateIngredientBox(
-    bool autoCalc,
-    List<ProductQuantity> ingredients,
-    Unit unit,
-    Unit defUnit,
-    Conversion densityConversion,
-    Conversion quantityConversion,
-  ) {
-    if (!autoCalc) return null;
-    if (ingredients.isNotEmpty && !conversionToUnitPossible(unit, defUnit, densityConversion, quantityConversion)) return "invalid";
-    if (unit == Unit.quantity) return "invalid";
-    return null;
-  }
-  
   Widget _buildAddIngredientButton() {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
@@ -1163,16 +1149,23 @@ class _EditProductViewState extends State<EditProductView> {
     final quantityConversion = _quantityConversionNotifier.value;
     final quantityName = _quantityNameController.text;
     final autoCalc = _autoCalcAmountNotifier.value;
-    final amountForIngredients = _resultingAmountNotifier.value;
+    final resultingAmount = _resultingAmountNotifier.value;
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     final ingredients = _ingredientsNotifier.value;
     
     final isValid = _formKey.currentState!.validate()
       && validateConversionBox(0) == null
       && validateConversionBox(1) == null
-      && validateIngredientBox(autoCalc, ingredients, ingredientsUnit, defUnit, densityConversion, quantityConversion) == null;
-    // var result = validateIngredientBox(ingredients, ingredientsUnit, defUnit, densityConversion, quantityConversion);
-    // devtools.log("Validation result: $result");
+      && validateResultingAmount(
+          ingredientsUnit,
+          defUnit,
+          autoCalc,
+          ingredients,
+          resultingAmount,
+          densityConversion,
+          quantityConversion,
+        ).$1 == ErrorType.none;
+    
     return (
       Product(
         id:                    isEdit ? _id : -1,
@@ -1182,7 +1175,7 @@ class _EditProductViewState extends State<EditProductView> {
         quantityConversion:    quantityConversion,
         quantityName:          quantityName,
         autoCalc:              autoCalc,
-        amountForIngredients:  amountForIngredients,
+        amountForIngredients:  resultingAmount,
         ingredientsUnit:       ingredientsUnit,
         ingredients:           ingredients,
       ),

@@ -11,13 +11,9 @@ enum ErrorType {
 String? validateIngredient({
   required Product productToCheck,
   required Product ingredient,
-}) {
-  // Check whether there is a circular reference in the ingredients
-  if (getIngredientsRecursively(productToCheck, ingredient, [ingredient]) != null) {
-    return "This ingredient leads to a circular reference";
-  }
-  return null;
-}
+}) => getIngredientsRecursively(productToCheck, ingredient, [ingredient]) == null
+    ? null
+    : "Circular reference";
 
 List<Product>? getIngredientsRecursively(Product checkProd, Product product, List<Product> alreadyVisited) {
   var ingredientsWithNulls = product.ingredients.map((ingr) => ingr.product).toList();
@@ -125,9 +121,44 @@ bool conversionToUnitPossible(
   Unit unit2,
   Conversion densityConversion,
   Conversion quantityConversion,
-) => convertToUnit(
-  unit1,
-  densityConversion,
-  quantityConversion,
-  ProductQuantity(product: null, amount: 1, unit: unit2),
-).isFinite;
+) {
+  // If unit1 is of type quantity, swap the units
+  if (unitTypes[unit1] == UnitType.quantity) {
+    var temp = unit1;
+    unit1 = unit2;
+    unit2 = temp;
+  }
+  
+  return convertToUnit(
+    unit1,
+    densityConversion,
+    quantityConversion,
+    ProductQuantity(product: null, amount: 1, unit: unit2),
+  ).isFinite;
+}
+
+(ErrorType, String?) validateResultingAmount(
+  Unit unit,
+  Unit defUnit,
+  bool autoCalc,
+  List<ProductQuantity> ingredients,
+  double resultingAmount,
+  Conversion densityConversion,
+  Conversion quantityConversion,
+) {
+  ErrorType errorType = ErrorType.none;
+  String? errorMsg;
+  
+  if (unit == Unit.quantity && autoCalc) {
+    errorMsg = "Auto calculation is not possible with quantity units";
+    errorType = ErrorType.error;
+  } else if (!conversionToUnitPossible(unit, defUnit, densityConversion, quantityConversion)) {
+    errorMsg = "A conversion to the default unit (${unitToString(defUnit)}) is not possible";
+    errorType = ingredients.isEmpty ? ErrorType.warning : ErrorType.error;
+  } else if (errorType != ErrorType.error && ingredients.isNotEmpty && resultingAmount == 0) {
+    errorMsg = "Amount must be greater than 0";
+    errorType = ErrorType.error;
+  }
+  
+  return (errorType, errorMsg);
+}
