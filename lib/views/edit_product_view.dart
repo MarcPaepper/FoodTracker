@@ -54,6 +54,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   int _id = -1;
   List<FocusNode> _ingredientFocusNodes = [];
   late Product prevProduct;
+  bool interimProduct = false;
+  // used to store the product while the user navigates to another page, can contain formal errors
   
   final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
   final _quantityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultQuantity());
@@ -181,7 +183,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     field.text = text.substring(0, text.length - 2);
                   }
                 }
-                
+                devtools.log("Product ${isEdit ? prevProduct.name : "/"}: $interimProduct");
+                // change state after build complete
+                if (!interimProduct) {
+                  Future(() {
+                    interimProduct = true;
+                  });
+                }
                 return SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.all(6.0),
