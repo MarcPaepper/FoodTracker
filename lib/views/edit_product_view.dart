@@ -334,6 +334,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           // navigate to edit view of duplicate product
           try {
             final product = products.firstWhere((prod) => prod.name == name);
+            interimProduct = getProductFromForm().$1;
             Navigator.of(context).pushNamed(
               editProductRoute,
               arguments: product.name,
@@ -1150,10 +1151,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       onPressed: () {
         // show product dialog
         showProductDialog(
-          context,
-          products,
-          null,
-          (Product? product) {
+          context: context,
+          products: products,
+          selectedProduct: null,
+          onSelected: (Product? product) {
             if (product != null) {
               var ingredients = _ingredientsNotifier.value;
               ingredients.add(ProductQuantity(
@@ -1165,15 +1166,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               _ingredientAmountControllers.add(TextEditingController());
             }
           },
+          beforeAdd: () {
+            interimProduct = getProductFromForm().$1;
+          }
         );
-        //_ingredientAmountControllers.add(TextEditingController());
-        //var ingredients = _ingredientsNotifier.value;
-        //ingredients.add(ProductQuantity(
-        //  product: null,
-        //  amount: 0,
-        //  unit: Unit.g,
-        //));
-        //_ingredientsNotifier.value = List.from(ingredients);
       },
     );
   }

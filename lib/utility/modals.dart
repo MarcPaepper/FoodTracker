@@ -46,12 +46,22 @@ Future showContinueWithoutSavingDialog(BuildContext context) =>
 // a textfield on top lets you filter the products
 // a listview with the products
 // you can exit the dialog by clicking cancel or choosing a product
-void showProductDialog(
-  BuildContext context,
-  List<Product> products,
+void showProductDialog({
+  required BuildContext context,
+  required List<Product> products,
   Product? selectedProduct,
-  void Function(Product?) onChanged
-) {
+  required void Function(Product?) onSelected,
+  void Function()? beforeAdd,
+}) {
+  var buttonStyle = ButtonStyle(
+    backgroundColor: MaterialStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
+    foregroundColor: MaterialStateProperty.all(Colors.white),
+    textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16)),
+    shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(16)),
+    )),
+  );
+  
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -59,22 +69,53 @@ void showProductDialog(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Choose a product'),
-            Expanded(
-              child: _ProductList(products: products, onSelected: onChanged),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Choose a product',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () {
-                    onChanged(null);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ]
-            )
+            Expanded(
+              child: _ProductList(products: products, onSelected: onSelected),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: buttonStyle,
+                      onPressed: () {
+                        beforeAdd?.call();
+                        // navigate to the product creation screen
+                        // and wait for the result
+                        
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text('Create new'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: buttonStyle,
+                      onPressed: () {
+                        onSelected(null);
+                        Navigator.of(context).pop();
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text('Cancel'),
+                      ),
+                    ),
+                  ),
+                ]
+              )
+            ),
           ]
         )
       );

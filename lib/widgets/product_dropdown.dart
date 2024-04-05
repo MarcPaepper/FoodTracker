@@ -75,10 +75,10 @@ class _ProductDropdownState extends State<ProductDropdown> {
           FocusScope.of(context).requestFocus(_focusNode);
         });
         showProductDialog(
-          context,
-          widget.products,
-          widget.selectedProduct,
-          (newProduct) => widget.onChanged(newProduct),
+          context: context,
+          products: widget.products,
+          selectedProduct: widget.selectedProduct,
+          onSelected:  (newProduct) => widget.onChanged(newProduct),
         );
       },
       child: Container(
