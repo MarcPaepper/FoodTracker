@@ -186,7 +186,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     field.text = text.substring(0, text.length - 2);
                   }
                 }
-                devtools.log("Product ${isEdit ? prevProduct.name : "/"}: $interimProduct");
                 
                 return SingleChildScrollView(
                   child: Padding(
@@ -652,6 +651,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     // Check if conversion is active
     if (convNotifier.value.enabled) {
+      // Check whether one of the amount fields is 0
+      if (convNotifier.value.amount1 == 0 || convNotifier.value.amount2 == 0) {
+        return "Both amount must be >0";
+      }
       // Check whether a conversion to the default unit is possible
       if (index == 1) {
         if (defUnit != Unit.quantity) {
@@ -780,7 +783,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Text(
                 errorMsg!,
-                textAlign: TextAlign.center,
+                textAlign: TextAlign.left,
                 style: TextStyle(
                   color: errorType == ErrorType.warning ? warningColor : Colors.red,
                   fontSize: 16)
