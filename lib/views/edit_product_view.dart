@@ -446,7 +446,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return items;
   }
   
-  // same as above but with MultiValueListenableBuilder
   Widget _buildConversionFields() {
     return MultiValueListenableBuilder(
       listenables: [
@@ -767,7 +766,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
         
         // check whether the ingredient unit is compatible with the default unit
-        
         var (errorType, errorMsg) = validateResultingAmount(
           valueUnit,
           valueDefUnit,
@@ -899,7 +897,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               errorText,
               const SizedBox(height: 8),
               _buildIngredientsList(products, valueIngredients, amounts, circRefs, valueUnit),
-              _buildAddIngredientButton(),
+              _buildAddIngredientButton(products),
             ],
           ),
         );
@@ -1128,7 +1126,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return entries;
   }
   
-  Widget _buildAddIngredientButton() {
+  Widget _buildAddIngredientButton(List<Product> products) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 210, 235, 198),
@@ -1150,7 +1148,32 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         child: Text("Add Ingredient"),
       ),
       onPressed: () {
-        
+        // show product dialog
+        showProductDialog(
+          context,
+          products,
+          null,
+          (Product? product) {
+            if (product != null) {
+              var ingredients = _ingredientsNotifier.value;
+              ingredients.add(ProductQuantity(
+                product: product,
+                amount: 0,
+                unit: product.defaultUnit,
+              ));
+              _ingredientsNotifier.value = List.from(ingredients);
+              _ingredientAmountControllers.add(TextEditingController());
+            }
+          },
+        );
+        //_ingredientAmountControllers.add(TextEditingController());
+        //var ingredients = _ingredientsNotifier.value;
+        //ingredients.add(ProductQuantity(
+        //  product: null,
+        //  amount: 0,
+        //  unit: Unit.g,
+        //));
+        //_ingredientsNotifier.value = List.from(ingredients);
       },
     );
   }
