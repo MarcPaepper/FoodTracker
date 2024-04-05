@@ -54,7 +54,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   int _id = -1;
   List<FocusNode> _ingredientFocusNodes = [];
   late Product prevProduct;
-  bool interimProduct = false;
+  Product? interimProduct;
   // used to store the product while the user navigates to another page, can contain formal errors
   
   final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
@@ -137,7 +137,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               if (snapshot.hasData) {
                 _loaded = true;
                 final products = snapshot.data as List<Product>;
-                if (isEdit) {
+                
+                if (interimProduct != null) {
+                  prevProduct = interimProduct!;
+                } else if (isEdit) {
                   try {
                     prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
                     _id = prevProduct.id;
@@ -150,7 +153,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 }
                 
                 // set initial values
-                _productNameController.text = widget.productName ?? prevProduct.name;
+                _productNameController.text = interimProduct?.name ?? widget.productName ?? prevProduct.name;
                 _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
                 _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
                 _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
@@ -184,12 +187,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   }
                 }
                 devtools.log("Product ${isEdit ? prevProduct.name : "/"}: $interimProduct");
-                // change state after build complete
-                if (!interimProduct) {
-                  Future(() {
-                    interimProduct = true;
-                  });
-                }
+                
                 return SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.all(6.0),
@@ -1057,6 +1055,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   onPressed: () {
                     // navigate to edit the product
                     if (product != null) {
+                      interimProduct = getProductFromForm().$1;
                       Navigator.of(context).pushNamed(
                         editProductRoute,
                         arguments: product.name,
