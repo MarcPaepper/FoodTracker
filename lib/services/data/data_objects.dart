@@ -58,10 +58,10 @@ class Product {
       densityConversion:    product.densityConversion,
       quantityConversion:   product.quantityConversion,
       quantityName:         product.quantityName,
-      autoCalc:       product.autoCalc,
+      autoCalc:             product.autoCalc,
       amountForIngredients: product.amountForIngredients,
       ingredientsUnit:      product.ingredientsUnit,
-      ingredients:           product.ingredients,
+      ingredients:          product.ingredients,
     );
   }
   

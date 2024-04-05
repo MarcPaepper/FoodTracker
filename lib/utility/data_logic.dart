@@ -9,16 +9,19 @@ enum ErrorType {
 }
 
 String? validateIngredient({
-  required Product productToCheck,
-  required Product ingredient,
-}) => getIngredientsRecursively(productToCheck, ingredient, [ingredient]) == null
-    ? null
-    : "Circular reference";
+  required Product? product,
+  required Product? ingredient,
+}) {
+  if (product == null || ingredient == null) return null;
+  return getIngredientsRecursively(product, ingredient, [ingredient]) == null
+    ? "Circular reference"
+    : null;
+}
 
 List<Product>? getIngredientsRecursively(Product checkProd, Product product, List<Product> alreadyVisited) {
   var ingredientsWithNulls = product.ingredients.map((ingr) => ingr.product).toList();
   // remove nulls
-  var ingredients = ingredientsWithNulls.where((element) => element != null).toList() as List<Product>;
+  var ingredients = ingredientsWithNulls.whereType<Product>().toList();
   if (ingredients.contains(checkProd)) return null;
   // recursion
   for (var ingr in ingredients) {

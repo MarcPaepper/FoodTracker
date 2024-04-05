@@ -67,6 +67,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   final _ingredientsNotifier = ValueNotifier<List<ProductQuantity>>([]);
   
   final _isDuplicateNotifier = ValueNotifier<bool>(false);
+  final _circRefNotifier = ValueNotifier<bool>(false);
   
   @override
   void initState() {
@@ -114,6 +115,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _ingredientsUnitNotifier.dispose();
     _ingredientsNotifier.dispose();
     _isDuplicateNotifier.dispose();
+    _circRefNotifier.dispose();
     super.dispose();
   }
   
@@ -777,12 +779,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         );
         
         Widget errorText = 
-          errorType == ErrorType.none
+          errorMsg == null
             ? const SizedBox()
             : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Text(
-                errorMsg!,
+                errorMsg,
                 textAlign: TextAlign.left,
                 style: TextStyle(
                   color: errorType == ErrorType.warning ? warningColor : Colors.red,
@@ -810,6 +812,20 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               _resultingAmountController.text = roundDouble(resultingAmount);
             });
           }
+        }
+        
+        // Test whether any of the ingredients is a circular reference
+        var circRefs = valueIngredients.map((i) => validateIngredient(
+          ingredient: i.product, product: prevProduct
+        ) != null).toList();
+        
+        var anyCircRef = circRefs.any((element) => element);
+        if (anyCircRef != _circRefNotifier.value) {
+          _circRefNotifier.value = anyCircRef;
+        }
+        
+        if (anyCircRef) {
+          errorType = ErrorType.error;
         }
         
         return BorderBox(
@@ -882,7 +898,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               ),
               errorText,
               const SizedBox(height: 8),
-              _buildIngredientsList(products, valueIngredients, amounts, valueUnit),
+              _buildIngredientsList(products, valueIngredients, amounts, circRefs, valueUnit),
               _buildAddIngredientButton(),
             ],
           ),
@@ -891,7 +907,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     );
   }
   
-  Widget _buildIngredientsList(List<Product> products, List<ProductQuantity> ingredients, List<double>? amounts, Unit targetUnit) {
+  Widget _buildIngredientsList(
+    List<Product> products,
+    List<ProductQuantity> ingredients,
+    List<double>? amounts,
+    List<bool> circRefs,
+    Unit targetUnit
+  ) {
     // if ingredients is empty, return a single list tile with a message
     if (ingredients.isEmpty) {
       return const ListTile(
@@ -908,13 +930,14 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         tileColor: Color.fromARGB(14, 0, 0, 255),
       );
     }
+    
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: const BoxDecoration(),
       child: SlidableReorderableList(
         key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
         buildDefaultDragHandles: false,
-        entries: _getIngredientEntries(products, ingredients, amounts, targetUnit),
+        entries: _getIngredientEntries(products, ingredients, amounts, circRefs, targetUnit),
         menuWidth: 90,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
@@ -931,20 +954,43 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     );
   }
   
-  List<SlidableListEntry> _getIngredientEntries(List<Product> products, List<ProductQuantity> ingredients, List<double>? amounts, Unit targetUnit) {
+  List<SlidableListEntry> _getIngredientEntries(
+    List<Product> products,
+    List<ProductQuantity> ingredients,
+    List<double>? amounts,
+    List<bool> circRefs,
+    Unit targetUnit,
+  ) {
     var entries = <SlidableListEntry>[];
     _ingredientFocusNodes = <FocusNode>[];
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
-      bool conversionPossible = amounts == null || !amounts[index].isNaN;
       bool dark = index % 2 == 0;
-      var color = dark ? const Color.fromARGB(12, 0, 0, 255) : const Color.fromARGB(6, 200, 200, 200);
+      var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
       var focusNode = FocusNode();
       _ingredientFocusNodes.add(focusNode);
       
       var product = ingredient.product != null 
         ? products.firstWhere((prod) => prod.id == ingredient.product!.id)
         : null;
+      
+      var errorType = circRefs[index] ? ErrorType.error : ErrorType.none;
+      String? errorMsg = errorType == ErrorType.error ? "Circular Reference" : null;
+      
+      if (errorType == ErrorType.none && amounts != null && amounts[index].isNaN) {
+        errorType = ErrorType.warning;
+        errorMsg = "Conversion to ${unitToLongString(targetUnit)} not possible";
+      }
+      
+      var errorBox = errorType == ErrorType.none
+        ? const SizedBox()
+        : Text(
+          " ⚠ $errorMsg",
+          style: TextStyle(
+            color: errorType == ErrorType.error ? Colors.red : warningColor,
+            fontSize: 16,
+          ),
+        );
       
       entries.add(
         SlidableListEntry(
@@ -1031,16 +1077,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           ),
                         ]
                       ),
-                      SizedBox(height: conversionPossible ? 0 : 10),
-                      conversionPossible
-                        ? const SizedBox()
-                        : Text(
-                          " ⚠ Conversion to ${unitToLongString(targetUnit)} not possible",
-                          style: const TextStyle(
-                            color: warningColor,
-                            fontSize: 16,
-                          ),
-                      ),
+                      SizedBox(height: errorType == ErrorType.none ? 0 : 10),
+                      errorBox
                     ],
                   ),
                 ),
@@ -1164,6 +1202,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     final ingredients = _ingredientsNotifier.value;
     
     final isValid = _formKey.currentState!.validate()
+      && !_circRefNotifier.value
       && validateConversionBox(0) == null
       && validateConversionBox(1) == null
       && validateResultingAmount(
