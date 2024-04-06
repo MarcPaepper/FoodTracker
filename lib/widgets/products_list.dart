@@ -10,6 +10,7 @@ List<Widget> getProductTiles({
   required List<Product> products,
   required String search,
   required Function(String, int) onSelected,
+  bool colorFromTop = false,
 }) {
   var searchWords = search.split(" ");
   
@@ -24,7 +25,7 @@ List<Widget> getProductTiles({
   var length = products.length;
   return List.generate(length, (index) {
     var product = products[index];
-    bool dark = (length - index) % 2 == 0;
+    bool dark = (colorFromTop ? index : (length - index)) % 2 == 0;
     var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
     
     return ProductTile(

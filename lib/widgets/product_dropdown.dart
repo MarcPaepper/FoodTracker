@@ -18,7 +18,6 @@ class ProductDropdown extends StatefulWidget {
   final Product? selectedProduct;
   final List<ProductQuantity> ingredients;
   final int index;
-  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier;
   final void Function(Product?) onChanged;
   final FocusNode? focusNode;
   
@@ -30,7 +29,6 @@ class ProductDropdown extends StatefulWidget {
     required this.selectedProduct,
     required this.ingredients,
     required this.index,
-    required this.ingredientsNotifier,
     required this.onChanged,
     this.focusNode,
     Key? key,

@@ -6,6 +6,15 @@ const warningColor = Color.fromARGB(255, 255, 174, 0);
 const errorBorderColor = Color.fromARGB(255, 230, 0, 0);
 const disabledBorderColor = Color.fromARGB(130, 158, 158, 158);
 
+var actionButtonStyle = ButtonStyle(
+  backgroundColor: MaterialStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
+  foregroundColor: MaterialStateProperty.all(Colors.white),
+  textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16)),
+  shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(12)),
+  )),
+);
+
 ThemeData getTheme() =>
   ThemeData(
     // red popup menu button
@@ -83,6 +92,11 @@ ThemeData getTheme() =>
           width: 4,
           color: Colors.red.shade500
         )
+      ),
+    ),
+    dialogTheme: const DialogTheme(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
       ),
     ),
   );

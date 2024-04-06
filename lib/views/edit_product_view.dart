@@ -49,12 +49,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   final List<TextEditingController> _ingredientAmountControllers = [];
   
-  late final bool isEdit;
+  late final bool _isEdit;
   
   int _id = -1;
   List<FocusNode> _ingredientFocusNodes = [];
-  late Product prevProduct;
-  Product? interimProduct;
+  late Product _prevProduct;
+  Product? _interimProduct;
   // used to store the product while the user navigates to another page, can contain formal errors
   
   final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
@@ -74,13 +74,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     if (widget.isEdit == null || (widget.isEdit! && widget.productName == null)) {
       Future(() {
         showErrorbar(context, "Error: Product not found");
-        Navigator.of(context).pop();
+        Navigator.of(context).pop([true, "Hallo8"]);
       });
     }
     
     _formKey = GlobalKey<FormState>();
     
-    isEdit = widget.isEdit ?? false;
+    _isEdit = widget.isEdit ?? false;
     
     _productNameController = TextEditingController();
     _densityAmount1Controller = TextEditingController();
@@ -125,79 +125,91 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return PopScope(
       canPop: false,
       onPopInvoked: _onPopInvoked,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(isEdit ? "Edit Product" : "Add Product"),
-          actions: isEdit ? [_buildDeleteButton()] : null
-        ),
-        body: ScrollConfiguration(
-          // clamping scroll physics to avoid overscroll
-          behavior: const ScrollBehavior().copyWith(overscroll: false),
-          child: StreamBuilder(
-            stream: _dataService.streamProducts(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                _loaded = true;
-                final products = snapshot.data as List<Product>;
-                
-                if (interimProduct != null) {
-                  prevProduct = interimProduct!;
-                } else if (isEdit) {
-                  try {
-                    prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
-                    _id = prevProduct.id;
-                  } catch (e) {
-                    _error = true;
-                    return const Text("Error: Product not found");
+      child: StreamBuilder(
+        stream: _dataService.streamProducts(),
+        builder: (context, snapshot) {
+          
+          List<Product>? products;
+          
+          if (snapshot.hasData) {
+            _loaded = true;
+            products = snapshot.data as List<Product>;
+            
+            if (_isEdit) {
+              try {
+                _prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
+                _id = _prevProduct.id;
+              } catch (e) {
+                _error = true;
+                return const Text("Error: Product not found");
+              }
+            } else {
+              _prevProduct = Product.defaultValues();
+            }
+            
+            var copyProduct = _interimProduct ?? _prevProduct;
+            
+            // set initial values
+            _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
+            _densityAmount1Controller.text = copyProduct.densityConversion.amount1.toString();
+            _densityAmount2Controller.text = copyProduct.densityConversion.amount2.toString();
+            _quantityAmount1Controller.text = copyProduct.quantityConversion.amount1.toString();
+            _quantityAmount2Controller.text = copyProduct.quantityConversion.amount2.toString();
+            _quantityNameController.text = copyProduct.quantityName;
+            
+            _densityConversionNotifier.value = copyProduct.densityConversion;
+            _quantityConversionNotifier.value = copyProduct.quantityConversion;
+            _defaultUnitNotifier.value = copyProduct.defaultUnit;
+            _autoCalcAmountNotifier.value = copyProduct.autoCalc;
+            _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
+            _ingredientsNotifier.value = List.from(copyProduct.ingredients);
+            
+            _resultingAmountController.text = copyProduct.amountForIngredients.toString();
+            _resultingAmountNotifier.value = copyProduct.amountForIngredients;
+            
+            // populate ingredient amount controllers
+            _ingredientAmountControllers.clear();
+            for (var ingredient in copyProduct.ingredients) {
+              var controller = TextEditingController();
+              controller.text = ingredient.amount.toString();
+              _ingredientAmountControllers.add(controller);
+            }
+            
+            // remove ".0" from amount fields if it is the end of the string
+            var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _resultingAmountController, ..._ingredientAmountControllers];
+            for (var field in amountFields) {
+              var text = field.text;
+              if (text.endsWith(".0")) {
+                field.text = text.substring(0, text.length - 2);
+              }
+            }
+          }
+          
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(_isEdit ? "Edit Product" : "Add Product"),
+              actions: _isEdit && _loaded ? [
+                ValueListenableBuilder(
+                  valueListenable: _productNameController,
+                  builder: (context, value, child) {
+                    var name = _productNameController.text;
+                    return _buildDeleteButton(name, products!);
                   }
-                } else {
-                  prevProduct = Product.defaultValues();
-                }
-                
-                // set initial values
-                _productNameController.text = interimProduct?.name ?? widget.productName ?? prevProduct.name;
-                _densityAmount1Controller.text = prevProduct.densityConversion.amount1.toString();
-                _densityAmount2Controller.text = prevProduct.densityConversion.amount2.toString();
-                _quantityAmount1Controller.text = prevProduct.quantityConversion.amount1.toString();
-                _quantityAmount2Controller.text = prevProduct.quantityConversion.amount2.toString();
-                _quantityNameController.text = prevProduct.quantityName;
-                
-                _densityConversionNotifier.value = prevProduct.densityConversion;
-                _quantityConversionNotifier.value = prevProduct.quantityConversion;
-                _defaultUnitNotifier.value = prevProduct.defaultUnit;
-                _autoCalcAmountNotifier.value = prevProduct.autoCalc;
-                _ingredientsUnitNotifier.value = prevProduct.ingredientsUnit;
-                _ingredientsNotifier.value = prevProduct.ingredients;
-                
-                _resultingAmountController.text = prevProduct.amountForIngredients.toString();
-                _resultingAmountNotifier.value = prevProduct.amountForIngredients;
-                
-                // populate ingredient amount controllers
-                _ingredientAmountControllers.clear();
-                for (var ingredient in prevProduct.ingredients) {
-                  var controller = TextEditingController();
-                  controller.text = ingredient.amount.toString();
-                  _ingredientAmountControllers.add(controller);
-                }
-                
-                // remove ".0" from amount fields if it is the end of the string
-                var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _resultingAmountController, ..._ingredientAmountControllers];
-                for (var field in amountFields) {
-                  var text = field.text;
-                  if (text.endsWith(".0")) {
-                    field.text = text.substring(0, text.length - 2);
-                  }
-                }
-                
-                return SingleChildScrollView(
+                )
+              ] : null
+            ),
+            body: ScrollConfiguration(
+              // clamping scroll physics to avoid overscroll
+              behavior: const ScrollBehavior().copyWith(overscroll: false),
+              child: 
+                _loaded ? SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.all(6.0),
                     child: Form(
                       key: _formKey,
                       child: Column(
-                        
                         children: [
-                          _buildNameField(products),
+                          _buildNameField(products!),
                           const SizedBox(height: 5),
                           _buildDefaultUnitDropdown(),
                           const SizedBox(height: 8),
@@ -210,22 +222,20 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       ),
                     ),
                   ),
-                );
-              } else {
-                return const LoadingPage();
-              }
-            }
-          ),
-        )
+                ) : const LoadingPage()
+            )
+          );
+        }
       ),
     );
   }
   
   Future _onPopInvoked(bool didPop) async {
     if (didPop) return;
-    if (!_loaded || _error) {
+    if (!_loaded || _error) { //
       // if the data is not loaded yet, pop immediately 
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop([true, "Hallo1"]);
+      devtools.log("hallo");
       return;
     }
     
@@ -234,45 +244,58 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     // test whether the product has been changed compared to the prevProduct
     var (product, _) = getProductFromForm();
     
-    if (product.equals(prevProduct)) {
-      Future(() => navigator.pop());
+    if (product.equals(_prevProduct)) {
+      Future(() => navigator.pop([true, "Hallo2"]));
       return;
     }
     
     bool willPop = await showContinueWithoutSavingDialog(context);
     
     if (willPop) {
-      Future(() => navigator.pop());
+      Future(() => navigator.pop([true, "Hallo3"]));
     }
   }
   
-  Widget _buildDeleteButton() => 
+  Widget _buildDeleteButton(String? name, List<Product> products) => 
     IconButton(
       onPressed: () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Delete Product"),
-            content: const Text("If you delete this product, all associated data will be lost."),
-            surfaceTintColor: Colors.transparent,
-            actions: [
-              TextButton(
-                onPressed: () {
-                  _dataService.deleteProductWithName(widget.productName!);
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
-                child: const Text("Delete"),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text("Cancel"),
-              )
-            ],
-          )
-        );
+        // Check whether the product is used in any recipe
+        List<Product> usedAsIngredient = products.where((prod) => prod.ingredients.any((ingr) => ingr.product?.id == _id)).toList();
+        
+        if (usedAsIngredient.isEmpty) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Delete Product"),
+              content: const Text("If you delete this product, all associated data will be lost."),
+              surfaceTintColor: Colors.transparent,
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _dataService.deleteProductWithName(widget.productName!);
+                    Navigator.of(context).pop([true, "Hallo4"]);
+                    Navigator.of(context).pop([true, "Hallo5"]);
+                  },
+                  child: const Text("Delete"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop([true, "Hallo6"]),
+                  child: const Text("Cancel"),
+                )
+              ],
+            )
+          );
+        } else {
+          // Tell the user that the product is used in following recipes
+          showUsedAsIngredientDialog(
+            name: name ?? "",
+            context: context,
+            usedAsIngredient: usedAsIngredient,
+            beforeNavigate: () {
+              _interimProduct = getProductFromForm().$1;
+            },
+          );
+        }
       },
       icon: const Icon(Icons.delete),
     );
@@ -334,7 +357,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           // navigate to edit view of duplicate product
           try {
             final product = products.firstWhere((prod) => prod.name == name);
-            interimProduct = getProductFromForm().$1;
+            _interimProduct = getProductFromForm().$1;
             Navigator.of(context).pushNamed(
               editProductRoute,
               arguments: product.name,
@@ -815,7 +838,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         
         // Test whether any of the ingredients is a circular reference
         var circRefs = valueIngredients.map((i) => validateIngredient(
-          ingredient: i.product, product: prevProduct
+          ingredient: i.product, product: _prevProduct
         ) != null).toList();
         
         var anyCircRef = circRefs.any((element) => element);
@@ -960,8 +983,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     List<bool> circRefs,
     Unit targetUnit,
   ) {
+    // remove all ingredient products from products list
+    var reducedProducts = products.where((prod) => !ingredients.any((ingr) => ingr.product?.id == prod.id)).toList();
+    
     var entries = <SlidableListEntry>[];
     _ingredientFocusNodes = <FocusNode>[];
+    
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
@@ -1009,11 +1036,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ProductDropdown(
-                        products: products,
+                        products: (product == null ? [] : [product]) + reducedProducts as List<Product>,
                         selectedProduct: product,
                         ingredients: ingredients,
                         index: index,
-                        ingredientsNotifier: _ingredientsNotifier,
                         focusNode: focusNode,
                         onChanged: (Product? newProduct) {
                           if (newProduct != null) {
@@ -1095,7 +1121,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   onPressed: () {
                     // navigate to edit the product
                     if (product != null) {
-                      interimProduct = getProductFromForm().$1;
+                      _interimProduct = getProductFromForm().$1;
                       Navigator.of(context).pushNamed(
                         editProductRoute,
                         arguments: product.name,
@@ -1167,7 +1193,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             }
           },
           beforeAdd: () {
-            interimProduct = getProductFromForm().$1;
+            _interimProduct = getProductFromForm().$1;
           }
         );
       },
@@ -1190,16 +1216,16 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         var (product, isValid) = getProductFromForm();
         
         if (isValid) {
-          if (isEdit) {
+          if (_isEdit) {
             _dataService.updateProduct(product);
           } else {
             _dataService.createProduct(product);
           }
           
-          Navigator.of(context).pop();
+          Navigator.of(context).pop([true, "Hallo7"]);
         }
       },
-      child: Text(isEdit ? "Update Product" : "Add Product"),
+      child: Text(_isEdit ? "Update Product" : "Add Product"),
     ),
   );
   
@@ -1236,7 +1262,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     return (
       Product(
-        id:                    isEdit ? _id : -1,
+        id:                    _isEdit ? _id : -1,
         name:                  name,
         defaultUnit:           defUnit,
         densityConversion:     densityConversion,
