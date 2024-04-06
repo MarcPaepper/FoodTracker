@@ -29,7 +29,7 @@ Future showContinueWithoutSavingDialog(BuildContext context) =>
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Discard changes?'),
-      content: const Text('You have made changes which will be lost unless you save them.'),
+      // content: const Text(''),
       surfaceTintColor: Colors.transparent,
       actionsAlignment: MainAxisAlignment.spaceEvenly,
       actions: <Widget>[
@@ -103,7 +103,7 @@ void showUsedAsIngredientDialog({
               child: ElevatedButton(
                 style: actionButtonStyle,
                 onPressed: () {
-                  Navigator.of(context).pop([true, "Hallo7"]);
+                  Navigator.of(context).pop(null);
                 },
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 10, horizontal: 40),
@@ -131,6 +131,8 @@ void showProductDialog({
 }) => showDialog(
     context: context,
     builder: (BuildContext context) {
+      var searchController = TextEditingController();
+      
       return Dialog(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -143,7 +145,11 @@ void showProductDialog({
               ),
             ),
             Expanded(
-              child: _ProductList(products: products, onSelected: onSelected),
+              child: _ProductList(
+                products: products,
+                onSelected: onSelected,
+                searchController: searchController,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(12),
@@ -155,9 +161,20 @@ void showProductDialog({
                       style: actionButtonStyle,
                       onPressed: () {
                         beforeAdd?.call();
+                        var name = searchController.text;
                         // navigate to the product creation screen
                         // and wait for the result
-                        
+                        Navigator.of(context).pushNamed(
+                          addProductRoute,
+                          arguments: name == '' ? null : name,
+                        ).then((value) {
+                          Navigator.of(context).pop();
+                          if (value == null) {
+                            onSelected(null);
+                          } else {
+                            onSelected(value as Product);
+                          }
+                        });
                       },
                       child: const Padding(
                         padding: EdgeInsets.all(10.0),
@@ -193,12 +210,14 @@ class _ProductList extends StatefulWidget {
   final Function(Product) onSelected;
   final bool showSearch;
   final bool colorFromTop;
+  final TextEditingController? searchController;
   
   const _ProductList({
     required this.products,
     required this.onSelected,
     this.showSearch = true,
     this.colorFromTop = false,
+    this.searchController,
   });
 
   @override
@@ -206,7 +225,13 @@ class _ProductList extends StatefulWidget {
 }
 
 class __ProductListState extends State<_ProductList> {
-  final TextEditingController _searchController = TextEditingController();
+  late TextEditingController _searchController;
+  
+  @override
+  void initState() {
+    _searchController = widget.searchController ?? TextEditingController();
+    super.initState();
+  }
   
   @override
   Widget build(BuildContext context) {

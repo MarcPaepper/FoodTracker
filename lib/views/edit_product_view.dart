@@ -74,7 +74,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     if (widget.isEdit == null || (widget.isEdit! && widget.productName == null)) {
       Future(() {
         showErrorbar(context, "Error: Product not found");
-        Navigator.of(context).pop([true, "Hallo8"]);
+        Navigator.of(context).pop(null);
       });
     }
     
@@ -232,10 +232,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   Future _onPopInvoked(bool didPop) async {
     if (didPop) return;
-    if (!_loaded || _error) { //
+    if (!_loaded || _error) {
       // if the data is not loaded yet, pop immediately 
-      Navigator.of(context).pop([true, "Hallo1"]);
-      devtools.log("hallo");
+      Navigator.of(context).pop(null);
       return;
     }
     
@@ -245,14 +244,14 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     var (product, _) = getProductFromForm();
     
     if (product.equals(_prevProduct)) {
-      Future(() => navigator.pop([true, "Hallo2"]));
+      Future(() => navigator.pop(_prevProduct));
       return;
     }
     
     bool willPop = await showContinueWithoutSavingDialog(context);
     
     if (willPop) {
-      Future(() => navigator.pop([true, "Hallo3"]));
+      Future(() => navigator.pop(product));
     }
   }
   
@@ -273,13 +272,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 TextButton(
                   onPressed: () {
                     _dataService.deleteProductWithName(widget.productName!);
-                    Navigator.of(context).pop([true, "Hallo4"]);
-                    Navigator.of(context).pop([true, "Hallo5"]);
+                    Navigator.of(context).pop(null);
+                    Navigator.of(context).pop(null);
                   },
                   child: const Text("Delete"),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop([true, "Hallo6"]),
+                  onPressed: () => Navigator.of(context).pop(),
                   child: const Text("Cancel"),
                 )
               ],
@@ -921,7 +920,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               errorText,
               const SizedBox(height: 8),
               _buildIngredientsList(products, valueIngredients, amounts, circRefs, valueUnit),
-              _buildAddIngredientButton(products),
+              _buildAddIngredientButton(products, valueIngredients),
             ],
           ),
         );
@@ -1153,7 +1152,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return entries;
   }
   
-  Widget _buildAddIngredientButton(List<Product> products) {
+  Widget _buildAddIngredientButton(List<Product> products, List<ProductQuantity> ingredients) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 210, 235, 198),
@@ -1182,7 +1181,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           selectedProduct: null,
           onSelected: (Product? product) {
             if (product != null) {
-              var ingredients = _ingredientsNotifier.value;
               ingredients.add(ProductQuantity(
                 product: product,
                 amount: 0,
@@ -1216,13 +1214,17 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         var (product, isValid) = getProductFromForm();
         
         if (isValid) {
+          Future<Product> future;
+          
           if (_isEdit) {
-            _dataService.updateProduct(product);
+            future = _dataService.updateProduct(product);
           } else {
-            _dataService.createProduct(product);
+            future = _dataService.createProduct(product);
           }
           
-          Navigator.of(context).pop([true, "Hallo7"]);
+          future.then((newProduct) {
+            Navigator.of(context).pop(newProduct);
+          });
         }
       },
       child: Text(_isEdit ? "Update Product" : "Add Product"),
