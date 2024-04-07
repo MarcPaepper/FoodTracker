@@ -20,18 +20,18 @@ var routes = {
   addMealsRoute:		(context) => const AddMealView(),
   productsRoute:	  (context) => const NutrionalValueView(),
   addProductRoute:	(context) {
-    var (name, copyId) = ModalRoute.of(context)!.settings.arguments as (String?, int?);
+    var result = ModalRoute.of(context)!.settings.arguments as (String?, bool?)?;
     return EditProductView(
       isEdit: false,
-      productName: name,
-      copyId: copyId,
+      productName: result?.$1,
+      isCopy: result?.$2 ?? false,
     );
   },
   editProductRoute: (context) {
-    var (name, _) = ModalRoute.of(context)!.settings.arguments as (String?, int?);
+    var result = ModalRoute.of(context)!.settings.arguments as (String?, bool?)?;
     return EditProductView(
       isEdit: true,
-      productName: name,
+      productName: result?.$1,
     );
   },
   addNutrionalValueRoute:	(context) => const EditNutrionalValueView(isEdit: false),

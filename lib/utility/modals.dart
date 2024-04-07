@@ -9,17 +9,31 @@ import '../services/data/data_objects.dart';
 import '../widgets/products_list.dart';
 import 'theme.dart';
 
-void showErrorbar(BuildContext context, String msg) {
+void showErrorbar(BuildContext context, String msg) =>
+  _showSnackbar(context: context, msg: msg, bgColor: const Color.fromARGB(255, 77, 22, 0), icon: const Icon(Icons.warning, color: Colors.white));
+
+void showSnackbar(context, msg, {Color bgColor = Colors.teal, Icon? icon}) =>
+  _showSnackbar(context: context, msg: msg, bgColor: bgColor, icon: icon);
+
+void _showSnackbar({
+  required BuildContext context,
+  required String msg,
+  required Color bgColor,
+  Icon? icon,
+}) {
+  var children = <Widget>[];
+  if (icon != null) {
+    children.add(icon);
+    children.add(const SizedBox(width: 10));
+  }
+  children.add(Text(msg));
+  
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Row(
-        children: [
-          const Icon(Icons.warning, color: Colors.white),
-          const SizedBox(width: 10),
-          Text(msg)
-        ]
+        children: children,
       ),
-      backgroundColor: const Color.fromARGB(255, 77, 22, 0),
+      backgroundColor: bgColor,
     )
   );
 }
@@ -87,7 +101,7 @@ void showUsedAsIngredientDialog({
               beforeNavigate();
               Navigator.of(context).pushNamed(
                 editProductRoute,
-                arguments: (product.name, null),
+                arguments: (product.name, false),
               );
             },
             productsMap: usedAsIngredientIn,
@@ -166,7 +180,7 @@ void showProductDialog({
                         // and wait for the result
                         Navigator.of(context).pushNamed(
                           addProductRoute,
-                          arguments: ((name == '' ? null : name), null),
+                          arguments: ((name == '' ? null : name), false),
                         ).then((value) {
                           Navigator.of(context).pop();
                           if (value == null) {

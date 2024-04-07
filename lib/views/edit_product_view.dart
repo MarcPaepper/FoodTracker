@@ -22,12 +22,12 @@ import '../utility/data_logic.dart';
 class EditProductView extends StatefulWidget {
   final String? productName;
   final bool? isEdit;
-  final int? copyId; // If the product settings should be copied from another product
+  final bool isCopy; // If the product settings should be copied from another product
   
   const EditProductView({
     this.isEdit,
     this.productName,
-    this.copyId,
+    this.isCopy = false,
     Key? key,
   }) : super(key: key);
 
@@ -58,7 +58,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   late final bool _isEdit;
   
   int _id = -1;
-  List<FocusNode> _ingredientFocusNodes = [];
+  List<FocusNode> _ingredientDropdownFocusNodes = [];
+  List<FocusNode> _ingredientAmountFocusNodes = [];
   late Product _prevProduct;
   Product? _interimProduct;
   // used to store the product while the user navigates to another page, can contain formal errors
@@ -98,9 +99,14 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     // reload product stream
     Future(() {
-      _dataService.reloadProductStream();
+      _dataService.reloadProductStream();// If it's a copy, toast via SnackBar
+      if (widget.isCopy) {
+        Future(() {
+          showSnackbar(context, "Product duplicated from '${widget.productName}'");
+        });
+      }
     });
-    devtools.log("copyId: ${widget.copyId}");
+    
     super.initState();
   }
   
@@ -195,9 +201,18 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             ? Map.fromEntries(products!.map((prod) => MapEntry(prod.id, prod)))
             : null;
           
+          String title;
+          if (widget.isEdit == true) {
+            title = "Edit Product";
+          } else if (widget.isCopy) {
+            title = "Add Product (Copy)";
+          } else {
+            title = "Add Product";
+          }
+          
           return Scaffold(
             appBar: AppBar(
-              title: Text(_isEdit ? "Edit Product" : "Add Product"),
+              title: Text(title),
               actions: _isEdit && _loaded ? [
                 ValueListenableBuilder(
                   valueListenable: _productNameController,
@@ -327,7 +342,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         ),
         validator: (String? value) {
           for (var prod in products) {
-            if (prod.name == value && prod.name != widget.productName) {
+            if (prod.name == value && !(prod.name == widget.productName && (widget.isEdit ?? false))) {
               // change notifier after build complete
               if (!_isDuplicateNotifier.value) {
                 Future(() {
@@ -356,6 +371,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       builder: (context, value, child) {
         return Column(
           children: [
+            if (widget.isCopy) _buildShowOrigButton(products),
             textField,
             if (value) _buildShowDuplicateButton(products),
           ],
@@ -364,13 +380,24 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     );
   }
   
-  // Make a stateful name field widget which changes its state and shows a button if the name is a duplicate
+  Widget _buildShowOrigButton(List<Product> products) => _buildProductReferrelButton(false, products);
   
-  Widget _buildShowDuplicateButton(List<Product> products) => Padding(
+  Widget _buildShowDuplicateButton(List<Product> products) => _buildProductReferrelButton(true, products);
+  
+  Widget _buildProductReferrelButton(
+    bool isNameDuplicate,
+    List<Product> products,
+  ) {
+    return Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextButton(
         onPressed: () {
-          final name = _productNameController.text;
+          String name;
+          if (isNameDuplicate) {
+            name = _productNameController.text;
+          } else {
+            name = widget.productName!;
+          }
           // navigate to edit view of duplicate product
           try {
             final product = products.firstWhere((prod) => prod.name == name);
@@ -383,14 +410,15 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             devtools.log("Error: Product not found");
           }
         },
-        child: const Text(
-          "Show Duplicate",
+        child: Text(
+          "Show ${isNameDuplicate ? "Duplicate" : "Original (${widget.productName})"}",
           style: TextStyle(
-            color: Colors.red,
+            color: isNameDuplicate ? Colors.red : Colors.teal,
           ),
         ),
       ),
     );
+  }
   
   Widget _buildDefaultUnitDropdown() {
     return StatefulBuilder(
@@ -738,6 +766,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   Widget _buildAmountField({
     required TextEditingController controller,
+    FocusNode? focusNode,
     bool enabled = true,
     Function(double)? onChangedAndParsed,
     double? padding,
@@ -756,6 +785,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
           ),
           controller: controller,
+          focusNode: focusNode,
           keyboardType: TextInputType.number,
           validator: (String? value) => enabled ? numberValidator(value) : null,
           autovalidateMode: AutovalidateMode.always,
@@ -1017,14 +1047,17 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     }
     
     var entries = <SlidableListEntry>[];
-    _ingredientFocusNodes = <FocusNode>[];
+    _ingredientDropdownFocusNodes = <FocusNode>[];
+    _ingredientAmountFocusNodes = <FocusNode>[];
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
-      var focusNode = FocusNode();
-      _ingredientFocusNodes.add(focusNode);
+      var focusNode1 = FocusNode();
+      var focusNode2 = FocusNode();
+      _ingredientDropdownFocusNodes.add(focusNode1);
+      _ingredientAmountFocusNodes.add(focusNode2);
       
       var product = ingredient.productId != null 
         ? productsMap[ingredient.productId]
@@ -1073,7 +1106,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         productsMap: availableProducts,
                         selectedProduct: product,
                         index: index,
-                        focusNode: focusNode,
+                        focusNode: focusNode1,
                         onChanged: (Product? newProduct) {
                           if (newProduct != null) {
                             // Check whether the new product supports the current unit
@@ -1087,7 +1120,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               unit:      newUnit,
                             );
                             _ingredientsNotifier.value = List.from(ingredients);
-                            WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index));
+                            WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index, 0));
                           }
                         },
                       ),
@@ -1099,6 +1132,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           Expanded(
                             child: _buildAmountField(
                               controller: _ingredientAmountControllers[index],
+                              focusNode: focusNode2,
                               padding: 0,
                               onChangedAndParsed: (value) {
                                 var prev = ingredients[index];
@@ -1154,7 +1188,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       _interimProduct = getProductFromForm().$1;
                       Navigator.of(context).pushNamed(
                         editProductRoute,
-                        arguments: (product.name, null),
+                        arguments: (product.name, false),
                       );
                     }
                   },
@@ -1212,13 +1246,26 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           selectedProduct: null,
           onSelected: (Product? product) {
             if (product != null) {
+              var defUnit = product.defaultUnit;
+              double amount;
+              if (defUnit == Unit.quantity || defUnit == Unit.l || defUnit == Unit.kg) {
+                amount = 1.0;
+              } else {
+                amount = 100.0;
+              }
               ingredients.add(ProductQuantity(
                 productId: product.id,
-                amount: 0,
+                amount: amount,
                 unit: product.defaultUnit,
               ));
               _ingredientsNotifier.value = List.from(ingredients);
-              _ingredientAmountControllers.add(TextEditingController());
+              var newController = TextEditingController();
+              newController.text = amount.toString();
+              _ingredientAmountControllers.add(newController);
+              // after 50ms, request focus for the amount field
+              Future.delayed(const Duration(milliseconds: 50), () {
+                _requestIngredientFocus(ingredients.length - 1, 1);
+              });
             }
           },
           beforeAdd: () {
@@ -1262,9 +1309,15 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     ),
   );
   
-  void _requestIngredientFocus(int index) {
-    if (index < _ingredientFocusNodes.length && _ingredientFocusNodes[index].canRequestFocus) {
-      _ingredientFocusNodes[index].requestFocus();
+  void _requestIngredientFocus(int index, int subIndex) {
+    if (index < _ingredientDropdownFocusNodes.length) {
+      if (subIndex == 0) {
+        // If sub index = 0, focus the product dropdown
+        _ingredientDropdownFocusNodes[index].requestFocus();
+      } else {
+        // If sub index = 1, focus the amount field
+        _ingredientAmountFocusNodes[index].requestFocus();
+      }
     }
   }
   

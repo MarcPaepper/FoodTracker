@@ -87,8 +87,15 @@ class _ProductsViewState extends State<ProductsView> {
           onSelected: (name, id) => Navigator.pushNamed (
             context,
             editProductRoute,
-            arguments: (name, null),
-          )
+            arguments: (name, false),
+          ),
+          onLongPress: (name, id) {
+            Navigator.pushNamed (
+              context,
+              addProductRoute,
+              arguments: (name, true),
+            );
+          },
         ),
       );
     }
@@ -124,7 +131,7 @@ class _ProductsViewState extends State<ProductsView> {
         Navigator.pushNamed (
           context,
           addProductRoute,
-          arguments: (name, null),
+          arguments: (name, false),
         );
       },
     );

@@ -10,6 +10,7 @@ List<Widget> getProductTiles({
   required List<Product> products,
   required String search,
   required Function(String, int) onSelected,
+  Function(String, int)? onLongPress,
   bool colorFromTop = false,
 }) {
   var searchWords = search.split(" ");
@@ -33,6 +34,7 @@ List<Widget> getProductTiles({
       searchWords: searchWords,
       color: color,
       onSelected: onSelected,
+      onLongPress: onLongPress,
       key: ValueKey(product.id),
     );
   });
@@ -43,12 +45,14 @@ class ProductTile extends StatefulWidget {
   final List<String> searchWords;
   final Color color;
   final Function(String, int) onSelected;
+  final Function(String, int)? onLongPress;
   
   const ProductTile({
     required this.product,
     required this.searchWords,
     required this.color,
     required this.onSelected,
+    this.onLongPress,
     super.key,
   });
 
@@ -82,6 +86,14 @@ class _ProductTileState extends State<ProductTile> {
             FocusScope.of(context).requestFocus(_focusNode);
           });
           widget.onSelected(widget.product.name, widget.product.id);
+        },
+        onLongPress: () {
+          setState(() {
+            FocusScope.of(context).requestFocus(_focusNode);
+          });
+          if (widget.onLongPress != null) {
+            widget.onLongPress!(widget.product.name, widget.product.id);
+          }
         },
         child: ListTile(
           title: RichText(
