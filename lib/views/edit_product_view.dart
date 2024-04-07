@@ -22,8 +22,14 @@ import '../utility/data_logic.dart';
 class EditProductView extends StatefulWidget {
   final String? productName;
   final bool? isEdit;
+  final int? copyId; // If the product settings should be copied from another product
   
-  const EditProductView({Key? key, this.isEdit, this.productName}) : super(key: key);
+  const EditProductView({
+    this.isEdit,
+    this.productName,
+    this.copyId,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<EditProductView> createState() => _EditProductViewState();
@@ -94,7 +100,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     Future(() {
       _dataService.reloadProductStream();
     });
-    
+    devtools.log("copyId: ${widget.copyId}");
     super.initState();
   }
   
@@ -371,7 +377,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             _interimProduct = getProductFromForm().$1;
             Navigator.of(context).pushNamed(
               editProductRoute,
-              arguments: product.name,
+              arguments: (product.name, null),
             );
           } catch (e) {
             devtools.log("Error: Product not found");
@@ -1024,8 +1030,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         ? productsMap[ingredient.productId]
         : null;
       
-      var availableProducts = (product == null ? {} : {product.id, product}) as Map<int, Product>;
+      var availableProducts = <int, Product>{};
       availableProducts.addAll(reducedProducts);
+      if (product != null) availableProducts[product.id] = product;
       
       var errorType = circRefs[index] ? ErrorType.error : ErrorType.none;
       String? errorMsg = errorType == ErrorType.error ? "Circular Reference" : null;
@@ -1147,7 +1154,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       _interimProduct = getProductFromForm().$1;
                       Navigator.of(context).pushNamed(
                         editProductRoute,
-                        arguments: product.name,
+                        arguments: (product.name, null),
                       );
                     }
                   },

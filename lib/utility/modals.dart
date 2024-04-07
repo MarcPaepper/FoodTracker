@@ -87,7 +87,7 @@ void showUsedAsIngredientDialog({
               beforeNavigate();
               Navigator.of(context).pushNamed(
                 editProductRoute,
-                arguments: product.name,
+                arguments: (product.name, null),
               );
             },
             productsMap: usedAsIngredientIn,
@@ -166,7 +166,7 @@ void showProductDialog({
                         // and wait for the result
                         Navigator.of(context).pushNamed(
                           addProductRoute,
-                          arguments: name == '' ? null : name,
+                          arguments: ((name == '' ? null : name), null),
                         ).then((value) {
                           Navigator.of(context).pop();
                           if (value == null) {

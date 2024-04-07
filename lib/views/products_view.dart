@@ -87,7 +87,7 @@ class _ProductsViewState extends State<ProductsView> {
           onSelected: (name, id) => Navigator.pushNamed (
             context,
             editProductRoute,
-            arguments: name,
+            arguments: (name, null),
           )
         ),
       );
@@ -124,7 +124,7 @@ class _ProductsViewState extends State<ProductsView> {
         Navigator.pushNamed (
           context,
           addProductRoute,
-          arguments: name,
+          arguments: (name, null),
         );
       },
     );
