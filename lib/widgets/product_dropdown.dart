@@ -14,9 +14,8 @@ final underlineColorFocused = Colors.teal.shade300;
 const underlineColorError = Color.fromARGB(210, 193, 46, 27);
 
 class ProductDropdown extends StatefulWidget {
-  final List<Product> products;
+  final Map<int, Product> productsMap;
   final Product? selectedProduct;
-  final List<ProductQuantity> ingredients;
   final int index;
   final void Function(Product?) onChanged;
   final FocusNode? focusNode;
@@ -25,9 +24,8 @@ class ProductDropdown extends StatefulWidget {
   final Color _underlineColor = underlineColorEnabled;
 
   ProductDropdown({
-    required this.products,
+    required this.productsMap,
     required this.selectedProduct,
-    required this.ingredients,
     required this.index,
     required this.onChanged,
     this.focusNode,
@@ -74,7 +72,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
         });
         showProductDialog(
           context: context,
-          products: widget.products,
+          productsMap: widget.productsMap,
           selectedProduct: widget.selectedProduct,
           onSelected:  (newProduct) => widget.onChanged(newProduct),
         );

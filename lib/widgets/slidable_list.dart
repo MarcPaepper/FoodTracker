@@ -42,6 +42,7 @@ class SlidableReorderableList extends StatefulWidget {
   final List<SlidableListEntry> entries;
   final double menuWidth;
   final bool buildDefaultDragHandles;
+  final ScrollPhysics physics;
   final void Function(int oldIndex, int newIndex) onReorder;
   
   const SlidableReorderableList({
@@ -49,6 +50,7 @@ class SlidableReorderableList extends StatefulWidget {
     required this.entries,
     required this.menuWidth,
     this.buildDefaultDragHandles = true,
+    this.physics = const NeverScrollableScrollPhysics(),
     required this.onReorder,
   }) : super(key: key);
 
@@ -64,6 +66,7 @@ class _SlidableReorderableListState extends State<SlidableReorderableList> {
       shrinkWrap: true,
       buildDefaultDragHandles: widget.buildDefaultDragHandles,
       onReorder: widget.onReorder,
+      physics: widget.physics,
       children: List.generate(widget.entries.length, (index) {
         var entry = widget.entries[index];
         var menuItems = entry.menuItems;

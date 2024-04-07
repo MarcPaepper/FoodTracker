@@ -9,7 +9,7 @@ import 'sqflite_data_provider.dart';
 
 import "dart:developer" as devtools show log;
 
-const currentMode = kIsWeb ? DebugDataProvider : DebugDataProvider;
+const currentMode = kIsWeb ? DebugDataProvider : SqfliteDataProvider;
 
 class DataService implements DataProvider {
   final DataProvider _provider;

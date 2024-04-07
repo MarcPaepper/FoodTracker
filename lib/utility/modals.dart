@@ -29,7 +29,7 @@ Future showContinueWithoutSavingDialog(BuildContext context) =>
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Discard changes?'),
-      // content: const Text(''),
+      content: const Text('If you continue, you lose your changes.'),
       surfaceTintColor: Colors.transparent,
       actionsAlignment: MainAxisAlignment.spaceEvenly,
       actions: <Widget>[
@@ -65,7 +65,7 @@ Future showContinueWithoutSavingDialog(BuildContext context) =>
 void showUsedAsIngredientDialog({
   required String name,
   required BuildContext context,
-  required List<Product> usedAsIngredient,
+  required Map<int, Product> usedAsIngredientIn,
   required Function() beforeNavigate,
 }) => showDialog(
   context: context,
@@ -90,7 +90,7 @@ void showUsedAsIngredientDialog({
                 arguments: product.name,
               );
             },
-            products: usedAsIngredient,
+            productsMap: usedAsIngredientIn,
             showSearch: false,
             colorFromTop: true,
           )
@@ -124,7 +124,7 @@ void showUsedAsIngredientDialog({
 // you can exit the dialog by clicking cancel or choosing a product
 void showProductDialog({
   required BuildContext context,
-  required List<Product> products,
+  required Map<int, Product> productsMap,
   Product? selectedProduct,
   required void Function(Product?) onSelected,
   void Function()? beforeAdd,
@@ -146,7 +146,7 @@ void showProductDialog({
             ),
             Expanded(
               child: _ProductList(
-                products: products,
+                productsMap: productsMap,
                 onSelected: onSelected,
                 searchController: searchController,
               ),
@@ -177,7 +177,7 @@ void showProductDialog({
                         });
                       },
                       child: const Padding(
-                        padding: EdgeInsets.all(10.0),
+                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10.0),
                         child: Text('Create new'),
                       ),
                     ),
@@ -206,14 +206,14 @@ void showProductDialog({
   );
 
 class _ProductList extends StatefulWidget {
-  final List<Product> products;
+  final Map<int, Product> productsMap;
   final Function(Product) onSelected;
   final bool showSearch;
   final bool colorFromTop;
   final TextEditingController? searchController;
   
   const _ProductList({
-    required this.products,
+    required this.productsMap,
     required this.onSelected,
     this.showSearch = true,
     this.colorFromTop = false,
@@ -251,11 +251,11 @@ class __ProductListState extends State<_ProductList> {
           child: ListView(
             children: getProductTiles(
               context: context,
-              products: widget.products,
+              products: widget.productsMap.values.toList(),
               search: _searchController.text,
               colorFromTop: widget.colorFromTop,
               onSelected: (name, id) {
-                var product = widget.products.firstWhere((element) => element.id == id);
+                var product = widget.productsMap[id]!;
                 Navigator.of(context).pop();
                 setState(() {
                   _searchController.clear();

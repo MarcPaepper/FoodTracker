@@ -185,6 +185,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             }
           }
           
+          var productsMap = _loaded
+            ? Map.fromEntries(products!.map((prod) => MapEntry(prod.id, prod)))
+            : null;
+          
           return Scaffold(
             appBar: AppBar(
               title: Text(_isEdit ? "Edit Product" : "Add Product"),
@@ -193,7 +197,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   valueListenable: _productNameController,
                   builder: (context, value, child) {
                     var name = _productNameController.text;
-                    return _buildDeleteButton(name, products!);
+                    return _buildDeleteButton(name, productsMap!);
                   }
                 )
               ] : null
@@ -215,7 +219,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           const SizedBox(height: 8),
                           _buildConversionFields(),
                           const SizedBox(height: 14),
-                          _buildIngredientBox(products),
+                          _buildIngredientBox(productsMap!),
                           const SizedBox(height: 8),
                           _buildAddButton(),
                         ]
@@ -255,13 +259,21 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     }
   }
   
-  Widget _buildDeleteButton(String? name, List<Product> products) => 
+  Widget _buildDeleteButton(String? name, Map<int, Product> productsMap) => 
     IconButton(
       onPressed: () {
         // Check whether the product is used in any recipe
-        List<Product> usedAsIngredient = products.where((prod) => prod.ingredients.any((ingr) => ingr.product?.id == _id)).toList();
+        // List<Product> usedAsIngredientIn = productsMap.where((prod) => prod.ingredients.any((ingr) => ingr.productId == _id)).toList();
         
-        if (usedAsIngredient.isEmpty) {
+        // Map all products which include the current product (_id) as an ingredient
+        Map<int, Product> usedAsIngredientIn = {};
+        for (var product in productsMap.values) {
+          if (product.ingredients.any((ingr) => ingr.productId == _id)) {
+            usedAsIngredientIn[product.id] = product;
+          }
+        }
+        
+        if (usedAsIngredientIn.isEmpty) {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -289,7 +301,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           showUsedAsIngredientDialog(
             name: name ?? "",
             context: context,
-            usedAsIngredient: usedAsIngredient,
+            usedAsIngredientIn: usedAsIngredientIn,
             beforeNavigate: () {
               _interimProduct = getProductFromForm().$1;
             },
@@ -763,7 +775,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     );
   }
   
-  Widget _buildIngredientBox(List<Product> products) {
+  Widget _buildIngredientBox(Map<int, Product> productsMap) {
     return MultiValueListenableBuilder(
       listenables: [
         _productNameController,
@@ -787,6 +799,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         var valueResultingAmount    = values[8] as double;
         
         var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
+        List<(ProductQuantity, Product?)> ingredientsWithProducts = [];
+        for (var ingredient in valueIngredients) {
+          ingredientsWithProducts.add((ingredient, productsMap[ingredient.productId]));
+        }
         
         // check whether the ingredient unit is compatible with the default unit
         var (errorType, errorMsg) = validateResultingAmount(
@@ -816,12 +832,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         // calculate the resulting amount
         List<double>? amounts;
         if (valueAutoCalc) {
-          amounts = valueIngredients.map((ingr) => convertBetweenProducts(
+          amounts = ingredientsWithProducts.map((pair) => convertBetweenProducts(
             targetUnit: valueUnit,
             conversion1: valueDensityConversion,
             conversion2: valueQuantityConversion,
-            ingredient: ingr,
-            products: products,
+            ingredient: pair.$1,
+            ingrProd: pair.$2,
           )).toList();
           // sum up all non-NaN amounts to get the resulting amount
           var resultingAmount = amounts.where((amount) => !amount.isNaN).fold(0.0, (prev, amount) => prev + amount);
@@ -835,9 +851,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           }
         }
         
-        // Test whether any of the ingredients is a circular reference
-        var circRefs = valueIngredients.map((i) => validateIngredient(
-          ingredient: i.product, product: _prevProduct
+        // same as above but using ingredientsWithProducts
+        
+        var circRefs = ingredientsWithProducts.map((pair) => validateIngredient(
+          products: productsMap,
+          ingrProd: pair.$2,
+          product: _prevProduct,
         ) != null).toList();
         
         var anyCircRef = circRefs.any((element) => element);
@@ -919,8 +938,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               ),
               errorText,
               const SizedBox(height: 8),
-              _buildIngredientsList(products, valueIngredients, amounts, circRefs, valueUnit),
-              _buildAddIngredientButton(products, valueIngredients),
+              _buildIngredientsList(productsMap, valueIngredients, amounts, circRefs, valueUnit),
+              _buildAddIngredientButton(productsMap, valueIngredients),
             ],
           ),
         );
@@ -929,7 +948,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   }
   
   Widget _buildIngredientsList(
-    List<Product> products,
+    Map<int, Product> productsMap,
     List<ProductQuantity> ingredients,
     List<double>? amounts,
     List<bool> circRefs,
@@ -958,7 +977,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       child: SlidableReorderableList(
         key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
         buildDefaultDragHandles: false,
-        entries: _getIngredientEntries(products, ingredients, amounts, circRefs, targetUnit),
+        
+        entries: _getIngredientEntries(productsMap, ingredients, amounts, circRefs, targetUnit),
         menuWidth: 90,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
@@ -976,14 +996,19 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   }
   
   List<SlidableListEntry> _getIngredientEntries(
-    List<Product> products,
+    Map<int, Product> productsMap,
     List<ProductQuantity> ingredients,
     List<double>? amounts,
     List<bool> circRefs,
     Unit targetUnit,
   ) {
     // remove all ingredient products from products list
-    var reducedProducts = products.where((prod) => !ingredients.any((ingr) => ingr.product?.id == prod.id)).toList();
+    var reducedProducts = Map<int, Product>.from(productsMap);
+    for (var ingredient in ingredients) {
+      if (ingredient.productId != null) {
+        reducedProducts.remove(ingredient.productId);
+      }
+    }
     
     var entries = <SlidableListEntry>[];
     _ingredientFocusNodes = <FocusNode>[];
@@ -995,9 +1020,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       var focusNode = FocusNode();
       _ingredientFocusNodes.add(focusNode);
       
-      var product = ingredient.product != null 
-        ? products.firstWhere((prod) => prod.id == ingredient.product!.id)
+      var product = ingredient.productId != null 
+        ? productsMap[ingredient.productId]
         : null;
+      
+      var availableProducts = (product == null ? {} : {product.id, product}) as Map<int, Product>;
+      availableProducts.addAll(reducedProducts);
       
       var errorType = circRefs[index] ? ErrorType.error : ErrorType.none;
       String? errorMsg = errorType == ErrorType.error ? "Circular Reference" : null;
@@ -1035,25 +1063,21 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ProductDropdown(
-                        products: (product == null ? [] : [product]) + reducedProducts as List<Product>,
+                        productsMap: availableProducts,
                         selectedProduct: product,
-                        ingredients: ingredients,
                         index: index,
                         focusNode: focusNode,
                         onChanged: (Product? newProduct) {
                           if (newProduct != null) {
                             // Check whether the new product supports the current unit
                             late Unit newUnit;
-                            if (ingredient.product != null && newProduct.getAvailableUnits().contains(ingredient.product!.defaultUnit)) {
-                              newUnit = ingredient.product!.defaultUnit;
-                            } else {
-                              newUnit = newProduct.defaultUnit;
-                            }
+                            var currentUnit = ingredient.unit;
+                            newUnit = (newProduct.getAvailableUnits().contains(currentUnit)) ? currentUnit : newProduct.defaultUnit;
                             
                             ingredients[index] = ProductQuantity(
-                              product: newProduct,
-                              amount: ingredient.amount,
-                              unit: newUnit,
+                              productId: newProduct.id,
+                              amount:    ingredient.amount,
+                              unit:      newUnit,
                             );
                             _ingredientsNotifier.value = List.from(ingredients);
                             WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index));
@@ -1072,7 +1096,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               onChangedAndParsed: (value) {
                                 var prev = ingredients[index];
                                 ingredients[index] = ProductQuantity(
-                                  product: prev.product,
+                                  productId: prev.productId,
                                   amount: value,
                                   unit: prev.unit,
                                 );
@@ -1090,7 +1114,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 if (unit != null) {
                                   var prev = ingredients[index];
                                   ingredients[index] = ProductQuantity(
-                                    product: prev.product,
+                                    productId: prev.productId,
                                     amount: prev.amount,
                                     unit: unit,
                                   );
@@ -1152,7 +1176,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return entries;
   }
   
-  Widget _buildAddIngredientButton(List<Product> products, List<ProductQuantity> ingredients) {
+  Widget _buildAddIngredientButton(Map<int, Product> productsMap, List<ProductQuantity> ingredients) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 210, 235, 198),
@@ -1177,12 +1201,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         // show product dialog
         showProductDialog(
           context: context,
-          products: products,
+          productsMap: productsMap,
           selectedProduct: null,
           onSelected: (Product? product) {
             if (product != null) {
               ingredients.add(ProductQuantity(
-                product: product,
+                productId: product.id,
                 amount: 0,
                 unit: product.defaultUnit,
               ));

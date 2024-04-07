@@ -9,25 +9,27 @@ enum ErrorType {
 }
 
 String? validateIngredient({
+  required Map<int, Product> products,
   required Product? product,
-  required Product? ingredient,
+  required Product? ingrProd,
 }) {
-  if (product == null || ingredient == null) return null;
-  return getIngredientsRecursively(product, ingredient, [ingredient]) == null
+  if (product == null || ingrProd == null) return null;
+  return getIngredientsRecursively(products, product, ingrProd, [ingrProd]) == null
     ? "Circular reference"
     : null;
 }
 
-List<Product>? getIngredientsRecursively(Product checkProd, Product product, List<Product> alreadyVisited) {
-  var ingredientsWithNulls = product.ingredients.map((ingr) => ingr.product).toList();
+List<Product>? getIngredientsRecursively(Map<int, Product> products, Product checkProd, Product product, List<Product> alreadyVisited) {
+  var ingredientIdsWithNulls = product.ingredients.map((ingr) => ingr.productId).toList();
   // remove nulls
-  var ingredients = ingredientsWithNulls.whereType<Product>().toList();
+  var ingredientIds = ingredientIdsWithNulls.whereType<int>().toList();
+  var ingredients = ingredientIds.map((id) => products[id]!).toList();
   if (ingredients.contains(checkProd)) return null;
   // recursion
   for (var ingr in ingredients) {
     if (!alreadyVisited.contains(ingr)) {
       alreadyVisited.add(ingr);
-      var recursivelyVisited = getIngredientsRecursively(checkProd, ingr, alreadyVisited);
+      var recursivelyVisited = getIngredientsRecursively(products, checkProd, ingr, alreadyVisited);
       if (recursivelyVisited == null) return null;
       alreadyVisited.addAll(recursivelyVisited);
     }
@@ -44,32 +46,59 @@ double convertBetweenProducts({
   required Conversion conversion1,
   required Conversion conversion2,
   required ProductQuantity ingredient,
-  required List<Product> products,
+  required Product? ingrProd,
 }) {
-  if (targetUnit == null) return double.nan;
+  if (targetUnit == null || ingrProd == null) return double.nan;
   
-  var possibleUnits = [targetUnit];
-  if (conversion1.enabled) {
-    possibleUnits.add(conversion1.unit1);
-    possibleUnits.add(conversion1.unit2);
-  }
-  if (conversion2.enabled) {
-    possibleUnits.add(conversion2.unit1);
-    possibleUnits.add(conversion2.unit2);
-  }
-  // remove duplicates
-  possibleUnits = possibleUnits.toSet().toList();
+  var possibleUnitsTarget = getConvertibleUnits(targetUnit, conversion1, conversion2);
+  var possibleUnitsIngred = getConvertibleUnits(ingredient.unit, ingrProd.densityConversion, ingrProd.quantityConversion);
   
-  for (var unit in possibleUnits) {
-    var conv = convertToUnit(
-      unit,
-      conversion1,
-      conversion2,
+  // convert ingredient to a common unit
+  if (possibleUnitsIngred.contains(targetUnit)) {
+    // direct conversion
+    return convertToUnit(
+      targetUnit,
+      ingrProd.densityConversion,
+      ingrProd.quantityConversion,
       ingredient,
     );
-    if (!conv.isNaN) return conv;
+  } else {
+    // find common unit
+    var commonUnits = possibleUnitsTarget.toSet().intersection(possibleUnitsIngred.toSet()).toList();
+    if (commonUnits.isEmpty) return double.nan;
+    var commonUnit = commonUnits.first;
+    // convert ingredient to common unit
+    var commonAmount = convertToUnit(
+      commonUnit,
+      ingrProd.densityConversion,
+      ingrProd.quantityConversion,
+      ingredient,
+    );
+    // convert to target unit
+    return convertToUnit(
+      targetUnit,
+      conversion1,
+      conversion2,
+      ProductQuantity(productId: null, amount: commonAmount, unit: commonUnit),
+    );
   }
-  return double.nan;
+}
+
+List<Unit> getConvertibleUnits(Unit targetUnit, Conversion densityConversion, Conversion quantityConversion) {
+  List<Unit> possibleUnits = [];
+  if (densityConversion.enabled) {
+    possibleUnits.addAll(volumetricUnits);
+    possibleUnits.addAll(weightUnits);
+  }
+  if (quantityConversion.enabled) {
+    if (volumetricUnits.contains(quantityConversion.unit2)) {
+      possibleUnits.addAll(volumetricUnits);
+    } else {
+      possibleUnits.addAll(weightUnits);
+    }
+  }
+  // remove duplicates
+  return possibleUnits;
 }
 
 double convertToUnit(
@@ -88,7 +117,7 @@ double convertToUnit(
     if (quantityConversion.enabled) {
       var newUnit = quantityConversion.unit2;
       var newAmount = ingredient.amount * quantityConversion.amount2 / quantityConversion.amount1;
-      ingredient = ProductQuantity(product: ingredient.product, amount: newAmount, unit: newUnit);
+      ingredient = ProductQuantity(productId: ingredient.productId, amount: newAmount, unit: newUnit);
       typeIngr = unitTypes[newUnit];
     } else {
       return double.nan;
@@ -102,13 +131,13 @@ double convertToUnit(
         // use the density conversion to convert the volumetric unit to the weight unit
         var newUnit = densityConversion.unit2;
         var newAmount = ingredient.amount * densityConversion.amount2 / densityConversion.amount1;
-        ingredient = ProductQuantity(product: ingredient.product, amount: newAmount, unit: newUnit);
+        ingredient = ProductQuantity(productId: ingredient.productId, amount: newAmount, unit: newUnit);
         typeIngr = unitTypes[newUnit];
       } else {
         // use the density conversion in reverse
         var newUnit = densityConversion.unit1;
         var newAmount = ingredient.amount * densityConversion.amount1 / densityConversion.amount2;
-        ingredient = ProductQuantity(product: ingredient.product, amount: newAmount, unit: newUnit);
+        ingredient = ProductQuantity(productId: ingredient.productId, amount: newAmount, unit: newUnit);
         typeIngr = unitTypes[newUnit];
       }
     } else {
@@ -136,7 +165,7 @@ bool conversionToUnitPossible(
     unit1,
     densityConversion,
     quantityConversion,
-    ProductQuantity(product: null, amount: 1, unit: unit2),
+    ProductQuantity(productId: null, amount: 1, unit: unit2),
   ).isFinite;
 }
 

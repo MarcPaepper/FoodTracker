@@ -42,7 +42,7 @@ class DebugDataProvider implements DataProvider {
           if (i <= 3) { 
             firstProducts.add(
               ProductQuantity(
-                product: product,
+                productId: product.id,
                 amount: 100,
                 unit: Unit.g,
               )

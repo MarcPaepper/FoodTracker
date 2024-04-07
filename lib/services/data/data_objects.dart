@@ -127,25 +127,25 @@ List<Unit> getAvailableUnitsForConversions(
 }
 
 class ProductQuantity {
-  final Product? product;
+  final int? productId;
   final double amount;
   final Unit unit;
   
   ProductQuantity({
-    required this.product,
+    required this.productId,
     required this.amount,
     required this.unit,
   });
   
   @override
-  bool operator ==(covariant ProductQuantity other) => product == other.product && amount == other.amount && unit == other.unit;
+  bool operator ==(covariant ProductQuantity other) => productId == other.productId && amount == other.amount && unit == other.unit;
   
   @override
-  int get hashCode => product.hashCode ^ amount.hashCode ^ unit.hashCode;
+  int get hashCode => productId.hashCode ^ amount.hashCode ^ unit.hashCode;
   
   @override
   String toString() {
-    return "<ProductQuantity $amount ${unitToString(unit)} of $product>";
+    return "<ProductQuantity $amount ${unitToString(unit)} prod id $productId>";
   }
 }
 

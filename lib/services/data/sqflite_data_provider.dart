@@ -146,7 +146,7 @@ class SqfliteDataProvider implements DataProvider {
     var ingredientRows = await _db!.query(ingredientTable);
     for (var row in ingredientRows) {
       var containedInProduct = _products.firstWhere((p) => p.id == row[isContainedInIdColumn]);
-      containedInProduct.ingredients.add(await _dbRowToProductQuantity(row, _products));
+      containedInProduct.ingredients.add(await _dbRowToProductQuantity(row));
     }
     
     _productsStreamController.add(_products);
@@ -168,7 +168,7 @@ class SqfliteDataProvider implements DataProvider {
     final product = _dbRowToProduct(productResults.first);
     
     var ingredientRows = await _db!.query(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [id]);
-    product.ingredients = await Future.wait(ingredientRows.map((row) => _dbRowToProductQuantity(row, _products)));
+    product.ingredients = await Future.wait(ingredientRows.map((row) => _dbRowToProductQuantity(row)));
     
     return product;
   }
@@ -266,29 +266,19 @@ class SqfliteDataProvider implements DataProvider {
   
   // Ingredients
   
-  Future<ProductQuantity> _dbRowToProductQuantity(Map<String, Object?> row, List<Product>? products) async {
-    late final Product ingredientProduct;
-    if (products == null || products.isEmpty) {
-      final results = await _db!.query(productTable, where: '$idColumn = ?', whereArgs: [row[ingredientIdColumn]]);
-      if (results.isEmpty) throw NotFoundException();
-      if (results.length > 1) throw NotUniqueException();
-      ingredientProduct = _dbRowToProduct(results.first);
-    } else {
-      ingredientProduct = products.firstWhere((p) => p.id == row[ingredientIdColumn]);
-    }
-    
+  Future<ProductQuantity> _dbRowToProductQuantity(Map<String, Object?> row) async {
     return ProductQuantity(
-      product: ingredientProduct,
-      amount:  toDouble(row[amountColumn]),
-      unit:    unitFromString(row[unitColumn] as String),
+      productId: row[ingredientIdColumn] as int,
+      amount:    toDouble(row[amountColumn]),
+      unit:      unitFromString(row[unitColumn] as String),
     );
   }
   
   Future<void> _addIngredients({required Product product, required int containedInId}) async {
     for (final ingredient in product.ingredients) {
-      if (ingredient.product == null) throw ArgumentError("Ingredient product is null");
+      if (ingredient.productId == null) throw ArgumentError("Ingredient product id is null");
       await _db!.insert(ingredientTable, {
-        ingredientIdColumn:     ingredient.product!.id,
+        ingredientIdColumn:     ingredient.productId!,
         isContainedInIdColumn:  containedInId,
         amountColumn:           ingredient.amount,
         unitColumn:             unitToString(ingredient.unit),
