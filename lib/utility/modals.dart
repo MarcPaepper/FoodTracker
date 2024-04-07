@@ -162,6 +162,8 @@ void showProductDialog({
               child: _ProductList(
                 productsMap: productsMap,
                 onSelected: onSelected,
+                onLongPress: (product) =>
+                  onAddProduct(context, product.name, true, beforeAdd, onSelected),
                 searchController: searchController,
               ),
             ),
@@ -174,21 +176,9 @@ void showProductDialog({
                     child: ElevatedButton(
                       style: actionButtonStyle,
                       onPressed: () {
-                        beforeAdd?.call();
-                        var name = searchController.text;
-                        // navigate to the product creation screen
-                        // and wait for the result
-                        Navigator.of(context).pushNamed(
-                          addProductRoute,
-                          arguments: ((name == '' ? null : name), false),
-                        ).then((value) {
-                          Navigator.of(context).pop();
-                          if (value == null) {
-                            onSelected(null);
-                          } else {
-                            onSelected(value as Product);
-                          }
-                        });
+                        String? name = searchController.text;
+                        name = name == '' ? null : name;
+                        onAddProduct(context, name, false, beforeAdd, onSelected);
                       },
                       child: const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10.0),
@@ -219,9 +209,33 @@ void showProductDialog({
     }
   );
 
+void onAddProduct(
+  BuildContext context,
+  String? name,
+  bool isCopy,
+  void Function()? beforeAdd,
+  void Function(Product?) onSelected,
+) {
+  beforeAdd?.call();
+  // navigate to the product creation screen
+  // and wait for the result
+  Navigator.of(context).pushNamed(
+    addProductRoute,
+    arguments: (name, isCopy),
+  ).then((value) {
+    Navigator.of(context).pop();
+    if (value == null) {
+      onSelected(null);
+    } else {
+      onSelected(value as Product);
+    }
+  });
+}
+
 class _ProductList extends StatefulWidget {
   final Map<int, Product> productsMap;
   final Function(Product) onSelected;
+  final Function(Product)? onLongPress;
   final bool showSearch;
   final bool colorFromTop;
   final TextEditingController? searchController;
@@ -229,6 +243,7 @@ class _ProductList extends StatefulWidget {
   const _ProductList({
     required this.productsMap,
     required this.onSelected,
+    this.onLongPress,
     this.showSearch = true,
     this.colorFromTop = false,
     this.searchController,
@@ -276,6 +291,14 @@ class __ProductListState extends State<_ProductList> {
                 });
                 widget.onSelected(product);
               },
+              onLongPress: (name, id) {
+                var product = widget.productsMap[id]!;
+                if (widget.onLongPress != null) {
+                  widget.onLongPress!(product);
+                } else {
+                  widget.onSelected(product);
+                }
+              }
             ),
           ),
         ),

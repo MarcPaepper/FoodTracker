@@ -1262,8 +1262,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               var newController = TextEditingController();
               newController.text = amount.toString();
               _ingredientAmountControllers.add(newController);
-              // after 50ms, request focus for the amount field
-              Future.delayed(const Duration(milliseconds: 50), () {
+              // request focus for the amount field
+              Future.delayed(const Duration(milliseconds: 25), () {
                 _requestIngredientFocus(ingredients.length - 1, 1);
               });
             }
