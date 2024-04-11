@@ -87,6 +87,7 @@ double convertBetweenProducts({
 
 List<Unit> getConvertibleUnits(Unit targetUnit, Conversion densityConversion, Conversion quantityConversion) {
   List<Unit> possibleUnits = [];
+  if (targetUnit != Unit.quantity) possibleUnits.add(targetUnit);
   if (densityConversion.enabled) {
     possibleUnits.addAll(volumetricUnits);
     possibleUnits.addAll(weightUnits);

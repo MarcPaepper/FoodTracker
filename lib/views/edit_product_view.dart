@@ -52,6 +52,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   late final TextEditingController _quantityAmount2Controller;
   late final TextEditingController _quantityNameController;
   late final TextEditingController _resultingAmountController;
+  late final TextEditingController _nutrientAmountController;
   
   final List<TextEditingController> _ingredientAmountControllers = [];
   
