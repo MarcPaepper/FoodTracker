@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:food_tracker/services/data/data_exceptions.dart';
 
+import '../../utility/data_logic.dart';
 import 'data_provider.dart';
 import 'data_objects.dart';
 
@@ -11,17 +12,32 @@ import 'package:rxdart/rxdart.dart';
 
 class DebugDataProvider implements DataProvider {
   List<Product> products = [];
-  List<NutrionalValue> nutValues = [];
+  Map<int, Product> productsMap = {};
+  List<NutritionalValue> nutValues = [];
   bool loaded = false;
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
-  final _nutrionalValuesStreamController = BehaviorSubject<List<NutrionalValue>>();
+  final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();
   
   @override
   Future<String> open(String dbName) async {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
       const Duration(milliseconds: 100), () {
+        // create the 7 default nutritional values
+        nutValues = [
+          NutritionalValue(1, "Calories", "kcal"),
+          NutritionalValue(2, "Protein", "g"),
+          NutritionalValue(3, "Carbohydrates", "g"),
+          NutritionalValue(4, "Sugar", "g"),
+          NutritionalValue(5, "Fat", "g"),
+          NutritionalValue(6, "Saturated Fat", "g"),
+          NutritionalValue(7, "Salt", "g"),
+        ];
+        
+        // product nutritient values
+        List<double> prodNutrientValues = [2000, 50, 360, 90, 70, 20, 6];
+        
         products = [];
         List<ProductQuantity> firstProducts = [];
         for (int i = 1; i <= 20; i++) {
@@ -36,7 +52,15 @@ class DebugDataProvider implements DataProvider {
               autoCalc:             false,
               amountForIngredients: 100,
               ingredientsUnit:      Unit.g,
+              amountForNutrients:   100,
+              nutrientsUnit:        Unit.g,
               ingredients:          List.from(firstProducts),
+              nutrients:            prodNutrientValues.map((v) => ProductNutrient(
+                                      productId: i,
+                                      autoCalc: i > 3,
+                                      value: v,
+                                      nutritionalValueId: prodNutrientValues.indexOf(v) + 1
+                                    )).toList()
             );
           
           if (i <= 3) { 
@@ -47,21 +71,15 @@ class DebugDataProvider implements DataProvider {
                 unit: Unit.g,
               )
             );
+          } else {
+            // recalculate the nutrient values
+            product = calcProductNutrients(product, productsMap);
           }
           products.add(product);
+          productsMap[i] = product;
         }
-        // create the 7 default nutrional values
-        nutValues = [
-          NutrionalValue(1, "Calories", "kcal"),
-          NutrionalValue(2, "Protein", "g"),
-          NutrionalValue(3, "Carbohydrates", "g"),
-          NutrionalValue(4, "Fat", "g"),
-          NutrionalValue(5, "Saturated Fat", "g"),
-          NutrionalValue(6, "Sugar", "g"),
-          NutrionalValue(7, "Salt", "g"),
-        ];
         _productsStreamController.add(products);
-        _nutrionalValuesStreamController.add(nutValues);
+        _nutritionalValuesStreamController.add(nutValues);
         
         loaded = true;
         return "data loaded";
@@ -71,7 +89,7 @@ class DebugDataProvider implements DataProvider {
   @override
   Future<void> close() {
     _productsStreamController.close();
-    _nutrionalValuesStreamController.close();
+    _nutritionalValuesStreamController.close();
     return Future.value();
   }
   
@@ -96,10 +114,8 @@ class DebugDataProvider implements DataProvider {
   
   @override
   Future<Product> getProduct(int id) {
-    var list = products.where((element) => element.id == id);
-    if (list.isEmpty) throw NotFoundException();
-    if (list.length > 1) throw NotUniqueException();
-    return Future.value(list.first);
+    if (!productsMap.containsKey(id)) throw NotFoundException();
+    return Future.value(productsMap[id]);
   }
   
   @override
@@ -108,28 +124,27 @@ class DebugDataProvider implements DataProvider {
     for (final product in products) {
       if (product.id > highestId) highestId = product.id;
     }
-    final newProduct = Product(
-      id:                  highestId + 1,
-      name:                product.name,
-      defaultUnit:         product.defaultUnit,
-      densityConversion:   product.densityConversion,
-      quantityConversion:  product.quantityConversion,
-      quantityName:        product.quantityName,
-      autoCalc:            product.autoCalc,
-      amountForIngredients:product.amountForIngredients,
-      ingredientsUnit:     product.ingredientsUnit,
-      ingredients:         product.ingredients,
-    );
+    final newProduct = Product.copyWithDifferentId(product, highestId + 1);
+    
     products.add(newProduct);
+    productsMap[newProduct.id] = newProduct;
     _productsStreamController.add(products);
     return Future.value(newProduct);
   }
   
   @override
-  Future<Product> updateProduct(Product product) {
+  Future<Product> updateProduct(Product product, {bool recalc = true}) async {
+    if (recalc) {
+      var updatedProducts = recalcProductNutrients(product, products, productsMap);
+      for (var updatedProduct in updatedProducts) {
+        await updateProduct(updatedProduct, recalc: false);
+      }
+    }
+    
     int lenPrev = products.length;
     products.removeWhere((element) => element.id == product.id);
     products.add(product);
+    productsMap[product.id] = product;
     if (lenPrev - products.length != 0) {
       throw InvalidUpdateException();
     }
@@ -141,6 +156,7 @@ class DebugDataProvider implements DataProvider {
   Future<void> deleteProduct(int id) {
     int lenPrev = products.length;
     products.removeWhere((element) => element.id == id);
+    productsMap.remove(id);
     if (lenPrev - products.length != 1) {
       throw InvalidDeletionException();
     }
@@ -152,6 +168,7 @@ class DebugDataProvider implements DataProvider {
   Future<void> deleteProductWithName(String name) {
     int lenPrev = products.length;
     products.removeWhere((element) => element.name == name);
+    productsMap.removeWhere((key, value) => value.name == name);
     if (lenPrev - products.length != 1) {
       throw InvalidDeletionException();
     }
@@ -159,24 +176,24 @@ class DebugDataProvider implements DataProvider {
     return Future.value();
   }
   
-  // Nutrional Values
+  // Nutritional Values
   
   @override
-  Stream<List<NutrionalValue>> streamNutrionalValues() {
-    if (loaded) _nutrionalValuesStreamController.add(nutValues);
-    return _nutrionalValuesStreamController.stream;
+  Stream<List<NutritionalValue>> streamNutritionalValues() {
+    if (loaded) _nutritionalValuesStreamController.add(nutValues);
+    return _nutritionalValuesStreamController.stream;
   }
   
   @override
-  void reloadNutrionalValueStream() => loaded ? _nutrionalValuesStreamController.add(nutValues) : {};
+  void reloadNutritionalValueStream() => loaded ? _nutritionalValuesStreamController.add(nutValues) : {};
   
   @override
-  Future<Iterable<NutrionalValue>> getAllNutrionalValues() {
+  Future<Iterable<NutritionalValue>> getAllNutritionalValues() {
     return Future.value(nutValues);
   }
   
   @override
-  Future<NutrionalValue> getNutrionalValue(int id) {
+  Future<NutritionalValue> getNutritionalValue(int id) {
     var list = nutValues.where((element) => element.id == id);
     if (list.isEmpty) throw NotFoundException();
     if (list.length > 1) throw NotUniqueException();
@@ -184,48 +201,66 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
-  Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal) {
+  Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal) {
     int highestId = 0;
     for (final nutVal in nutValues) {
       if (nutVal.id > highestId) highestId = nutVal.id;
     }
-    final newNutVal = NutrionalValue(highestId + 1, nutVal.name, nutVal.unit);
+    final newNutVal = NutritionalValue(highestId + 1, nutVal.name, nutVal.unit);
+    _addProductNutrientsForNutritionalValue(nutritionalValueId: newNutVal.id);
     nutValues.add(newNutVal);
-    _nutrionalValuesStreamController.add(nutValues);
+    _nutritionalValuesStreamController.add(nutValues);
     return Future.value(newNutVal);
   }
   
   @override
-  Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal) {
+  Future<NutritionalValue> updateNutritionalValue(NutritionalValue nutVal) {
     int lenPrev = nutValues.length;
     nutValues.removeWhere((element) => element.id == nutVal.id);
     nutValues.add(nutVal);
     if (lenPrev - nutValues.length != 0) {
       throw InvalidUpdateException();
     }
-    _nutrionalValuesStreamController.add(nutValues);
+    _nutritionalValuesStreamController.add(nutValues);
     return Future.value(nutVal);
   }
   
   @override
-  Future<void> deleteNutrionalValue(int id) {
+  Future<void> deleteNutritionalValue(int id) {
     int lenPrev = nutValues.length;
     nutValues.removeWhere((element) => element.id == id);
     if (lenPrev - nutValues.length != 1) {
       throw InvalidDeletionException();
     }
-    _nutrionalValuesStreamController.add(nutValues);
+    _deleteProductNutrientsForNutritionalValue(nutritionalValueId: id);
+    _nutritionalValuesStreamController.add(nutValues);
     return Future.value();
   }
   
   @override
-  Future<void> deleteNutrionalValueWithName(String name) {
-    int lenPrev = nutValues.length;
-    nutValues.removeWhere((element) => element.name == name);
-    if (lenPrev - nutValues.length != 1) {
-      throw InvalidDeletionException();
+  Future<void> deleteNutritionalValueWithName(String name) {
+    int id = nutValues.firstWhere((element) => element.name == name).id;
+    return deleteNutritionalValue(id);
+  }
+  
+  // Product Nutrients
+  
+  _addProductNutrientsForNutritionalValue({required int nutritionalValueId}) {
+    for (var product in products) {
+      product.nutrients.add(
+        ProductNutrient(
+          productId: product.id,
+          autoCalc: true,
+          value: 0,
+          nutritionalValueId: nutritionalValueId
+        )
+      );
     }
-    _nutrionalValuesStreamController.add(nutValues);
-    return Future.value();
+  }
+  
+  _deleteProductNutrientsForNutritionalValue({required int nutritionalValueId}) {
+    for (var product in products) {
+      product.nutrients.removeWhere((element) => element.nutritionalValueId == nutritionalValueId);
+    }
   }
 }

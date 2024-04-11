@@ -1,5 +1,6 @@
 
 
+import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 
 enum ErrorType {
@@ -169,6 +170,23 @@ bool conversionToUnitPossible(
   ).isFinite;
 }
 
+double calcResultingAmount(
+  List<(ProductQuantity, Product?)> ingredientsWithProducts,
+  Unit productUnit,
+  Conversion densityConversion,
+  Conversion quantityConversion,
+) {
+  List<double>? amounts = ingredientsWithProducts.map((pair) => convertBetweenProducts(
+    targetUnit: productUnit,
+    conversion1: densityConversion,
+    conversion2: quantityConversion,
+    ingredient: pair.$1,
+    ingrProd: pair.$2,
+  )).toList();
+  // sum up all non-NaN amounts to get the resulting amount
+  return amounts.where((amount) => !amount.isNaN).fold(0.0, (prev, amount) => prev + amount);
+}
+
 (ErrorType, String?) validateResultingAmount(
   Unit unit,
   Unit defUnit,
@@ -194,3 +212,84 @@ bool conversionToUnitPossible(
   
   return (errorType, errorMsg);
 }
+
+
+  
+  // recalculate the nutrients for the product and all products that contain it
+  List<Product> recalcProductNutrients(Product product, List<Product> products, Map<int, Product> productsMap) {
+    Map<int, Product> alteredProductsMap = Map.from(productsMap);
+    // create a tree of products that contain the product
+    var safetyCounter = 0;
+    var lastLevel = [product];
+    List<List<Product>> dependenceLevels = [lastLevel]; // first level is the product itself, second level are the products that contain the product, etc.
+    do {
+      // find all products that contain one of the products in the last level
+      var nextLevel = <Product>[];
+      for (var product in lastLevel) {
+        var containingProducts = products.where((p) => p.ingredients.any((i) => i.productId == product.id));
+        // skip products that are already in the tree
+        containingProducts = containingProducts.where((p) => !dependenceLevels.any((l) => l.contains(p)));
+        nextLevel.addAll(containingProducts);
+      }
+      dependenceLevels.add(nextLevel);
+      lastLevel = nextLevel;
+      safetyCounter++;
+    } while (lastLevel.isNotEmpty && safetyCounter < 128);
+    if (safetyCounter >= 128) throw InfiniteLoopException();
+    
+    var updatedProducts = <Product>[];
+    for (var level in dependenceLevels) {
+      for (var product in level) {
+        var updatedProduct = calcProductNutrients(product, alteredProductsMap);
+        if (updatedProduct.id != product.id) {
+          updatedProducts.add(updatedProduct);
+        }
+        alteredProductsMap[product.id] = updatedProduct;
+      }
+    }
+    return updatedProducts;
+  }
+  
+  Product calcProductNutrients(Product product, Map<int, Product> productsMap) {
+    List<ProductQuantity>? ingredients;
+    // calc the resulting amount of the product
+    if (product.autoCalc) {
+      ingredients ??= product.ingredients;
+      List<(ProductQuantity, Product?)> ingredientsWithProducts = [];
+      for (var ingredient in ingredients) {
+        ingredientsWithProducts.add((ingredient, productsMap[ingredient.productId]));
+      }
+      product.amountForIngredients = calcResultingAmount(
+        ingredientsWithProducts,
+        product.ingredientsUnit,
+        product.densityConversion,
+        product.quantityConversion,
+      );
+    }
+    // calc the nutrients for the product
+    for (var nutrient in product.nutrients) {
+      if (!nutrient.autoCalc) continue;
+      var value = 0.0;
+      ingredients ??= product.ingredients;
+      // add up the nutrients of all ingredients
+      for (var ingredient in ingredients) {
+        var ingrProd = productsMap[ingredient.productId]!;
+        var ingrNutr = ingrProd.nutrients.firstWhere((n) => n.nutritionalValueId == nutrient.nutritionalValueId);
+        value +=
+            ingrNutr.value
+          * ingredient.amount
+          * convertToUnit(ingredient.unit, ingrProd.densityConversion, ingrProd.quantityConversion, ingredient);
+      }
+      // convert from the ingredients amount to nutrients amount
+      value = convertBetweenProducts(
+        targetUnit: product.nutrientsUnit,
+        conversion1: product.densityConversion,
+        conversion2: product.quantityConversion,
+        ingredient: ProductQuantity(productId: product.id, amount: value, unit: product.ingredientsUnit),
+        ingrProd: product,
+      ) / product.amountForIngredients * product.amountForNutrients;
+      nutrient.value = value;
+    }
+    
+    return product;
+  }

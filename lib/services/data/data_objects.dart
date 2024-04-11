@@ -3,7 +3,6 @@ import 'package:collection/collection.dart';
 class Product {
 	int id = -1; // unique identifier
 	String name = "example Product"; // must be unique
-	CalcMethod nutValOrigin = CalcMethod.manual;
   
   Unit defaultUnit;
 	Conversion densityConversion; // factor when volume is converted to weight
@@ -14,10 +13,11 @@ class Product {
   bool autoCalc; // if true, the amount of the product is calculated automatically from the ingredients list
   double amountForIngredients; // How much of the product is made out of the ingredients
   final Unit ingredientsUnit;
+  double amountForNutrients;
+  final Unit nutrientsUnit;
   
   List<ProductQuantity> ingredients;
-  
-	Map<NutrionalValue, double?> nutValues = {};
+  List<ProductNutrient> nutrients;
   
   // same as above but with named parameters
   Product({
@@ -30,7 +30,10 @@ class Product {
     required this.autoCalc,
     required this.amountForIngredients,
     required this.ingredientsUnit,
+    required this.amountForNutrients,
+    required this.nutrientsUnit,
     required this.ingredients,
+    required this.nutrients,
   });
   
   // default values
@@ -45,7 +48,10 @@ class Product {
       autoCalc: false,
       amountForIngredients: 100,
       ingredientsUnit: Unit.g,
+      amountForNutrients: 100,
+      nutrientsUnit: Unit.g,
       ingredients: [],
+      nutrients: [],
     );
   }
   
@@ -61,7 +67,10 @@ class Product {
       autoCalc:             product.autoCalc,
       amountForIngredients: product.amountForIngredients,
       ingredientsUnit:      product.ingredientsUnit,
+      amountForNutrients:   product.amountForNutrients,
+      nutrientsUnit:        product.nutrientsUnit,
       ingredients:          product.ingredients,
+      nutrients:            product.nutrients,
     );
   }
   
@@ -78,7 +87,10 @@ class Product {
            autoCalc == other.autoCalc &&
            amountForIngredients == other.amountForIngredients &&
            ingredientsUnit == other.ingredientsUnit &&
-           const ListEquality().equals(ingredients, other.ingredients);
+           amountForNutrients == other.amountForNutrients &&
+           nutrientsUnit == other.nutrientsUnit &&
+           const ListEquality().equals(ingredients, other.ingredients) &&
+           const ListEquality().equals(nutrients, other.nutrients);
   }
   
   @override
@@ -149,11 +161,6 @@ class ProductQuantity {
   }
 }
 
-enum CalcMethod {
-	manual, // the nutrional values for the product are given by the user
-	auto, // the nutrional values are calculated automatically from the ingredients list
-}
-
 enum Unit { // measurement units which products can be given in
 	quantity, // the number of objects, e.g. "3 bananas"
 	kg,
@@ -169,11 +176,11 @@ enum UnitType {
 }
 const Map<Unit, UnitType> unitTypes = {
   Unit.quantity: UnitType.quantity,
-  Unit.kg: UnitType.weight,
-  Unit.g: UnitType.weight,
-  Unit.mg: UnitType.weight,
-  Unit.l: UnitType.volumetric,
-  Unit.ml: UnitType.volumetric,
+  Unit.kg:       UnitType.weight,
+  Unit.g:        UnitType.weight,
+  Unit.mg:       UnitType.weight,
+  Unit.l:        UnitType.volumetric,
+  Unit.ml:       UnitType.volumetric,
 };
 const Map<Unit, double> unitTypeFactors = {
   Unit.kg: 1,
@@ -349,21 +356,46 @@ class Conversion {
   int get hashCode => toString().hashCode;
 }
 
-class NutrionalValue {
+class NutritionalValue {
 	int id = -1; // unique identifier
 	String name = ""; // must be unique
   String unit = "";
 	
-	NutrionalValue(this.id, this.name, this.unit);
+	NutritionalValue(this.id, this.name, this.unit);
   
   @override
-  bool operator ==(covariant NutrionalValue other) => id == other.id;
+  bool operator ==(covariant NutritionalValue other) => id == other.id;
   
   @override
   int get hashCode => id.hashCode;
   
   @override
   String toString() {
-    return "<NutrionalValue #$id '$name'>";
+    return "<NutritionalValue #$id '$name'>";
+  }
+}
+
+class ProductNutrient {
+  final int productId;
+  final int nutritionalValueId;
+  final bool autoCalc;
+  double value;
+  
+  ProductNutrient({
+    required this.productId,
+    required this.nutritionalValueId,
+    required this.autoCalc,
+    required this.value,
+  });
+  
+  @override
+  bool operator ==(covariant ProductNutrient other) => productId == other.productId && nutritionalValueId == other.nutritionalValueId;
+  
+  @override
+  int get hashCode => productId.hashCode ^ nutritionalValueId.hashCode;
+  
+  @override
+  String toString() {
+    return "<ProductNutrient of prod $productId containing $value of nutr $nutritionalValueId${autoCalc ? " (autocalc)":""}>";
   }
 }

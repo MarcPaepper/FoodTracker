@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'dart:async';
 
 import 'package:food_tracker/constants/tables.dart';
@@ -16,14 +18,20 @@ import 'package:food_tracker/services/data/data_provider.dart';
 
 import "dart:developer" as devtools show log;
 
+import '../../utility/data_logic.dart';
+
 const productTable = "product";
 const mealTable = "meal";
-const nutrionalValueTable = "nutritional_value";
+const nutritionalValueTable = "nutritional_value";
 const ingredientTable = "ingredient";
+const productNutrientTable = "product_nutrient";
+
+// multiple tables
+
+const idColumn                    = "id";
 
 // product table
 
-const idColumn                    = "id";
 const nameColumn                  = "name";
 const dateColumn                  = "date";
 const quantityNameColumn          = "quantity_name";
@@ -33,8 +41,10 @@ const defaultUnitColumn           = "default_unit";
 const autoCalcAmountColumn        = "auto_calc_amount";
 const amountForIngredientsColumn  = "amount_for_ingredients";
 const ingredientsUnitColumn       = "ingredients_unit";
+const amountForNutrientsColumn    = "amount_for_nutrients";
+const nutrientsUnitColumn         = "nutrients_unit";
 
-// nutrional value table
+// nutritional value table
 
 const unitNameColumn              = "unit";
 
@@ -45,6 +55,13 @@ const isContainedInIdColumn       = "is_contained_in_id";
 const amountColumn                = "amount";
 const unitColumn                  = "unit";
 
+// product nutrient table
+
+const nutritionalValueIdColumn    = "nutritional_value_id";
+const productIdColumn             = "product_id";
+const autoCalcColumn              = "auto_calc";
+const valueColumn                 = "value";
+
 const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
@@ -52,10 +69,11 @@ class SqfliteDataProvider implements DataProvider {
   
   // cached data
   List<Product> _products = [];
-  List<NutrionalValue> _nutritionalValues = [];
+  Map<int, Product> _productsMap = {};
+  List<NutritionalValue> _nutritionalValues = [];
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
-  final _nutrionalValuesStreamController = BehaviorSubject<List<NutrionalValue>>();
+  final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();
 
   SqfliteDataProvider(String dbName);
   
@@ -67,9 +85,10 @@ class SqfliteDataProvider implements DataProvider {
     devtools.log("Opening sqflite database");
     if (isLoaded()) return Future.value("data already loaded");
     var tables = {
-      productTable: createProductTable,
-      nutrionalValueTable: createNutrionalValueTable,
-      ingredientTable: createIngredientTable,
+      productTable: (createProductTable, productColumns),
+      nutritionalValueTable: (createNutritionalValueTable, nutritionalValueColumns),
+      ingredientTable: (createIngredientTable, ingredientColumns),
+      productNutrientTable: (createProductNutrientTable, productNutrientColumns),
     };
     try {
       // Find file
@@ -91,23 +110,35 @@ class SqfliteDataProvider implements DataProvider {
       _db = await openDatabase(dbPath);
       
       for (final entry in tables.entries) {
+        var (createTable, columns) = entry.value;
+        
         // Check whether the table exists
         var result = await _db!.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='${entry.key}'");
         if (result.isEmpty) {
           devtools.log("Creating table ${entry.key}");
-          await _db!.execute(entry.value);
+          await _db!.execute(createTable);
           
-          // If table is Nutrional Value, insert the default values
-          if (entry.key == nutrionalValueTable) {
-            for (var value in defaultNutrionalValues) {
-              createNutrionalValue(value);
+          // If table is Nutritional Value, insert the default values
+          if (entry.key == nutritionalValueTable) {
+            for (var value in defaultNutritionalValues) {
+              createNutritionalValue(value);
+            }
+          }
+        } else {
+          // Check whether the table has all columns
+          var tableColumns = await _db!.query(entry.key);
+          var columnNames = tableColumns.first.keys;
+          for (var column in columns) {
+            if (!columnNames.contains(column)) {
+              devtools.log("Adding column $column to table ${entry.key}");
+              await _db!.execute("ALTER TABLE ${entry.key} ADD COLUMN $column");
             }
           }
         }
       }
       
       getAllProducts();
-      getAllNutrionalValues();
+      getAllNutritionalValues();
       
       return "data loaded";
     } on MissingPlatformDirectoryException {
@@ -118,7 +149,7 @@ class SqfliteDataProvider implements DataProvider {
   @override
   Future<void> close() async {
     _productsStreamController.close();
-    _nutrionalValuesStreamController.close();
+    _nutritionalValuesStreamController.close();
     await _db!.close();
     _db = null;
   }
@@ -139,14 +170,25 @@ class SqfliteDataProvider implements DataProvider {
     
     var productRows = await _db!.query(productTable);
     _products = <Product>[];
+    _productsMap = {};
     for (var row in productRows) {
-      _products.add(_dbRowToProduct(row));
+      var product = _dbRowToProduct(row);
+      _products.add(product);
+      _productsMap[product.id] = product;
     }
     // add ingredients to products
     var ingredientRows = await _db!.query(ingredientTable);
     for (var row in ingredientRows) {
-      var containedInProduct = _products.firstWhere((p) => p.id == row[isContainedInIdColumn]);
+      var id = row[isContainedInIdColumn] as int;
+      var containedInProduct = _productsMap[id]!;
       containedInProduct.ingredients.add(await _dbRowToProductQuantity(row));
+    }
+    // add nutrients to products
+    var nutrientRows = await _db!.query(productNutrientTable);
+    for (var row in nutrientRows) {
+      var id = row[productIdColumn] as int;
+      var product = _productsMap[id]!;
+      product.nutrients.add(await _dbRowToProductNutrient(row));
     }
     
     _productsStreamController.add(_products);
@@ -158,19 +200,8 @@ class SqfliteDataProvider implements DataProvider {
   Future<Product> getProduct(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    // check whether cached already
-    if (_products.isNotEmpty) return _products.firstWhere((p) => p.id == id, orElse: () => throw NotFoundException());
-    
-    final productResults = await _db!.query(productTable, where: '$idColumn = ?', whereArgs: [id]);
-    if (productResults.isEmpty) throw NotFoundException();
-    if (productResults.length > 1) throw NotUniqueException();
-    
-    final product = _dbRowToProduct(productResults.first);
-    
-    var ingredientRows = await _db!.query(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [id]);
-    product.ingredients = await Future.wait(ingredientRows.map((row) => _dbRowToProductQuantity(row)));
-    
-    return product;
+    if (_productsMap.containsKey(id)) return _productsMap[id]!;
+    else throw NotFoundException();
   }
   
   Product _dbRowToProduct(Map<String, Object?> row) =>
@@ -181,10 +212,13 @@ class SqfliteDataProvider implements DataProvider {
       densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
       quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
       quantityName:          row[quantityNameColumn] as String,
-      autoCalc:        row[autoCalcAmountColumn] == 1,
+      autoCalc:              row[autoCalcAmountColumn] == 1,
       amountForIngredients:  toDouble(row[amountForIngredientsColumn]),
       ingredientsUnit:       unitFromString(row[ingredientsUnitColumn] as String),
+      amountForNutrients:    toDouble(row[amountForNutrientsColumn]),
+      nutrientsUnit:         unitFromString(row[nutrientsUnitColumn] as String),
       ingredients:           [],
+      nutrients:             [],
     );
   
   @override
@@ -203,20 +237,31 @@ class SqfliteDataProvider implements DataProvider {
       autoCalcAmountColumn:        product.autoCalc ? 1 : 0,
       amountForIngredientsColumn:  product.amountForIngredients,
       ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
+      amountForNutrientsColumn:    product.amountForNutrients,
+      nutrientsUnitColumn:         unitToString(product.nutrientsUnit),
     });
     
     _addIngredients(product: product, containedInId: id);
+    _addProductNutrientsForProduct(product: product, productId: id);
     
     var newProduct = Product.copyWithDifferentId(product, id);
     _products.add(newProduct);
+    _productsMap[id] = newProduct;
     _productsStreamController.add(_products);
     
     return newProduct;
   }
   
   @override
-  Future<Product> updateProduct(Product product) async {
+  Future<Product> updateProduct(Product product, {bool recalc = true}) async {
     if (!isLoaded()) throw DataNotLoadedException();
+    
+    if (recalc) {
+      var updatedProducts = recalcProductNutrients(product, _products, _productsMap);
+      for (var updatedProduct in updatedProducts) {
+        await updateProduct(updatedProduct, recalc: false);
+      }
+    }
     
     final updatedCount = await _db!.update(productTable, {
       nameColumn:                  product.name,
@@ -226,14 +271,20 @@ class SqfliteDataProvider implements DataProvider {
       quantityNameColumn:          product.quantityName,
       autoCalcAmountColumn:        product.autoCalc ? 1 : 0,
       amountForIngredientsColumn:  product.amountForIngredients,
+      ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
+      amountForNutrientsColumn:    product.amountForNutrients,
     }, where: '$idColumn = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
     await _deleteIngredients(containedInId: product.id);
     await _addIngredients(product: product, containedInId: product.id);
     
+    await _deleteProductNutrientsForProduct(productId: product.id);
+    await _addProductNutrientsForProduct(product: product, productId: product.id);
+    
     _products.removeWhere((p) => p.id == product.id);
     _products.add(product);
+    _productsMap[product.id] = product;
     _productsStreamController.add(_products);
     
     return product;
@@ -247,8 +298,10 @@ class SqfliteDataProvider implements DataProvider {
     if (deletedCount != 1) throw InvalidDeletionException();
     
     _deleteIngredients(containedInId: id);
+    _deleteProductNutrientsForProduct(productId: id);
     
     _products.removeWhere((p) => p.id == id);
+    _productsMap.remove(id);
     _productsStreamController.add(_products);
   }
   
@@ -290,23 +343,23 @@ class SqfliteDataProvider implements DataProvider {
     await _db!.delete(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [containedInId]);
   }
   
-  // Nutrional values
+  // Nutritional values
   
   @override
-  Stream<List<NutrionalValue>> streamNutrionalValues() => _nutrionalValuesStreamController.stream;
+  Stream<List<NutritionalValue>> streamNutritionalValues() => _nutritionalValuesStreamController.stream;
   
   @override
-  void reloadNutrionalValueStream() {
-    if (isLoaded()) _nutrionalValuesStreamController.add(_nutritionalValues);
+  void reloadNutritionalValueStream() {
+    if (isLoaded()) _nutritionalValuesStreamController.add(_nutritionalValues);
   }
   
   @override
-  Future<Iterable<NutrionalValue>> getAllNutrionalValues() async {
+  Future<Iterable<NutritionalValue>> getAllNutritionalValues() async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    var rows = await _db!.query(nutrionalValueTable);
+    var rows = await _db!.query(nutritionalValueTable);
     return rows.map((row) => 
-      NutrionalValue(
+      NutritionalValue(
         row[idColumn] as int,
         row[nameColumn] as String,
         row[unitNameColumn] as String,
@@ -315,46 +368,48 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
-  Future<NutrionalValue> getNutrionalValue(int id) async {
+  Future<NutritionalValue> getNutritionalValue(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final results = await _db!.query(nutrionalValueTable, where: '$idColumn = ?', whereArgs: [id]);
+    final results = await _db!.query(nutritionalValueTable, where: '$idColumn = ?', whereArgs: [id]);
     if (results.isEmpty) throw NotFoundException();
     if (results.length > 1) throw NotUniqueException();
     
     final row = results.first;
     final name = row[nameColumn] as String;
     final unitName = row[unitNameColumn] as String;
-    final nutrionalValue = NutrionalValue(id, name, unitName);
+    final nutritionalValue = NutritionalValue(id, name, unitName);
     
-    _nutrionalValuesStreamController.add(_nutritionalValues);
+    _nutritionalValuesStreamController.add(_nutritionalValues);
     
-    return nutrionalValue;
+    return nutritionalValue;
   }
   
   @override
-  Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal) async {
+  Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final results = await _db!.query(nutrionalValueTable, where: '$nameColumn = ?', whereArgs: [nutVal.name]);
+    final results = await _db!.query(nutritionalValueTable, where: '$nameColumn = ?', whereArgs: [nutVal.name]);
     if (results.isNotEmpty) throw NotUniqueException();
     
-    final id = await _db!.insert(nutrionalValueTable, {
+    final id = await _db!.insert(nutritionalValueTable, {
       nameColumn: nutVal.name,
       unitNameColumn: nutVal.unit,
     });
     
-    _nutritionalValues.add(NutrionalValue(id, nutVal.name, nutVal.unit));
-    _nutrionalValuesStreamController.add(_nutritionalValues);
+    _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
     
-    return NutrionalValue(id, nutVal.name, nutVal.unit);
+    _nutritionalValues.add(NutritionalValue(id, nutVal.name, nutVal.unit));
+    _nutritionalValuesStreamController.add(_nutritionalValues);
+    
+    return NutritionalValue(id, nutVal.name, nutVal.unit);
   }
   
   @override
-  Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal) async {
+  Future<NutritionalValue> updateNutritionalValue(NutritionalValue nutVal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final updatedCount = await _db!.update(nutrionalValueTable, {
+    final updatedCount = await _db!.update(nutritionalValueTable, {
       nameColumn: nutVal.name,
       unitNameColumn: nutVal.unit,
     }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
@@ -362,30 +417,76 @@ class SqfliteDataProvider implements DataProvider {
     
     _nutritionalValues.removeWhere((p) => p.id == nutVal.id);
     _nutritionalValues.add(nutVal);
-    _nutrionalValuesStreamController.add(_nutritionalValues);
+    _nutritionalValuesStreamController.add(_nutritionalValues);
     
     return nutVal;
   }
   
   @override
-  Future<void> deleteNutrionalValue(int id) async {
+  Future<void> deleteNutritionalValue(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final deletedCount = await _db!.delete(nutrionalValueTable, where: '$idColumn = ?', whereArgs: [id]);
+    final deletedCount = await _db!.delete(nutritionalValueTable, where: '$idColumn = ?', whereArgs: [id]);
     if (deletedCount != 1) throw InvalidDeletionException();
     
+    _deleteProductNutrientsForNutritionalValue(nutritionalValueId: id);
+    
     _nutritionalValues.removeWhere((p) => p.id == id);
-    _nutrionalValuesStreamController.add(_nutritionalValues);
+    _nutritionalValuesStreamController.add(_nutritionalValues);
   }
   
   @override
-  Future<void> deleteNutrionalValueWithName(String name) async {
+  Future<void> deleteNutritionalValueWithName(String name) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final deletedCount = await _db!.delete(nutrionalValueTable, where: '$nameColumn = ?', whereArgs: [name]);
-    if (deletedCount != 1) throw InvalidDeletionException();
+    final results = await _db!.query(nutritionalValueTable, where: '$nameColumn = ?', whereArgs: [name]);
+    if (results.isEmpty) throw NotFoundException();
+    if (results.length > 1) throw NotUniqueException();
+    final id = results.first[idColumn] as int;
     
-    _nutritionalValues.removeWhere((p) => p.name == name);
-    _nutrionalValuesStreamController.add(_nutritionalValues);
+    return deleteNutritionalValue(id);
+  }
+  
+  // Product Nutrients
+  
+  Future<ProductNutrient> _dbRowToProductNutrient(Map<String, Object?> row) async {
+    return ProductNutrient(
+      nutritionalValueId: row[nutritionalValueIdColumn] as int,
+      productId:          row[productIdColumn] as int,
+      autoCalc:           row[autoCalcColumn] == 1,
+      value:              toDouble(row[valueColumn]),
+    );
+  }
+  
+  Future<void> _addProductNutrientsForProduct({required Product product, required int productId}) async {
+    for (final nutrient in product.nutrients) {
+      await _db!.insert(productNutrientTable, {
+        nutritionalValueIdColumn: nutrient.nutritionalValueId,
+        productIdColumn:          productId,
+        autoCalcColumn:           nutrient.autoCalc ? 1 : 0,
+        valueColumn:              nutrient.value,
+      });
+    }
+  }
+  
+  Future<void> _addProductNutrientsForNutritionalValue({required int nutritionalValueId}) async {
+    for (final product in _products) {
+      product.nutrients.add(
+        ProductNutrient(
+          nutritionalValueId: nutritionalValueId,
+          productId:          product.id,
+          autoCalc:           true,
+          value:              0,
+        )
+      );
+    }
+  }
+  
+  Future<void> _deleteProductNutrientsForProduct({required int productId}) async {
+    await _db!.delete(productNutrientTable, where: '$productIdColumn = ?', whereArgs: [productId]);
+  }
+  
+  Future<void> _deleteProductNutrientsForNutritionalValue({required int nutritionalValueId}) async {
+    await _db!.delete(productNutrientTable, where: '$nutritionalValueIdColumn = ?', whereArgs: [nutritionalValueId]);
   }
 }

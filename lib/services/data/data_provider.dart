@@ -15,12 +15,12 @@ abstract class DataProvider {
   Future<void> deleteProduct(int id);
   Future<void> deleteProductWithName(String name);
   
-  Stream<List<NutrionalValue>> streamNutrionalValues();
-  Future<Iterable<NutrionalValue>> getAllNutrionalValues();
-  void reloadNutrionalValueStream();
-  Future<NutrionalValue> getNutrionalValue(int id);
-  Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal);
-  Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal);
-  Future<void> deleteNutrionalValue(int id);
-  Future<void> deleteNutrionalValueWithName(String name);
+  Stream<List<NutritionalValue>> streamNutritionalValues();
+  Future<Iterable<NutritionalValue>> getAllNutritionalValues();
+  void reloadNutritionalValueStream();
+  Future<NutritionalValue> getNutritionalValue(int id);
+  Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal);
+  Future<NutritionalValue> updateNutritionalValue(NutritionalValue nutVal);
+  Future<void> deleteNutritionalValue(int id);
+  Future<void> deleteNutritionalValueWithName(String name);
 }

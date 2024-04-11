@@ -6,14 +6,14 @@ import 'package:food_tracker/widgets/loading_page.dart';
 
 // import "dart:developer" as devtools show log;
 
-class NutrionalValueView extends StatefulWidget {
-	const NutrionalValueView({super.key});
+class NutritionalValueView extends StatefulWidget {
+	const NutritionalValueView({super.key});
 
   @override
-  State<NutrionalValueView> createState() => _NutrionalValueViewState();
+  State<NutritionalValueView> createState() => _NutritionalValueViewState();
 }
 
-class _NutrionalValueViewState extends State<NutrionalValueView> {
+class _NutritionalValueViewState extends State<NutritionalValueView> {
   late final DataService _dataService;
   bool _isLoading = true;
   
@@ -22,7 +22,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
     _dataService = DataService.current();
     // reload stream after build complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_isLoading) _dataService.reloadNutrionalValueStream();
+      if (_isLoading) _dataService.reloadNutritionalValueStream();
     });
     super.initState();
   }
@@ -35,7 +35,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
 	@override
 	Widget build(BuildContext context) {
 		return StreamBuilder(
-      stream: _dataService.streamNutrionalValues(),
+      stream: _dataService.streamNutritionalValues(),
       builder: (context, snapshot) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +57,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
     if (snapshot.hasData) {
       _isLoading = false;
       
-      var values = snapshot.data as List<NutrionalValue>;
+      var values = snapshot.data as List<NutritionalValue>;
       
       // sort products by id
       values.sort((a, b) => a.id.compareTo(b.id));
@@ -88,7 +88,7 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
             onTap: () {
               Navigator.pushNamed (
                 context,
-                editNutrionalValueRoute,
+                editNutritionalValueRoute,
                 arguments: value.id,
               );
             },
@@ -112,10 +112,10 @@ class _NutrionalValueViewState extends State<NutrionalValueView> {
     icon: const Icon(Icons.add),
     label: const Padding(
       padding: EdgeInsets.only(left: 5.0),
-      child: Text("Add Nutrional Value"),
+      child: Text("Add Nutritional Value"),
     ),
     onPressed: () {
-      Navigator.of(context).pushNamed(addNutrionalValueRoute);
+      Navigator.of(context).pushNamed(addNutritionalValueRoute);
     },
   );
 }

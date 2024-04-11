@@ -868,15 +868,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         // calculate the resulting amount
         List<double>? amounts;
         if (valueAutoCalc) {
-          amounts = ingredientsWithProducts.map((pair) => convertBetweenProducts(
-            targetUnit: valueUnit,
-            conversion1: valueDensityConversion,
-            conversion2: valueQuantityConversion,
-            ingredient: pair.$1,
-            ingrProd: pair.$2,
-          )).toList();
-          // sum up all non-NaN amounts to get the resulting amount
-          var resultingAmount = amounts.where((amount) => !amount.isNaN).fold(0.0, (prev, amount) => prev + amount);
+          var resultingAmount = calcResultingAmount(
+            ingredientsWithProducts,
+            valueUnit,
+            valueDensityConversion,
+            valueQuantityConversion,
+          );
           
           if (!resultingAmount.isNaN && resultingAmount != valueResultingAmount) {
             // after frame callback to avoid changing the value during build
@@ -1348,16 +1345,19 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     return (
       Product(
-        id:                    _isEdit ? _id : -1,
-        name:                  name,
-        defaultUnit:           defUnit,
-        densityConversion:     densityConversion,
-        quantityConversion:    quantityConversion,
-        quantityName:          quantityName,
-        autoCalc:              autoCalc,
-        amountForIngredients:  resultingAmount,
-        ingredientsUnit:       ingredientsUnit,
-        ingredients:           ingredients,
+        id:                   _isEdit ? _id : -1,
+        name:                 name,
+        defaultUnit:          defUnit,
+        densityConversion:    densityConversion,
+        quantityConversion:   quantityConversion,
+        quantityName:         quantityName,
+        autoCalc:             autoCalc,
+        amountForIngredients: resultingAmount,
+        ingredientsUnit:      ingredientsUnit,
+        ingredients:          ingredients,
+        amountForNutrients:   100.0,
+        nutrientsUnit:        defUnit,
+        nutrients:            [],
       ),
       isValid,
     );

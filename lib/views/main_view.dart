@@ -49,7 +49,7 @@ class _MainViewState extends State<MainView> {
           body: const TabBarView(
             children: [
               ProductsView(),
-              NutrionalValueView(),
+              NutritionalValueView(),
             ],
           ),
         )

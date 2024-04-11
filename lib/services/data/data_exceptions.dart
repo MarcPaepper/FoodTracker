@@ -8,3 +8,4 @@ class InvalidDeletionException implements Exception {}
 class NotFoundException implements Exception {}
 class DbAlreadyOpenException implements Exception {}
 class NoDocumentsDirectoryException implements Exception {}
+class InfiniteLoopException implements Exception {}

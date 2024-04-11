@@ -61,16 +61,16 @@ class DataService implements DataProvider {
   @override Future<void> deleteProduct(int id)             => _condLoad().then((_) => _provider.deleteProduct(id));
   @override Future<void> deleteProductWithName(String name)=> _condLoad().then((_) => _provider.deleteProductWithName(name));
   
-  // Nutrional Values
+  // Nutritional Values
   
-  @override Stream<List<NutrionalValue>> streamNutrionalValues()               => _provider.streamNutrionalValues();
-  @override void reloadNutrionalValueStream()                                  => _provider.reloadNutrionalValueStream();
-  @override Future<Iterable<NutrionalValue>> getAllNutrionalValues()           => _condLoad().then((_) => _provider.getAllNutrionalValues());
-  @override Future<NutrionalValue> getNutrionalValue(int id)                   => _condLoad().then((_) => _provider.getNutrionalValue(id));
-  @override Future<NutrionalValue> createNutrionalValue(NutrionalValue nutVal) => _condLoad().then((_) => _provider.createNutrionalValue(nutVal));
-  @override Future<NutrionalValue> updateNutrionalValue(NutrionalValue nutVal) => _condLoad().then((_) => _provider.updateNutrionalValue(nutVal));
-  @override Future<void> deleteNutrionalValue(int id)                          => _condLoad().then((_) => _provider.deleteNutrionalValue(id));
-  @override Future<void> deleteNutrionalValueWithName(String name)             => _condLoad().then((_) => _provider.deleteNutrionalValueWithName(name));
+  @override Stream<List<NutritionalValue>> streamNutritionalValues()               => _provider.streamNutritionalValues();
+  @override void reloadNutritionalValueStream()                                  => _provider.reloadNutritionalValueStream();
+  @override Future<Iterable<NutritionalValue>> getAllNutritionalValues()           => _condLoad().then((_) => _provider.getAllNutritionalValues());
+  @override Future<NutritionalValue> getNutritionalValue(int id)                   => _condLoad().then((_) => _provider.getNutritionalValue(id));
+  @override Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal) => _condLoad().then((_) => _provider.createNutritionalValue(nutVal));
+  @override Future<NutritionalValue> updateNutritionalValue(NutritionalValue nutVal) => _condLoad().then((_) => _provider.updateNutritionalValue(nutVal));
+  @override Future<void> deleteNutritionalValue(int id)                          => _condLoad().then((_) => _provider.deleteNutritionalValue(id));
+  @override Future<void> deleteNutritionalValueWithName(String name)             => _condLoad().then((_) => _provider.deleteNutritionalValueWithName(name));
   
   Future _condLoad() {
     if (_provider.isLoaded()) {

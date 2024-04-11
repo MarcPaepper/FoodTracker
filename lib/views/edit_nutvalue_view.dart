@@ -7,17 +7,17 @@ import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
 
-class EditNutrionalValueView extends StatefulWidget {
+class EditNutritionalValueView extends StatefulWidget {
   final int? nutvalueId;
   final bool? isEdit;
   
-  const EditNutrionalValueView({Key? key, this.isEdit, this.nutvalueId}) : super(key: key);
+  const EditNutritionalValueView({Key? key, this.isEdit, this.nutvalueId}) : super(key: key);
 
   @override
-  State<EditNutrionalValueView> createState() => _EditNutrionalValueViewState();
+  State<EditNutritionalValueView> createState() => _EditNutritionalValueViewState();
 }
 
-class _EditNutrionalValueViewState extends State<EditNutrionalValueView> {
+class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   final _dataService = DataService.current();
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
@@ -65,7 +65,7 @@ class _EditNutrionalValueViewState extends State<EditNutrionalValueView> {
                   actions: [
                     TextButton(
                       onPressed: () {
-                        _dataService.deleteNutrionalValue(widget.nutvalueId!);
+                        _dataService.deleteNutritionalValue(widget.nutvalueId!);
                         Navigator.of(context).pop();
                         Navigator.of(context).pop();
                       },
@@ -86,11 +86,11 @@ class _EditNutrionalValueViewState extends State<EditNutrionalValueView> {
         ] : null
       ),
       body: FutureBuilder(
-        future: _dataService.getAllNutrionalValues(),
+        future: _dataService.getAllNutritionalValues(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
-              final nutValues = snapshot.data as List<NutrionalValue>;
+              final nutValues = snapshot.data as List<NutritionalValue>;
               if (isEdit) {
                 try {
                   final value = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
@@ -123,7 +123,7 @@ class _EditNutrionalValueViewState extends State<EditNutrionalValueView> {
     );
   }
   
-  Widget _buildNameField(List<NutrionalValue> nutValues) => Padding(
+  Widget _buildNameField(List<NutritionalValue> nutValues) => Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextFormField(
         controller: _name,
@@ -171,11 +171,11 @@ class _EditNutrionalValueViewState extends State<EditNutrionalValueView> {
           final isValid = _formKey.currentState!.validate();
           if (isValid) {
             if (isEdit) {
-              var nval = NutrionalValue(widget.nutvalueId!, name, unit);
-              _dataService.updateNutrionalValue(nval);
+              var nval = NutritionalValue(widget.nutvalueId!, name, unit);
+              _dataService.updateNutritionalValue(nval);
             } else {
-              var nval = NutrionalValue(-1, name, unit);
-              _dataService.createNutrionalValue(nval);
+              var nval = NutritionalValue(-1, name, unit);
+              _dataService.createNutritionalValue(nval);
             }
             Navigator.of(context).pop();
           }
