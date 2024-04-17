@@ -228,11 +228,13 @@ double calcResultingAmount(
       var nextLevel = <Product>[];
       for (var product in lastLevel) {
         var containingProducts = products.where((p) => p.ingredients.any((i) => i.productId == product.id));
-        // skip products that are already in the tree
-        containingProducts = containingProducts.where((p) => !dependenceLevels.any((l) => l.contains(p)));
+        // if there are products in containingProduct which are also in previous levels, remove them from the previous levels
+        for (var level in dependenceLevels) {
+          level.removeWhere((p) => containingProducts.contains(p));
+        }
         nextLevel.addAll(containingProducts);
       }
-      dependenceLevels.add(nextLevel);
+      if (nextLevel.isNotEmpty) dependenceLevels.add(nextLevel);
       lastLevel = nextLevel;
       safetyCounter++;
     } while (lastLevel.isNotEmpty && safetyCounter < 128);
@@ -240,12 +242,12 @@ double calcResultingAmount(
     
     var updatedProducts = <Product>[];
     for (var level in dependenceLevels) {
-      for (var product in level) {
-        var updatedProduct = calcProductNutrients(product, alteredProductsMap);
-        if (updatedProduct.id != product.id) {
+      for (var updateProduct in level) {
+        var updatedProduct = calcProductNutrients(updateProduct, alteredProductsMap);
+        if (updatedProduct.id != updateProduct.id) {
           updatedProducts.add(updatedProduct);
         }
-        alteredProductsMap[product.id] = updatedProduct;
+        alteredProductsMap[updateProduct.id] = updatedProduct;
       }
     }
     return updatedProducts;
@@ -293,4 +295,17 @@ double calcResultingAmount(
     }
     
     return product;
+  }
+  
+  // remove the product itself and all ingredient products from the map
+  Map<int, Product> reduceProducts(Map<int, Product> productsMap, List<ProductQuantity> ingredients, int? id) {
+    var reducedProducts = Map<int, Product>.from(productsMap);
+    for (var ingredient in ingredients) {
+      if (ingredient.productId != null) {
+        reducedProducts.remove(ingredient.productId);
+      }
+    }
+    // remove product itself
+    if (id != null && id >= 0) reducedProducts.remove(id);
+    return reducedProducts;
   }

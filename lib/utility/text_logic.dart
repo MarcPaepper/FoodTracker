@@ -68,3 +68,12 @@ String roundDouble(double value) {
     return regex.hasMatch(str) ? regex.firstMatch(str)!.group(1)! : str;
   }
 }
+
+String _truncateZeros(String text) {
+  if (text.endsWith(".0")) {
+    return text.substring(0, text.length - 2);
+  }
+  return text;
+}
+
+String truncateZeros(double number) => _truncateZeros(number.toString());

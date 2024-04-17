@@ -55,6 +55,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   late final TextEditingController _nutrientAmountController;
   
   final List<TextEditingController> _ingredientAmountControllers = [];
+  final List<TextEditingController> _nutrientAmountControllers = [];
   
   late final bool _isEdit;
   
@@ -73,6 +74,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   final _resultingAmountNotifier = ValueNotifier<double>(0);
   final _ingredientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
   final _ingredientsNotifier = ValueNotifier<List<ProductQuantity>>([]);
+  
+  final _amountForNutrientsNotifier = ValueNotifier<double>(0);
+  final _nutrientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
+  final _nutrientsNotifier = ValueNotifier<List<ProductNutrient>>([]);
   
   final _isDuplicateNotifier = ValueNotifier<bool>(false);
   final _circRefNotifier = ValueNotifier<bool>(false);
@@ -97,6 +102,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _quantityAmount2Controller = TextEditingController();
     _quantityNameController = TextEditingController();
     _resultingAmountController = TextEditingController();
+    _nutrientAmountController = TextEditingController();
     
     // reload product stream
     Future(() {
@@ -129,6 +135,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _ingredientsNotifier.dispose();
     _isDuplicateNotifier.dispose();
     _circRefNotifier.dispose();
+    _amountForNutrientsNotifier.dispose();
+    _nutrientsUnitNotifier.dispose();
+    _nutrientsNotifier.dispose();
     super.dispose();
   }
   
@@ -139,117 +148,128 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       canPop: false,
       onPopInvoked: _onPopInvoked,
       child: StreamBuilder(
-        stream: _dataService.streamProducts(),
-        builder: (context, snapshot) {
-          
-          List<Product>? products;
-          
-          if (snapshot.hasData) {
-            _loaded = true;
-            products = snapshot.data as List<Product>;
-            
-            if (_isEdit) {
-              try {
-                _prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
-                _id = _prevProduct.id;
-              } catch (e) {
-                _error = true;
-                return const Text("Error: Product not found");
-              }
-            } else {
-              _prevProduct = Product.defaultValues();
-            }
-            
-            var copyProduct = _interimProduct ?? _prevProduct;
-            
-            // set initial values
-            _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
-            _densityAmount1Controller.text = copyProduct.densityConversion.amount1.toString();
-            _densityAmount2Controller.text = copyProduct.densityConversion.amount2.toString();
-            _quantityAmount1Controller.text = copyProduct.quantityConversion.amount1.toString();
-            _quantityAmount2Controller.text = copyProduct.quantityConversion.amount2.toString();
-            _quantityNameController.text = copyProduct.quantityName;
-            
-            _densityConversionNotifier.value = copyProduct.densityConversion;
-            _quantityConversionNotifier.value = copyProduct.quantityConversion;
-            _defaultUnitNotifier.value = copyProduct.defaultUnit;
-            _autoCalcAmountNotifier.value = copyProduct.autoCalc;
-            _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
-            _ingredientsNotifier.value = List.from(copyProduct.ingredients);
-            
-            _resultingAmountController.text = copyProduct.amountForIngredients.toString();
-            _resultingAmountNotifier.value = copyProduct.amountForIngredients;
-            
-            // populate ingredient amount controllers
-            _ingredientAmountControllers.clear();
-            for (var ingredient in copyProduct.ingredients) {
-              var controller = TextEditingController();
-              controller.text = ingredient.amount.toString();
-              _ingredientAmountControllers.add(controller);
-            }
-            
-            // remove ".0" from amount fields if it is the end of the string
-            var amountFields = [_densityAmount1Controller, _densityAmount2Controller, _quantityAmount1Controller, _quantityAmount2Controller, _resultingAmountController, ..._ingredientAmountControllers];
-            for (var field in amountFields) {
-              var text = field.text;
-              if (text.endsWith(".0")) {
-                field.text = text.substring(0, text.length - 2);
-              }
-            }
-          }
-          
-          var productsMap = _loaded
-            ? Map.fromEntries(products!.map((prod) => MapEntry(prod.id, prod)))
-            : null;
-          
-          String title;
-          if (widget.isEdit == true) {
-            title = "Edit Product";
-          } else if (widget.isCopy) {
-            title = "Add Product (Copy)";
-          } else {
-            title = "Add Product";
-          }
-          
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(title),
-              actions: _isEdit && _loaded ? [
-                ValueListenableBuilder(
-                  valueListenable: _productNameController,
-                  builder: (context, value, child) {
-                    var name = _productNameController.text;
-                    return _buildDeleteButton(name, productsMap!);
+        stream: _dataService.streamNutritionalValues(),
+        builder: (contextN, snapshotN) {
+          return StreamBuilder(
+            stream: _dataService.streamProducts(),
+            builder: (contextP, snapshotP) {
+              
+              List<NutritionalValue>? nutValues;
+              List<Product>? products;
+              
+              if (snapshotN.hasData && snapshotP.hasData) {
+                _loaded = true;
+                
+                nutValues = snapshotN.data as List<NutritionalValue>;
+                products = snapshotP.data as List<Product>;
+                
+                if (_isEdit) {
+                  try {
+                    _prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
+                    _id = _prevProduct.id;
+                  } catch (e) {
+                    _error = true;
+                    return const Text("Error: Product not found");
                   }
-                )
-              ] : null
-            ),
-            body: ScrollConfiguration(
-              // clamping scroll physics to avoid overscroll
-              behavior: const ScrollBehavior().copyWith(overscroll: false),
-              child: 
-                _loaded ? SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          _buildNameField(products!),
-                          const SizedBox(height: 5),
-                          _buildDefaultUnitDropdown(),
-                          const SizedBox(height: 8),
-                          _buildConversionFields(),
-                          const SizedBox(height: 14),
-                          _buildIngredientBox(productsMap!),
-                          const SizedBox(height: 8),
-                          _buildAddButton(),
-                        ]
+                } else {
+                  _prevProduct = Product.defaultValues();
+                }
+                
+                var copyProduct = _interimProduct ?? _prevProduct;
+                
+                // set initial values
+                _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
+                _densityAmount1Controller.text = truncateZeros(copyProduct.densityConversion.amount1);
+                _densityAmount2Controller.text = truncateZeros(copyProduct.densityConversion.amount2);
+                _quantityAmount1Controller.text = truncateZeros(copyProduct.quantityConversion.amount1);
+                _quantityAmount2Controller.text = truncateZeros(copyProduct.quantityConversion.amount2);
+                _quantityNameController.text = copyProduct.quantityName;
+                _nutrientAmountController.text = truncateZeros(copyProduct.amountForNutrients);
+                
+                _densityConversionNotifier.value = copyProduct.densityConversion;
+                _quantityConversionNotifier.value = copyProduct.quantityConversion;
+                _defaultUnitNotifier.value = copyProduct.defaultUnit;
+                _autoCalcAmountNotifier.value = copyProduct.autoCalc;
+                _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
+                _ingredientsNotifier.value = List.from(copyProduct.ingredients);
+                _nutrientsUnitNotifier.value = copyProduct.nutrientsUnit;
+                _nutrientsNotifier.value = List.from(copyProduct.nutrients);
+                _amountForNutrientsNotifier.value = copyProduct.amountForNutrients;
+                
+                _resultingAmountController.text = copyProduct.amountForIngredients.toString();
+                _resultingAmountNotifier.value = copyProduct.amountForIngredients;
+                
+                // populate ingredient amount controllers
+                _ingredientAmountControllers.clear();
+                for (var ingredient in copyProduct.ingredients) {
+                  var controller = TextEditingController();
+                  controller.text = ingredient.amount.toString();
+                  _ingredientAmountControllers.add(controller);
+                }
+                
+                // populate nutrient amount controllers
+                _nutrientAmountControllers.clear();
+                for (var nutrient in copyProduct.nutrients) {
+                  var controller = TextEditingController();
+                  controller.text = nutrient.value.toString();
+                  _nutrientAmountControllers.add(controller);
+                }
+              }
+              
+              var productsMap = _loaded
+                ? Map.fromEntries(products!.map((prod) => MapEntry(prod.id, prod)))
+                : null;
+              
+              String title;
+              if (widget.isEdit == true) {
+                title = "Edit Product";
+              } else if (widget.isCopy) {
+                title = "Add Product (Copy)";
+              } else {
+                title = "Add Product";
+              }
+              
+              return Scaffold(
+                appBar: AppBar(
+                  title: Text(title),
+                  actions: _isEdit && _loaded ? [
+                    ValueListenableBuilder(
+                      valueListenable: _productNameController,
+                      builder: (context, value, child) {
+                        var name = _productNameController.text;
+                        return _buildDeleteButton(name, productsMap!);
+                      }
+                    )
+                  ] : null
+                ),
+                body: ScrollConfiguration(
+                  // clamping scroll physics to avoid overscroll
+                  behavior: const ScrollBehavior().copyWith(overscroll: false),
+                  child: 
+                    _loaded ? SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              _buildNameField(products!),
+                              const SizedBox(height: 5),
+                              _buildDefaultUnitDropdown(),
+                              const SizedBox(height: 8),
+                              _buildConversionFields(),
+                              const SizedBox(height: 14),
+                              _buildIngredientBox(productsMap!),
+                              const SizedBox(height: 8),
+                              _buildAddButton(),
+                            ]
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ) : const LoadingPage()
-            )
+                    ) : const LoadingPage()
+                )
+              );
+            }
           );
         }
       ),
@@ -973,7 +993,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               errorText,
               const SizedBox(height: 8),
               _buildIngredientsList(productsMap, valueIngredients, amounts, circRefs, valueUnit),
-              _buildAddIngredientButton(productsMap, valueIngredients),
+              _buildAddIngredientButton(productsMap, valueIngredients, _id),
             ],
           ),
         );
@@ -1012,7 +1032,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
         buildDefaultDragHandles: false,
         
-        entries: _getIngredientEntries(productsMap, ingredients, amounts, circRefs, targetUnit),
+        entries: _getIngredientEntries(productsMap, ingredients, amounts, circRefs, targetUnit, _id),
         menuWidth: 90,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
@@ -1035,14 +1055,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     List<double>? amounts,
     List<bool> circRefs,
     Unit targetUnit,
+    int id,
   ) {
     // remove all ingredient products from products list
-    var reducedProducts = Map<int, Product>.from(productsMap);
-    for (var ingredient in ingredients) {
-      if (ingredient.productId != null) {
-        reducedProducts.remove(ingredient.productId);
-      }
-    }
+    var reducedProducts = reduceProducts(productsMap, ingredients, id);
     
     var entries = <SlidableListEntry>[];
     _ingredientDropdownFocusNodes = <FocusNode>[];
@@ -1215,7 +1231,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return entries;
   }
   
-  Widget _buildAddIngredientButton(Map<int, Product> productsMap, List<ProductQuantity> ingredients) {
+  Widget _buildAddIngredientButton(Map<int, Product> productsMap, List<ProductQuantity> ingredients, int id) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 210, 235, 198),
@@ -1236,11 +1252,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         padding: EdgeInsets.only(left: 5.0),
         child: Text("Add Ingredient"),
       ),
-      onPressed: () {
+      onPressed: () {// remove all ingredient products from products list
+        var reducedProducts = reduceProducts(productsMap, ingredients, id);
         // show product dialog
         showProductDialog(
           context: context,
-          productsMap: productsMap,
+          productsMap: reducedProducts,
           selectedProduct: null,
           onSelected: (Product? product) {
             if (product != null) {
@@ -1344,6 +1361,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           quantityConversion,
         ).$1 == ErrorType.none;
     
+    
     return (
       Product(
         id:                   _isEdit ? _id : -1,
@@ -1358,7 +1376,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         ingredients:          ingredients,
         amountForNutrients:   100.0,
         nutrientsUnit:        defUnit,
-        nutrients:            [],
+        nutrients:            _prevProduct.nutrients,
       ),
       isValid,
     );
