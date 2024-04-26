@@ -52,25 +52,26 @@ class DataService implements DataProvider {
   
   // Products
 
-  @override Stream<List<Product>> streamProducts()         => _provider.streamProducts();
-  @override void reloadProductStream()                     => _provider.reloadProductStream();
-  @override Future<Iterable<Product>> getAllProducts()     => _condLoad().then((_) => _provider.getAllProducts());
-  @override Future<Product> getProduct(int id)             => _condLoad().then((_) => _provider.getProduct(id));
-  @override Future<Product> createProduct(Product product) => _condLoad().then((_) => _provider.createProduct(product));
-  @override Future<Product> updateProduct(Product product) => _condLoad().then((_) => _provider.updateProduct(product));
-  @override Future<void> deleteProduct(int id)             => _condLoad().then((_) => _provider.deleteProduct(id));
-  @override Future<void> deleteProductWithName(String name)=> _condLoad().then((_) => _provider.deleteProductWithName(name));
+  @override Stream<List<Product>> streamProducts()          => _provider.streamProducts();
+  @override void reloadProductStream()                      => _provider.reloadProductStream();
+  @override Future<Iterable<Product>> getAllProducts()      => _condLoad().then((_) => _provider.getAllProducts());
+  @override Future<Product> getProduct(int id)              => _condLoad().then((_) => _provider.getProduct(id));
+  @override Future<Product> createProduct(Product product)  => _condLoad().then((_) => _provider.createProduct(product));
+  @override Future<Product> updateProduct(Product product)  => _condLoad().then((_) => _provider.updateProduct(product));
+  @override Future<void> deleteProduct(int id)              => _condLoad().then((_) => _provider.deleteProduct(id));
+  @override Future<void> deleteProductWithName(String name) => _condLoad().then((_) => _provider.deleteProductWithName(name));
   
   // Nutritional Values
   
-  @override Stream<List<NutritionalValue>> streamNutritionalValues()               => _provider.streamNutritionalValues();
-  @override void reloadNutritionalValueStream()                                  => _provider.reloadNutritionalValueStream();
-  @override Future<Iterable<NutritionalValue>> getAllNutritionalValues()           => _condLoad().then((_) => _provider.getAllNutritionalValues());
-  @override Future<NutritionalValue> getNutritionalValue(int id)                   => _condLoad().then((_) => _provider.getNutritionalValue(id));
+  @override Stream<List<NutritionalValue>> streamNutritionalValues()                 => _provider.streamNutritionalValues();
+  @override void reloadNutritionalValueStream()                                      => _provider.reloadNutritionalValueStream();
+  @override Future<Iterable<NutritionalValue>> getAllNutritionalValues()             => _condLoad().then((_) => _provider.getAllNutritionalValues());
+  @override Future<NutritionalValue> getNutritionalValue(int id)                     => _condLoad().then((_) => _provider.getNutritionalValue(id));
   @override Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal) => _condLoad().then((_) => _provider.createNutritionalValue(nutVal));
   @override Future<NutritionalValue> updateNutritionalValue(NutritionalValue nutVal) => _condLoad().then((_) => _provider.updateNutritionalValue(nutVal));
-  @override Future<void> deleteNutritionalValue(int id)                          => _condLoad().then((_) => _provider.deleteNutritionalValue(id));
-  @override Future<void> deleteNutritionalValueWithName(String name)             => _condLoad().then((_) => _provider.deleteNutritionalValueWithName(name));
+  @override Future<void> reorderNutritionalValues(Map<int, int> orderMap)            => _condLoad().then((_) => _provider.reorderNutritionalValues(orderMap));
+  @override Future<void> deleteNutritionalValue(int id)                              => _condLoad().then((_) => _provider.deleteNutritionalValue(id));
+  @override Future<void> deleteNutritionalValueWithName(String name)                 => _condLoad().then((_) => _provider.deleteNutritionalValueWithName(name));
   
   Future _condLoad() {
     if (_provider.isLoaded()) {

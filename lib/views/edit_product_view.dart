@@ -177,6 +177,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 
                 var copyProduct = _interimProduct ?? _prevProduct;
                 
+                // check whether nutValues and copyProduct nutrients match
+                
+                var copyNutrients = checkNutrients(copyProduct.id, copyProduct.nutrients, nutValues);
+                
                 // set initial values
                 _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
                 _densityAmount1Controller.text = truncateZeros(copyProduct.densityConversion.amount1);
@@ -193,7 +197,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
                 _ingredientsNotifier.value = List.from(copyProduct.ingredients);
                 _nutrientsUnitNotifier.value = copyProduct.nutrientsUnit;
-                _nutrientsNotifier.value = List.from(copyProduct.nutrients);
+                _nutrientsNotifier.value = List.from(copyNutrients);
                 _amountForNutrientsNotifier.value = copyProduct.amountForNutrients;
                 
                 _resultingAmountController.text = copyProduct.amountForIngredients.toString();
@@ -257,9 +261,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               const SizedBox(height: 5),
                               _buildDefaultUnitDropdown(),
                               const SizedBox(height: 8),
-                              _buildConversionFields(),
+                              _buildConversionBoxes(),
                               const SizedBox(height: 14),
                               _buildIngredientBox(productsMap!),
+                              const SizedBox(height: 14),
+                              _buildNutrientBox(nutValues!),
                               const SizedBox(height: 8),
                               _buildAddButton(),
                             ]
@@ -536,7 +542,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return items;
   }
   
-  Widget _buildConversionFields() {
+  Widget _buildConversionBoxes() {
     return MultiValueListenableBuilder(
       listenables: [
         _defaultUnitNotifier,
@@ -549,16 +555,16 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         var valueConv2 = values[2] as Conversion;
         return Column(
           children: [
-            _buildConversionField(0, _densityConversionNotifier, valueConv2, valueUnit),
+            _buildConversionBox(0, _densityConversionNotifier, valueConv2, valueUnit),
             const SizedBox(height: 10),
-            _buildConversionField(1, _quantityConversionNotifier, valueConv1, valueUnit),
+            _buildConversionBox(1, _quantityConversionNotifier, valueConv1, valueUnit),
           ],
         );
       },
     );
   }
   
-  Widget _buildConversionField(int index, ValueNotifier<Conversion> notifier, Conversion otherConversion, Unit defUnit) {
+  Widget _buildConversionBox(int index, ValueNotifier<Conversion> notifier, Conversion otherConversion, Unit defUnit) {
     return LayoutBuilder(
       builder: (context, constraints) {
         var conversion = notifier.value;
@@ -744,7 +750,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     if (convNotifier.value.enabled) {
       // Check whether one of the amount fields is 0
       if (convNotifier.value.amount1 == 0 || convNotifier.value.amount2 == 0) {
-        return "Both amount must be >0";
+        return "Both amounts must be >0";
       }
       // Check whether a conversion to the default unit is possible
       if (index == 1) {
@@ -832,6 +838,172 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     );
   }
   
+  Widget _buildNutrientBox(List<NutritionalValue> nutValues) {
+    return MultiValueListenableBuilder(
+      listenables: [
+        _amountForNutrientsNotifier,
+        _nutrientsUnitNotifier,
+        _nutrientsNotifier,
+        _defaultUnitNotifier,
+        _densityConversionNotifier,
+        _quantityConversionNotifier,
+      ],
+      builder: (context, values, child) {
+        var valueAmount             = values[0] as double;
+        var valueUnit               = values[1] as Unit;
+        var valueNutrients          = values[2] as List<ProductNutrient>;
+        var valueDefUnit            = values[3] as Unit;
+        var valueDensityConversion  = values[4] as Conversion;
+        var valueQuantityConversion = values[5] as Conversion;
+        
+        var anyAutoCalc = valueNutrients.any((nutrient) => nutrient.autoCalc);
+        var isEmpty = !(anyAutoCalc || valueNutrients.any((nutrient) => nutrient.value != 0));
+        
+        // check whether the ingredient unit is compatible with the default unit
+        var (errorType, errorMsg) = validateAmount(
+          valueUnit,
+          valueDefUnit,
+          anyAutoCalc,
+          isEmpty,
+          valueAmount,
+          valueDensityConversion,
+          valueQuantityConversion,
+        );
+        
+        Widget errorText = 
+          errorMsg == null
+            ? const SizedBox()
+            : Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Text(
+                errorMsg,
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  color: errorType == ErrorType.warning ? warningColor : Colors.red,
+                  fontSize: 16)
+                ),
+            );
+        
+        return BorderBox(
+          title: "Nutrients",
+          borderColor: errorType == ErrorType.error ? errorBorderColor : null,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    const Text(
+                      "Nutrients for ",
+                      maxLines: 3,
+                      style: TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                    Flexible(
+                      child: Padding( // resulting ingredient amount field
+                        padding: const EdgeInsets.only(right: 12),
+                        child: _buildAmountField(
+                          controller: _nutrientAmountController,
+                          onChangedAndParsed: (value) => _amountForNutrientsNotifier.value = value,
+                          padding: 0,
+                        )
+                      ),
+                    ),
+                    Flexible(
+                      child: UnitDropdown(
+                        items: _buildUnitItems(verbose: true), 
+                        current: valueUnit,
+                        onChanged: (Unit? unit) => _nutrientsUnitNotifier.value = unit ?? Unit.g,
+                      ),
+                    ),
+                    const Text(
+                      " :  ",
+                      maxLines: 3,
+                      style: TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                    const Column(
+                      children: [
+                       Tooltip(
+                          message: "Fields left empty are calculated automatically from ingredients",
+                          child: Icon(
+                            Icons.info_outline,
+                            size: 22.0,
+                            color: Colors.blue,
+                          ),
+                        ),
+                       SizedBox(height: 14),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              errorText,
+              const SizedBox(height: 8),
+              // CheckboxListTile(
+              //   title: const Text("Auto calculate nutrients from ingredients"),
+              //   value: true,
+              //   onChanged: (newValue) {},
+              //   controlAffinity: ListTileControlAffinity.leading,
+              // ),
+              _buildNutrientsList(valueNutrients, nutValues),
+            ],
+          ),
+        );
+      }
+    );
+  }
+  
+  Widget _buildNutrientsList(
+    List<ProductNutrient> nutrients,
+    List<NutritionalValue> nutValues,
+  ) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: nutrients.length,
+      itemBuilder: (context, index) {
+        var nutrient = nutrients[index];
+        var nutValue = nutValues.firstWhere((nv) => nv.id == nutrient.nutritionalValueId);
+        
+        bool dark = index % 2 == 0;
+        var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
+        
+        return ListTile(
+          tileColor: color,
+          key: Key("tile for the nutrient ${nutrient.nutritionalValueId}"),
+          contentPadding: EdgeInsets.zero,
+          minVerticalPadding: 0,
+          visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+          title: Row(
+            children: [
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(
+                    fontSize: 16,
+                  ),
+                  text: "[${nutValue.unit}]",
+                  children: [
+                    TextSpan(
+                      text: " ${nutValue.name}",
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontStyle: FontStyle.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
   Widget _buildIngredientBox(Map<int, Product> productsMap) {
     return MultiValueListenableBuilder(
       listenables: [
@@ -862,11 +1034,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         }
         
         // check whether the ingredient unit is compatible with the default unit
-        var (errorType, errorMsg) = validateResultingAmount(
+        var (errorType, errorMsg) = validateAmount(
           valueUnit,
           valueDefUnit,
           valueAutoCalc,
-          valueIngredients,
+          valueIngredients.isEmpty,
           valueResultingAmount,
           valueDensityConversion,
           valueQuantityConversion,
@@ -961,7 +1133,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         )
                         : SizedBox(
                           width: 70,
-                          child:_buildAmountField(
+                          child: _buildAmountField(
                             controller: _resultingAmountController,
                             enabled: !valueAutoCalc,
                             onChangedAndParsed: (value) => _resultingAmountNotifier.value = value,
@@ -1346,17 +1518,32 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     final resultingAmount = _resultingAmountNotifier.value;
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     final ingredients = _ingredientsNotifier.value;
+    final amountForNutrients = _amountForNutrientsNotifier.value;
+    final nutrientsUnit = _nutrientsUnitNotifier.value;
+    final nutrients = _nutrientsNotifier.value;
+    
+    var anyNutrientAutoCalc = nutrients.any((nutrient) => nutrient.autoCalc);
+    var areNutrientsEmpty = !(anyNutrientAutoCalc || nutrients.any((nutrient) => nutrient.value != 0));
     
     final isValid = _formKey.currentState!.validate()
       && !_circRefNotifier.value
       && validateConversionBox(0) == null
       && validateConversionBox(1) == null
-      && validateResultingAmount(
+      && validateAmount(
           ingredientsUnit,
           defUnit,
           autoCalc,
-          ingredients,
+          ingredients.isEmpty,
           resultingAmount,
+          densityConversion,
+          quantityConversion,
+        ).$1 == ErrorType.none
+      && validateAmount(
+          nutrientsUnit,
+          defUnit,
+          anyNutrientAutoCalc,
+          areNutrientsEmpty,
+          amountForNutrients,
           densityConversion,
           quantityConversion,
         ).$1 == ErrorType.none;
@@ -1374,9 +1561,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         amountForIngredients: resultingAmount,
         ingredientsUnit:      ingredientsUnit,
         ingredients:          ingredients,
-        amountForNutrients:   100.0,
-        nutrientsUnit:        defUnit,
-        nutrients:            _prevProduct.nutrients,
+        amountForNutrients:   amountForNutrients,
+        nutrientsUnit:        nutrientsUnit,
+        nutrients:            nutrients,
       ),
       isValid,
     );

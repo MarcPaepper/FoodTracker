@@ -1,5 +1,7 @@
 
 
+import 'package:collection/collection.dart';
+
 import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 
@@ -188,12 +190,12 @@ double calcResultingAmount(
   return amounts.where((amount) => !amount.isNaN).fold(0.0, (prev, amount) => prev + amount);
 }
 
-(ErrorType, String?) validateResultingAmount(
+(ErrorType, String?) validateAmount(
   Unit unit,
   Unit defUnit,
   bool autoCalc,
-  List<ProductQuantity> ingredients,
-  double resultingAmount,
+  bool isEmpty, // Whether the list of ingredients or nutrients is empty
+  double amount,
   Conversion densityConversion,
   Conversion quantityConversion,
 ) {
@@ -205,8 +207,8 @@ double calcResultingAmount(
     errorType = ErrorType.error;
   } else if (!conversionToUnitPossible(unit, defUnit, densityConversion, quantityConversion)) {
     errorMsg = "A conversion to the default unit (${unitToString(defUnit)}) is not possible";
-    errorType = ingredients.isEmpty ? ErrorType.warning : ErrorType.error;
-  } else if (errorType != ErrorType.error && ingredients.isNotEmpty && resultingAmount == 0) {
+    errorType = isEmpty ? ErrorType.warning : ErrorType.error;
+  } else if (errorType != ErrorType.error && !isEmpty && amount == 0) {
     errorMsg = "Amount must be greater than 0";
     errorType = ErrorType.error;
   }
@@ -214,98 +216,126 @@ double calcResultingAmount(
   return (errorType, errorMsg);
 }
 
+// recalculate the nutrients for the product and all products that contain it
+List<Product> recalcProductNutrients(Product product, List<Product> products, Map<int, Product> productsMap) {
+  Map<int, Product> alteredProductsMap = Map.from(productsMap);
+  // create a tree of products that contain the product
+  var safetyCounter = 0;
+  var lastLevel = [product];
+  List<List<Product>> dependenceLevels = [lastLevel]; // first level is the product itself, second level are the products that contain the product, etc.
+  do {
+    // find all products that contain one of the products in the last level
+    var nextLevel = <Product>[];
+    for (var product in lastLevel) {
+      var containingProducts = products.where((p) => p.ingredients.any((i) => i.productId == product.id));
+      // if there are products in containingProduct which are also in previous levels, remove them from the previous levels
+      for (var level in dependenceLevels) {
+        level.removeWhere((p) => containingProducts.contains(p));
+      }
+      nextLevel.addAll(containingProducts);
+    }
+    if (nextLevel.isNotEmpty) dependenceLevels.add(nextLevel);
+    lastLevel = nextLevel;
+    safetyCounter++;
+  } while (lastLevel.isNotEmpty && safetyCounter < 128);
+  if (safetyCounter >= 128) throw InfiniteLoopException();
+  
+  var updatedProducts = <Product>[];
+  for (var level in dependenceLevels) {
+    for (var updateProduct in level) {
+      var updatedProduct = calcProductNutrients(updateProduct, alteredProductsMap);
+      if (updatedProduct.id != updateProduct.id) {
+        updatedProducts.add(updatedProduct);
+      }
+      alteredProductsMap[updateProduct.id] = updatedProduct;
+    }
+  }
+  return updatedProducts;
+}
 
-  
-  // recalculate the nutrients for the product and all products that contain it
-  List<Product> recalcProductNutrients(Product product, List<Product> products, Map<int, Product> productsMap) {
-    Map<int, Product> alteredProductsMap = Map.from(productsMap);
-    // create a tree of products that contain the product
-    var safetyCounter = 0;
-    var lastLevel = [product];
-    List<List<Product>> dependenceLevels = [lastLevel]; // first level is the product itself, second level are the products that contain the product, etc.
-    do {
-      // find all products that contain one of the products in the last level
-      var nextLevel = <Product>[];
-      for (var product in lastLevel) {
-        var containingProducts = products.where((p) => p.ingredients.any((i) => i.productId == product.id));
-        // if there are products in containingProduct which are also in previous levels, remove them from the previous levels
-        for (var level in dependenceLevels) {
-          level.removeWhere((p) => containingProducts.contains(p));
-        }
-        nextLevel.addAll(containingProducts);
-      }
-      if (nextLevel.isNotEmpty) dependenceLevels.add(nextLevel);
-      lastLevel = nextLevel;
-      safetyCounter++;
-    } while (lastLevel.isNotEmpty && safetyCounter < 128);
-    if (safetyCounter >= 128) throw InfiniteLoopException();
-    
-    var updatedProducts = <Product>[];
-    for (var level in dependenceLevels) {
-      for (var updateProduct in level) {
-        var updatedProduct = calcProductNutrients(updateProduct, alteredProductsMap);
-        if (updatedProduct.id != updateProduct.id) {
-          updatedProducts.add(updatedProduct);
-        }
-        alteredProductsMap[updateProduct.id] = updatedProduct;
-      }
-    }
-    return updatedProducts;
-  }
-  
-  Product calcProductNutrients(Product product, Map<int, Product> productsMap) {
-    List<ProductQuantity>? ingredients;
-    // calc the resulting amount of the product
-    if (product.autoCalc) {
-      ingredients ??= product.ingredients;
-      List<(ProductQuantity, Product?)> ingredientsWithProducts = [];
-      for (var ingredient in ingredients) {
-        ingredientsWithProducts.add((ingredient, productsMap[ingredient.productId]));
-      }
-      product.amountForIngredients = calcResultingAmount(
-        ingredientsWithProducts,
-        product.ingredientsUnit,
-        product.densityConversion,
-        product.quantityConversion,
-      );
-    }
-    // calc the nutrients for the product
-    for (var nutrient in product.nutrients) {
-      if (!nutrient.autoCalc) continue;
-      var value = 0.0;
-      ingredients ??= product.ingredients;
-      // add up the nutrients of all ingredients
-      for (var ingredient in ingredients) {
-        var ingrProd = productsMap[ingredient.productId]!;
-        var ingrNutr = ingrProd.nutrients.firstWhere((n) => n.nutritionalValueId == nutrient.nutritionalValueId);
-        value +=
-            ingrNutr.value
-          * ingredient.amount
-          * convertToUnit(ingredient.unit, ingrProd.densityConversion, ingrProd.quantityConversion, ingredient);
-      }
-      // convert from the ingredients amount to nutrients amount
-      value = convertBetweenProducts(
-        targetUnit: product.nutrientsUnit,
-        conversion1: product.densityConversion,
-        conversion2: product.quantityConversion,
-        ingredient: ProductQuantity(productId: product.id, amount: value, unit: product.ingredientsUnit),
-        ingrProd: product,
-      ) / product.amountForIngredients * product.amountForNutrients;
-      nutrient.value = value;
-    }
-    
-    return product;
-  }
-  
-  // remove the product itself and all ingredient products from the map
-  Map<int, Product> reduceProducts(Map<int, Product> productsMap, List<ProductQuantity> ingredients, int? id) {
-    var reducedProducts = Map<int, Product>.from(productsMap);
+Product calcProductNutrients(Product product, Map<int, Product> productsMap) {
+  List<ProductQuantity>? ingredients;
+  // calc the resulting amount of the product
+  if (product.autoCalc) {
+    ingredients ??= product.ingredients;
+    List<(ProductQuantity, Product?)> ingredientsWithProducts = [];
     for (var ingredient in ingredients) {
-      if (ingredient.productId != null) {
-        reducedProducts.remove(ingredient.productId);
-      }
+      ingredientsWithProducts.add((ingredient, productsMap[ingredient.productId]));
     }
-    // remove product itself
-    if (id != null && id >= 0) reducedProducts.remove(id);
-    return reducedProducts;
+    product.amountForIngredients = calcResultingAmount(
+      ingredientsWithProducts,
+      product.ingredientsUnit,
+      product.densityConversion,
+      product.quantityConversion,
+    );
   }
+  // calc the nutrients for the product
+  for (var nutrient in product.nutrients) {
+    if (!nutrient.autoCalc) continue;
+    var value = 0.0;
+    ingredients ??= product.ingredients;
+    // add up the nutrients of all ingredients
+    for (var ingredient in ingredients) {
+      var ingrProd = productsMap[ingredient.productId]!;
+      var ingrNutr = ingrProd.nutrients.firstWhere((n) => n.nutritionalValueId == nutrient.nutritionalValueId);
+      value +=
+          ingrNutr.value
+        * ingredient.amount
+        * convertToUnit(ingredient.unit, ingrProd.densityConversion, ingrProd.quantityConversion, ingredient);
+    }
+    // convert from the ingredients amount to nutrients amount
+    value = convertBetweenProducts(
+      targetUnit: product.nutrientsUnit,
+      conversion1: product.densityConversion,
+      conversion2: product.quantityConversion,
+      ingredient: ProductQuantity(productId: product.id, amount: value, unit: product.ingredientsUnit),
+      ingrProd: product,
+    ) / product.amountForIngredients * product.amountForNutrients;
+    nutrient.value = value;
+  }
+  
+  return product;
+}
+
+// remove the product itself and all ingredient products from the map
+Map<int, Product> reduceProducts(Map<int, Product> productsMap, List<ProductQuantity> ingredients, int? id) {
+  var reducedProducts = Map<int, Product>.from(productsMap);
+  for (var ingredient in ingredients) {
+    if (ingredient.productId != null) {
+      reducedProducts.remove(ingredient.productId);
+    }
+  }
+  // remove product itself
+  if (id != null && id >= 0) reducedProducts.remove(id);
+  return reducedProducts;
+}
+
+List<NutritionalValue> sortNutValues(List<NutritionalValue> nutValues) => nutValues..sort((a, b) => a.orderId.compareTo(b.orderId));
+
+// check whether the product nutrients match the nutritional values
+List<ProductNutrient> checkNutrients(
+  int productId,
+  List<ProductNutrient> checkList,
+  List<NutritionalValue> nutritionalValues
+) {
+  var checkMap = { for (var pN in checkList) pN : false }; // true if the nutrient is correct
+  for (var nutValue in nutritionalValues) {
+    var nId = nutValue.id;
+    var checkNut = checkList.firstWhereOrNull((n) => n.nutritionalValueId == nId);
+    if (checkNut == null) {
+      // create a new nutrient
+      checkNut = ProductNutrient(
+        productId: productId,
+        nutritionalValueId: nId,
+        autoCalc: true,
+        value: 0,
+      );
+      checkMap[checkNut] = true;
+    } else {
+      checkMap[checkNut] = true;
+    }
+  }
+  
+  // return all nutrients that are correct
+  return checkMap.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
+}

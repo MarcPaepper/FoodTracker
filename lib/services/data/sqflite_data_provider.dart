@@ -47,6 +47,7 @@ const nutrientsUnitColumn         = "nutrients_unit";
 // nutritional value table
 
 const unitNameColumn              = "unit";
+const orderIdColumn               = "order_id";
 
 // ingredient table
 
@@ -154,7 +155,7 @@ class SqfliteDataProvider implements DataProvider {
     _db = null;
   }
   
-  // Products
+  // ----- Products -----
   
   @override
   Stream<List<Product>> streamProducts() => _productsStreamController.stream;
@@ -317,7 +318,7 @@ class SqfliteDataProvider implements DataProvider {
     return deleteProduct(id);
   }
   
-  // Ingredients
+  // ----- Ingredients -----
   
   Future<ProductQuantity> _dbRowToProductQuantity(Map<String, Object?> row) async {
     return ProductQuantity(
@@ -343,7 +344,7 @@ class SqfliteDataProvider implements DataProvider {
     await _db!.delete(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [containedInId]);
   }
   
-  // Nutritional values
+  // ----- Nutritional values -----
   
   @override
   Stream<List<NutritionalValue>> streamNutritionalValues() => _nutritionalValuesStreamController.stream;
@@ -361,6 +362,7 @@ class SqfliteDataProvider implements DataProvider {
     return rows.map((row) => 
       NutritionalValue(
         row[idColumn] as int,
+        row[orderIdColumn] as int,
         row[nameColumn] as String,
         row[unitNameColumn] as String,
       )
@@ -377,8 +379,9 @@ class SqfliteDataProvider implements DataProvider {
     
     final row = results.first;
     final name = row[nameColumn] as String;
+    final orderId = row[orderIdColumn] as int;
     final unitName = row[unitNameColumn] as String;
-    final nutritionalValue = NutritionalValue(id, name, unitName);
+    final nutritionalValue = NutritionalValue(id, orderId, name, unitName);
     
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
@@ -399,10 +402,10 @@ class SqfliteDataProvider implements DataProvider {
     
     _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
     
-    _nutritionalValues.add(NutritionalValue(id, nutVal.name, nutVal.unit));
+    _nutritionalValues.add(NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit));
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
-    return NutritionalValue(id, nutVal.name, nutVal.unit);
+    return NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit);
   }
   
   @override
@@ -411,6 +414,7 @@ class SqfliteDataProvider implements DataProvider {
     
     final updatedCount = await _db!.update(nutritionalValueTable, {
       nameColumn: nutVal.name,
+      orderIdColumn: nutVal.orderId,
       unitNameColumn: nutVal.unit,
     }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
@@ -420,6 +424,20 @@ class SqfliteDataProvider implements DataProvider {
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
     return nutVal;
+  }
+  
+  @override
+  Future<void> reorderNutritionalValues(Map<int, int> orderMap) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    for (final entry in orderMap.entries) {
+      final updatedCount = await _db!.update(nutritionalValueTable, {
+        orderIdColumn: entry.value,
+      }, where: '$idColumn = ?', whereArgs: [entry.key]);
+      if (updatedCount != 1) throw InvalidUpdateException();
+    }
+    
+    _nutritionalValuesStreamController.add(_nutritionalValues);
   }
   
   @override
@@ -447,7 +465,7 @@ class SqfliteDataProvider implements DataProvider {
     return deleteNutritionalValue(id);
   }
   
-  // Product Nutrients
+  // ----- Product Nutrients -----
   
   Future<ProductNutrient> _dbRowToProductNutrient(Map<String, Object?> row) async {
     return ProductNutrient(

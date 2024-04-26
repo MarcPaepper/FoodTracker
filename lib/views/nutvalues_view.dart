@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/constants/routes.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/services/data/data_service.dart';
+import 'package:food_tracker/utility/data_logic.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
 
 // import "dart:developer" as devtools show log;
@@ -59,11 +60,10 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
       
       var values = snapshot.data as List<NutritionalValue>;
       
-      // sort products by id
-      values.sort((a, b) => a.id.compareTo(b.id));
+      values = sortNutValues(values);
       
       var length = values.length;
-      return ListView.builder(
+      return ReorderableListView.builder(
         itemCount: length,
         itemBuilder: (context, index) {
           var value = values[index];
@@ -71,6 +71,7 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
           var color = dark ? const Color.fromARGB(255, 237, 246, 253) : Colors.white;
           
           return ListTile(
+            key: Key(value.id.toString()),
             title: RichText(
               text: TextSpan(
                 children: [
@@ -93,7 +94,30 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
               );
             },
           );
-        }
+        },
+        onReorder: (oldIndex, newIndex) {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          if (oldIndex == newIndex) return;
+          
+          var orderMap = <int, int>{};
+          orderMap[values[oldIndex].id] = values[newIndex].orderId;
+          
+          if (newIndex > oldIndex) {
+            // reduce all other order ids by 1
+            for (var i = oldIndex + 1; i <= newIndex; i++) {
+              orderMap[values[i].id] = values[i].orderId - 1;
+            }
+          } else {
+            // increase all other order ids by 1
+            for (var i = newIndex; i < oldIndex; i++) {
+              orderMap[values[i].id] = values[i].orderId + 1;
+            }
+          }
+          
+          _dataService.reorderNutritionalValues(orderMap);
+        },
       );
     }
     return const LoadingPage();

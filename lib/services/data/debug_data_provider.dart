@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:food_tracker/constants/tables.dart';
 import 'package:food_tracker/services/data/data_exceptions.dart';
 
 import '../../utility/data_logic.dart';
@@ -25,15 +26,7 @@ class DebugDataProvider implements DataProvider {
     return Future.delayed(
       const Duration(milliseconds: 100), () {
         // create the 7 default nutritional values
-        nutValues = [
-          NutritionalValue(1, "Calories", "kcal"),
-          NutritionalValue(2, "Protein", "g"),
-          NutritionalValue(3, "Carbohydrates", "g"),
-          NutritionalValue(4, "Sugar", "g"),
-          NutritionalValue(5, "Fat", "g"),
-          NutritionalValue(6, "Saturated Fat", "g"),
-          NutritionalValue(7, "Salt", "g"),
-        ];
+        nutValues = defaultNutritionalValues;
         
         // product nutritient values
         List<double> prodNutrientValues = [2000, 50, 360, 90, 70, 20, 6];
@@ -176,7 +169,7 @@ class DebugDataProvider implements DataProvider {
     return Future.value();
   }
   
-  // Nutritional Values
+  // ----- Nutritional Values -----
   
   @override
   Stream<List<NutritionalValue>> streamNutritionalValues() {
@@ -206,7 +199,7 @@ class DebugDataProvider implements DataProvider {
     for (final nutVal in nutValues) {
       if (nutVal.id > highestId) highestId = nutVal.id;
     }
-    final newNutVal = NutritionalValue(highestId + 1, nutVal.name, nutVal.unit);
+    final newNutVal = NutritionalValue(highestId + 1, highestId + 1, nutVal.name, nutVal.unit);
     _addProductNutrientsForNutritionalValue(nutritionalValueId: newNutVal.id);
     nutValues.add(newNutVal);
     _nutritionalValuesStreamController.add(nutValues);
@@ -238,12 +231,22 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<void> reorderNutritionalValues(Map<int, int> orderMap) {
+    for (var entry in orderMap.entries) {
+      var nutVal = nutValues.firstWhere((element) => element.id == entry.key);
+      nutVal.orderId = entry.value;
+    }
+    _nutritionalValuesStreamController.add(nutValues);
+    return Future.value();
+  }
+  
+  @override
   Future<void> deleteNutritionalValueWithName(String name) {
     int id = nutValues.firstWhere((element) => element.name == name).id;
     return deleteNutritionalValue(id);
   }
   
-  // Product Nutrients
+  // ----- Product Nutrients -----
   
   _addProductNutrientsForNutritionalValue({required int nutritionalValueId}) {
     for (var product in products) {

@@ -23,6 +23,8 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   late final TextEditingController _name;
   late final TextEditingController _unit;
   
+  late final int _orderId;
+  
   late final bool isEdit;
   
   @override
@@ -94,7 +96,9 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
               if (isEdit) {
                 try {
                   final value = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
+                  _orderId = value.orderId;
                   _name.text = value.name;
+                  _unit.text = value.unit;
                 } catch (e) {
                   return const Text("Error: Value not found");
                 }
@@ -171,10 +175,10 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
           final isValid = _formKey.currentState!.validate();
           if (isValid) {
             if (isEdit) {
-              var nval = NutritionalValue(widget.nutvalueId!, name, unit);
+              var nval = NutritionalValue(widget.nutvalueId!, _orderId, name, unit);
               _dataService.updateNutritionalValue(nval);
             } else {
-              var nval = NutritionalValue(-1, name, unit);
+              var nval = NutritionalValue(-1, _orderId, name, unit);
               _dataService.createNutritionalValue(nval);
             }
             Navigator.of(context).pop();

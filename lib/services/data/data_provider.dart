@@ -21,6 +21,7 @@ abstract class DataProvider {
   Future<NutritionalValue> getNutritionalValue(int id);
   Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal);
   Future<NutritionalValue> updateNutritionalValue(NutritionalValue nutVal);
+  Future<void> reorderNutritionalValues(Map<int, int> orderMap);
   Future<void> deleteNutritionalValue(int id);
   Future<void> deleteNutritionalValueWithName(String name);
 }

@@ -57,6 +57,19 @@ class Product {
   
   // same as above but as factory constructor
   factory Product.copyWithDifferentId(Product product, int newId) {
+    // change ingredients and nutrients product id
+    List<ProductQuantity> newIngredients = product.ingredients.map((i) => ProductQuantity(
+      productId: newId,
+      amount: i.amount,
+      unit: i.unit,
+    )).toList();
+    List<ProductNutrient> newNutrients = product.nutrients.map((n) => ProductNutrient(
+      productId: newId,
+      nutritionalValueId: n.nutritionalValueId,
+      autoCalc: n.autoCalc,
+      value: n.value,
+    )).toList();
+    
     return Product(
       id: newId,
       name:                 product.name,
@@ -69,8 +82,8 @@ class Product {
       ingredientsUnit:      product.ingredientsUnit,
       amountForNutrients:   product.amountForNutrients,
       nutrientsUnit:        product.nutrientsUnit,
-      ingredients:          product.ingredients,
-      nutrients:            product.nutrients,
+      ingredients:          newIngredients,
+      nutrients:            newNutrients,
     );
   }
   
@@ -358,10 +371,11 @@ class Conversion {
 
 class NutritionalValue {
 	int id = -1; // unique identifier
+  int orderId = -1; // order in which the values are displayed
 	String name = ""; // must be unique
   String unit = "";
 	
-	NutritionalValue(this.id, this.name, this.unit);
+	NutritionalValue(this.id, this.orderId, this.name, this.unit);
   
   @override
   bool operator ==(covariant NutritionalValue other) => id == other.id;
