@@ -22,6 +22,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _unit;
+  var _showFullName = ValueNotifier(false);
   
   late final int _orderId;
   
@@ -96,9 +97,11 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
               if (isEdit) {
                 try {
                   final value = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
-                  _orderId = value.orderId;
-                  _name.text = value.name;
-                  _unit.text = value.unit;
+                  
+                  _orderId            = value.orderId;
+                  _name.text          = value.name;
+                  _unit.text          = value.unit;
+                  _showFullName.value = value.showFullName;
                 } catch (e) {
                   return const Text("Error: Value not found");
                 }
@@ -111,6 +114,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
                     children: [
                       _buildNameField(nutValues),
                       _buildUnitField(),
+                      _buildShowFullNameToggle(),
                       _buildAddButton(),
                     ]
                   ),
@@ -166,19 +170,35 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
       ),
     );
   
+  Widget _buildShowFullNameToggle() => ValueListenableBuilder(
+      valueListenable: _showFullName,
+      builder: (context, value, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: SwitchListTile(
+            title: const Text("Show Full Name"),
+            value: value,
+            onChanged: (newValue) => _showFullName.value = newValue,
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+        );
+      }
+    );
+  
   Widget _buildAddButton() => Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextButton(
         onPressed: () {
           final name = _name.text;
           final unit = _unit.text;
+          final showFullName = _showFullName.value;
           final isValid = _formKey.currentState!.validate();
           if (isValid) {
             if (isEdit) {
-              var nval = NutritionalValue(widget.nutvalueId!, _orderId, name, unit);
+              var nval = NutritionalValue(widget.nutvalueId!, _orderId, name, unit, showFullName);
               _dataService.updateNutritionalValue(nval);
             } else {
-              var nval = NutritionalValue(-1, _orderId, name, unit);
+              var nval = NutritionalValue(-1, _orderId, name, unit, showFullName);
               _dataService.createNutritionalValue(nval);
             }
             Navigator.of(context).pop();

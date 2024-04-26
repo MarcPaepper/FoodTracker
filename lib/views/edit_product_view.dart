@@ -964,10 +964,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: nutrients.length,
+      itemCount: nutValues.length,
       itemBuilder: (context, index) {
-        var nutrient = nutrients[index];
-        var nutValue = nutValues.firstWhere((nv) => nv.id == nutrient.nutritionalValueId);
+        var nutValue = nutValues[index];
+        var nutrient = nutrients.firstWhere((nut) => nut.nutritionalValueId == nutValue.id);
         
         bool dark = index % 2 == 0;
         var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
@@ -980,23 +980,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
           title: Row(
             children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(
-                    fontSize: 16,
-                  ),
-                  text: "[${nutValue.unit}]",
-                  children: [
-                    TextSpan(
-                      text: " ${nutValue.name}",
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontStyle: FontStyle.normal,
-                      ),
-                    ),
-                  ],
+              Text(
+                "${nutValue.unit} ${nutValue.showFullName ? nutValue.name : ""}",
+                style: const TextStyle(
+                  fontSize: 16,
                 ),
-              ),
+              )
             ],
           ),
         );

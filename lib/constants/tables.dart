@@ -61,7 +61,8 @@ const nutritionalValueColumns = [
   '"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE',
   '"name" TEXT NOT NULL UNIQUE',
   '"unit" TEXT NOT NULL',
-  '"order_id"	INTEGER NOT NULL UNIQUE'
+  '"order_id"	INTEGER NOT NULL UNIQUE',
+  '"show_full_name"	INTEGER NOT NULL,',
 ];
 
 const ingredientColumns = [
@@ -79,11 +80,11 @@ const productNutrientColumns = [
 ];
 
 final defaultNutritionalValues = [
-  NutritionalValue(0, 0, "Calories", "kcal"),
-  NutritionalValue(1, 1, "Protein", "g"),
-  NutritionalValue(2, 2, "Carbohydrates", "g"),
-  NutritionalValue(3, 3, "Fat", "g"),
-  NutritionalValue(4, 4, "Fiber", "g"),
-  NutritionalValue(5, 5, "Sugar", "g"),
-  NutritionalValue(6, 6, "Salt", "g"),
+  NutritionalValue(0, 0, "Calories", "kcal", false),
+  NutritionalValue(1, 1, "Protein", "g", true),
+  NutritionalValue(2, 2, "Carbohydrates", "g", true),
+  NutritionalValue(3, 3, "Fat", "g", true),
+  NutritionalValue(4, 4, "Fiber", "g", true),
+  NutritionalValue(5, 5, "Sugar", "g", true),
+  NutritionalValue(6, 6, "Salt", "g", true),
 ];

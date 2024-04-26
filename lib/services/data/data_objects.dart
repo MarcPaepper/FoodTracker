@@ -374,8 +374,9 @@ class NutritionalValue {
   int orderId = -1; // order in which the values are displayed
 	String name = ""; // must be unique
   String unit = "";
+  bool showFullName = true;
 	
-	NutritionalValue(this.id, this.orderId, this.name, this.unit);
+	NutritionalValue(this.id, this.orderId, this.name, this.unit, this.showFullName);
   
   @override
   bool operator ==(covariant NutritionalValue other) => id == other.id;

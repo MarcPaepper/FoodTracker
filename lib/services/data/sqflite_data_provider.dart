@@ -48,6 +48,7 @@ const nutrientsUnitColumn         = "nutrients_unit";
 
 const unitNameColumn              = "unit";
 const orderIdColumn               = "order_id";
+const showFullNameColumn          = "show_full_name";
 
 // ingredient table
 
@@ -365,6 +366,7 @@ class SqfliteDataProvider implements DataProvider {
         row[orderIdColumn] as int,
         row[nameColumn] as String,
         row[unitNameColumn] as String,
+        row[showFullNameColumn] == 1,
       )
     ).toList();
   }
@@ -381,7 +383,8 @@ class SqfliteDataProvider implements DataProvider {
     final name = row[nameColumn] as String;
     final orderId = row[orderIdColumn] as int;
     final unitName = row[unitNameColumn] as String;
-    final nutritionalValue = NutritionalValue(id, orderId, name, unitName);
+    final showFullName = row[showFullNameColumn] == 1;
+    final nutritionalValue = NutritionalValue(id, orderId, name, unitName, showFullName);
     
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
@@ -402,10 +405,10 @@ class SqfliteDataProvider implements DataProvider {
     
     _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
     
-    _nutritionalValues.add(NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit));
+    _nutritionalValues.add(NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit, nutVal.showFullName));
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
-    return NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit);
+    return NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit, nutVal.showFullName);
   }
   
   @override
@@ -413,9 +416,10 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     final updatedCount = await _db!.update(nutritionalValueTable, {
-      nameColumn: nutVal.name,
-      orderIdColumn: nutVal.orderId,
-      unitNameColumn: nutVal.unit,
+      nameColumn:         nutVal.name,
+      orderIdColumn:      nutVal.orderId,
+      unitNameColumn:     nutVal.unit,
+      showFullNameColumn: nutVal.showFullName ? 1 : 0,
     }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
