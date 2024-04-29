@@ -57,12 +57,7 @@ class Product {
   
   // same as above but as factory constructor
   factory Product.copyWithDifferentId(Product product, int newId) {
-    // change ingredients and nutrients product id
-    List<ProductQuantity> newIngredients = product.ingredients.map((i) => ProductQuantity(
-      productId: newId,
-      amount: i.amount,
-      unit: i.unit,
-    )).toList();
+    // change nutrients product id
     List<ProductNutrient> newNutrients = product.nutrients.map((n) => ProductNutrient(
       productId: newId,
       nutritionalValueId: n.nutritionalValueId,
@@ -82,7 +77,7 @@ class Product {
       ingredientsUnit:      product.ingredientsUnit,
       amountForNutrients:   product.amountForNutrients,
       nutrientsUnit:        product.nutrientsUnit,
-      ingredients:          newIngredients,
+      ingredients:          product.ingredients,
       nutrients:            newNutrients,
     );
   }

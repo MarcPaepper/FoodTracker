@@ -30,46 +30,209 @@ class DebugDataProvider implements DataProvider {
         
         // product nutritient values
         List<double> prodNutrientValues = [2000, 50, 360, 90, 70, 20, 6];
+        // convert to map with indices as keys
+        Map<int, double> prodNutrientValuesMap = {};
+        for (int i = 0; i < prodNutrientValues.length; i++) {
+          prodNutrientValuesMap[i] = prodNutrientValues[i];
+        }
         
         products = [];
-        List<ProductQuantity> firstProducts = [];
-        for (int i = 1; i <= 20; i++) {
-          var product = 
-            Product(
-              id: i,
-              name:                 "Example $i",
-              defaultUnit:          Unit.g,
-              densityConversion:    Conversion.fromString("100 ml = 100 g disabled"),
-              quantityConversion:   Conversion.fromString("1 x = 100 g disabled"),
-              quantityName:         "x",
-              autoCalc:             false,
-              amountForIngredients: 100,
-              ingredientsUnit:      Unit.g,
-              amountForNutrients:   100,
-              nutrientsUnit:        Unit.g,
-              ingredients:          List.from(firstProducts),
-              nutrients:            prodNutrientValues.map((v) => ProductNutrient(
-                                      productId: i,
-                                      autoCalc: i > 3,
-                                      value: v,
-                                      nutritionalValueId: prodNutrientValues.indexOf(v) + 1
-                                    )).toList()
-            );
+        
+        // Brühe
+        products.add(
+          Product(
+            id: 0,
+            name: "Brühe",
+            defaultUnit: Unit.ml,
+            densityConversion: const Conversion(
+              amount1: 100,
+              unit1: Unit.ml,
+              amount2: 95,
+              unit2: Unit.g,
+              enabled: true,
+            ),
+            quantityConversion: const Conversion(
+              amount1: 1,
+              unit1: Unit.quantity,
+              amount2: 100,
+              unit2: Unit.g,
+              enabled: false,
+            ),
+            quantityName: "x",
+            autoCalc: false,
+            amountForIngredients: 100,
+            ingredientsUnit: Unit.g,
+            amountForNutrients: 100,
+            nutrientsUnit: Unit.ml,
+            ingredients: [],
+            nutrients: [
+              quickNutri(0, 0, 0), // kcal
+              quickNutri(0, 1, 10), // fat
+              quickNutri(0, 2, 0), // saturated fat
+              quickNutri(0, 3, 0), // carbohydrates
+              quickNutri(0, 4, 0), // sugar
+              quickNutri(0, 5, 0), // protein
+              quickNutri(0, 6, 5), // salt
+            ],
+          ));
+        
+        // Fleisch
+        products.add(
+          Product(
+            id: 1,
+            name: "Fleisch",
+            defaultUnit: Unit.g,
+            densityConversion: const Conversion(
+              amount1: 100,
+              unit1: Unit.ml,
+              amount2: 100,
+              unit2: Unit.g,
+              enabled: false,
+            ),
+            quantityConversion: const Conversion(
+              amount1: 1,
+              unit1: Unit.quantity,
+              amount2: 100,
+              unit2: Unit.g,
+              enabled: false,
+            ),
+            quantityName: "x",
+            autoCalc: false,
+            amountForIngredients: 100,
+            ingredientsUnit: Unit.g,
+            amountForNutrients: 100,
+            nutrientsUnit: Unit.g,
+            ingredients: [],
+            nutrients: [
+              quickNutri(0, 0, 0), // kcal
+              quickNutri(0, 1, 0), // fat
+              quickNutri(0, 2, 0), // saturated fat
+              quickNutri(0, 3, 0), // carbohydrates
+              quickNutri(0, 4, 0), // sugar
+              quickNutri(0, 5, 20), // protein
+              quickNutri(0, 6, 0), // salt
+            ],
+          ));
+        
+        // Apfel
+        products.add(
+          Product(
+            id: 2,
+            name: "Apfel",
+            defaultUnit: Unit.quantity,
+            densityConversion: const Conversion(
+              amount1: 100,
+              unit1: Unit.ml,
+              amount2: 100,
+              unit2: Unit.g,
+              enabled: false,
+            ),
+            quantityConversion: const Conversion(
+              amount1: 1,
+              unit1: Unit.quantity,
+              amount2: 150,
+              unit2: Unit.g,
+              enabled: true,
+            ),
+            quantityName: "x",
+            autoCalc: false,
+            amountForIngredients: 100,
+            ingredientsUnit: Unit.g,
+            amountForNutrients: 1,
+            nutrientsUnit: Unit.kg,
+            ingredients: [],
+            nutrients: [
+              quickNutri(0, 0, 0), // kcal
+              quickNutri(0, 1, 0), // fat
+              quickNutri(0, 2, 0), // saturated fat
+              quickNutri(0, 3, 200), // carbohydrates
+              quickNutri(0, 4, 100), // sugar
+              quickNutri(0, 5, 0), // protein
+              quickNutri(0, 6, 0), // salt
+            ],
+          ));
+        
+        // Ei
+        products.add(
+          Product(
+            id: 3,
+            name: "Ei",
+            defaultUnit: Unit.g,
+            densityConversion: const Conversion(
+              amount1: 100,
+              unit1: Unit.ml,
+              amount2: 100,
+              unit2: Unit.g,
+              enabled: false,
+            ),
+            quantityConversion: const Conversion(
+              amount1: 1,
+              unit1: Unit.quantity,
+              amount2: 50,
+              unit2: Unit.g,
+              enabled: true,
+            ),
+            quantityName: "x",
+            autoCalc: false,
+            amountForIngredients: 100,
+            ingredientsUnit: Unit.g,
+            amountForNutrients: 100,
+            nutrientsUnit: Unit.g,
+            ingredients: [],
+            nutrients: [
+              quickNutri(0, 0, 0), // kcal
+              quickNutri(0, 1, 0), // fat
+              quickNutri(0, 2, 0), // saturated fat
+              quickNutri(0, 3, 0), // carbohydrates
+              quickNutri(0, 4, 0), // sugar
+              quickNutri(0, 5, 20), // protein
+              quickNutri(0, 6, 0), // salt
+            ],
+          ));
+        
+        // List<ProductQuantity> firstProducts = [];
+        // for (int i = 1; i <= 20; i++) {
+        //   var product = 
+        //     Product(
+        //       id: i,
+        //       name:                 "Example $i",
+        //       defaultUnit:          Unit.g,
+        //       densityConversion:    Conversion.fromString("100 ml = 100 g disabled"),
+        //       quantityConversion:   Conversion.fromString("1 x = 100 g disabled"),
+        //       quantityName:         "x",
+        //       autoCalc:             false,
+        //       amountForIngredients: 100,
+        //       ingredientsUnit:      Unit.g,
+        //       amountForNutrients:   100,
+        //       nutrientsUnit:        Unit.g,
+        //       ingredients:          List.from(firstProducts),
+        //       nutrients:            prodNutrientValuesMap.entries.map((e) => ProductNutrient(
+        //                               productId: i,
+        //                               autoCalc: i > 3,
+        //                               value: e.value,
+        //                               nutritionalValueId: e.key
+        //                             )).toList()
+        //     );
           
-          if (i <= 3) { 
-            firstProducts.add(
-              ProductQuantity(
-                productId: product.id,
-                amount: 100,
-                unit: Unit.g,
-              )
-            );
-          } else {
-            // recalculate the nutrient values
-            product = calcProductNutrients(product, productsMap);
-          }
-          products.add(product);
-          productsMap[i] = product;
+        //   if (i <= 3) { 
+        //     firstProducts.add(
+        //       ProductQuantity(
+        //         productId: product.id,
+        //         amount: 100,
+        //         unit: Unit.g,
+        //       )
+        //     );
+        //   } else {
+        //     // recalculate the nutrient values
+        //     product = updateProductNutrients(product, productsMap);
+        //   }
+        //   products.add(product);
+        //   productsMap[i] = product;
+        // }
+        
+        // update map
+        for (var product in products) {
+          productsMap[product.id] = product;
         }
         _productsStreamController.add(products);
         _nutritionalValuesStreamController.add(nutValues);
@@ -78,6 +241,13 @@ class DebugDataProvider implements DataProvider {
         return "data loaded";
       });
   }
+  
+  ProductNutrient quickNutri(int prodId, int nutId, double value) => ProductNutrient(
+    productId: prodId,
+    autoCalc: false,
+    value: value,
+    nutritionalValueId: nutId
+  );
   
   @override
   Future<void> close() {

@@ -187,7 +187,16 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   
   Widget _buildAddButton() => Padding(
       padding: const EdgeInsets.all(8.0),
-      child: TextButton(
+      child: ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all(Colors.teal.shade400),
+          foregroundColor: MaterialStateProperty.all(Colors.white),
+          minimumSize: MaterialStateProperty.all(const Size(double.infinity, 60)),
+          textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16)),
+          shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(14)),
+          )),
+        ),
         onPressed: () {
           final name = _name.text;
           final unit = _unit.text;

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/product_dropdown.dart';
@@ -18,6 +20,7 @@ import 'package:food_tracker/widgets/slidable_list.dart';
 import "dart:developer" as devtools show log;
 
 import '../utility/data_logic.dart';
+import '../widgets/amount_field.dart';
 
 class EditProductView extends StatefulWidget {
   final String? productName;
@@ -157,11 +160,14 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               List<NutritionalValue>? nutValues;
               List<Product>? products;
               
+              Map<int, Product>? productsMap;
+              
               if (snapshotN.hasData && snapshotP.hasData) {
                 _loaded = true;
                 
                 nutValues = snapshotN.data as List<NutritionalValue>;
                 products = snapshotP.data as List<Product>;
+                productsMap = Map.fromEntries(products.map((prod) => MapEntry(prod.id, prod)));
                 
                 if (_isEdit) {
                   try {
@@ -173,6 +179,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   }
                 } else {
                   _prevProduct = Product.defaultValues();
+                  // create one nutrient per nutritional value
+                  _prevProduct.nutrients = nutValues.map((nutVal) => ProductNutrient(
+                    productId: -1,
+                    nutritionalValueId: nutVal.id,
+                    value: 0,
+                    autoCalc: true,
+                  )).toList();
                 }
                 
                 var copyProduct = _interimProduct ?? _prevProduct;
@@ -197,7 +210,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
                 _ingredientsNotifier.value = List.from(copyProduct.ingredients);
                 _nutrientsUnitNotifier.value = copyProduct.nutrientsUnit;
-                _nutrientsNotifier.value = List.from(copyNutrients);
                 _amountForNutrientsNotifier.value = copyProduct.amountForNutrients;
                 
                 _resultingAmountController.text = copyProduct.amountForIngredients.toString();
@@ -211,18 +223,29 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   _ingredientAmountControllers.add(controller);
                 }
                 
+                // calculate nutrients
+                
+                // measure the time it takes to calculate the nutrients
+                _nutrientsNotifier.value = calcNutrients(
+                  nutrients: copyNutrients,
+                  ingredients: copyProduct.ingredients,
+                  productsMap: productsMap,
+                  ingredientsUnit: copyProduct.ingredientsUnit,
+                  nutrientsUnit: copyProduct.nutrientsUnit,
+                  densityConversion: copyProduct.densityConversion,
+                  quantityConversion: copyProduct.quantityConversion,
+                  amountForIngredients: copyProduct.amountForIngredients,
+                  amountForNutrients: copyProduct.amountForNutrients,
+                ).$1;
+                
                 // populate nutrient amount controllers
                 _nutrientAmountControllers.clear();
-                for (var nutrient in copyProduct.nutrients) {
+                for (var nutrient in copyNutrients) {
                   var controller = TextEditingController();
-                  controller.text = nutrient.value.toString();
+                  if (!nutrient.autoCalc) controller.text = nutrient.value.toString();
                   _nutrientAmountControllers.add(controller);
                 }
               }
-              
-              var productsMap = _loaded
-                ? Map.fromEntries(products!.map((prod) => MapEntry(prod.id, prod)))
-                : null;
               
               String title;
               if (widget.isEdit == true) {
@@ -265,7 +288,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               const SizedBox(height: 14),
                               _buildIngredientBox(productsMap!),
                               const SizedBox(height: 14),
-                              _buildNutrientBox(nutValues!),
+                              _buildNutrientBox(nutValues!, productsMap),
                               const SizedBox(height: 8),
                               _buildAddButton(),
                             ]
@@ -778,7 +801,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     required TextEditingController controller,
     required int index,
   }) {
-    return _buildAmountField(
+    return AmountField(
       controller: controller,
       enabled: notifier.value.enabled,
       onChangedAndParsed: (value) {
@@ -791,54 +814,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     );
   }
   
-  Widget _buildAmountField({
-    required TextEditingController controller,
-    FocusNode? focusNode,
-    bool enabled = true,
-    Function(double)? onChangedAndParsed,
-    double? padding,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: padding ?? 12),
-      child: Focus(
-        onFocusChange: (bool hasFocus) {
-          if (hasFocus) {
-            controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.value.text.length);
-          }
-        },
-        child: TextFormField(
-          enabled: enabled,
-          decoration: const InputDecoration(
-            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-          ),
-          controller: controller,
-          focusNode: focusNode,
-          keyboardType: TextInputType.number,
-          validator: (String? value) => enabled ? numberValidator(value) : null,
-          autovalidateMode: AutovalidateMode.always,
-          onChanged: (String? value) {
-            if (value != null && value.isNotEmpty) {
-              try {
-                value = value.replaceAll(",", ".");
-                var cursorPos = controller.selection.baseOffset;
-                controller.text = value;
-                controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
-                
-                var input = double.parse(value);
-                if (input.isFinite && onChangedAndParsed != null) {
-                  onChangedAndParsed(input);
-                }
-              } catch (e) {
-                devtools.log("Error: Invalid number in amount field");
-              }
-            }
-          },
-        ),
-      ),
-    );
-  }
   
-  Widget _buildNutrientBox(List<NutritionalValue> nutValues) {
+  
+  Widget _buildNutrientBox(List<NutritionalValue> nutValues, Map<int, Product> productsMap) {
     return MultiValueListenableBuilder(
       listenables: [
         _amountForNutrientsNotifier,
@@ -847,21 +825,49 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         _defaultUnitNotifier,
         _densityConversionNotifier,
         _quantityConversionNotifier,
+        _ingredientsNotifier,
+        _ingredientsUnitNotifier,
+        _resultingAmountNotifier,
       ],
       builder: (context, values, child) {
         var valueAmount             = values[0] as double;
-        var valueUnit               = values[1] as Unit;
+        var valueNutrientsUnit      = values[1] as Unit;
         var valueNutrients          = values[2] as List<ProductNutrient>;
         var valueDefUnit            = values[3] as Unit;
         var valueDensityConversion  = values[4] as Conversion;
         var valueQuantityConversion = values[5] as Conversion;
+        var valueIngredients        = values[6] as List<ProductQuantity>;
+        var valueIngredientsUnit    = values[7] as Unit;
+        var valueResultingAmount    = values[8] as double;
         
         var anyAutoCalc = valueNutrients.any((nutrient) => nutrient.autoCalc);
         var isEmpty = !(anyAutoCalc || valueNutrients.any((nutrient) => nutrient.value != 0));
         
+        // same as above but with the current values
+        var updatedNutrients = calcNutrients(
+          nutrients: valueNutrients,
+          ingredients: valueIngredients,
+          productsMap: productsMap,
+          ingredientsUnit: valueIngredientsUnit,
+          nutrientsUnit: valueNutrientsUnit,
+          densityConversion: valueDensityConversion,
+          quantityConversion: valueQuantityConversion,
+          amountForIngredients: valueResultingAmount,
+          amountForNutrients: valueAmount,
+        ).$1;
+        
+        // if any value differs, update the nutrient values
+        for (var i = 0; i < valueNutrients.length; i++) {
+          if (valueNutrients[i].value != updatedNutrients[i].value) {
+            devtools.log("updated nutrients");
+            _nutrientsNotifier.value = updatedNutrients;
+            break;
+          }
+        }
+        
         // check whether the ingredient unit is compatible with the default unit
         var (errorType, errorMsg) = validateAmount(
-          valueUnit,
+          valueNutrientsUnit,
           valueDefUnit,
           anyAutoCalc,
           isEmpty,
@@ -904,7 +910,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     Flexible(
                       child: Padding( // resulting ingredient amount field
                         padding: const EdgeInsets.only(right: 12),
-                        child: _buildAmountField(
+                        child: AmountField(
                           controller: _nutrientAmountController,
                           onChangedAndParsed: (value) => _amountForNutrientsNotifier.value = value,
                           padding: 0,
@@ -914,7 +920,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     Flexible(
                       child: UnitDropdown(
                         items: _buildUnitItems(verbose: true), 
-                        current: valueUnit,
+                        current: valueNutrientsUnit,
                         onChanged: (Unit? unit) => _nutrientsUnitNotifier.value = unit ?? Unit.g,
                       ),
                     ),
@@ -928,27 +934,21 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     const Column(
                       children: [
                        Tooltip(
-                          message: "Fields left empty are calculated automatically from ingredients",
+                          message: "Fields left empty are calculated automatically from ingredients and are shown as blue.",
                           child: Icon(
                             Icons.info_outline,
                             size: 22.0,
                             color: Colors.blue,
                           ),
                         ),
-                       SizedBox(height: 14),
+                        SizedBox(height: 14),
                       ],
                     ),
                   ],
                 ),
               ),
               errorText,
-              const SizedBox(height: 8),
-              // CheckboxListTile(
-              //   title: const Text("Auto calculate nutrients from ingredients"),
-              //   value: true,
-              //   onChanged: (newValue) {},
-              //   controlAffinity: ListTileControlAffinity.leading,
-              // ),
+              const SizedBox(height: 12),
               _buildNutrientsList(valueNutrients, nutValues),
             ],
           ),
@@ -980,6 +980,26 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
           title: Row(
             children: [
+              // Text field for the nutrient amount
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                child: SizedBox(
+                  width: 140,
+                  child: AmountField(
+                    controller: _nutrientAmountControllers[index],
+                    canBeEmpty: true,
+                    hintText: roundDouble(nutrient.value),
+                    onChangedAndParsed: (value) {
+                      nutrient.value = value;
+                      _nutrientsNotifier.value = List.from(nutrients);
+                    },
+                    padding: 0,
+                    borderColor: nutrient.autoCalc ? const Color.fromARGB(181, 56, 141, 211) : null,
+                    fillColor: nutrient.autoCalc   ? const Color.fromARGB(44, 155, 186, 245) : null,
+                    hintColor: nutrient.autoCalc   ? const Color.fromARGB(174, 18, 83, 136)  : null,
+                  ),
+                ),
+              ),
               Text(
                 "${nutValue.unit} ${nutValue.showFullName ? nutValue.name : ""}",
                 style: const TextStyle(
@@ -1050,7 +1070,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         // calculate the resulting amount
         List<double>? amounts;
         if (valueAutoCalc) {
-          var resultingAmount = calcResultingAmount(
+          double resultingAmount;
+          (resultingAmount, amounts) = calcResultingAmount(
             ingredientsWithProducts,
             valueUnit,
             valueDensityConversion,
@@ -1122,7 +1143,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         )
                         : SizedBox(
                           width: 70,
-                          child: _buildAmountField(
+                          child: AmountField(
                             controller: _resultingAmountController,
                             enabled: !valueAutoCalc,
                             onChangedAndParsed: (value) => _resultingAmountNotifier.value = value,
@@ -1222,17 +1243,16 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     var reducedProducts = reduceProducts(productsMap, ingredients, id);
     
     var entries = <SlidableListEntry>[];
-    _ingredientDropdownFocusNodes = <FocusNode>[];
-    _ingredientAmountFocusNodes = <FocusNode>[];
+    
+    _ingredientAmountFocusNodes = List.generate(ingredients.length, (_) => FocusNode());
+    _ingredientDropdownFocusNodes = List.generate(ingredients.length, (_) => FocusNode());
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
-      var focusNode1 = FocusNode();
-      var focusNode2 = FocusNode();
-      _ingredientDropdownFocusNodes.add(focusNode1);
-      _ingredientAmountFocusNodes.add(focusNode2);
+      var focusNode1 = _ingredientDropdownFocusNodes[index];
+      var focusNode2 = _ingredientAmountFocusNodes[index];
       
       var product = ingredient.productId != null 
         ? productsMap[ingredient.productId]
@@ -1241,6 +1261,21 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       var availableProducts = <int, Product>{};
       availableProducts.addAll(reducedProducts);
       if (product != null) availableProducts[product.id] = product;
+      
+      // check whether selected unit is compatible with the product
+      var unit = ingredient.unit;
+      if (product != null && !product.getAvailableUnits().contains(unit)) {
+        unit = product.defaultUnit;
+        ingredients[index] = ProductQuantity(
+          productId: ingredient.productId,
+          amount: ingredient.amount,
+          unit: unit,
+        );
+        // update after build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _ingredientsNotifier.value = List.from(ingredients);
+        });
+      }
       
       var errorType = circRefs[index] ? ErrorType.error : ErrorType.none;
       String? errorMsg = errorType == ErrorType.error ? "Circular Reference" : null;
@@ -1286,7 +1321,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           if (newProduct != null) {
                             // Check whether the new product supports the current unit
                             late Unit newUnit;
-                            var currentUnit = ingredient.unit;
+                            var currentUnit = unit;
                             newUnit = (newProduct.getAvailableUnits().contains(currentUnit)) ? currentUnit : newProduct.defaultUnit;
                             
                             ingredients[index] = ProductQuantity(
@@ -1305,19 +1340,33 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         children: [
                           // amount field
                           Expanded(
-                            child: _buildAmountField(
-                              controller: _ingredientAmountControllers[index],
-                              focusNode: focusNode2,
-                              padding: 0,
-                              onChangedAndParsed: (value) {
-                                var prev = ingredients[index];
-                                ingredients[index] = ProductQuantity(
-                                  productId: prev.productId,
-                                  amount: value,
-                                  unit: prev.unit,
-                                );
-                                _ingredientsNotifier.value = List.from(ingredients);
-                              }
+                            child: Focus(
+                              onFocusChange: (value) {
+                                if (!value) return;
+                                for (var node in _ingredientAmountFocusNodes) {
+                                  if (node != focusNode2) {
+                                    node.unfocus();
+                                    // unfocus after built
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      node.unfocus();
+                                    });
+                                  }
+                                }
+                              },
+                              child: AmountField(
+                                controller: _ingredientAmountControllers[index],
+                                focusNode: focusNode2,
+                                padding: 0,
+                                onChangedAndParsed: (value) {
+                                  var prev = ingredients[index];
+                                  ingredients[index] = ProductQuantity(
+                                    productId: prev.productId,
+                                    amount: value,
+                                    unit: prev.unit,
+                                  );
+                                  _ingredientsNotifier.value = List.from(ingredients);
+                                }
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1325,7 +1374,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           Expanded(
                             child: UnitDropdown(
                               items: _buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values),
-                              current: ingredient.unit,
+                              current: unit,
                               onChanged: (Unit? unit) {
                                 if (unit != null) {
                                   var prev = ingredients[index];
@@ -1379,8 +1428,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   icon: const Icon(Icons.delete),
                   onPressed: () {
                     ingredients.removeAt(index);
-                    _ingredientsNotifier.value = List.from(ingredients);
                     _ingredientAmountControllers.removeAt(index).dispose();
+                    _ingredientsNotifier.value = List.from(ingredients);
                   },
                 ),
               ),
@@ -1389,6 +1438,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         )
       );
     }
+    
     return entries;
   }
   
@@ -1526,7 +1576,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           resultingAmount,
           densityConversion,
           quantityConversion,
-        ).$1 == ErrorType.none
+        ).$1 != ErrorType.error
       && validateAmount(
           nutrientsUnit,
           defUnit,
@@ -1535,7 +1585,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           amountForNutrients,
           densityConversion,
           quantityConversion,
-        ).$1 == ErrorType.none;
+        ).$1 != ErrorType.error;
     
     
     return (

@@ -72,7 +72,7 @@ class SqfliteDataProvider implements DataProvider {
   // cached data
   List<Product> _products = [];
   Map<int, Product> _productsMap = {};
-  List<NutritionalValue> _nutritionalValues = [];
+  final List<NutritionalValue> _nutritionalValues = [];
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
   final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();

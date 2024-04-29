@@ -38,9 +38,12 @@ double toDouble(dynamic value) {
   }
 }
 
-String? numberValidator(String? value) {
-  if (value == null || value.isEmpty) {
+String? numberValidator(String? value, {bool canBeEmpty = false}) {
+  if (value == null || (!canBeEmpty && value.isEmpty)) {
     return "Required Field";
+  }
+  if (canBeEmpty && value.isEmpty) {
+    return null;
   }
   try {
     double.parse(value);

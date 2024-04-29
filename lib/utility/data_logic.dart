@@ -1,9 +1,9 @@
-
-
 import 'package:collection/collection.dart';
 
 import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
+
+// import "dart:developer" as devtools show log;
 
 enum ErrorType {
   none,
@@ -59,7 +59,7 @@ double convertBetweenProducts({
   // convert ingredient to a common unit
   if (possibleUnitsIngred.contains(targetUnit)) {
     // direct conversion
-    return convertToUnit(
+    return convertIngredientToProductUnit(
       targetUnit,
       ingrProd.densityConversion,
       ingrProd.quantityConversion,
@@ -71,14 +71,14 @@ double convertBetweenProducts({
     if (commonUnits.isEmpty) return double.nan;
     var commonUnit = commonUnits.first;
     // convert ingredient to common unit
-    var commonAmount = convertToUnit(
+    var commonAmount = convertIngredientToProductUnit(
       commonUnit,
       ingrProd.densityConversion,
       ingrProd.quantityConversion,
       ingredient,
     );
     // convert to target unit
-    return convertToUnit(
+    return convertIngredientToProductUnit(
       targetUnit,
       conversion1,
       conversion2,
@@ -89,7 +89,11 @@ double convertBetweenProducts({
 
 List<Unit> getConvertibleUnits(Unit targetUnit, Conversion densityConversion, Conversion quantityConversion) {
   List<Unit> possibleUnits = [];
-  if (targetUnit != Unit.quantity) possibleUnits.add(targetUnit);
+  if (volumetricUnits.contains(targetUnit)) {
+    possibleUnits.addAll(volumetricUnits);
+  } else if (weightUnits.contains(targetUnit)) {
+    possibleUnits.addAll(weightUnits);
+  }
   if (densityConversion.enabled) {
     possibleUnits.addAll(volumetricUnits);
     possibleUnits.addAll(weightUnits);
@@ -105,51 +109,72 @@ List<Unit> getConvertibleUnits(Unit targetUnit, Conversion densityConversion, Co
   return possibleUnits;
 }
 
-double convertToUnit(
-  Unit productUnit,
+double convertIngredientToProductUnit(
+  Unit targetUnit,
   Conversion densityConversion,
   Conversion quantityConversion,
   ProductQuantity ingredient,
+) => convertToUnit(
+  targetUnit,
+  ingredient.unit,
+  ingredient.amount,
+  densityConversion,
+  quantityConversion,
+);
+
+double convertToUnit(
+  Unit targetUnit,
+  Unit unit,
+  double amount,
+  Conversion densityConversion,
+  Conversion quantityConversion,
+  {bool enableTargetQuantity = false}
 ) {
-  var typeIngr = unitTypes[ingredient.unit];
-  var typeProd = unitTypes[productUnit];
+  var typePrev = unitTypes[unit];
+  var typeTarg = unitTypes[targetUnit];
   
-  if (typeProd == UnitType.quantity) return double.nan;
-  
-  if (typeIngr == UnitType.quantity) {
+  if (typeTarg == UnitType.quantity) {
+    if (!enableTargetQuantity) return double.nan;
     // convert using quantity conversion
     if (quantityConversion.enabled) {
-      var newUnit = quantityConversion.unit2;
-      var newAmount = ingredient.amount * quantityConversion.amount2 / quantityConversion.amount1;
-      ingredient = ProductQuantity(productId: ingredient.productId, amount: newAmount, unit: newUnit);
-      typeIngr = unitTypes[newUnit];
+      targetUnit = quantityConversion.unit2;
+      amount *= quantityConversion.amount1 / quantityConversion.amount2;
     } else {
       return double.nan;
     }
   }
-  // At this point, the ingredient unit is not a quantity unit
+  
+  if (typePrev == UnitType.quantity) {
+    // convert using quantity conversion
+    if (quantityConversion.enabled) {
+      unit = quantityConversion.unit2;
+      amount *= quantityConversion.amount2 / quantityConversion.amount1;
+      typePrev = unitTypes[unit];
+    } else {
+      return double.nan;
+    }
+  }
+  // At this point, the unit is not a quantity unit
   // If the product type is different, try to use the density conversion
-  if (typeIngr != typeProd) {
+  if (typePrev != typeTarg) {
     if (densityConversion.enabled) {
-      if (typeIngr == UnitType.volumetric) {
+      if (typePrev == UnitType.volumetric) {
         // use the density conversion to convert the volumetric unit to the weight unit
-        var newUnit = densityConversion.unit2;
-        var newAmount = ingredient.amount * densityConversion.amount2 / densityConversion.amount1;
-        ingredient = ProductQuantity(productId: ingredient.productId, amount: newAmount, unit: newUnit);
-        typeIngr = unitTypes[newUnit];
+        unit = densityConversion.unit2;
+        amount *= densityConversion.amount2 / densityConversion.amount1;
+        typePrev = unitTypes[unit];
       } else {
         // use the density conversion in reverse
-        var newUnit = densityConversion.unit1;
-        var newAmount = ingredient.amount * densityConversion.amount1 / densityConversion.amount2;
-        ingredient = ProductQuantity(productId: ingredient.productId, amount: newAmount, unit: newUnit);
-        typeIngr = unitTypes[newUnit];
+        unit = densityConversion.unit1;
+        amount *= densityConversion.amount1 / densityConversion.amount2;
+        typePrev = unitTypes[unit];
       }
     } else {
       return double.nan;
     }
   }
-  // At this point, the ingredient unit is the same as the product unit
-  return ingredient.amount * unitTypeFactors[ingredient.unit]! / unitTypeFactors[productUnit]!;
+  // At this point, the unit is the same as the product unit
+  return amount * unitTypeFactors[unit]! / unitTypeFactors[targetUnit]!;
 }
 
 bool conversionToUnitPossible(
@@ -167,27 +192,11 @@ bool conversionToUnitPossible(
   
   return convertToUnit(
     unit1,
+    unit2,
+    1,
     densityConversion,
     quantityConversion,
-    ProductQuantity(productId: null, amount: 1, unit: unit2),
   ).isFinite;
-}
-
-double calcResultingAmount(
-  List<(ProductQuantity, Product?)> ingredientsWithProducts,
-  Unit productUnit,
-  Conversion densityConversion,
-  Conversion quantityConversion,
-) {
-  List<double>? amounts = ingredientsWithProducts.map((pair) => convertBetweenProducts(
-    targetUnit: productUnit,
-    conversion1: densityConversion,
-    conversion2: quantityConversion,
-    ingredient: pair.$1,
-    ingrProd: pair.$2,
-  )).toList();
-  // sum up all non-NaN amounts to get the resulting amount
-  return amounts.where((amount) => !amount.isNaN).fold(0.0, (prev, amount) => prev + amount);
 }
 
 (ErrorType, String?) validateAmount(
@@ -202,10 +211,11 @@ double calcResultingAmount(
   ErrorType errorType = ErrorType.none;
   String? errorMsg;
   
-  if (unit == Unit.quantity && autoCalc) {
-    errorMsg = "Auto calculation is not possible with quantity units";
-    errorType = ErrorType.error;
-  } else if (!conversionToUnitPossible(unit, defUnit, densityConversion, quantityConversion)) {
+  // if (unit == Unit.quantity && autoCalc) {
+  //   errorMsg = "Auto calculation is not possible with quantity units";
+  //   errorType = ErrorType.error;
+  // } else 
+  if (unit != defUnit && !conversionToUnitPossible(unit, defUnit, densityConversion, quantityConversion)) {
     errorMsg = "A conversion to the default unit (${unitToString(defUnit)}) is not possible";
     errorType = isEmpty ? ErrorType.warning : ErrorType.error;
   } else if (errorType != ErrorType.error && !isEmpty && amount == 0) {
@@ -243,21 +253,18 @@ List<Product> recalcProductNutrients(Product product, List<Product> products, Ma
   var updatedProducts = <Product>[];
   for (var level in dependenceLevels) {
     for (var updateProduct in level) {
-      var updatedProduct = calcProductNutrients(updateProduct, alteredProductsMap);
-      if (updatedProduct.id != updateProduct.id) {
-        updatedProducts.add(updatedProduct);
-      }
+      var updatedProduct = updateProductNutrients(updateProduct, alteredProductsMap);
+      updatedProducts.add(updatedProduct);
       alteredProductsMap[updateProduct.id] = updatedProduct;
     }
   }
   return updatedProducts;
 }
 
-Product calcProductNutrients(Product product, Map<int, Product> productsMap) {
-  List<ProductQuantity>? ingredients;
+Product updateProductNutrients(Product product, Map<int, Product> productsMap) {
   // calc the resulting amount of the product
   if (product.autoCalc) {
-    ingredients ??= product.ingredients;
+    var ingredients = product.ingredients;
     List<(ProductQuantity, Product?)> ingredientsWithProducts = [];
     for (var ingredient in ingredients) {
       ingredientsWithProducts.add((ingredient, productsMap[ingredient.productId]));
@@ -267,34 +274,84 @@ Product calcProductNutrients(Product product, Map<int, Product> productsMap) {
       product.ingredientsUnit,
       product.densityConversion,
       product.quantityConversion,
-    );
+    ).$1;
   }
+  
   // calc the nutrients for the product
-  for (var nutrient in product.nutrients) {
+  product.nutrients = calcNutrients(
+    nutrients: product.nutrients,
+    ingredients: product.ingredients,
+    productsMap: productsMap,
+    ingredientsUnit: product.ingredientsUnit,
+    nutrientsUnit: product.nutrientsUnit,
+    densityConversion: product.densityConversion,
+    quantityConversion: product.quantityConversion,
+    amountForIngredients: product.amountForIngredients,
+    amountForNutrients: product.amountForNutrients,
+  ).$1;
+  
+  return product;
+}
+
+(List<ProductNutrient>, List<bool>) calcNutrients({
+  required List<ProductNutrient> nutrients,
+  required List<ProductQuantity> ingredients,
+  required Map<int, Product> productsMap,
+  required Unit ingredientsUnit,
+  required Unit nutrientsUnit,
+  required Conversion densityConversion,
+  required Conversion quantityConversion,
+  required double amountForIngredients,
+  required double amountForNutrients,
+}) {
+  // create a list of booleans that indicate which ingredients were converted successfully
+  var convertedIngredients = List.filled(ingredients.length, true);
+  // calc the nutrients for the product
+  for (var nutrient in nutrients) {
     if (!nutrient.autoCalc) continue;
     var value = 0.0;
-    ingredients ??= product.ingredients;
     // add up the nutrients of all ingredients
-    for (var ingredient in ingredients) {
-      var ingrProd = productsMap[ingredient.productId]!;
-      var ingrNutr = ingrProd.nutrients.firstWhere((n) => n.nutritionalValueId == nutrient.nutritionalValueId);
-      value +=
-          ingrNutr.value
-        * ingredient.amount
-        * convertToUnit(ingredient.unit, ingrProd.densityConversion, ingrProd.quantityConversion, ingredient);
+    for (var i = 0; i < ingredients.length; i++) {
+      var ingredient = ingredients[i];
+      if (!convertedIngredients[i]) continue;
+      // try {
+        var ingrProd = productsMap[ingredient.productId]!;
+        var ingrNutr = ingrProd.nutrients.firstWhere((n) => n.nutritionalValueId == nutrient.nutritionalValueId);
+        // convert from ingredients nutrients unit to ingredient used
+        var valuePerIngrNutrUnit = ingrNutr.value / ingrProd.amountForNutrients;
+        var valueForIngrUsed = convertToUnit(ingrProd.nutrientsUnit, ingredient.unit, valuePerIngrNutrUnit, ingrProd.densityConversion, ingrProd.quantityConversion) * ingredient.amount;
+        // convert between products
+        var valuePerProdIngrUnit = valueForIngrUsed / amountForIngredients;
+        value += valuePerProdIngrUnit;
+      // } catch (e) {
+      //   devtools.log("Error while calculating nutrients: $e");
+      //   convertedIngredients[i] = false;
+      // }
     }
     // convert from the ingredients amount to nutrients amount
-    value = convertBetweenProducts(
-      targetUnit: product.nutrientsUnit,
-      conversion1: product.densityConversion,
-      conversion2: product.quantityConversion,
-      ingredient: ProductQuantity(productId: product.id, amount: value, unit: product.ingredientsUnit),
-      ingrProd: product,
-    ) / product.amountForIngredients * product.amountForNutrients;
+    value = convertToUnit(ingredientsUnit, nutrientsUnit, value, densityConversion, quantityConversion) * amountForNutrients;
     nutrient.value = value;
   }
   
-  return product;
+  return (nutrients, convertedIngredients);
+}
+
+(double, List<double>) calcResultingAmount(
+  List<(ProductQuantity, Product?)> ingredientsWithProducts,
+  Unit productUnit,
+  Conversion densityConversion,
+  Conversion quantityConversion,
+) {
+  List<double>? amounts = ingredientsWithProducts.map((pair) => convertBetweenProducts(
+    targetUnit: productUnit,
+    conversion1: densityConversion,
+    conversion2: quantityConversion,
+    ingredient: pair.$1,
+    ingrProd: pair.$2,
+  )).toList();
+  // sum up all non-NaN amounts to get the resulting amount
+  var resAmount = amounts.where((amount) => !amount.isNaN).fold(0.0, (prev, amount) => prev + amount);
+  return (resAmount, amounts);
 }
 
 // remove the product itself and all ingredient products from the map

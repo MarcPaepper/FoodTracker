@@ -81,10 +81,10 @@ const productNutrientColumns = [
 
 final defaultNutritionalValues = [
   NutritionalValue(0, 0, "Calories", "kcal", false),
-  NutritionalValue(1, 1, "Protein", "g", true),
-  NutritionalValue(2, 2, "Carbohydrates", "g", true),
-  NutritionalValue(3, 3, "Fat", "g", true),
-  NutritionalValue(4, 4, "Fiber", "g", true),
-  NutritionalValue(5, 5, "Sugar", "g", true),
+  NutritionalValue(1, 1, "Fat", "g", true),
+  NutritionalValue(2, 2, "Saturated Fat", "g", true),
+  NutritionalValue(3, 3, "Carbohydrates", "g", true),
+  NutritionalValue(4, 4, "Sugar", "g", true),
+  NutritionalValue(5, 5, "Protein", "g", true),
   NutritionalValue(6, 6, "Salt", "g", true),
 ];
