@@ -375,24 +375,28 @@ List<ProductNutrient> checkNutrients(
   List<ProductNutrient> checkList,
   List<NutritionalValue> nutritionalValues
 ) {
-  var checkMap = { for (var pN in checkList) pN : false }; // true if the nutrient is correct
+  // var checkMap = { for (var pN in checkList) pN : false }; // true if the nutrient is correct
+  var newList = <ProductNutrient>[];
   for (var nutValue in nutritionalValues) {
     var nId = nutValue.id;
     var checkNut = checkList.firstWhereOrNull((n) => n.nutritionalValueId == nId);
     if (checkNut == null) {
       // create a new nutrient
-      checkNut = ProductNutrient(
+      newList.add(ProductNutrient(
         productId: productId,
         nutritionalValueId: nId,
         autoCalc: true,
         value: 0,
-      );
-      checkMap[checkNut] = true;
+      ));
     } else {
-      checkMap[checkNut] = true;
+      newList.add(ProductNutrient(
+        productId: productId,
+        nutritionalValueId: nId,
+        autoCalc: checkNut.autoCalc,
+        value: checkNut.value,
+      ));
     }
   }
   
-  // return all nutrients that are correct
-  return checkMap.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
+  return newList;
 }

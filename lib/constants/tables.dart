@@ -1,9 +1,10 @@
 import 'package:food_tracker/services/data/data_objects.dart';
+import 'package:sqflite/sqflite.dart';
 
 const createProductTable = '''
 CREATE TABLE IF NOT EXISTS "product" (
-	"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-	"name"	TEXT NOT NULL UNIQUE,
+	"id"	INTEGER,
+	"name"	TEXT,
 	"density_conversion"	TEXT,
 	"quantity_conversion"	TEXT,
 	"quantity_name"	TEXT,
@@ -17,25 +18,25 @@ CREATE TABLE IF NOT EXISTS "product" (
 ''';
 const createNutritionalValueTable = '''
 CREATE TABLE IF NOT EXISTS "nutritional_value" (
-	"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-	"name"	TEXT NOT NULL UNIQUE,
-	"unit"	TEXT NOT NULL
+	"id"	INTEGER,
+	"name"	TEXT,
+	"unit"	TEXT
 );
 ''';
 const createIngredientTable = '''
 CREATE TABLE "ingredient" (
-	"ingredient_id"	INTEGER NOT NULL,
-	"is_contained_in_id"	INTEGER NOT NULL,
-	"amount"	INTEGER NOT NULL,
-	"unit"	TEXT NOT NULL,
+	"ingredient_id"	INTEGER,
+	"is_contained_in_id"	INTEGER,
+	"amount"	INTEGER,
+	"unit"	TEXT,
 	FOREIGN KEY("is_contained_in_id") REFERENCES "product"("id")
 );
 ''';
 const createProductNutrientTable = '''
 CREATE TABLE "product_nutrient" (
-	"nutritional_value_id"	INTEGER NOT NULL,
-	"product_id"	INTEGER NOT NULL,
-	"auto_calc"	INTEGER NOT NULL,
+	"nutritional_value_id"	INTEGER,
+	"product_id"	INTEGER,
+	"auto_calc"	INTEGER,
 	"value"	INTEGER
 );
 ''';
@@ -46,8 +47,8 @@ const ingredientTableName = "ingredient";
 const productNutrientTableName = "product_nutrient";
 
 const productColumns = [
-  '"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE',
-  '"name" TEXT NOT NULL UNIQUE',
+  '"id" INTEGER',
+  '"name" TEXT',
   '"density_conversion" TEXT',
   '"quantity_conversion" TEXT',
   '"quantity_name" TEXT',
@@ -58,24 +59,24 @@ const productColumns = [
 ];
 
 const nutritionalValueColumns = [
-  '"id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE',
-  '"name" TEXT NOT NULL UNIQUE',
-  '"unit" TEXT NOT NULL',
-  '"order_id"	INTEGER NOT NULL UNIQUE',
-  '"show_full_name"	INTEGER NOT NULL,',
+  '"id" INTEGER',
+  '"name" TEXT',
+  '"unit" TEXT',
+  '"order_id"	INTEGER',
+  '"show_full_name"	INTEGER,',
 ];
 
 const ingredientColumns = [
-  '"ingredient_id" INTEGER NOT NULL',
-  '"is_contained_in_id" INTEGER NOT NULL',
-  '"amount" INTEGER NOT NULL',
-  '"unit" TEXT NOT NULL',
+  '"ingredient_id" INTEGER',
+  '"is_contained_in_id" INTEGER',
+  '"amount" INTEGER',
+  '"unit" TEXT',
 ];
 
 const productNutrientColumns = [
-  '"nutritional_value_id" INTEGER NOT NULL',
-  '"product_id" INTEGER NOT NULL',
-  '"auto_calc" INTEGER NOT NULL',
+  '"nutritional_value_id" INTEGER',
+  '"product_id" INTEGER',
+  '"auto_calc" INTEGER',
   '"value" INTEGER',
 ];
 

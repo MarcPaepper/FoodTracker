@@ -162,6 +162,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               
               Map<int, Product>? productsMap;
               
+              // if data has loaded
               if (snapshotN.hasData && snapshotP.hasData) {
                 _loaded = true;
                 
@@ -991,15 +992,21 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     hintText: roundDouble(nutrient.value),
                     onChangedAndParsed: (value) {
                       nutrient.value = value;
+                      nutrient.autoCalc = false;
+                      _nutrientsNotifier.value = List.from(nutrients);
+                    },
+                    onEmptied: () {
+                      nutrient.autoCalc = true;
                       _nutrientsNotifier.value = List.from(nutrients);
                     },
                     padding: 0,
-                    borderColor: nutrient.autoCalc ? const Color.fromARGB(181, 56, 141, 211) : null,
+                    borderColor: nutrient.autoCalc ? const Color.fromARGB(181, 56, 141, 211) : null,//Color.fromARGB(197, 76, 129, 124),
                     fillColor: nutrient.autoCalc   ? const Color.fromARGB(44, 155, 186, 245) : null,
                     hintColor: nutrient.autoCalc   ? const Color.fromARGB(174, 18, 83, 136)  : null,
                   ),
                 ),
               ),
+              // Text for the nutrient name
               Text(
                 "${nutValue.unit} ${nutValue.showFullName ? nutValue.name : ""}",
                 style: const TextStyle(

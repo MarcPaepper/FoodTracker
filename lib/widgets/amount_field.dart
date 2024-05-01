@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/merge_input_decoration.dart';
 import '../utility/text_logic.dart';
@@ -13,6 +15,7 @@ class AmountField extends StatelessWidget {
   final bool enabled;
   final bool canBeEmpty;
   final Function(double)? onChangedAndParsed;
+  final Function()? onEmptied;
   final double? padding;
   final String? hintText;
   final Color? borderColor;
@@ -24,6 +27,7 @@ class AmountField extends StatelessWidget {
     this.focusNode,
     this.enabled = true,
     this.onChangedAndParsed,
+    this.onEmptied,
     this.padding,
     this.hintText,
     this.canBeEmpty = false,
@@ -75,7 +79,11 @@ class AmountField extends StatelessWidget {
           validator: (String? value) => enabled ? numberValidator(value, canBeEmpty: canBeEmpty) : null,
           autovalidateMode: AutovalidateMode.always,
           onChanged: (String? value) {
-            if (value != null && value.isNotEmpty) {
+            if (value == null) return;
+            else if (value.isEmpty && onEmptied != null) {
+              onEmptied!();
+            }
+            else if (value.isNotEmpty) {
               try {
                 value = value.replaceAll(",", ".");
                 var cursorPos = controller.selection.baseOffset;

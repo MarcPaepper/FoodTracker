@@ -128,10 +128,13 @@ class SqfliteDataProvider implements DataProvider {
           }
         } else {
           // Check whether the table has all columns
-          var tableColumns = await _db!.query(entry.key);
-          var columnNames = tableColumns.first.keys;
+          var existingTableColumns = await _db!.query(entry.key);
+          var existingColumnNames = existingTableColumns.first.keys;
           for (var column in columns) {
-            if (!columnNames.contains(column)) {
+            // Extract column name from the string
+            var columnName = column.split(" ")[0].replaceAll('"', '');
+            
+            if (!existingColumnNames.contains(columnName)) {
               devtools.log("Adding column $column to table ${entry.key}");
               await _db!.execute("ALTER TABLE ${entry.key} ADD COLUMN $column");
             }

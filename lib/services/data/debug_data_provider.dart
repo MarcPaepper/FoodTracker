@@ -104,13 +104,13 @@ class DebugDataProvider implements DataProvider {
             nutrientsUnit: Unit.g,
             ingredients: [],
             nutrients: [
-              quickNutri(0, 0, 0), // kcal
-              quickNutri(0, 1, 0), // fat
-              quickNutri(0, 2, 0), // saturated fat
-              quickNutri(0, 3, 0), // carbohydrates
-              quickNutri(0, 4, 0), // sugar
-              quickNutri(0, 5, 20), // protein
-              quickNutri(0, 6, 0), // salt
+              quickNutri(1, 0, 0), // kcal
+              quickNutri(1, 1, 0), // fat
+              quickNutri(1, 2, 0), // saturated fat
+              quickNutri(1, 3, 0), // carbohydrates
+              quickNutri(1, 4, 0), // sugar
+              quickNutri(1, 5, 20), // protein
+              quickNutri(1, 6, 0), // salt
             ],
           ));
         
@@ -142,13 +142,13 @@ class DebugDataProvider implements DataProvider {
             nutrientsUnit: Unit.kg,
             ingredients: [],
             nutrients: [
-              quickNutri(0, 0, 0), // kcal
-              quickNutri(0, 1, 0), // fat
-              quickNutri(0, 2, 0), // saturated fat
-              quickNutri(0, 3, 200), // carbohydrates
-              quickNutri(0, 4, 100), // sugar
-              quickNutri(0, 5, 0), // protein
-              quickNutri(0, 6, 0), // salt
+              quickNutri(2, 0, 0), // kcal
+              quickNutri(2, 1, 0), // fat
+              quickNutri(2, 2, 0), // saturated fat
+              quickNutri(2, 3, 200), // carbohydrates
+              quickNutri(2, 4, 100), // sugar
+              quickNutri(2, 5, 0), // protein
+              quickNutri(2, 6, 0), // salt
             ],
           ));
         
@@ -180,13 +180,13 @@ class DebugDataProvider implements DataProvider {
             nutrientsUnit: Unit.g,
             ingredients: [],
             nutrients: [
-              quickNutri(0, 0, 0), // kcal
-              quickNutri(0, 1, 0), // fat
-              quickNutri(0, 2, 0), // saturated fat
-              quickNutri(0, 3, 0), // carbohydrates
-              quickNutri(0, 4, 0), // sugar
-              quickNutri(0, 5, 20), // protein
-              quickNutri(0, 6, 0), // salt
+              quickNutri(3, 0, 0), // kcal
+              quickNutri(3, 1, 0), // fat
+              quickNutri(3, 2, 0), // saturated fat
+              quickNutri(3, 3, 0), // carbohydrates
+              quickNutri(3, 4, 0), // sugar
+              quickNutri(3, 5, 20), // protein
+              quickNutri(3, 6, 0), // salt
             ],
           ));
         
@@ -244,7 +244,7 @@ class DebugDataProvider implements DataProvider {
   
   ProductNutrient quickNutri(int prodId, int nutId, double value) => ProductNutrient(
     productId: prodId,
-    autoCalc: false,
+    autoCalc: value == 0,
     value: value,
     nutritionalValueId: nutId
   );

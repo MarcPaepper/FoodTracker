@@ -388,7 +388,7 @@ class NutritionalValue {
 class ProductNutrient {
   final int productId;
   final int nutritionalValueId;
-  final bool autoCalc;
+  bool autoCalc;
   double value;
   
   ProductNutrient({
@@ -399,7 +399,11 @@ class ProductNutrient {
   });
   
   @override
-  bool operator ==(covariant ProductNutrient other) => productId == other.productId && nutritionalValueId == other.nutritionalValueId;
+  bool operator ==(covariant ProductNutrient other) =>
+      productId == other.productId
+      && nutritionalValueId == other.nutritionalValueId
+      && autoCalc == other.autoCalc
+      && value == other.value;
   
   @override
   int get hashCode => productId.hashCode ^ nutritionalValueId.hashCode;
