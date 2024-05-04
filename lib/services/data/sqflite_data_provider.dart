@@ -72,7 +72,7 @@ class SqfliteDataProvider implements DataProvider {
   // cached data
   List<Product> _products = [];
   Map<int, Product> _productsMap = {};
-  final List<NutritionalValue> _nutritionalValues = [];
+  List<NutritionalValue> _nutritionalValues = [];
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
   final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();
@@ -100,6 +100,8 @@ class SqfliteDataProvider implements DataProvider {
       } else {
         var docsPath = await getApplicationDocumentsDirectory();
         dbPath = join(docsPath.path, dbName);
+        // log
+        devtools.log("Database path: $dbPath");
         // delete file if forceReset
         if (forceReset) {
           try {
@@ -127,14 +129,16 @@ class SqfliteDataProvider implements DataProvider {
             }
           }
         } else {
+          // Extract all columns from table
+          var existingColumnsMap = await _db!.rawQuery("SELECT name FROM PRAGMA_TABLE_INFO('${entry.key}')");
+          var existingColumns = existingColumnsMap.map((e) => e.values.first).toList();
+          
           // Check whether the table has all columns
-          var existingTableColumns = await _db!.query(entry.key);
-          var existingColumnNames = existingTableColumns.first.keys;
           for (var column in columns) {
             // Extract column name from the string
             var columnName = column.split(" ")[0].replaceAll('"', '');
             
-            if (!existingColumnNames.contains(columnName)) {
+            if (!existingColumns.contains(columnName)) {
               devtools.log("Adding column $column to table ${entry.key}");
               await _db!.execute("ALTER TABLE ${entry.key} ADD COLUMN $column");
             }
@@ -142,8 +146,8 @@ class SqfliteDataProvider implements DataProvider {
         }
       }
       
-      getAllProducts();
-      getAllNutritionalValues();
+      await getAllProducts();
+      await getAllNutritionalValues();
       
       return "data loaded";
     } on MissingPlatformDirectoryException {
@@ -218,10 +222,10 @@ class SqfliteDataProvider implements DataProvider {
       quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
       quantityName:          row[quantityNameColumn] as String,
       autoCalc:              row[autoCalcAmountColumn] == 1,
-      amountForIngredients:  toDouble(row[amountForIngredientsColumn]),
-      ingredientsUnit:       unitFromString(row[ingredientsUnitColumn] as String),
-      amountForNutrients:    toDouble(row[amountForNutrientsColumn]),
-      nutrientsUnit:         unitFromString(row[nutrientsUnitColumn] as String),
+      amountForIngredients:  toDouble(row[amountForIngredientsColumn] ?? 100),
+      ingredientsUnit:       unitFromString((row[ingredientsUnitColumn] ?? row[defaultUnitColumn]) as String),
+      amountForNutrients:    toDouble(row[amountForNutrientsColumn] ?? 100),
+      nutrientsUnit:         unitFromString((row[nutrientsUnitColumn] ?? row[defaultUnitColumn]) as String),
       ingredients:           [],
       nutrients:             [],
     );
@@ -362,16 +366,12 @@ class SqfliteDataProvider implements DataProvider {
   Future<Iterable<NutritionalValue>> getAllNutritionalValues() async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    var rows = await _db!.query(nutritionalValueTable);
-    return rows.map((row) => 
-      NutritionalValue(
-        row[idColumn] as int,
-        row[orderIdColumn] as int,
-        row[nameColumn] as String,
-        row[unitNameColumn] as String,
-        row[showFullNameColumn] == 1,
-      )
-    ).toList();
+    var nutValRows = await _db!.query(nutritionalValueTable);
+    _nutritionalValues = nutValRows.map((row) => _dbRowToNutritionalValue(row)).toList();
+    
+    _nutritionalValuesStreamController.add(_nutritionalValues);
+    
+    return _nutritionalValues;
   }
   
   @override
@@ -382,17 +382,21 @@ class SqfliteDataProvider implements DataProvider {
     if (results.isEmpty) throw NotFoundException();
     if (results.length > 1) throw NotUniqueException();
     
-    final row = results.first;
-    final name = row[nameColumn] as String;
-    final orderId = row[orderIdColumn] as int;
-    final unitName = row[unitNameColumn] as String;
-    final showFullName = row[showFullNameColumn] == 1;
-    final nutritionalValue = NutritionalValue(id, orderId, name, unitName, showFullName);
+    var nutritionalValue = _dbRowToNutritionalValue(results.first);
     
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
     return nutritionalValue;
   }
+  
+  NutritionalValue _dbRowToNutritionalValue(Map<String, Object?> row) =>
+    NutritionalValue(
+      row[idColumn] as int,
+      (row[orderIdColumn] ?? row[idColumn]) as int,
+      row[nameColumn] as String,
+      row[unitNameColumn] as String,
+      row[showFullNameColumn] == 1,
+    );
   
   @override
   Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal) async {

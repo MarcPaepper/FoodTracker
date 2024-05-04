@@ -1000,9 +1000,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       _nutrientsNotifier.value = List.from(nutrients);
                     },
                     padding: 0,
-                    borderColor: nutrient.autoCalc ? const Color.fromARGB(181, 56, 141, 211) : null,//Color.fromARGB(197, 76, 129, 124),
-                    fillColor: nutrient.autoCalc   ? const Color.fromARGB(44, 155, 186, 245) : null,
-                    hintColor: nutrient.autoCalc   ? const Color.fromARGB(174, 18, 83, 136)  : null,
+                    borderColor: nutrient.autoCalc ? const Color.fromARGB(181,  56, 141, 211) : null,//Color.fromARGB(197, 76, 129, 124),
+                    fillColor: nutrient.autoCalc   ? const Color.fromARGB( 44, 155, 186, 245) : null,
+                    hintColor: nutrient.autoCalc   ? const Color.fromARGB(174,  18,  83, 136)  : null,
                   ),
                 ),
               ),

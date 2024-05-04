@@ -56,14 +56,16 @@ const productColumns = [
   '"auto_calc_amount" INTEGER',
   '"amount_for_ingredients" INTEGER',
   '"ingredients_unit" TEXT',
+  '"amount_for_nutrients" INTEGER',
+  '"ingredient_unit" TEXT',
 ];
 
 const nutritionalValueColumns = [
   '"id" INTEGER',
   '"name" TEXT',
   '"unit" TEXT',
-  '"order_id"	INTEGER',
-  '"show_full_name"	INTEGER,',
+  '"order_id" INTEGER',
+  '"show_full_name" INTEGER',
 ];
 
 const ingredientColumns = [
