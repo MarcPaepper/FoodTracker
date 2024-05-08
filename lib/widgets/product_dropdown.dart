@@ -49,7 +49,6 @@ class _ProductDropdownState extends State<ProductDropdown> {
   @override
   void dispose() {
     super.dispose();
-    _focusNode?.dispose();
   }
   
   @override

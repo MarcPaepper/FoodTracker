@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+
+// import 'dart:developer' as devtools show log;
   
 List<TextSpan> highlightOccurrences(String source, List<String> search) {
   var spans = <TextSpan>[];

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/product_dropdown.dart';
@@ -78,7 +76,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   final _ingredientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
   final _ingredientsNotifier = ValueNotifier<List<ProductQuantity>>([]);
   
-  final _amountForNutrientsNotifier = ValueNotifier<double>(0);
+  final _nutrientAmountNotifier = ValueNotifier<double>(0);
   final _nutrientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
   final _nutrientsNotifier = ValueNotifier<List<ProductNutrient>>([]);
   
@@ -138,7 +136,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _ingredientsNotifier.dispose();
     _isDuplicateNotifier.dispose();
     _circRefNotifier.dispose();
-    _amountForNutrientsNotifier.dispose();
+    _nutrientAmountNotifier.dispose();
     _nutrientsUnitNotifier.dispose();
     _nutrientsNotifier.dispose();
     super.dispose();
@@ -211,22 +209,27 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
                 _ingredientsNotifier.value = List.from(copyProduct.ingredients);
                 _nutrientsUnitNotifier.value = copyProduct.nutrientsUnit;
-                _amountForNutrientsNotifier.value = copyProduct.amountForNutrients;
+                _nutrientAmountNotifier.value = copyProduct.amountForNutrients;
                 
-                _resultingAmountController.text = copyProduct.amountForIngredients.toString();
+                _resultingAmountController.text = truncateZeros(copyProduct.amountForIngredients);
                 _resultingAmountNotifier.value = copyProduct.amountForIngredients;
+                
+                devtools.log("initializing EditProductView");
                 
                 // populate ingredient amount controllers
                 _ingredientAmountControllers.clear();
                 for (var ingredient in copyProduct.ingredients) {
                   var controller = TextEditingController();
-                  controller.text = ingredient.amount.toString();
+                  controller.text = truncateZeros(ingredient.amount);
                   _ingredientAmountControllers.add(controller);
                 }
                 
+                // Populate focus nodes
+                _ingredientDropdownFocusNodes = List.generate(copyProduct.ingredients.length, (index) => FocusNode());
+                _ingredientAmountFocusNodes = List.generate(copyProduct.ingredients.length, (index) => FocusNode());
+                
                 // calculate nutrients
                 
-                // measure the time it takes to calculate the nutrients
                 _nutrientsNotifier.value = calcNutrients(
                   nutrients: copyNutrients,
                   ingredients: copyProduct.ingredients,
@@ -243,7 +246,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 _nutrientAmountControllers.clear();
                 for (var nutrient in copyNutrients) {
                   var controller = TextEditingController();
-                  if (!nutrient.autoCalc) controller.text = nutrient.value.toString();
+                  if (!nutrient.autoCalc) controller.text = truncateZeros(nutrient.value);
                   _nutrientAmountControllers.add(controller);
                 }
               }
@@ -324,7 +327,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       return;
     }
     
-    bool willPop = await showContinueWithoutSavingDialog(context);
+    bool willPop = await showContinueWithoutSavingDialog(context) == true;
     
     if (willPop) {
       Future(() => navigator.pop(product));
@@ -820,7 +823,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   Widget _buildNutrientBox(List<NutritionalValue> nutValues, Map<int, Product> productsMap) {
     return MultiValueListenableBuilder(
       listenables: [
-        _amountForNutrientsNotifier,
+        _nutrientAmountNotifier,
         _nutrientsUnitNotifier,
         _nutrientsNotifier,
         _defaultUnitNotifier,
@@ -860,7 +863,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         // if any value differs, update the nutrient values
         for (var i = 0; i < valueNutrients.length; i++) {
           if (valueNutrients[i].value != updatedNutrients[i].value) {
-            devtools.log("updated nutrients");
             _nutrientsNotifier.value = updatedNutrients;
             break;
           }
@@ -913,7 +915,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         padding: const EdgeInsets.only(right: 12),
                         child: AmountField(
                           controller: _nutrientAmountController,
-                          onChangedAndParsed: (value) => _amountForNutrientsNotifier.value = value,
+                          onChangedAndParsed: (value) => _nutrientAmountNotifier.value = value,
                           padding: 0,
                         )
                       ),
@@ -1043,7 +1045,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         var valueQuantityConversion = values[7] as Conversion;
         var valueResultingAmount    = values[8] as double;
         
-        var productName = valueName.text != "" ? "'${valueName.text}'" : "  the product";
+        var productName = valueName.text != "" ? "'${valueName.text}'" : " the product";
         List<(ProductQuantity, Product?)> ingredientsWithProducts = [];
         for (var ingredient in valueIngredients) {
           ingredientsWithProducts.add((ingredient, productsMap[ingredient.productId]));
@@ -1139,7 +1141,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 child: Row(
                   children: [
                     Padding( // resulting ingredient amount field
-                      padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 12),
+                      padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 10),
                       child: valueAutoCalc ? 
                         Text(
                           valueResultingAmount.isNaN ? "NaN" : roundDouble(valueResultingAmount),
@@ -1149,7 +1151,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           )
                         )
                         : SizedBox(
-                          width: 70,
+                          width: 80,
                           child: AmountField(
                             controller: _resultingAmountController,
                             enabled: !valueAutoCalc,
@@ -1253,6 +1255,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     _ingredientAmountFocusNodes = List.generate(ingredients.length, (_) => FocusNode());
     _ingredientDropdownFocusNodes = List.generate(ingredients.length, (_) => FocusNode());
+    devtools.log("ingredients ${ingredients.length}, focus nodes ${_ingredientAmountFocusNodes.length}");
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
@@ -1350,15 +1353,22 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                             child: Focus(
                               onFocusChange: (value) {
                                 if (!value) return;
+                                var count = 0;
                                 for (var node in _ingredientAmountFocusNodes) {
                                   if (node != focusNode2) {
                                     node.unfocus();
-                                    // unfocus after built
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    // unfocus after 20 ms
+                                    Future.delayed(const Duration(milliseconds: 20), () {
                                       node.unfocus();
                                     });
+                                    count++;
+                                  }
+                                  if (count > 0) {
+                                    devtools.log("Unfocused $count nodes");
                                   }
                                 }
+                                // unfocus everthing else
+                                FocusScope.of(context).unfocus();
                               },
                               child: AmountField(
                                 controller: _ingredientAmountControllers[index],
@@ -1435,7 +1445,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                   icon: const Icon(Icons.delete),
                   onPressed: () {
                     ingredients.removeAt(index);
-                    _ingredientAmountControllers.removeAt(index).dispose();
+                    _ingredientAmountControllers.removeAt(index);
+                    // _ingredientAmountFocusNodes.removeAt(index);
+                    // _ingredientDropdownFocusNodes.removeAt(index);
                     _ingredientsNotifier.value = List.from(ingredients);
                   },
                 ),
@@ -1491,14 +1503,18 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 amount: amount,
                 unit: product.defaultUnit,
               ));
-              _ingredientsNotifier.value = List.from(ingredients);
               var newController = TextEditingController();
-              newController.text = amount.toString();
+              newController.text = truncateZeros(amount);
               _ingredientAmountControllers.add(newController);
-              // request focus for the amount field
-              Future.delayed(const Duration(milliseconds: 25), () {
-                _requestIngredientFocus(ingredients.length - 1, 1);
-              });
+              // add focus nodes
+              // _ingredientAmountFocusNodes.add(FocusNode());
+              // _ingredientDropdownFocusNodes.add(FocusNode());
+              _ingredientsNotifier.value = List.from(ingredients);
+              _requestIngredientFocus(ingredients.length - 1, 1);
+              // Future.delayed(const Duration(milliseconds: 50), () => _requestIngredientFocus(ingredients.length - 1, 1));
+              // Future.delayed(const Duration(milliseconds: 100), () => _requestIngredientFocus(ingredients.length - 1, 1));
+              // Future.delayed(const Duration(milliseconds: 10), () => _requestIngredientFocus(ingredients.length - 1, 1));
+              // Future.delayed(const Duration(milliseconds: 150), () => _requestIngredientFocus(ingredients.length - 1, 1));
             }
           },
           beforeAdd: () {
@@ -1543,14 +1559,19 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   );
   
   void _requestIngredientFocus(int index, int subIndex) {
-    if (index < _ingredientDropdownFocusNodes.length) {
-      if (subIndex == 0) {
-        // If sub index = 0, focus the product dropdown
-        _ingredientDropdownFocusNodes[index].requestFocus();
-      } else {
-        // If sub index = 1, focus the amount field
-        _ingredientAmountFocusNodes[index].requestFocus();
+    try {
+      if (index < _ingredientDropdownFocusNodes.length) {
+        if (subIndex == 0) {
+          // If sub index = 0, focus the product dropdown
+          _ingredientDropdownFocusNodes[index].requestFocus();
+        } else {
+          // If sub index = 1, focus the amount field
+          devtools.log("Focus on amount field $index of ${_ingredientAmountFocusNodes.length}");
+          // _ingredientAmountFocusNodes[index].requestFocus();
+        }
       }
+    } catch (e) {
+      devtools.log("Error focusing ingredient $index: $e");
     }
   }
   
@@ -1564,7 +1585,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     final resultingAmount = _resultingAmountNotifier.value;
     final ingredientsUnit = _ingredientsUnitNotifier.value;
     final ingredients = _ingredientsNotifier.value;
-    final amountForNutrients = _amountForNutrientsNotifier.value;
+    final amountForNutrients = _nutrientAmountNotifier.value;
     final nutrientsUnit = _nutrientsUnitNotifier.value;
     final nutrients = _nutrientsNotifier.value;
     

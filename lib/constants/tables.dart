@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS "product" (
 	"amount_for_ingredients"	INTEGER,
 	"ingredients_unit"	TEXT,
 	"amount_for_nutrients"	INTEGER,
-	"ingredient_unit"	TEXT
+	"nutrients_unit"	TEXT
 );
 ''';
 const createNutritionalValueTable = '''
@@ -57,7 +57,7 @@ const productColumns = [
   '"amount_for_ingredients" INTEGER',
   '"ingredients_unit" TEXT',
   '"amount_for_nutrients" INTEGER',
-  '"ingredient_unit" TEXT',
+  '"nutrients_unit" TEXT',
 ];
 
 const nutritionalValueColumns = [

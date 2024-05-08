@@ -3,7 +3,7 @@ import 'package:collection/collection.dart';
 import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 
-// import "dart:developer" as devtools show log;
+import "dart:developer" as devtools show log;
 
 enum ErrorType {
   none,
@@ -314,7 +314,7 @@ Product updateProductNutrients(Product product, Map<int, Product> productsMap) {
     for (var i = 0; i < ingredients.length; i++) {
       var ingredient = ingredients[i];
       if (!convertedIngredients[i]) continue;
-      // try {
+      try {
         var ingrProd = productsMap[ingredient.productId]!;
         var ingrNutr = ingrProd.nutrients.firstWhere((n) => n.nutritionalValueId == nutrient.nutritionalValueId);
         // convert from ingredients nutrients unit to ingredient used
@@ -323,13 +323,13 @@ Product updateProductNutrients(Product product, Map<int, Product> productsMap) {
         // convert between products
         var valuePerProdIngrUnit = valueForIngrUsed / amountForIngredients;
         value += valuePerProdIngrUnit;
-      // } catch (e) {
-      //   devtools.log("Error while calculating nutrients: $e");
-      //   convertedIngredients[i] = false;
-      // }
+      } catch (e) {
+        devtools.log("Error while calculating nutrients: $e");
+        convertedIngredients[i] = false;
+      }
     }
     // convert from the ingredients amount to nutrients amount
-    value = convertToUnit(ingredientsUnit, nutrientsUnit, value, densityConversion, quantityConversion) * amountForNutrients;
+    if (value != 0.0) value = convertToUnit(ingredientsUnit, nutrientsUnit, value, densityConversion, quantityConversion) * amountForNutrients;
     nutrient.value = value;
   }
   
