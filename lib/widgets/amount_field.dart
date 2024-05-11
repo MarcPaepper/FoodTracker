@@ -64,6 +64,7 @@ class AmountField extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: padding ?? 12),
       child: Focus(
+        skipTraversal: true,
         onFocusChange: (bool hasFocus) {
           if (hasFocus) {
             controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.value.text.length);

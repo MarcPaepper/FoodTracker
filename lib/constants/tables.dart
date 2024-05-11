@@ -1,5 +1,4 @@
 import 'package:food_tracker/services/data/data_objects.dart';
-import 'package:sqflite/sqflite.dart';
 
 const createProductTable = '''
 CREATE TABLE IF NOT EXISTS "product" (

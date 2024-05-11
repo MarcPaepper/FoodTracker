@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/product_dropdown.dart';
@@ -62,7 +64,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   int _id = -1;
   List<FocusNode> _ingredientDropdownFocusNodes = [];
-  List<FocusNode> _ingredientAmountFocusNodes = [];
   late Product _prevProduct;
   Product? _interimProduct;
   // used to store the product while the user navigates to another page, can contain formal errors
@@ -226,7 +227,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 
                 // Populate focus nodes
                 _ingredientDropdownFocusNodes = List.generate(copyProduct.ingredients.length, (index) => FocusNode());
-                _ingredientAmountFocusNodes = List.generate(copyProduct.ingredients.length, (index) => FocusNode());
                 
                 // calculate nutrients
                 
@@ -1253,16 +1253,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     var entries = <SlidableListEntry>[];
     
-    _ingredientAmountFocusNodes = List.generate(ingredients.length, (_) => FocusNode());
     _ingredientDropdownFocusNodes = List.generate(ingredients.length, (_) => FocusNode());
-    devtools.log("ingredients ${ingredients.length}, focus nodes ${_ingredientAmountFocusNodes.length}");
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
       var focusNode1 = _ingredientDropdownFocusNodes[index];
-      var focusNode2 = _ingredientAmountFocusNodes[index];
       
       var product = ingredient.productId != null 
         ? productsMap[ingredient.productId]
@@ -1350,40 +1347,18 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         children: [
                           // amount field
                           Expanded(
-                            child: Focus(
-                              onFocusChange: (value) {
-                                if (!value) return;
-                                var count = 0;
-                                for (var node in _ingredientAmountFocusNodes) {
-                                  if (node != focusNode2) {
-                                    node.unfocus();
-                                    // unfocus after 20 ms
-                                    Future.delayed(const Duration(milliseconds: 20), () {
-                                      node.unfocus();
-                                    });
-                                    count++;
-                                  }
-                                  if (count > 0) {
-                                    devtools.log("Unfocused $count nodes");
-                                  }
-                                }
-                                // unfocus everthing else
-                                FocusScope.of(context).unfocus();
-                              },
-                              child: AmountField(
-                                controller: _ingredientAmountControllers[index],
-                                focusNode: focusNode2,
-                                padding: 0,
-                                onChangedAndParsed: (value) {
-                                  var prev = ingredients[index];
-                                  ingredients[index] = ProductQuantity(
-                                    productId: prev.productId,
-                                    amount: value,
-                                    unit: prev.unit,
-                                  );
-                                  _ingredientsNotifier.value = List.from(ingredients);
-                                }
-                              ),
+                            child: AmountField(
+                              controller: _ingredientAmountControllers[index],
+                              padding: 0,
+                              onChangedAndParsed: (value) {
+                                var prev = ingredients[index];
+                                ingredients[index] = ProductQuantity(
+                                  productId: prev.productId,
+                                  amount: value,
+                                  unit: prev.unit,
+                                );
+                                _ingredientsNotifier.value = List.from(ingredients);
+                              }
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1506,15 +1481,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               var newController = TextEditingController();
               newController.text = truncateZeros(amount);
               _ingredientAmountControllers.add(newController);
-              // add focus nodes
-              // _ingredientAmountFocusNodes.add(FocusNode());
-              // _ingredientDropdownFocusNodes.add(FocusNode());
               _ingredientsNotifier.value = List.from(ingredients);
-              _requestIngredientFocus(ingredients.length - 1, 1);
-              // Future.delayed(const Duration(milliseconds: 50), () => _requestIngredientFocus(ingredients.length - 1, 1));
-              // Future.delayed(const Duration(milliseconds: 100), () => _requestIngredientFocus(ingredients.length - 1, 1));
-              // Future.delayed(const Duration(milliseconds: 10), () => _requestIngredientFocus(ingredients.length - 1, 1));
-              // Future.delayed(const Duration(milliseconds: 150), () => _requestIngredientFocus(ingredients.length - 1, 1));
+              Future.delayed(const Duration(milliseconds: 50), () => _requestIngredientFocus(ingredients.length - 1, 1));
             }
           },
           beforeAdd: () {
@@ -1566,8 +1534,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           _ingredientDropdownFocusNodes[index].requestFocus();
         } else {
           // If sub index = 1, focus the amount field
-          devtools.log("Focus on amount field $index of ${_ingredientAmountFocusNodes.length}");
-          // _ingredientAmountFocusNodes[index].requestFocus();
+          _ingredientDropdownFocusNodes[index].requestFocus();
+          Future.delayed(const Duration(milliseconds: 20), () {
+            for (var i = 0; i < 2; i++) FocusManager.instance.primaryFocus?.nextFocus();
+          });
         }
       }
     } catch (e) {

@@ -6,14 +6,17 @@ import 'package:food_tracker/views/main_view.dart';
 import 'package:food_tracker/views/nutvalues_view.dart';
 import 'package:food_tracker/views/stats_view.dart';
 
-String mainRoute       = "/debug/";
-String addMealsRoute   = "/meals/add/";
-String productsRoute   = "/products/";
-String addProductRoute = "/products/add/";
-String editProductRoute = "/products/edit/";
-String addNutritionalValueRoute = "/nutvalues/add/";
+import '../views/test_view.dart';
+
+String mainRoute                 = "/debug/";
+String addMealsRoute             = "/meals/add/";
+String productsRoute             = "/products/";
+String addProductRoute           = "/products/add/";
+String editProductRoute          = "/products/edit/";
+String addNutritionalValueRoute  = "/nutvalues/add/";
 String editNutritionalValueRoute = "/nutvalues/edit/";
-String statsRoute      = "/stats/";
+String statsRoute                = "/stats/";
+String testRoute                 = "/test/";
 
 var routes = {
   mainRoute:			(context)   => const MainView(),
@@ -42,4 +45,5 @@ var routes = {
     );
   },
   statsRoute:		  	(context) => const StatsView(),
+  testRoute:	  		(context) => const TestView(),
 };
