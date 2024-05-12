@@ -26,6 +26,7 @@ class SearchField extends StatelessWidget {
             )
           : const Icon(Icons.search),
       ),
+      textInputAction: TextInputAction.search,
       onChanged: (value) => onChanged(value),
     );
   }

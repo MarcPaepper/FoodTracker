@@ -130,6 +130,8 @@ double convertToUnit(
   Conversion quantityConversion,
   {bool enableTargetQuantity = false}
 ) {
+  if (amount == 0) return 0;
+  
   var typePrev = unitTypes[unit];
   var typeTarg = unitTypes[targetUnit];
   
@@ -138,6 +140,7 @@ double convertToUnit(
     // convert using quantity conversion
     if (quantityConversion.enabled) {
       targetUnit = quantityConversion.unit2;
+      typeTarg = unitTypes[targetUnit];
       amount *= quantityConversion.amount1 / quantityConversion.amount2;
     } else {
       return double.nan;
@@ -319,7 +322,7 @@ Product updateProductNutrients(Product product, Map<int, Product> productsMap) {
         var ingrNutr = ingrProd.nutrients.firstWhere((n) => n.nutritionalValueId == nutrient.nutritionalValueId);
         // convert from ingredients nutrients unit to ingredient used
         var valuePerIngrNutrUnit = ingrNutr.value / ingrProd.amountForNutrients;
-        var valueForIngrUsed = convertToUnit(ingrProd.nutrientsUnit, ingredient.unit, valuePerIngrNutrUnit, ingrProd.densityConversion, ingrProd.quantityConversion) * ingredient.amount;
+        var valueForIngrUsed = convertToUnit(ingrProd.nutrientsUnit, ingredient.unit, valuePerIngrNutrUnit, ingrProd.densityConversion, ingrProd.quantityConversion, enableTargetQuantity: true) * ingredient.amount;
         // convert between products
         var valuePerProdIngrUnit = valueForIngrUsed / amountForIngredients;
         value += valuePerProdIngrUnit;

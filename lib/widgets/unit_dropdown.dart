@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../services/data/data_objects.dart';
 
@@ -61,4 +62,59 @@ class _UnitDropdownState extends State<UnitDropdown> {
       onChanged: enabled ? widget.onChanged : null,
     );
   }
+}
+
+Map<Unit, Widget> buildUnitItems({
+  List<Unit>? units,
+  bool verbose = true,
+  int? maxWidth,
+  required String quantityName
+}) {
+  var items = <Unit, Widget>{};
+  units ??= Unit.values;
+  
+  for (var unit in units) {
+    if (unit == Unit.quantity && verbose) {
+      items[unit] = RichText(
+        text: TextSpan(
+          style: TextStyle(
+            fontFamily: GoogleFonts.nunitoSans().fontFamily,
+            fontSize: 16,
+            color: Colors.black,
+          ),
+          text: quantityName,
+          children: const [
+            TextSpan(
+              text: "  (quantity)",
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      items[unit] = RichText(
+        text: TextSpan(
+          text: unit == Unit.quantity ? quantityName : unitToString(unit),
+          style: TextStyle(
+            fontFamily: GoogleFonts.nunitoSans().fontFamily,
+            fontSize: 16,
+            color: Colors.black,
+          ),
+        ),
+      );
+    }
+    
+    // limit width of items if maxWidth is set
+    if (maxWidth != null) {
+      items[unit] = SizedBox(
+        width: maxWidth.toDouble(),
+        child: items[unit],
+      );
+    }
+  }
+  
+  return items;
 }
