@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS "product" (
 	"amount_for_ingredients"	INTEGER,
 	"ingredients_unit"	TEXT,
 	"amount_for_nutrients"	INTEGER,
-	"nutrients_unit"	TEXT
+	"nutrients_unit"	TEXT,
+	"creation_date"	TEXT,
+	"last_edit_date"	TEXT,
 );
 ''';
 const createNutritionalValueTable = '''
@@ -57,6 +59,8 @@ const productColumns = [
   '"ingredients_unit" TEXT',
   '"amount_for_nutrients" INTEGER',
   '"nutrients_unit" TEXT',
+	'"creation_date" TEXT',
+	'"last_edit_date" TEXT',
 ];
 
 const nutritionalValueColumns = [
@@ -80,6 +84,15 @@ const productNutrientColumns = [
   '"auto_calc" INTEGER',
   '"value" INTEGER',
 ];
+
+var missingProductColumns = {
+  "creation_date":  () => "UPDATE $productTableName SET creation_date = datetime('now') WHERE creation_date IS NULL;",
+  "last_edit_date": () => "UPDATE $productTableName SET last_edit_date = datetime('now') WHERE last_edit_date IS NULL;",
+};
+
+var missingNutritionalValueColumns = {};
+var missingIngredientColumns = {};
+var missingProductNutrientColumns = {};
 
 final defaultNutritionalValues = [
   NutritionalValue(0, 0, "Calories", "kcal", false),

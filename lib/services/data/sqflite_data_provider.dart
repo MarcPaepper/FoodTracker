@@ -33,7 +33,8 @@ const idColumn                    = "id";
 // product table
 
 const nameColumn                  = "name";
-const dateColumn                  = "date";
+const creationDateColumn          = "creation_date";
+const lastEditDateColumn          = "last_edit_date";
 const quantityNameColumn          = "quantity_name";
 const densityConversionColumn     = "density_conversion";
 const quantityConversionColumn    = "quantity_conversion";
@@ -87,10 +88,10 @@ class SqfliteDataProvider implements DataProvider {
     devtools.log("Opening sqflite database");
     if (isLoaded()) return Future.value("data already loaded");
     var tables = {
-      productTable: (createProductTable, productColumns),
-      nutritionalValueTable: (createNutritionalValueTable, nutritionalValueColumns),
-      ingredientTable: (createIngredientTable, ingredientColumns),
-      productNutrientTable: (createProductNutrientTable, productNutrientColumns),
+      productTable: (createProductTable, productColumns, missingProductColumns),
+      nutritionalValueTable: (createNutritionalValueTable, nutritionalValueColumns, missingNutritionalValueColumns),
+      ingredientTable: (createIngredientTable, ingredientColumns, missingIngredientColumns),
+      productNutrientTable: (createProductNutrientTable, productNutrientColumns, missingProductNutrientColumns),
     };
     try {
       // Find file
@@ -114,7 +115,7 @@ class SqfliteDataProvider implements DataProvider {
       _db = await openDatabase(dbPath);
       
       for (final entry in tables.entries) {
-        var (createTable, columns) = entry.value;
+        var (createTable, columns, missingColumns) = entry.value;
         
         // Check whether the table exists
         var result = await _db!.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='${entry.key}'");
@@ -141,6 +142,10 @@ class SqfliteDataProvider implements DataProvider {
             if (!existingColumns.contains(columnName)) {
               devtools.log("Adding column $column to table ${entry.key}");
               await _db!.execute("ALTER TABLE ${entry.key} ADD COLUMN $column");
+              // check whether there are any missing columns
+              if (missingColumns.containsKey(columnName)) {
+                await _db!.execute(missingColumns[columnName]!());
+              }
             }
           }
         }
@@ -217,6 +222,8 @@ class SqfliteDataProvider implements DataProvider {
     Product(
       id:                    row[idColumn] as int,
       name:                  row[nameColumn] as String,
+      creationDate:          DateTime.parse(row[creationDateColumn] as String),
+      lastEditDate:          DateTime.parse(row[lastEditDateColumn] as String),
       defaultUnit:           unitFromString(row[defaultUnitColumn] as String),
       densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
       quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
@@ -240,6 +247,8 @@ class SqfliteDataProvider implements DataProvider {
     final id = await _db!.insert(productTable, {
       nameColumn:                  product.name,
       defaultUnitColumn:           unitToString(product.defaultUnit),
+      creationDateColumn:          DateTime.now().toIso8601String(),
+      lastEditDateColumn:          DateTime.now().toIso8601String(),
       densityConversionColumn:     product.densityConversion.toString(),
       quantityConversionColumn:    product.quantityConversion.toString(),
       quantityNameColumn:          product.quantityName,
@@ -272,8 +281,12 @@ class SqfliteDataProvider implements DataProvider {
       }
     }
     
+    product.lastEditDate = DateTime.now();
+    
     final updatedCount = await _db!.update(productTable, {
       nameColumn:                  product.name,
+      creationDateColumn:          product.creationDate!.toIso8601String(),
+      lastEditDateColumn:          product.lastEditDate!.toIso8601String(),
       defaultUnitColumn:           unitToString(product.defaultUnit),
       densityConversionColumn:     product.densityConversion.toString(),
       quantityConversionColumn:    product.quantityConversion.toString(),

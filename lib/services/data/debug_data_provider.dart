@@ -43,6 +43,8 @@ class DebugDataProvider implements DataProvider {
           Product(
             id: 0,
             name: "Brühe",
+            creationDate: DateTime.now().subtract(const Duration(days: 10)),
+            lastEditDate: DateTime.now().subtract(const Duration(days: 0)),
             defaultUnit: Unit.ml,
             densityConversion: const Conversion(
               amount1: 100,
@@ -81,6 +83,8 @@ class DebugDataProvider implements DataProvider {
           Product(
             id: 1,
             name: "Fleisch",
+            creationDate: DateTime.now().subtract(const Duration(days: 9)),
+            lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
             defaultUnit: Unit.g,
             densityConversion: const Conversion(
               amount1: 100,
@@ -119,6 +123,8 @@ class DebugDataProvider implements DataProvider {
           Product(
             id: 2,
             name: "Apfel",
+            creationDate: DateTime.now().subtract(const Duration(days: 8)),
+            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
             defaultUnit: Unit.quantity,
             densityConversion: const Conversion(
               amount1: 100,
@@ -157,6 +163,8 @@ class DebugDataProvider implements DataProvider {
           Product(
             id: 3,
             name: "Ei",
+            creationDate: DateTime.now().subtract(const Duration(days: 7)),
+            lastEditDate: DateTime.now().subtract(const Duration(days: 3)),
             defaultUnit: Unit.g,
             densityConversion: const Conversion(
               amount1: 100,
@@ -289,6 +297,9 @@ class DebugDataProvider implements DataProvider {
     }
     final newProduct = Product.copyWithDifferentId(product, highestId + 1);
     
+    newProduct.creationDate = DateTime.now();
+    newProduct.lastEditDate = DateTime.now();
+    
     products.add(newProduct);
     productsMap[newProduct.id] = newProduct;
     _productsStreamController.add(products);
@@ -303,6 +314,8 @@ class DebugDataProvider implements DataProvider {
         await updateProduct(updatedProduct, recalc: false);
       }
     }
+    
+    product.lastEditDate = DateTime.now();
     
     int lenPrev = products.length;
     products.removeWhere((element) => element.id == product.id);

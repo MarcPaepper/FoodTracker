@@ -627,6 +627,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       Product(
         id:                   _isEdit ? _id : -1,
         name:                 name,
+        creationDate:         _isEdit ? _prevProduct.creationDate : DateTime.now(),
         defaultUnit:          defUnit,
         densityConversion:    densityConversion,
         quantityConversion:   quantityConversion,

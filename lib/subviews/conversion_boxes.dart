@@ -97,6 +97,7 @@ class ConversionBoxes extends StatelessWidget {
             decoration: const InputDecoration(
               labelText: "Designation",
             ),
+            textInputAction: TextInputAction.next,
             validator: (String? value) {
               if (!conversion.enabled) {
                 return null;

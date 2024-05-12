@@ -3,7 +3,7 @@ import 'package:food_tracker/services/data/data_objects.dart';
 
 import '../utility/text_logic.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 List<Widget> getProductTiles({
   required BuildContext context,

@@ -4,6 +4,9 @@ class Product {
 	int id = -1; // unique identifier
 	String name = "example Product"; // must be unique
   
+  DateTime? creationDate;
+  DateTime? lastEditDate;
+  
   Unit defaultUnit;
 	Conversion densityConversion; // factor when volume is converted to weight
 												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
@@ -23,6 +26,8 @@ class Product {
   Product({
     required this.id,
     required this.name,
+             this.creationDate,
+             this.lastEditDate,
     required this.defaultUnit,
     required this.densityConversion,
     required this.quantityConversion,

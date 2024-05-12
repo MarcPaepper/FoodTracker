@@ -21,6 +21,7 @@ class AmountField extends StatelessWidget {
   final Color? borderColor;
   final Color? fillColor;
   final Color? hintColor;
+  final TextInputAction textInputAction;
   
   const AmountField({
     required this.controller,
@@ -34,6 +35,7 @@ class AmountField extends StatelessWidget {
     this.borderColor,
     this.fillColor,
     this.hintColor,
+    this.textInputAction = TextInputAction.next,
     super.key
   });
 
@@ -76,7 +78,7 @@ class AmountField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           keyboardType: TextInputType.number,
-          
+          textInputAction: textInputAction,
           validator: (String? value) => enabled ? numberValidator(value, canBeEmpty: canBeEmpty) : null,
           autovalidateMode: AutovalidateMode.always,
           onChanged: (String? value) {

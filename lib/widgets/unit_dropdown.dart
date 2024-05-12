@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,6 +9,7 @@ class UnitDropdown extends StatefulWidget {
   final Unit current;
   final bool? enabled;
   final Function(Unit? unit)? onChanged;
+  final bool skipTraversal;
   
   const UnitDropdown({
     super.key,
@@ -15,6 +17,7 @@ class UnitDropdown extends StatefulWidget {
     required this.current,
     this.enabled,
     this.onChanged,
+    this.skipTraversal = !kIsWeb,
   });
 
   @override
@@ -51,15 +54,18 @@ class _UnitDropdownState extends State<UnitDropdown> {
       )));
     }
     
-    return DropdownButtonFormField<Unit>(
-      decoration: decoration,
-      isExpanded: true,
-      value: widget.current,
-      items: items.entries.map((entry) => DropdownMenuItem<Unit>(
-        value: entry.key,
-        child: entry.value,
-      )).toList(),
-      onChanged: enabled ? widget.onChanged : null,
+    return ExcludeFocusTraversal(
+      excluding: widget.skipTraversal,
+      child: DropdownButtonFormField<Unit>(
+        decoration: decoration,
+        isExpanded: true,
+        value: widget.current,
+        items: items.entries.map((entry) => DropdownMenuItem<Unit>(
+          value: entry.key,
+          child: entry.value,
+        )).toList(),
+        onChanged: enabled ? widget.onChanged : null,
+      ),
     );
   }
 }

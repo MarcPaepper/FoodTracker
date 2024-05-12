@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
@@ -19,6 +20,7 @@ class ProductDropdown extends StatefulWidget {
   final int index;
   final void Function(Product?) onChanged;
   final FocusNode? focusNode;
+  final bool skipTraversal;
   
   final Color _fillColor = fillColor;
   final Color _underlineColor = underlineColorEnabled;
@@ -29,6 +31,7 @@ class ProductDropdown extends StatefulWidget {
     required this.index,
     required this.onChanged,
     this.focusNode,
+    this.skipTraversal = !kIsWeb,
     Key? key,
   }) : super(key: key);
   
@@ -57,69 +60,73 @@ class _ProductDropdownState extends State<ProductDropdown> {
     var fillColor = widget._fillColor;
     var underlineColor = widget._underlineColor;
     
-    return InkWell(
-      borderRadius: BorderRadius.circular(10.0),
-      focusNode: _focusNode,
-      onFocusChange: (hasFocus) {
-        setState(() {
-          _hasFocus = hasFocus;
-        });
-      },
-      onTap: () {
-        setState(() {
-          FocusScope.of(context).requestFocus(_focusNode);
-        });
-        showProductDialog(
-          context: context,
-          productsMap: widget.productsMap,
-          selectedProduct: widget.selectedProduct,
-          onSelected:  (newProduct) => widget.onChanged(newProduct),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.0),
-          color: fillColor,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Focus(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 13, 10),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  width: 1.75,
-                  color: (_hasFocus)
-                    ? underlineColorFocused
-                    : underlineColor,
+    return ExcludeFocusTraversal(
+      excluding: widget.skipTraversal,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10.0),
+        focusNode: _focusNode,
+        onFocusChange: (hasFocus) {
+          setState(() {
+            _hasFocus = hasFocus;
+          });
+        },
+        onTap: () {
+          setState(() {
+            FocusScope.of(context).requestFocus(_focusNode);
+          });
+          showProductDialog(
+            context: context,
+            productsMap: widget.productsMap,
+            selectedProduct: widget.selectedProduct,
+            onSelected:  (newProduct) => widget.onChanged(newProduct),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10.0),
+            color: fillColor,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Focus(
+            skipTraversal: true,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 13, 10),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    width: 1.75,
+                    color: (_hasFocus)
+                      ? underlineColorFocused
+                      : underlineColor,
+                  ),
                 ),
               ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                widget.selectedProduct != null
-                  ? Text(
-                      widget.selectedProduct!.name,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 16,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  widget.selectedProduct != null
+                    ? Text(
+                        widget.selectedProduct!.name,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16,
+                        ),
+                      )
+                    : Text(
+                        'Choose a product',
+                        style: TextStyle(
+                          color: textColor,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 16,
+                        ),
                       ),
-                    )
-                  : Text(
-                      'Choose a product',
-                      style: TextStyle(
-                        color: textColor,
-                        fontStyle: FontStyle.italic,
-                        fontSize: 16,
-                      ),
-                    ),
-                const Spacer(),
-                Icon(
-                  Icons.arrow_drop_down,
-                  color: textColor.withAlpha(170),
-                ),
-              ],
+                  const Spacer(),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    color: textColor.withAlpha(170),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
