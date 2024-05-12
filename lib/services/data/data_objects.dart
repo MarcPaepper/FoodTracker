@@ -6,7 +6,10 @@ class Product {
   
   DateTime? creationDate;
   DateTime? lastEditDate;
+  DateTime? temporaryBeginning;
+  DateTime? temporaryEnd;
   
+  bool isTemporary;
   Unit defaultUnit;
 	Conversion densityConversion; // factor when volume is converted to weight
 												// e.g. [("l", "kg", 1.035)] means 1 liter = 1.035 kg
@@ -28,6 +31,9 @@ class Product {
     required this.name,
              this.creationDate,
              this.lastEditDate,
+             this.temporaryBeginning,
+             this.temporaryEnd,
+    required this.isTemporary,
     required this.defaultUnit,
     required this.densityConversion,
     required this.quantityConversion,
@@ -46,6 +52,7 @@ class Product {
     return Product(
       id: -1,
       name: "",
+      isTemporary: false,
       defaultUnit: Unit.g,
       densityConversion: Conversion.defaultDensity(),
       quantityConversion: Conversion.defaultQuantity(),
@@ -74,6 +81,11 @@ class Product {
       id: newId,
       name:                 product.name,
       defaultUnit:          product.defaultUnit,
+      creationDate:         product.creationDate,
+      lastEditDate:         product.lastEditDate,
+      temporaryBeginning:   product.temporaryBeginning,
+      temporaryEnd:         product.temporaryEnd,
+      isTemporary:          product.isTemporary,
       densityConversion:    product.densityConversion,
       quantityConversion:   product.quantityConversion,
       quantityName:         product.quantityName,
@@ -93,6 +105,9 @@ class Product {
   bool equals(Product other) {
     return id == other.id &&
            name == other.name &&
+           temporaryBeginning == other.temporaryBeginning &&
+           temporaryEnd == other.temporaryEnd &&
+           isTemporary == other.isTemporary &&
            defaultUnit == other.defaultUnit &&
            densityConversion == other.densityConversion &&
            quantityConversion == other.quantityConversion &&

@@ -403,3 +403,12 @@ List<ProductNutrient> checkNutrients(
   
   return newList;
 }
+
+String? validateTemporaryInterval(DateTime? begin, DateTime? end) {
+  if (begin != null && end != null && begin.isAfter(end)) {
+    return "Interval must start before it ends";
+  }
+  return null;
+}
+
+DateTime? condParse(String? date) => date == null ? null : DateTime.parse(date);

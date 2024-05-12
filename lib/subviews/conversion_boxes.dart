@@ -179,10 +179,12 @@ class ConversionBoxes extends StatelessWidget {
             ],
           );
         
+        if (!conversion.enabled) inputFields = const SizedBox();
+        
         return BorderBox(
           borderColor: borderColor,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 8, 12, 16),
+            padding: EdgeInsets.fromLTRB(0, 8, 12, conversion.enabled ? 16 : 0),
             child: Column(
               children: [
                 SwitchListTile(

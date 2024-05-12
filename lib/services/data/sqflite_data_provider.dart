@@ -35,6 +35,9 @@ const idColumn                    = "id";
 const nameColumn                  = "name";
 const creationDateColumn          = "creation_date";
 const lastEditDateColumn          = "last_edit_date";
+const temporaryBeginningColumn    = "temporary_beginning";
+const temporaryEndColumn          = "temporary_end";
+const isTemporaryColumn           = "is_temporary";
 const quantityNameColumn          = "quantity_name";
 const densityConversionColumn     = "density_conversion";
 const quantityConversionColumn    = "quantity_conversion";
@@ -224,6 +227,9 @@ class SqfliteDataProvider implements DataProvider {
       name:                  row[nameColumn] as String,
       creationDate:          DateTime.parse(row[creationDateColumn] as String),
       lastEditDate:          DateTime.parse(row[lastEditDateColumn] as String),
+      temporaryBeginning:    condParse(row[temporaryBeginningColumn] as String?),
+      temporaryEnd:          condParse(row[temporaryEndColumn] as String?),
+      isTemporary:           row[isTemporaryColumn] == 1,
       defaultUnit:           unitFromString(row[defaultUnitColumn] as String),
       densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
       quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
@@ -249,9 +255,12 @@ class SqfliteDataProvider implements DataProvider {
       defaultUnitColumn:           unitToString(product.defaultUnit),
       creationDateColumn:          DateTime.now().toIso8601String(),
       lastEditDateColumn:          DateTime.now().toIso8601String(),
+      temporaryBeginningColumn:    product.temporaryBeginning?.toIso8601String().split("T")[0], // YYYY-MM-DD format
+      temporaryEndColumn:          product.temporaryEnd?.toIso8601String().split("T")[0], // YYYY-MM-DD format
+      isTemporaryColumn:           product.isTemporary ? 1 : 0,
+      quantityNameColumn:          product.quantityName,
       densityConversionColumn:     product.densityConversion.toString(),
       quantityConversionColumn:    product.quantityConversion.toString(),
-      quantityNameColumn:          product.quantityName,
       autoCalcAmountColumn:        product.autoCalc ? 1 : 0,
       amountForIngredientsColumn:  product.amountForIngredients,
       ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
@@ -287,6 +296,9 @@ class SqfliteDataProvider implements DataProvider {
       nameColumn:                  product.name,
       creationDateColumn:          product.creationDate!.toIso8601String(),
       lastEditDateColumn:          product.lastEditDate!.toIso8601String(),
+      temporaryBeginningColumn:    product.temporaryBeginning?.toIso8601String().split("T")[0], // YYYY-MM-DD format
+      temporaryEndColumn:          product.temporaryEnd?.toIso8601String().split("T")[0], // YYYY-MM-DD format
+      isTemporaryColumn:           product.isTemporary ? 1 : 0,
       defaultUnitColumn:           unitToString(product.defaultUnit),
       densityConversionColumn:     product.densityConversion.toString(),
       quantityConversionColumn:    product.quantityConversion.toString(),

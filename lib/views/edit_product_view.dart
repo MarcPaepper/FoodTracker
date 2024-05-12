@@ -15,6 +15,7 @@ import "dart:developer" as devtools show log;
 
 import '../subviews/conversion_boxes.dart';
 import '../subviews/nutrients_box.dart';
+import '../subviews/temporary_box.dart';
 import '../utility/data_logic.dart';
 
 class EditProductView extends StatefulWidget {
@@ -62,9 +63,14 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   Product? _interimProduct;
   // used to store the product while the user navigates to another page, can contain formal errors
   
+  final _defaultUnitNotifier = ValueNotifier<Unit>(Unit.g);
+  
+  final _isTemporaryNotifier = ValueNotifier<bool>(false);
+  final _temporaryBeginningNotifier = ValueNotifier<DateTime?>(null);
+  final _temporaryEndNotifier = ValueNotifier<DateTime?>(null);
+  
   final _densityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultDensity());
   final _quantityConversionNotifier = ValueNotifier<Conversion>(Conversion.defaultQuantity());
-  final _defaultUnitNotifier = ValueNotifier<Unit>(Unit.g);
   
   final _autoCalcAmountNotifier = ValueNotifier<bool>(false);
   final _resultingAmountNotifier = ValueNotifier<double>(0);
@@ -122,9 +128,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _quantityAmount2Controller.dispose();
     _quantityNameController.dispose();
     _resultingAmountController.dispose();
+    _defaultUnitNotifier.dispose();
+    _isTemporaryNotifier.dispose();
+    _temporaryBeginningNotifier.dispose();
+    _temporaryEndNotifier.dispose();
     _densityConversionNotifier.dispose();
     _quantityConversionNotifier.dispose();
-    _defaultUnitNotifier.dispose();
     _autoCalcAmountNotifier.dispose();
     _resultingAmountNotifier.dispose();
     _ingredientsUnitNotifier.dispose();
@@ -197,9 +206,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 _quantityNameController.text = copyProduct.quantityName;
                 _nutrientAmountController.text = truncateZeros(copyProduct.amountForNutrients);
                 
+                _defaultUnitNotifier.value = copyProduct.defaultUnit;
+                _isTemporaryNotifier.value = copyProduct.isTemporary;
+                _temporaryBeginningNotifier.value = copyProduct.temporaryBeginning;
+                _temporaryEndNotifier.value = copyProduct.temporaryEnd;
                 _densityConversionNotifier.value = copyProduct.densityConversion;
                 _quantityConversionNotifier.value = copyProduct.quantityConversion;
-                _defaultUnitNotifier.value = copyProduct.defaultUnit;
                 _autoCalcAmountNotifier.value = copyProduct.autoCalc;
                 _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
                 _ingredientsNotifier.value = List.from(copyProduct.ingredients);
@@ -277,6 +289,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               _buildNameField(products!),
                               const SizedBox(height: 5),
                               _buildDefaultUnitDropdown(),
+                              TemporaryBox(
+                                isTemporaryNotifier: _isTemporaryNotifier,
+                                beginningNotifier: _temporaryBeginningNotifier,
+                                endNotifier: _temporaryEndNotifier,
+                              ),
                               const SizedBox(height: 8),
                               ConversionBoxes(
                                 densityAmount1Controller: _densityAmount1Controller,
@@ -602,6 +619,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     final defUnit = _defaultUnitNotifier.value;
     final densityConversion = _densityConversionNotifier.value;
     final quantityConversion = _quantityConversionNotifier.value;
+    final temporaryBeginning = _temporaryBeginningNotifier.value;
+    final temporaryEnd = _temporaryEndNotifier.value;
+    final isTemporary = _isTemporaryNotifier.value;
     final quantityName = _quantityNameController.text;
     final autoCalc = _autoCalcAmountNotifier.value;
     final resultingAmount = _resultingAmountNotifier.value;
@@ -636,13 +656,17 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           densityConversion,
           quantityConversion,
         ).$1 != ErrorType.error;
-    
+    devtools.log("creation date ${_prevProduct.creationDate}");
     
     return (
       Product(
         id:                   _isEdit ? _id : -1,
         name:                 name,
-        creationDate:         _isEdit ? _prevProduct.creationDate : DateTime.now(),
+        creationDate:         _isEdit ? _prevProduct.creationDate : null,
+        lastEditDate:         DateTime.now(),
+        temporaryBeginning:   temporaryBeginning,
+        temporaryEnd:         temporaryEnd,
+        isTemporary:          isTemporary,
         defaultUnit:          defUnit,
         densityConversion:    densityConversion,
         quantityConversion:   quantityConversion,
