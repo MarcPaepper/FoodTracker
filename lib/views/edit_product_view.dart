@@ -253,6 +253,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 appBar: AppBar(
                   title: Text(title),
                   actions: _isEdit && _loaded ? [
+                    _buildInfoButton(),
                     ValueListenableBuilder(
                       valueListenable: _productNameController,
                       builder: (context, value, child) {
@@ -365,8 +366,22 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     }
   }
   
+  Widget _buildInfoButton() => Container(
+    width: 30,
+    child: IconButton(
+      onPressed: () {
+        showProductInfoDialog(context, _prevProduct);
+      },
+      icon: const Icon(Icons.info_outline),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+    ),
+  );
+  
   Widget _buildDeleteButton(String? name, Map<int, Product> productsMap) => 
     IconButton(
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
       onPressed: () {
         // Check whether the product is used in any recipe
         // List<Product> usedAsIngredientIn = productsMap.where((prod) => prod.ingredients.any((ingr) => ingr.productId == _id)).toList();

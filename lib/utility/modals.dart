@@ -1,13 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:food_tracker/widgets/search_field.dart';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../widgets/search_field.dart';
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
+import '../widgets/products_list.dart';
+import 'theme.dart';
 
 // import 'dart:developer' as devtools show log;
 
-import '../widgets/products_list.dart';
-import 'theme.dart';
 
 void showErrorbar(BuildContext context, String msg) =>
   _showSnackbar(context: context, msg: msg, bgColor: const Color.fromARGB(255, 77, 22, 0), icon: const Icon(Icons.warning, color: Colors.white));
@@ -208,6 +211,29 @@ void showProductDialog({
       );
     }
   );
+
+// show a dialog which lets you see the creation date and the last edit date of a product
+void showProductInfoDialog(BuildContext context, Product product) => showDialog(
+  context: context,
+  builder: (context) => AlertDialog(
+    title: const Text('Product Info'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Created on: ${DateFormat.yMd(Platform.localeName).format(product.creationDate!)}"),
+        Text("Last Edit: ${DateFormat.yMd(Platform.localeName).format(product.lastEditDate!)}"),
+      ],
+    ),
+    actions: [
+      ElevatedButton(
+        style: actionButtonStyle,
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Close'),
+      ),
+    ],
+  ),
+);
 
 void onAddProduct(
   BuildContext context,
