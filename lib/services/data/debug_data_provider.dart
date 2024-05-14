@@ -299,7 +299,7 @@ class DebugDataProvider implements DataProvider {
     for (final product in products) {
       if (product.id > highestId) highestId = product.id;
     }
-    final newProduct = Product.copyWithDifferentId(product, highestId + 1);
+    final newProduct = Product.copyWith(product, newId: highestId + 1);
     
     newProduct.creationDate = DateTime.now();
     newProduct.lastEditDate = DateTime.now();

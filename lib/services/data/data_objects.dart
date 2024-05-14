@@ -68,18 +68,28 @@ class Product {
   }
   
   // same as above but as factory constructor
-  factory Product.copyWithDifferentId(Product product, int newId) {
+  factory Product.copyWith(
+    Product product,
+    {
+      int? newId,
+      String? newName,
+    }
+  ) {
     // change nutrients product id
-    List<ProductNutrient> newNutrients = product.nutrients.map((n) => ProductNutrient(
-      productId: newId,
-      nutritionalValueId: n.nutritionalValueId,
-      autoCalc: n.autoCalc,
-      value: n.value,
-    )).toList();
+    List<ProductNutrient>? newNutrients;
+    
+    if (newId != null) {
+      newNutrients = product.nutrients.map((n) => ProductNutrient(
+        productId: newId,
+        nutritionalValueId: n.nutritionalValueId,
+        autoCalc: n.autoCalc,
+        value: n.value,
+      )).toList();
+    }
     
     return Product(
-      id: newId,
-      name:                 product.name,
+      id:                   newId ?? product.id,
+      name:                 newName ?? product.name,
       defaultUnit:          product.defaultUnit,
       creationDate:         product.creationDate,
       lastEditDate:         product.lastEditDate,
@@ -95,7 +105,7 @@ class Product {
       amountForNutrients:   product.amountForNutrients,
       nutrientsUnit:        product.nutrientsUnit,
       ingredients:          product.ingredients,
-      nutrients:            newNutrients,
+      nutrients:            newNutrients ?? product.nutrients,
     );
   }
   

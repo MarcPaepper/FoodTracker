@@ -10,7 +10,7 @@ import '../utility/text_logic.dart';
 import '../utility/theme.dart';
 import '../widgets/border_box.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class TemporaryBox extends StatelessWidget {
   final ValueNotifier<bool> isTemporaryNotifier;
@@ -91,9 +91,6 @@ class TemporaryBox extends StatelessWidget {
           beginningTextNat = isTemporary ? relativeDaysNatural(beginning) : "";
           endTextNat       = isTemporary ? relativeDaysNatural(end)       : "";
         }
-        
-        var localeSplit = Platform.localeName.split("_");
-        devtools.log("localeSplit: $localeSplit");
         
         return BorderBox(
           borderColor: borderColor,

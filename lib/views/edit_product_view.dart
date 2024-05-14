@@ -1,4 +1,6 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
+// ignore_for_file: curly_braces_in_flow_control_structures, empty_catches
+
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:food_tracker/subviews/ingredients_box.dart';
@@ -40,6 +42,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   bool _loaded = false;
   bool _error = false;
+  
+  String? _copyName;
   
   final _dataService = DataService.current();
   
@@ -199,6 +203,42 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 
                 // set initial values
                 _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
+                
+                if (widget.isCopy && _interimProduct == null && widget.productName != null) {
+                  var name = widget.productName!;
+                  // Remove the copy date and number from the name
+                  var regex = RegExp(r"\((\d{4}-\d{1,2}-\d{1,2})( #\d+)?\)$");
+                  var match = regex.firstMatch(_productNameController.text);
+                  if (match != null) {
+                    name = name.substring(0, match.start).trim();
+                  }
+                  // add the current date in the format YYYY-MM-DD
+                  name += " (${DateTime.now().toIso8601String().split("T")[0]}";
+                  
+                  // check all products for the highest copy number
+                  // For example if there is a product "Product (2024-01-01)" the highest copy number is 0, if there is a product "Product (2024-01-01 #1)" the highest copy number is 1
+                  var copyNumber = -1;
+                  for (var product in products) {
+                    if (product.name.startsWith(name)) {
+                      var copy = product.name.substring(name.length).trim().replaceAll(RegExp(r"[\)#]"), "");
+                      if (copy.isEmpty) {
+                        copyNumber = 0;
+                      } else {
+                        try {
+                          var copyInt = int.parse(copy);
+                          if (copyInt > copyNumber) copyNumber = copyInt;
+                        } catch (e) {}
+                      }
+                    }
+                  }
+                  if (copyNumber >= 0) {
+                    copyNumber = max(1, copyNumber);
+                    name += " #${copyNumber + 1}";
+                  }
+                  _copyName = "$name)";
+                  _productNameController.text = _copyName!;
+                }
+                
                 _densityAmount1Controller.text = truncateZeros(copyProduct.densityConversion.amount1);
                 _densityAmount2Controller.text = truncateZeros(copyProduct.densityConversion.amount2);
                 _quantityAmount1Controller.text = truncateZeros(copyProduct.quantityConversion.amount1);
@@ -371,7 +411,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     // test whether the product has been changed compared to the prevProduct
     var (product, _) = getProductFromForm();
     
-    if (product.equals(_prevProduct)) {
+    var compProduct = _prevProduct;
+    if (_copyName != null) compProduct = Product.copyWith(product, newName: _copyName!);
+    
+    if (product.equals(compProduct)) {
       Future(() => navigator.pop(_prevProduct));
       return;
     }
@@ -506,7 +549,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     List<Product> products,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: TextButton(
         onPressed: () {
           String name;
@@ -528,7 +571,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           }
         },
         child: Text(
-          "Show ${isNameDuplicate ? "Duplicate" : "Original (${widget.productName})"}",
+          "Show ${isNameDuplicate ? "Duplicate" : "Original \"${widget.productName}\""}",
           style: TextStyle(
             color: isNameDuplicate ? Colors.red : Colors.teal,
           ),
@@ -636,6 +679,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     final isValid = _formKey.currentState!.validate()
       && !_circRefNotifier.value
+      && (!isTemporary || validateTemporaryInterval(temporaryBeginning, temporaryEnd) == null)
       && validateConversionBox(0, defUnit, densityConversion, quantityConversion, quantityName) == null
       && validateConversionBox(1, defUnit, densityConversion, quantityConversion, quantityName) == null
       && validateAmount(
@@ -656,7 +700,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           densityConversion,
           quantityConversion,
         ).$1 != ErrorType.error;
-    devtools.log("creation date ${_prevProduct.creationDate}");
     
     return (
       Product(
