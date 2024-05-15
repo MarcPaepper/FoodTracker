@@ -44,6 +44,7 @@ dependencies:
   intl: ^0.18.1
   flutter_localizations:
     sdk: flutter
+  universal_io: ^2.2.2
 
 dev_dependencies:
   test: ^1.24.9

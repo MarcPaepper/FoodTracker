@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
+import 'package:food_tracker/utility/modals.dart';
+import 'package:food_tracker/widgets/sort_field.dart';
 
 import '../utility/text_logic.dart';
 
@@ -9,6 +11,7 @@ List<Widget> getProductTiles({
   required BuildContext context,
   required List<Product> products,
   required String search,
+           (SortType sortType, SortOrder sortOrder)? sorting,
   required Function(String, int) onSelected,
   Function(String, int)? onLongPress,
   bool colorFromTop = false,
@@ -20,8 +23,28 @@ List<Widget> getProductTiles({
     return searchWords.every((word) => name.contains(word.toLowerCase()));
   }).toList();
   
-  // sort products by id
-  products.sort((a, b) => a.id.compareTo(b.id));
+  // sorting
+  if (sorting != null) {
+    try {
+      switch (sorting.$1) {
+        case SortType.alphabetical:
+          products.sort((a, b) => a.name.compareTo(b.name));
+          break;
+        case SortType.relevancy:
+        case SortType.creationDate:
+          products.sort((a, b) => a.creationDate!.compareTo(b.creationDate!));
+          break;
+        case SortType.lastEditDate:
+          products.sort((a, b) => a.lastEditDate!.compareTo(b.lastEditDate!));
+          break;
+      }
+      if (sorting.$2 == SortOrder.descending) {
+        products = products.reversed.toList();
+      }
+    } catch (e) {
+      showErrorbar(context, "Error sorting products: $e");
+    }
+  }
   
   var length = products.length;
   return List.generate(length, (index) {

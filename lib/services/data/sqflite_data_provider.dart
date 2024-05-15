@@ -271,7 +271,7 @@ class SqfliteDataProvider implements DataProvider {
     _addIngredients(product: product, containedInId: id);
     _addProductNutrientsForProduct(product: product, productId: id);
     
-    var newProduct = Product.copyWith(product, newId: id);
+    var newProduct = Product.copyWith(product, newId: id, newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
     _products.add(newProduct);
     _productsMap[id] = newProduct;
     _productsStreamController.add(_products);

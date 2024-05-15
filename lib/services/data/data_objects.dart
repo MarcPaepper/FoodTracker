@@ -73,6 +73,8 @@ class Product {
     {
       int? newId,
       String? newName,
+      DateTime? newCreationDate,
+      DateTime? newLastEditDate,
     }
   ) {
     // change nutrients product id
@@ -91,8 +93,8 @@ class Product {
       id:                   newId ?? product.id,
       name:                 newName ?? product.name,
       defaultUnit:          product.defaultUnit,
-      creationDate:         product.creationDate,
-      lastEditDate:         product.lastEditDate,
+      creationDate:         newCreationDate ?? product.creationDate,
+      lastEditDate:         newLastEditDate ?? product.lastEditDate,
       temporaryBeginning:   product.temporaryBeginning,
       temporaryEnd:         product.temporaryEnd,
       isTemporary:          product.isTemporary,

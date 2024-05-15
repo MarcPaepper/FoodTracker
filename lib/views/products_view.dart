@@ -6,6 +6,7 @@ import 'package:food_tracker/widgets/loading_page.dart';
 import 'package:food_tracker/widgets/search_field.dart';
 
 import '../widgets/products_list.dart';
+import '../widgets/sort_field.dart';
 
 // import "dart:developer" as devtools show log;
 
@@ -21,6 +22,8 @@ class _ProductsViewState extends State<ProductsView> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
+  SortType _sortType = SortType.relevancy;
+  SortOrder _sortOrder = SortOrder.ascending;
   
   @override
   void initState() {
@@ -49,10 +52,28 @@ class _ProductsViewState extends State<ProductsView> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 15),
             Container(
               color: Colors.white,
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0.0),
+                child: SortField(
+                  sortType: _sortType,
+                  sortOrder: _sortOrder,
+                  onChanged: (sortType, sortOrder) {
+                    setState(() {
+                      _sortType = sortType;
+                      _sortOrder = sortOrder;
+                    });
+                  }
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Container(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10.0),
                 child: SearchField(
                   searchController: _searchController,
                   onChanged: (value) => setState(() {
@@ -61,6 +82,7 @@ class _ProductsViewState extends State<ProductsView> {
                 ),
               ),
             ),
+            const SizedBox(height: 5),
             Expanded(
               child: _buildProductList(snapshot)
             ),
@@ -84,6 +106,7 @@ class _ProductsViewState extends State<ProductsView> {
           context: context,
           products: products,
           search: _searchController.text,
+          sorting: (_sortType, _sortOrder),
           onSelected: (name, id) => Navigator.pushNamed (
             context,
             editProductRoute,

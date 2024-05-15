@@ -1,6 +1,6 @@
 // ignore_for_file: unused_import
 
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
