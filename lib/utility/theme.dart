@@ -7,10 +7,10 @@ const errorBorderColor = Color.fromARGB(255, 230, 0, 0);
 const disabledBorderColor = Color.fromARGB(130, 158, 158, 158);
 
 var actionButtonStyle = ButtonStyle(
-  backgroundColor: MaterialStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
-  foregroundColor: MaterialStateProperty.all(Colors.white),
-  textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16)),
-  shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+  backgroundColor: WidgetStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
+  foregroundColor: WidgetStateProperty.all(Colors.white),
+  textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
+  shape: WidgetStateProperty.all(const RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(12)),
   )),
 );
@@ -23,6 +23,7 @@ ThemeData getTheme() =>
       color: Color.fromARGB(249, 242, 255, 250),
       surfaceTintColor: Colors.white,
     ),
+    scaffoldBackgroundColor: Colors.white,
     colorSchemeSeed: Colors.teal,
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.teal.shade400,
@@ -44,8 +45,8 @@ ThemeData getTheme() =>
         )
       ),
       // bright press and hover color
-      overlayColor: MaterialStateColor.resolveWith((Set<MaterialState> states) =>
-        states.contains(MaterialState.pressed) ?
+      overlayColor: WidgetStateColor.resolveWith((Set<WidgetState> states) =>
+        states.contains(WidgetState.pressed) ?
           Colors.white.withAlpha(50) :
           Colors.white.withAlpha(20)
       ),
@@ -53,43 +54,43 @@ ThemeData getTheme() =>
     inputDecorationTheme: InputDecorationTheme(
       isDense: true,
       filled: true,
-      fillColor: MaterialStateColor.resolveWith((Set<MaterialState> states) =>
-        states.contains(MaterialState.error) ?
+      fillColor: WidgetStateColor.resolveWith((Set<WidgetState> states) =>
+        states.contains(WidgetState.error) ?
           const Color.fromARGB(34, 255, 111, 0) :
           Colors.grey.withAlpha(35)
       ),
       enabledBorder: UnderlineInputBorder(
         borderRadius: BorderRadius.circular(10.0),
         borderSide: const BorderSide(
-          width: 3.5,
+          width: 2.0,
           color: Colors.grey
         )
       ),
       disabledBorder: UnderlineInputBorder(
         borderRadius: BorderRadius.circular(10.0),
         borderSide: BorderSide(
-          width: 3.5,
+          width: 2.0,
           color: Colors.grey.shade300
         )
       ),
       focusedBorder: UnderlineInputBorder(
         borderRadius: BorderRadius.circular(10.0),
         borderSide: BorderSide(
-          width: 3.5,
+          width: 2.0,
           color: Colors.teal.shade300
         )
       ),
       errorBorder: UnderlineInputBorder(
         borderRadius: BorderRadius.circular(10.0),
         borderSide: const BorderSide(
-          width: 3.5,
+          width: 2.0,
           color: Color.fromARGB(210, 193, 46, 27)
         )
       ),
       focusedErrorBorder: UnderlineInputBorder(
         borderRadius: BorderRadius.circular(10.0),
         borderSide: BorderSide(
-          width: 4,
+          width: 2.0,
           color: Colors.red.shade500
         )
       ),

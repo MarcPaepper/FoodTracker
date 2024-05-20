@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 enum SortType {
@@ -35,7 +36,7 @@ class _SortFieldState extends State<SortField> {
     hintText: 'Search',
     fillColor: Colors.white,
     filled: true,
-    contentPadding: EdgeInsets.fromLTRB(13, 11, 8, 11),
+    contentPadding: kIsWeb ? EdgeInsets.fromLTRB(13, 11, 8, 11) : EdgeInsets.fromLTRB(13, 11, 8, 9),
   );
   
   final _dropdownTextStyle = const TextStyle(
@@ -57,7 +58,7 @@ class _SortFieldState extends State<SortField> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 12 : 9),
       ),
       onPressed: () {
         setState(() {
@@ -96,6 +97,7 @@ class _SortFieldState extends State<SortField> {
                       ),
                       DropdownButtonFormField<SortType>(
                         decoration: _dropdownDecoration,
+                        alignment: Alignment.bottomLeft,
                         value: widget.sortType,
                         onChanged: (SortType? value) {
                           if (value != null) {

@@ -14,6 +14,7 @@ class SearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       controller: searchController,
+      textAlignVertical: TextAlignVertical.center,
       decoration: InputDecoration(
         hintText: 'Search',
         suffixIcon: searchController.text.isNotEmpty

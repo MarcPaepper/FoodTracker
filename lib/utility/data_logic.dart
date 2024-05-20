@@ -1,5 +1,13 @@
-import 'package:collection/collection.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:collection/collection.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+// import 'package:archive/archive_io.dart';
+
+import '../services/data/data_service.dart';
 import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 
@@ -163,13 +171,17 @@ double convertToUnit(
     if (densityConversion.enabled) {
       if (typePrev == UnitType.volumetric) {
         // use the density conversion to convert the volumetric unit to the weight unit
-        unit = densityConversion.unit2;
+        amount *= unitTypeFactors[unit]! / unitTypeFactors[densityConversion.unit1]!;
+        // unit = densityConversion.unit1;
         amount *= densityConversion.amount2 / densityConversion.amount1;
+        unit = densityConversion.unit2;
         typePrev = unitTypes[unit];
       } else {
         // use the density conversion in reverse
-        unit = densityConversion.unit1;
+        amount *= unitTypeFactors[unit]! / unitTypeFactors[densityConversion.unit2]!;
+        // unit = densityConversion.unit2;
         amount *= densityConversion.amount1 / densityConversion.amount2;
+        unit = densityConversion.unit1;
         typePrev = unitTypes[unit];
       }
     } else {
@@ -412,3 +424,87 @@ String? validateTemporaryInterval(DateTime? begin, DateTime? end) {
 }
 
 DateTime? condParse(String? date) => date == null ? null : DateTime.parse(date);
+
+Future<void> exportData() async {
+  // export nutritional values and products separately as json
+  
+  // load nutritional values, products, ingredients, and product nutrients
+  
+  var service = DataService.current();
+  
+  var nutritionalValues = await service.getAllNutritionalValues();
+  var products = await service.getAllProducts();
+  
+  // convert nutritional values to json
+  Map<String, dynamic> nutValuesJson = {};
+  for (var nutValue in nutritionalValues) {
+    nutValuesJson[nutValue.id.toString()] = {
+      "id":           nutValue.id,
+      "order_id":     nutValue.orderId,
+      "name":         nutValue.name,
+      "unit":         nutValue.unit,
+      "showFullName": nutValue.showFullName,
+    };
+  }
+  
+  // convert products to json
+  Map<String, dynamic> productsJson = {};
+  for (var product in products) {
+    productsJson[product.id.toString()] = {
+      "id":                     product.id,
+      "name":                   product.name,
+      "auto_calc":              product.autoCalc,
+      "ingredients_unit":       product.ingredientsUnit.toString(),
+      "nutrients_unit":         product.nutrientsUnit.toString(),
+      "amount_for_ingredients": product.amountForIngredients,
+      "amount_for_nutrients":   product.amountForNutrients,
+      "density_conversion":     product.densityConversion.toString(),
+      "quantity_conversion":    product.quantityConversion.toString(),
+      "ingredients": product.ingredients.map((ingr) => {
+        "product_id": ingr.productId,
+        "amount":     ingr.amount,
+        "unit":       ingr.unit.toString(),
+      }).toList(),
+      "nutrients": product.nutrients.map((nut) => {
+        "nutritional_value_id": nut.nutritionalValueId,
+        "auto_calc":            nut.autoCalc,
+        "value":                nut.value,
+      }).toList(),
+    };
+  }
+  
+  // convert to products.json and nutritional_values.json
+  const encoder = JsonEncoder.withIndent("  ");
+  
+  var pJsonUtf8 = utf8.encode(encoder.convert(productsJson));
+  var nvJsonUtf8 = utf8.encode(encoder.convert(nutValuesJson));
+  
+  var date = DateTime.now().toString().split(" ")[0]; // format: YYYY-MM-DD
+  var nameP = "products_$date.json";
+  var nameNv = "nutritional_values_$date.json";
+  
+  var pathP = await storeFileTemporarily(pJsonUtf8, nameP);
+  var pathNv = await storeFileTemporarily(nvJsonUtf8, nameNv);
+  
+  // share both files separately
+  await Share.shareXFiles(
+    [
+      XFile(pathP),
+      XFile(pathNv),
+    ],
+  );
+  
+  // delete
+  await File(pathP).delete();
+  await File(pathNv).delete();
+}
+
+Future<String> storeFileTemporarily(Uint8List image, String name) async {
+  final tempDir = await getTemporaryDirectory();
+  
+  final path = '${tempDir.path}/$name';
+  final file = await File(path).create();
+  file.writeAsBytesSync(image);
+
+  return path;
+}

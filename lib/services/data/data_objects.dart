@@ -207,7 +207,10 @@ enum Unit { // measurement units which products can be given in
 	g,
 	mg,
 	l,
-	ml,
+	ml;
+  
+  @override
+  String toString() => unitToString(this);
 }
 enum UnitType {
   weight,

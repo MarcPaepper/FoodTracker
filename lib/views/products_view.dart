@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/constants/routes.dart';
-import 'package:food_tracker/services/data/data_objects.dart';
-import 'package:food_tracker/services/data/data_service.dart';
-import 'package:food_tracker/widgets/loading_page.dart';
-import 'package:food_tracker/widgets/search_field.dart';
 
-import '../widgets/products_list.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+import '../constants/routes.dart';
+import '../services/data/data_objects.dart';
+import '../services/data/data_service.dart';
+import '../widgets/loading_page.dart';
 import '../widgets/sort_field.dart';
+import '../widgets/search_field.dart';
+import '../widgets/products_list.dart';
 
 // import "dart:developer" as devtools show log;
 
@@ -52,11 +54,10 @@ class _ProductsViewState extends State<ProductsView> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 15),
             Container(
               color: Colors.white,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0.0),
+                padding: kIsWeb ? const EdgeInsets.fromLTRB(12, 18, 12, 0) : const EdgeInsets.fromLTRB(12, 12, 12, 0),
                 child: SortField(
                   sortType: _sortType,
                   sortOrder: _sortOrder,
@@ -69,11 +70,10 @@ class _ProductsViewState extends State<ProductsView> {
                 ),
               ),
             ),
-            const SizedBox(height: 5),
             Container(
               color: Colors.white,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: kIsWeb ? 16.0 : 12.0),
                 child: SearchField(
                   searchController: _searchController,
                   onChanged: (value) => setState(() {
@@ -82,7 +82,6 @@ class _ProductsViewState extends State<ProductsView> {
                 ),
               ),
             ),
-            const SizedBox(height: 5),
             Expanded(
               child: _buildProductList(snapshot)
             ),

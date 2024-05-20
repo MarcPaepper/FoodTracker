@@ -59,7 +59,7 @@ class ConversionBoxes extends StatelessWidget {
       builder: (context, constraints) {
         var conversion = notifier.value;
         
-        var checkBoxTexts = ["Enable Volumetric Conversion", "Enable Quantity Conversion"];
+        var checkBoxTexts = ["Volumetric Conversion", "Quantity Conversion"];
         var text = checkBoxTexts[index];
         var controller1 = index == 0 ? densityAmount1Controller : quantityAmount1Controller;
         var controller2 = index == 0 ? densityAmount2Controller : quantityAmount2Controller;

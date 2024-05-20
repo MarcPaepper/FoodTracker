@@ -1,12 +1,12 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
 import 'package:flutter/material.dart';
-import 'package:food_tracker/utility/merge_input_decoration.dart';
-import '../utility/text_logic.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-// import devtools
 import "dart:developer" as devtools show log;
 
+import '../utility/merge_input_decoration.dart';
+import '../utility/text_logic.dart';
 import '../utility/theme.dart';
 
 class AmountField extends StatelessWidget {
@@ -44,7 +44,7 @@ class AmountField extends StatelessWidget {
     var inputTheme = getTheme().inputDecorationTheme;
     
     var inputDec = InputDecoration(
-      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+      contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 16 : 12, horizontal: 14),
       hintText: hintText,
       hintStyle: TextStyle(color: hintColor ?? inputTheme.hintStyle?.color),
       fillColor: fillColor ?? inputTheme.fillColor,

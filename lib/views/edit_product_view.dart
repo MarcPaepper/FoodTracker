@@ -3,22 +3,22 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:food_tracker/subviews/ingredients_box.dart';
-import 'package:food_tracker/utility/text_logic.dart';
-import 'package:food_tracker/widgets/unit_dropdown.dart';
-
-import 'package:food_tracker/constants/routes.dart';
-import 'package:food_tracker/services/data/data_objects.dart';
-import 'package:food_tracker/services/data/data_service.dart';
-import 'package:food_tracker/utility/modals.dart';
-import 'package:food_tracker/widgets/loading_page.dart';
 
 import "dart:developer" as devtools show log;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../subviews/conversion_boxes.dart';
 import '../subviews/nutrients_box.dart';
 import '../subviews/temporary_box.dart';
 import '../utility/data_logic.dart';
+import '../subviews/ingredients_box.dart';
+import '../utility/text_logic.dart';
+import '../widgets/unit_dropdown.dart';
+import '../constants/routes.dart';
+import '../services/data/data_objects.dart';
+import '../services/data/data_service.dart';
+import '../utility/modals.dart';
+import '../widgets/loading_page.dart';
 
 class EditProductView extends StatefulWidget {
   final String? productName;
@@ -309,8 +309,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     ValueListenableBuilder(
                       valueListenable: _productNameController,
                       builder: (context, value, child) {
-                        var name = _productNameController.text;
-                        return _buildDeleteButton(name, productsMap!);
+                        return _buildDeleteButton(productsMap!);
                       }
                     )
                   ] : null
@@ -438,64 +437,68 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     ),
   );
   
-  Widget _buildDeleteButton(String? name, Map<int, Product> productsMap) => 
-    IconButton(
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
-      onPressed: () {
-        // Check whether the product is used in any recipe
-        // List<Product> usedAsIngredientIn = productsMap.where((prod) => prod.ingredients.any((ingr) => ingr.productId == _id)).toList();
-        
-        // Map all products which include the current product (_id) as an ingredient
-        Map<int, Product> usedAsIngredientIn = {};
-        for (var product in productsMap.values) {
-          if (product.ingredients.any((ingr) => ingr.productId == _id)) {
-            usedAsIngredientIn[product.id] = product;
-          }
-        }
-        
-        if (usedAsIngredientIn.isEmpty) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text("Delete Product"),
-              content: const Text("If you delete this product, all associated data will be lost."),
-              surfaceTintColor: Colors.transparent,
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _dataService.deleteProductWithName(widget.productName!);
-                    Navigator.of(context).pop(null);
-                    Navigator.of(context).pop(null);
-                  },
-                  child: const Text("Delete"),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("Cancel"),
+  Widget _buildDeleteButton(Map<int, Product> productsMap) => 
+    ValueListenableBuilder(
+      valueListenable: _productNameController,
+      builder: (context, value, child) {
+        var name = _productNameController.text;
+        return IconButton(
+          padding: const EdgeInsets.fromLTRB(kIsWeb ? 5 : 0, 0, kIsWeb ? 10 : 0, 0),
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            // Map all products which include the current product (_id) as an ingredient
+            Map<int, Product> usedAsIngredientIn = {};
+            for (var product in productsMap.values) {
+              if (product.ingredients.any((ingr) => ingr.productId == _id)) {
+                usedAsIngredientIn[product.id] = product;
+              }
+            }
+            
+            if (usedAsIngredientIn.isEmpty) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Delete Product"),
+                  content: const Text("If you delete this product, all associated data will be lost."),
+                  surfaceTintColor: Colors.transparent,
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        _dataService.deleteProductWithName(widget.productName!);
+                        Navigator.of(context).pop(null);
+                        Navigator.of(context).pop(null);
+                      },
+                      child: const Text("Delete"),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("Cancel"),
+                    )
+                  ],
                 )
-              ],
-            )
-          );
-        } else {
-          // Tell the user that the product is used in following recipes
-          showUsedAsIngredientDialog(
-            name: name ?? "",
-            context: context,
-            usedAsIngredientIn: usedAsIngredientIn,
-            beforeNavigate: () {
-              _interimProduct = getProductFromForm().$1;
-            },
-          );
-        }
-      },
-      icon: const Icon(Icons.delete),
+              );
+            } else {
+              // Tell the user that the product is used in following recipes
+              showUsedAsIngredientDialog(
+                name: name,
+                context: context,
+                usedAsIngredientIn: usedAsIngredientIn,
+                beforeNavigate: () {
+                  _interimProduct = getProductFromForm().$1;
+                },
+              );
+            }
+          },
+          icon: const Icon(Icons.delete),
+        );
+      }
     );
   
   Widget _buildNameField(List<Product> products) {
     var textField = Padding(
       padding: const EdgeInsets.all(8.0),
       child: TextFormField(
+        autofocus: !(_isEdit || widget.isCopy || _interimProduct != null),
         controller: _productNameController,
         decoration: const InputDecoration(
           labelText: "Name"

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/views/add_meal_view.dart';
-import 'package:food_tracker/views/edit_nutvalue_view.dart';
-import 'package:food_tracker/views/edit_product_view.dart';
-import 'package:food_tracker/views/main_view.dart';
-import 'package:food_tracker/views/nutvalues_view.dart';
-import 'package:food_tracker/views/stats_view.dart';
-
+import '../views/add_meal_view.dart';
+import '../views/edit_nutvalue_view.dart';
+import '../views/edit_product_view.dart';
+import '../views/main_view.dart';
+import '../views/nutvalues_view.dart';
+import '../views/stats_view.dart';
+import '../views/options_view.dart';
 import '../views/test_view.dart';
 
 String mainRoute                 = "/debug/";
@@ -17,6 +17,7 @@ String addNutritionalValueRoute  = "/nutvalues/add/";
 String editNutritionalValueRoute = "/nutvalues/edit/";
 String statsRoute                = "/stats/";
 String testRoute                 = "/test/";
+String optionsRoute              = "/options/";
 
 var routes = {
   mainRoute:			(context)   => const MainView(),
@@ -46,4 +47,5 @@ var routes = {
   },
   statsRoute:		  	(context) => const StatsView(),
   testRoute:	  		(context) => const TestView(),
+  optionsRoute:		  (context) => const OptionsView(),
 };

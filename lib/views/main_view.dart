@@ -1,10 +1,11 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'package:flutter/material.dart';
-import 'package:food_tracker/constants/data.dart';
-import 'package:food_tracker/services/data/data_service.dart';
-import 'package:food_tracker/views/products_view.dart';
-import 'package:food_tracker/views/nutvalues_view.dart';
+import 'package:flutter/material.dart' show BuildContext, DefaultTabController, Material, PreferredSize, SafeArea, Scaffold, ScrollBehavior, ScrollConfiguration, State, StatefulWidget, Tab, TabBar, TabBarView, Theme, Widget;
+import '../constants/data.dart';
+import '../services/data/data_service.dart';
+import 'products_view.dart';
+import 'nutvalues_view.dart';
+import 'options_view.dart';
 
 // import 'dart:developer' as devtools show log;
 
@@ -37,7 +38,7 @@ class _MainViewState extends State<MainView> {
       // clamping scroll physics to avoid overscroll
       behavior: const ScrollBehavior().copyWith(overscroll: false),
       child: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Scaffold(
           appBar: PreferredSize(
             preferredSize: _tabBar.preferredSize,
@@ -50,6 +51,7 @@ class _MainViewState extends State<MainView> {
             children: [
               ProductsView(),
               NutritionalValueView(),
+              OptionsView(),
             ],
           ),
         )
@@ -61,6 +63,7 @@ class _MainViewState extends State<MainView> {
     tabs: [
       Tab(text: "Products"),
       Tab(text: "Nutrition"),
+      Tab(text: "Options"),
     ],
   );
 }

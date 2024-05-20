@@ -32,10 +32,10 @@ class _UnitDropdownState extends State<UnitDropdown> {
     
     var decoration = enabled
       ? const InputDecoration(
-        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+        contentPadding: EdgeInsets.symmetric(vertical: kIsWeb ? 16 : 12, horizontal: 14),
       ) 
       : InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+        contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 16 : 12, horizontal: 14),
         // no enabled border
         enabledBorder: UnderlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
