@@ -17,6 +17,8 @@ class ConversionBoxes extends StatelessWidget {
   final TextEditingController quantityAmount2Controller;
   final TextEditingController quantityNameController;
   final Function() onValidate;
+  final Function(Conversion, Conversion) onConversionChanged;
+  final Function() intermediateSave;
   
   const ConversionBoxes({
     required this.defaultUnitNotifier,
@@ -28,6 +30,8 @@ class ConversionBoxes extends StatelessWidget {
     required this.quantityAmount2Controller,
     required this.quantityNameController,
     required this.onValidate,
+    required this.onConversionChanged,
+    required this.intermediateSave,
     Key? key
   }) : super(key: key);
   
@@ -85,7 +89,14 @@ class ConversionBoxes extends StatelessWidget {
             current: conversion.unit1,
             onChanged: (Unit? unit) {
               if (unit != null) {
-                notifier.value = notifier.value.withUnit1(unit);
+                conversion = conversion.withUnit1(unit);
+                if (index == 0) {
+                  densityConversionNotifier.value = conversion;
+                  onConversionChanged(conversion, otherConversion);
+                } else {
+                  quantityConversionNotifier.value = conversion;
+                  onConversionChanged(otherConversion, conversion);
+                }
               }
             }
           );
@@ -108,6 +119,7 @@ class ConversionBoxes extends StatelessWidget {
               return null;
             },
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            onChanged: (_) => intermediateSave,
           );
         }
         var dropdown2 = UnitDropdown(
@@ -116,7 +128,14 @@ class ConversionBoxes extends StatelessWidget {
           current: conversion.unit2,
           onChanged: (Unit? unit) {
             if (unit != null) {
-              notifier.value = notifier.value.withUnit2(unit);
+              conversion = conversion.withUnit2(unit);
+              if (index == 0) {
+                densityConversionNotifier.value = conversion;
+                onConversionChanged(conversion, otherConversion);
+              } else {
+                quantityConversionNotifier.value = conversion;
+                onConversionChanged(otherConversion, conversion);
+              }
             }
           }
         );
@@ -137,10 +156,36 @@ class ConversionBoxes extends StatelessWidget {
         Widget inputFields = isWide
           ? Row(
             children: [
-              Expanded(child: _buildConversionAmountField(notifier: notifier, controller: controller1, index: 1)),
+              Expanded(child: _buildConversionAmountField(
+                notifier: notifier,
+                controller: controller1,
+                index: 1,
+                onChanged: (value) {
+                  conversion = notifier.value.withAmount1(value);
+                  notifier.value = conversion;
+                  if (index == 0) {
+                    onConversionChanged(conversion, otherConversion);
+                  } else {
+                    onConversionChanged(otherConversion, conversion);
+                  }
+                }
+              )),
               Expanded(child: dropdown1),
               equalSign,
-              Expanded(child: _buildConversionAmountField(notifier: notifier, controller: controller2, index: 2)),
+              Expanded(child: _buildConversionAmountField(
+                notifier: notifier,
+                controller: controller2,
+                index: 2,
+                onChanged: (value) {
+                  conversion = notifier.value.withAmount2(value);
+                  notifier.value = conversion;
+                  if (index == 0) {
+                    onConversionChanged(conversion, otherConversion);
+                  } else {
+                    onConversionChanged(otherConversion, conversion);
+                  }
+                }
+              )),
               Expanded(child: dropdown2),
             ]
           )
@@ -154,7 +199,20 @@ class ConversionBoxes extends StatelessWidget {
               TableRow(
                 children: [
                   const SizedBox.shrink(),
-                  _buildConversionAmountField(notifier: notifier, controller: controller1, index: 1),
+                  _buildConversionAmountField(
+                    notifier: notifier,
+                    controller: controller1,
+                    index: 1,
+                    onChanged: (value) {
+                      conversion = notifier.value.withAmount1(value);
+                      notifier.value = conversion;
+                      if (index == 0) {
+                        onConversionChanged(conversion, otherConversion);
+                      } else {
+                        onConversionChanged(otherConversion, conversion);
+                      }
+                    }
+                  ),
                   dropdown1,
                 ]
               ),
@@ -172,7 +230,20 @@ class ConversionBoxes extends StatelessWidget {
                     verticalAlignment: TableCellVerticalAlignment.middle,
                     child: equalSign,
                   ),
-                  _buildConversionAmountField(notifier: notifier, controller: controller2, index: 2),
+                  _buildConversionAmountField(
+                    notifier: notifier,
+                    controller: controller2,
+                    index: 2,
+                    onChanged: (value) {
+                      conversion = notifier.value.withAmount2(value);
+                      notifier.value = conversion;
+                      if (index == 0) {
+                        onConversionChanged(conversion, otherConversion);
+                      } else {
+                        onConversionChanged(otherConversion, conversion);
+                      }
+                    }
+                  ),
                   dropdown2,
                 ]
               ),
@@ -238,6 +309,7 @@ class ConversionBoxes extends StatelessWidget {
     required ValueNotifier<Conversion> notifier,
     required TextEditingController controller,
     required int index,
+    required Function(double) onChanged,
   }) {
     return AmountField(
       controller: controller,
@@ -248,6 +320,7 @@ class ConversionBoxes extends StatelessWidget {
         } else {
           notifier.value = notifier.value.withAmount2(value);
         }
+        onChanged(value);
       }
     );
   }

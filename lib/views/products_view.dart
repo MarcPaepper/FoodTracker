@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:food_tracker/utility/theme.dart';
 
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
@@ -21,7 +22,7 @@ class ProductsView extends StatefulWidget {
 
 class _ProductsViewState extends State<ProductsView> {
   late final DataService _dataService;
-  final ScrollController _scrollController = ScrollController();
+  // final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   SortType _sortType = SortType.relevancy;
@@ -30,19 +31,19 @@ class _ProductsViewState extends State<ProductsView> {
   @override
   void initState() {
     _dataService = DataService.current();
-    _dataService.streamProducts().listen((_) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients) {
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        }
-      });
-    });
+    // _dataService.streamProducts().listen((_) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     if (_scrollController.hasClients) {
+    //       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    //     }
+    //   });
+    // });
     super.initState();
   }
   
   @override
   void dispose() {
-    _scrollController.dispose();
+    // _scrollController.dispose();
     super.dispose();
   }
   
@@ -100,7 +101,7 @@ class _ProductsViewState extends State<ProductsView> {
       var products = snapshot.data as List<Product>;
       return ListView(
         physics: const ClampingScrollPhysics(),
-        controller: _scrollController,
+        // controller: _scrollController,
         children: getProductTiles(
           context: context,
           products: products,
@@ -135,15 +136,7 @@ class _ProductsViewState extends State<ProductsView> {
     }
     
     return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color.fromARGB(255, 210, 235, 198),
-        foregroundColor: Colors.black,
-        minimumSize: const Size(double.infinity, 56),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-        textStyle: Theme.of(context).textTheme.bodyLarge,
-      ),
+      style: addButtonStyle,
       icon: const Icon(Icons.add),
       label: Padding(
         padding: const EdgeInsets.only(left: 5.0),

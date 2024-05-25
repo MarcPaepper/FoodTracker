@@ -73,6 +73,16 @@ class DataService implements DataProvider {
   @override Future<void> deleteNutritionalValue(int id)                              => _condLoad().then((_) => _provider.deleteNutritionalValue(id));
   @override Future<void> deleteNutritionalValueWithName(String name)                 => _condLoad().then((_) => _provider.deleteNutritionalValueWithName(name));
   
+  // Meals
+  
+  @override Stream<List<Meal>> streamMeals()     => _provider.streamMeals();
+  @override void reloadMealStream()              => _provider.reloadMealStream();
+  @override Future<Iterable<Meal>> getAllMeals() => _condLoad().then((_) => _provider.getAllMeals());
+  @override Future<Meal> getMeal(int id)         => _condLoad().then((_) => _provider.getMeal(id));
+  @override Future<Meal> createMeal(Meal meal)   => _condLoad().then((_) => _provider.createMeal(meal));
+  @override Future<Meal> updateMeal(Meal meal)   => _condLoad().then((_) => _provider.updateMeal(meal));
+  @override Future<void> deleteMeal(int id)      => _condLoad().then((_) => _provider.deleteMeal(id));
+  
   Future _condLoad() {
     if (_provider.isLoaded()) {
       return Future.value();

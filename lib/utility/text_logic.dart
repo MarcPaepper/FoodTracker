@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 // import 'dart:developer' as devtools show log;
   
@@ -104,5 +106,27 @@ String relativeDaysNatural(DateTime date) {
 extension MyDateExtension on DateTime {
   DateTime getDateOnly(){
     return DateTime(year, month, day);
+  }
+}
+
+List<String> conditionallyRemoveYear(List<DateTime> dates, {bool showWeekDay = true}) {
+  var reg = RegExp(r"(\d{4})"); // match a year
+  var function = showWeekDay ? DateFormat.yMEd : DateFormat.yMd;
+  var texts = dates.map((date) => function(Platform.localeName).format(date)).toList(); // format dates
+  var matches = texts.map((text) => reg.firstMatch(text)).toList();
+  var years = matches.map((match) => match?.group(1)).toList();
+  var currentYear = DateTime.now().year.toString();
+  
+  if (years.every((year) => year == currentYear)) {
+    for (var i = 0; i < texts.length; i++) {
+      // remove year completely and leading and trailing "/" or "-"
+      texts[i] = texts[i].replaceFirst(currentYear, "")
+                 .replaceAll(RegExp(r"^[/-]"), "")
+                 .replaceAll(RegExp(r"[/-]$"), "");
+    }
+    return texts;
+  } else {
+    // replace year with last two digits
+    return texts.map((text) => text.replaceFirst(currentYear, currentYear.substring(2))).toList();
   }
 }

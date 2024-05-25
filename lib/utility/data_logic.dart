@@ -339,7 +339,7 @@ Product updateProductNutrients(Product product, Map<int, Product> productsMap) {
         var valuePerProdIngrUnit = valueForIngrUsed / amountForIngredients;
         value += valuePerProdIngrUnit;
       } catch (e) {
-        devtools.log("Error while calculating nutrients: $e");
+        devtools.log("Error while calculating nutrient ${nutrient.nutritionalValueId}: $e");
         convertedIngredients[i] = false;
       }
     }

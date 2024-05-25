@@ -24,4 +24,12 @@ abstract class DataProvider {
   Future<void> reorderNutritionalValues(Map<int, int> orderMap);
   Future<void> deleteNutritionalValue(int id);
   Future<void> deleteNutritionalValueWithName(String name);
+  
+  Stream<List<Meal>> streamMeals();
+  Future<Iterable<Meal>> getAllMeals();
+  void reloadMealStream();
+  Future<Meal> getMeal(int id);
+  Future<Meal> createMeal(Meal meal);
+  Future<Meal> updateMeal(Meal meal);
+  Future<void> deleteMeal(int id);
 }

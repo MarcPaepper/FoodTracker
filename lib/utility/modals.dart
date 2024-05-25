@@ -41,7 +41,7 @@ void _showSnackbar({
   );
 }
 
-Future showContinueWithoutSavingDialog(BuildContext context) => 
+Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save}) => 
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
@@ -73,6 +73,22 @@ Future showContinueWithoutSavingDialog(BuildContext context) =>
                 ),
               ),
             ),
+            if (save != null) ...[
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  style: actionButtonStyle,
+                  onPressed: () {
+                    save();
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                    child: Text('Save'),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ],
@@ -99,7 +115,7 @@ void showUsedAsIngredientDialog({
           ),
         ),
         Expanded(
-          child: _ProductList(
+          child: _MainList(
             onSelected: (product) {
               beforeNavigate();
               Navigator.of(context).pushNamed(
@@ -145,6 +161,7 @@ void showProductDialog({
   Product? selectedProduct,
   required void Function(Product?) onSelected,
   void Function()? beforeAdd,
+  bool autofocus = false,
 }) => showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -153,21 +170,16 @@ void showProductDialog({
       return Dialog(
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'Choose a product',
-                style: TextStyle(fontSize: 17),
-              ),
-            ),
             Expanded(
-              child: _ProductList(
+              child: _MainList(
                 productsMap: productsMap,
                 onSelected: onSelected,
                 onLongPress: (product) =>
                   onAddProduct(context, product.name, true, beforeAdd, onSelected),
                 searchController: searchController,
+                autofocus: autofocus,
               ),
             ),
             Padding(
@@ -258,28 +270,30 @@ void onAddProduct(
   });
 }
 
-class _ProductList extends StatefulWidget {
+class _MainList extends StatefulWidget {
   final Map<int, Product> productsMap;
   final Function(Product) onSelected;
   final Function(Product)? onLongPress;
   final bool showSearch;
   final bool colorFromTop;
   final TextEditingController? searchController;
+  final bool autofocus;
   
-  const _ProductList({
+  const _MainList({
     required this.productsMap,
     required this.onSelected,
     this.onLongPress,
     this.showSearch = true,
     this.colorFromTop = false,
     this.searchController,
+    this.autofocus = false,
   });
 
   @override
-  State<_ProductList> createState() => __ProductListState();
+  State<_MainList> createState() => _MainListState();
 }
 
-class __ProductListState extends State<_ProductList> {
+class _MainListState extends State<_MainList> {
   late TextEditingController _searchController;
   
   @override
@@ -293,12 +307,19 @@ class __ProductListState extends State<_ProductList> {
     return Column(
       children: [
         widget.showSearch ? Container(
-          color: Colors.white,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(15),
+              topRight: Radius.circular(15),
+            ),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(16.0),
             child: SearchField(
               searchController: _searchController,
               onChanged: (value) => setState(() {}),
+              autofocus: widget.autofocus,
             )
           )
         ) : const SizedBox(),

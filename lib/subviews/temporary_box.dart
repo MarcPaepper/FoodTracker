@@ -1,10 +1,8 @@
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
-import 'package:intl/intl.dart';
 
+import '../widgets/multi_value_listenable_builder.dart';
 import '../utility/data_logic.dart';
 import '../utility/text_logic.dart';
 import '../utility/theme.dart';
@@ -17,10 +15,13 @@ class TemporaryBox extends StatelessWidget {
   final ValueNotifier<DateTime?> beginningNotifier;
   final ValueNotifier<DateTime?> endNotifier;
   
+  final Function() intermediateSave;
+  
   const TemporaryBox({
     required this.isTemporaryNotifier,
     required this.beginningNotifier,
     required this.endNotifier,
+    required this.intermediateSave,
     super.key,
   });
 
@@ -43,6 +44,7 @@ class TemporaryBox extends StatelessWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             beginningNotifier.value = beginning;
             endNotifier.value = end;
+            intermediateSave();
           });
         }
         
@@ -67,27 +69,10 @@ class TemporaryBox extends StatelessWidget {
         var endTextNat = "";
         
         if (isTemporary) {
-          var reg = RegExp(r"(\d{4})");
-          beginningText = DateFormat.yMEd (Platform.localeName).format(beginning!);
-          endText       = DateFormat.yMEd(Platform.localeName).format(end!);
+          var texts = conditionallyRemoveYear([beginning!, end!]);
+          beginningText = texts[0];
+          endText = texts[1];
           
-          // if regex matches, concat all match groups
-          var match1 = reg.firstMatch(beginningText);
-          var match2 = reg.firstMatch(endText);
-          
-          if (match1 != null && match2 != null) {
-            var yearFull1 = match1.group(1)!;
-            var yearFull2 = match2.group(1)!;
-            // check if both fall in the current year
-            if (yearFull1 == yearFull2 && yearFull1 == DateTime.now().year.toString()) {
-              beginningText = beginningText.replaceFirst(yearFull1, "");
-              endText       = endText.replaceFirst(yearFull2, "");
-            } else {
-              beginningText = beginningText.replaceFirst(yearFull1, yearFull1.substring(2));
-              endText       = endText.replaceFirst(yearFull2, yearFull2.substring(2));
-            }
-          }
-        
           beginningTextNat = isTemporary ? relativeDaysNatural(beginning) : "";
           endTextNat       = isTemporary ? relativeDaysNatural(end)       : "";
         }
@@ -102,7 +87,10 @@ class TemporaryBox extends StatelessWidget {
                 SwitchListTile(
                   value: isTemporary,
                   controlAffinity: ListTileControlAffinity.leading,
-                  onChanged: (value) => isTemporaryNotifier.value = value,
+                  onChanged: (value) {
+                    isTemporaryNotifier.value = value;
+                    intermediateSave();
+                  },
                   title: Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
@@ -141,6 +129,7 @@ class TemporaryBox extends StatelessWidget {
                         if (range != null) {
                           beginningNotifier.value = range.start;
                           endNotifier.value = range.end;
+                          intermediateSave();
                         }
                       },
                       child: Row(

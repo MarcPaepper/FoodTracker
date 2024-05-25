@@ -15,12 +15,15 @@ import '../widgets/product_dropdown.dart';
 import '../widgets/slidable_list.dart';
 import '../widgets/unit_dropdown.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class IngredientsBox extends StatefulWidget {
   final int id;
   final Product prevProduct;
   final Map<int, Product> productsMap;
+  final int? focusIndex;
+  final DateTime? autofocusTime;
+  
   final ValueNotifier<Unit>                  defaultUnitNotifier;
   final TextEditingController                quantityNameController;
   final ValueNotifier<bool>                  autoCalcAmountNotifier;
@@ -33,13 +36,18 @@ class IngredientsBox extends StatefulWidget {
   final TextEditingController                productNameController;
   final TextEditingController                resultingAmountController;
   final List<TextEditingController>          ingredientAmountControllers;
+  final List<FocusNode>                      ingredientDropdownFocusNodes;
   
   final Function() intermediateSave;
+  final Function(Unit, List<ProductQuantity>, int?) onChange;
+  final Function(int, int) requestIngredientFocus;
   
   const IngredientsBox({
     required this.id,
     required this.prevProduct,
     required this.productsMap,
+             this.focusIndex,
+             this.autofocusTime,
     required this.defaultUnitNotifier,
     required this.quantityNameController,
     required this.autoCalcAmountNotifier,
@@ -52,7 +60,10 @@ class IngredientsBox extends StatefulWidget {
     required this.productNameController,
     required this.resultingAmountController,
     required this.ingredientAmountControllers,
+    required this.ingredientDropdownFocusNodes,
     required this.intermediateSave,
+    required this.onChange,
+    required this.requestIngredientFocus,
     super.key,
   });
 
@@ -61,8 +72,6 @@ class IngredientsBox extends StatefulWidget {
 }
 
 class _IngredientsBoxState extends State<IngredientsBox> {
-  List<FocusNode> _ingredientDropdownFocusNodes = [];
-  
   @override
   Widget build(BuildContext context) {
     return MultiValueListenableBuilder(
@@ -92,7 +101,6 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         for (var ingredient in valueIngredients) {
           ingredientsWithProducts.add((ingredient, widget.productsMap[ingredient.productId]));
         }
-        
         // check whether the ingredient unit is compatible with the default unit
         var (errorType, errorMsg) = validateAmount(
           valueUnit,
@@ -207,7 +215,11 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                       child: UnitDropdown(
                         items: buildUnitItems(verbose: true, quantityName: widget.quantityNameController.text), 
                         current: valueUnit,
-                        onChanged: (Unit? unit) => widget.ingredientsUnitNotifier.value = unit ?? Unit.g,
+                        intermediateSave: widget.intermediateSave,
+                        onChanged: (Unit? unit) {
+                          var newUnit = unit ?? Unit.g;
+                          widget.onChange(newUnit, valueIngredients, null);
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -300,18 +312,18 @@ class _IngredientsBoxState extends State<IngredientsBox> {
     var entries = <SlidableListEntry>[];
     
     // check whether there are the correct number of focus nodes
-    for (int i = _ingredientDropdownFocusNodes.length; i < ingredients.length; i++) {
-      _ingredientDropdownFocusNodes.add(FocusNode());
+    for (int i = widget.ingredientDropdownFocusNodes.length; i < ingredients.length; i++) {
+      widget.ingredientDropdownFocusNodes.add(FocusNode());
     }
-    for (int i = _ingredientDropdownFocusNodes.length; i > ingredients.length; i--) {
-      _ingredientDropdownFocusNodes.removeLast();
+    for (int i = widget.ingredientDropdownFocusNodes.length; i > ingredients.length; i--) {
+      widget.ingredientDropdownFocusNodes.removeLast();
     }
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
-      var focusNode1 = _ingredientDropdownFocusNodes[index];
+      var focusNode1 = widget.ingredientDropdownFocusNodes[index];
       
       var product = ingredient.productId != null 
         ? productsMap[ingredient.productId]
@@ -376,6 +388,9 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                         selectedProduct: product,
                         index: index,
                         focusNode: focusNode1,
+                        autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
+                        autofocusSearch: true,
+                        beforeTap: () => widget.intermediateSave(),
                         onChanged: (Product? newProduct) {
                           if (newProduct != null) {
                             // Check whether the new product supports the current unit
@@ -388,8 +403,11 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                               amount:    ingredient.amount,
                               unit:      newUnit,
                             );
+                            widget.onChange(widget.ingredientsUnitNotifier.value, ingredients, index);
                             widget.ingredientsNotifier.value = List.from(ingredients);
-                            WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index, 0));
+                            // WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index, 0));
+                            // // request after 200 ms
+                            // Future.delayed(const Duration(milliseconds: 200), () => _requestIngredientFocus(index, 0));
                           }
                         },
                       ),
@@ -514,10 +532,12 @@ class _IngredientsBoxState extends State<IngredientsBox> {
       onPressed: () {// remove all ingredient products from products list
         var reducedProducts = reduceProducts(productsMap, ingredients, id);
         // show product dialog
+        widget.intermediateSave();
         showProductDialog(
           context: context,
           productsMap: reducedProducts,
           selectedProduct: null,
+          autofocus: true,
           onSelected: (Product? product) {
             if (product != null) {
               var defUnit = product.defaultUnit;
@@ -536,7 +556,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               newController.text = truncateZeros(amount);
               widget.ingredientAmountControllers.add(newController);
               widget.ingredientsNotifier.value = List.from(ingredients);
-              Future.delayed(const Duration(milliseconds: 50), () => _requestIngredientFocus(ingredients.length - 1, 1));
+              Future.delayed(const Duration(milliseconds: 50), () => widget.requestIngredientFocus(ingredients.length - 1, 1));
             }
           },
           beforeAdd: () => widget.intermediateSave(),
@@ -545,22 +565,5 @@ class _IngredientsBoxState extends State<IngredientsBox> {
     );
   }
 
-  void _requestIngredientFocus(int index, int subIndex) {
-    try {
-      if (index < _ingredientDropdownFocusNodes.length) {
-        if (subIndex == 0) {
-          // If sub index = 0, focus the product dropdown
-          _ingredientDropdownFocusNodes[index].requestFocus();
-        } else {
-          // If sub index = 1, focus the amount field
-          _ingredientDropdownFocusNodes[index].requestFocus();
-          Future.delayed(const Duration(milliseconds: 20), () {
-            for (var i = 0; i < 2; i++) FocusManager.instance.primaryFocus?.nextFocus();
-          });
-        }
-      }
-    } catch (e) {
-      devtools.log("Error focusing ingredient $index: $e");
-    }
-  }
+
 }

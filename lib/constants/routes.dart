@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import '../views/add_meal_view.dart';
+// import '../views/add_meal_view.dart';
 import '../views/edit_nutvalue_view.dart';
 import '../views/edit_product_view.dart';
 import '../views/main_view.dart';
+import '../views/meals_view.dart';
 import '../views/nutvalues_view.dart';
 import '../views/stats_view.dart';
 import '../views/options_view.dart';
 import '../views/test_view.dart';
 
 String mainRoute                 = "/debug/";
-String addMealsRoute             = "/meals/add/";
+String mealsRoute                = "/meals/";
+// String addMealsRoute             = "/meals/add/";
 String productsRoute             = "/products/";
 String addProductRoute           = "/products/add/";
 String editProductRoute          = "/products/edit/";
@@ -21,7 +23,8 @@ String optionsRoute              = "/options/";
 
 var routes = {
   mainRoute:			(context)   => const MainView(),
-  addMealsRoute:		(context) => const AddMealView(),
+  mealsRoute:		(context)     => const MealsView(),
+  // addMealsRoute:		(context) => const AddMealView(),
   productsRoute:	  (context) => const NutritionalValueView(),
   addProductRoute:	(context) {
     var result = ModalRoute.of(context)!.settings.arguments as (String?, bool?)?;

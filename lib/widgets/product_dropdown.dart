@@ -18,9 +18,12 @@ class ProductDropdown extends StatefulWidget {
   final Map<int, Product> productsMap;
   final Product? selectedProduct;
   final int index;
+  final void Function()? beforeTap;
   final void Function(Product?) onChanged;
   final FocusNode? focusNode;
   final bool skipTraversal;
+  final DateTime? autofocus;
+  final bool autofocusSearch;
   
   final Color _fillColor = fillColor;
   final Color _underlineColor = underlineColorEnabled;
@@ -30,8 +33,11 @@ class ProductDropdown extends StatefulWidget {
     required this.selectedProduct,
     required this.index,
     required this.onChanged,
+    this.beforeTap,
     this.focusNode,
     this.skipTraversal = !kIsWeb,
+    this.autofocus,
+    this.autofocusSearch = false,
     Key? key,
   }) : super(key: key);
   
@@ -60,6 +66,25 @@ class _ProductDropdownState extends State<ProductDropdown> {
     var fillColor = widget._fillColor;
     var underlineColor = widget._underlineColor;
     
+    // // autofocus for 400ms
+    // if (widget.autofocus != null) devtools.log("delay ${DateTime.now().difference(widget.autofocus !).inMilliseconds}");
+    // if (widget.autofocus != null && DateTime.now().difference(widget.autofocus!).inMilliseconds < 900) {
+    //   devtools.log('autofocus the product ${widget.selectedProduct?.name ?? 'null'} at ${widget.autofocus}');
+    //   setState(() {
+    //     FocusScope.of(context).requestFocus(_focusNode);
+    //   });
+    //   var times = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600];
+    //   for (var time in times) {
+    //     Future.delayed(Duration(milliseconds: time), () {
+    //       if (mounted) {
+    //         setState(() {
+    //           FocusScope.of(context).requestFocus(_focusNode);
+    //         });
+    //       }
+    //     });
+    //   }
+    // }
+    
     return ExcludeFocusTraversal(
       excluding: widget.skipTraversal,
       child: InkWell(
@@ -71,6 +96,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
           });
         },
         onTap: () {
+          widget.beforeTap?.call();
           setState(() {
             FocusScope.of(context).requestFocus(_focusNode);
           });
@@ -79,6 +105,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
             productsMap: widget.productsMap,
             selectedProduct: widget.selectedProduct,
             onSelected:  (newProduct) => widget.onChanged(newProduct),
+            autofocus: widget.autofocusSearch,
           );
         },
         child: Container(

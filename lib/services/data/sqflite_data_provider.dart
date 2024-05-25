@@ -68,6 +68,12 @@ const productIdColumn             = "product_id";
 const autoCalcColumn              = "auto_calc";
 const valueColumn                 = "value";
 
+// meal table
+
+const dateTimeColumn               = "date_time";
+const mealAmountColumn             = "amount";
+const mealUnitColumn               = "unit";
+
 const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
@@ -77,9 +83,11 @@ class SqfliteDataProvider implements DataProvider {
   List<Product> _products = [];
   Map<int, Product> _productsMap = {};
   List<NutritionalValue> _nutritionalValues = [];
+  List<Meal> _meals = [];
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
   final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();
+  final _mealsStreamController = BehaviorSubject<List<Meal>>();
 
   SqfliteDataProvider(String dbName);
   
@@ -95,6 +103,7 @@ class SqfliteDataProvider implements DataProvider {
       nutritionalValueTable: (createNutritionalValueTable, nutritionalValueColumns, missingNutritionalValueColumns),
       ingredientTable: (createIngredientTable, ingredientColumns, missingIngredientColumns),
       productNutrientTable: (createProductNutrientTable, productNutrientColumns, missingProductNutrientColumns),
+      mealTable: (createMealTable, mealColumns, missingMealColumns),
     };
     try {
       // Find file
@@ -156,6 +165,7 @@ class SqfliteDataProvider implements DataProvider {
       
       await getAllProducts();
       await getAllNutritionalValues();
+      await getAllMeals();
       
       return "data loaded";
     } on MissingPlatformDirectoryException {
@@ -167,6 +177,7 @@ class SqfliteDataProvider implements DataProvider {
   Future<void> close() async {
     _productsStreamController.close();
     _nutritionalValuesStreamController.close();
+    _mealsStreamController.close();
     await _db!.close();
     _db = null;
   }
@@ -177,9 +188,7 @@ class SqfliteDataProvider implements DataProvider {
   Stream<List<Product>> streamProducts() => _productsStreamController.stream;
   
   @override
-  void reloadProductStream() {
-    if (isLoaded()) _productsStreamController.add(_products);
-  }
+  void reloadProductStream() => isLoaded() ? _productsStreamController.add(_products) : null;
   
   @override
   Future<Iterable<Product>> getAllProducts() async {
@@ -383,9 +392,7 @@ class SqfliteDataProvider implements DataProvider {
   Stream<List<NutritionalValue>> streamNutritionalValues() => _nutritionalValuesStreamController.stream;
   
   @override
-  void reloadNutritionalValueStream() {
-    if (isLoaded()) _nutritionalValuesStreamController.add(_nutritionalValues);
-  }
+  void reloadNutritionalValueStream() => isLoaded() ? _nutritionalValuesStreamController.add(_nutritionalValues) : null;
   
   @override
   Future<Iterable<NutritionalValue>> getAllNutritionalValues() async {
@@ -542,5 +549,98 @@ class SqfliteDataProvider implements DataProvider {
   
   Future<void> _deleteProductNutrientsForNutritionalValue({required int nutritionalValueId}) async {
     await _db!.delete(productNutrientTable, where: '$nutritionalValueIdColumn = ?', whereArgs: [nutritionalValueId]);
+  }
+  
+  // ----- Meals -----
+  
+  @override
+  Stream<List<Meal>> streamMeals() => _mealsStreamController.stream;
+  
+  @override
+  void reloadMealStream() => isLoaded() ? _mealsStreamController.add(_meals) : null;
+  
+  @override
+  Future<Iterable<Meal>> getAllMeals() async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    var mealRows = await _db!.query(mealTable);
+    _meals = mealRows.map((row) => _dbRowToMeal(row)).toList();
+    
+    _mealsStreamController.add(_meals);
+    
+    return _meals;
+  }
+  
+  @override
+  Future<Meal> getMeal(int id) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final results = await _db!.query(mealTable, where: '$idColumn = ?', whereArgs: [id]);
+    if (results.isEmpty) throw NotFoundException();
+    if (results.length > 1) throw NotUniqueException();
+    
+    var meal = _dbRowToMeal(results.first);
+    
+    _mealsStreamController.add(_meals);
+    
+    return meal;
+  }
+  
+  Meal _dbRowToMeal(Map<String, Object?> row) =>
+    Meal(
+      id:         row[idColumn] as int,
+      dateTime:   DateTime.parse(row[dateTimeColumn] as String),
+      productQuantity: ProductQuantity(
+        productId: row[productIdColumn] as int,
+        amount:    toDouble(row[mealAmountColumn]),
+        unit:      unitFromString(row[mealUnitColumn] as String),
+      ),
+    );
+  
+  @override
+  Future<Meal> createMeal(Meal meal) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final id = await _db!.insert(mealTable, {
+      dateTimeColumn:   meal.dateTime.toIso8601String(),
+      productIdColumn:  meal.productQuantity.productId,
+      mealAmountColumn: meal.productQuantity.amount,
+      mealUnitColumn:   unitToString(meal.productQuantity.unit),
+    });
+    
+    _meals.add(Meal(id: id, dateTime: meal.dateTime, productQuantity: meal.productQuantity));
+    _mealsStreamController.add(_meals);
+    
+    return Meal(id: id, dateTime: meal.dateTime, productQuantity: meal.productQuantity);
+  }
+  
+  @override
+  Future<Meal> updateMeal(Meal meal) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final updatedCount = await _db!.update(mealTable, {
+      dateTimeColumn:   meal.dateTime.toIso8601String(),
+      productIdColumn:  meal.productQuantity.productId,
+      mealAmountColumn: meal.productQuantity.amount,
+      mealUnitColumn:   unitToString(meal.productQuantity.unit),
+    }, where: '$idColumn = ?', whereArgs: [meal.id]);
+    if (updatedCount != 1) throw InvalidUpdateException();
+    
+    _meals.removeWhere((m) => m.id == meal.id);
+    _meals.add(meal);
+    _mealsStreamController.add(_meals);
+    
+    return meal;
+  }
+  
+  @override
+  Future<void> deleteMeal(int id) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final deletedCount = await _db!.delete(mealTable, where: '$idColumn = ?', whereArgs: [id]);
+    if (deletedCount != 1) throw InvalidDeletionException();
+    
+    _meals.removeWhere((m) => m.id == id);
+    _mealsStreamController.add(_meals);
   }
 }

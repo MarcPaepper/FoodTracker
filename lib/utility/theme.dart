@@ -133,3 +133,13 @@ class _CustomUnderlinePainter extends BoxPainter {
     canvas.drawLine(rect.topLeft, rect.topRight, paint);
   }
 }
+
+var addButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: const Color.fromARGB(255, 210, 235, 198),
+  foregroundColor: Colors.black,
+  minimumSize: const Size(double.infinity, 56),
+  alignment: Alignment.centerLeft,
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+  textStyle: const TextStyle(fontSize: 16),
+);

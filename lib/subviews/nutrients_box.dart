@@ -27,6 +27,9 @@ class NutrientsBox extends StatelessWidget {
   final TextEditingController nutrientAmountController;
   final List<TextEditingController> nutrientAmountControllers;
   
+  final Function(Unit) onUnitChanged;
+  final Function() intermediateSave;
+  
   const NutrientsBox({
     required this.nutValues,
     required this.productsMap,
@@ -42,6 +45,8 @@ class NutrientsBox extends StatelessWidget {
     required this.quantityNameController,
     required this.nutrientAmountController,
     required this.nutrientAmountControllers,
+    required this.onUnitChanged,
+    required this.intermediateSave,
     super.key
   });
 
@@ -142,7 +147,10 @@ class NutrientsBox extends StatelessWidget {
                         padding: const EdgeInsets.only(right: 12),
                         child: AmountField(
                           controller: nutrientAmountController,
-                          onChangedAndParsed: (value) => nutrientAmountNotifier.value = value,
+                          onChangedAndParsed: (value) {
+                            nutrientAmountNotifier.value = value;
+                            intermediateSave();
+                          },
                           padding: 0,
                         )
                       ),
@@ -151,7 +159,7 @@ class NutrientsBox extends StatelessWidget {
                       child: UnitDropdown(
                         items: buildUnitItems(verbose: true, quantityName: quantityNameController.text), 
                         current: valueNutrientsUnit,
-                        onChanged: (Unit? unit) => nutrientsUnitNotifier.value = unit ?? Unit.g,
+                        onChanged: (Unit? unit) => onUnitChanged(unit?? Unit.g),
                       ),
                     ),
                     const Text(
@@ -223,10 +231,12 @@ class NutrientsBox extends StatelessWidget {
                       nutrient.value = value;
                       nutrient.autoCalc = false;
                       nutrientsNotifier.value = List.from(nutrients);
+                      intermediateSave();
                     },
                     onEmptied: () {
                       nutrient.autoCalc = true;
                       nutrientsNotifier.value = List.from(nutrients);
+                      intermediateSave();
                     },
                     padding: 0,
                     borderColor: nutrient.autoCalc ? const Color.fromARGB(181,  56, 141, 211) : null,//Color.fromARGB(197, 76, 129, 124),

@@ -15,10 +15,12 @@ class DebugDataProvider implements DataProvider {
   List<Product> products = [];
   Map<int, Product> productsMap = {};
   List<NutritionalValue> nutValues = [];
+  List<Meal> meals = [];
   bool loaded = false;
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
   final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();
+  final _mealsStreamController = BehaviorSubject<List<Meal>>();
   
   @override
   Future<String> open(String dbName) async {
@@ -202,46 +204,6 @@ class DebugDataProvider implements DataProvider {
             ],
           ));
         
-        // List<ProductQuantity> firstProducts = [];
-        // for (int i = 1; i <= 20; i++) {
-        //   var product = 
-        //     Product(
-        //       id: i,
-        //       name:                 "Example $i",
-        //       defaultUnit:          Unit.g,
-        //       densityConversion:    Conversion.fromString("100 ml = 100 g disabled"),
-        //       quantityConversion:   Conversion.fromString("1 x = 100 g disabled"),
-        //       quantityName:         "x",
-        //       autoCalc:             false,
-        //       amountForIngredients: 100,
-        //       ingredientsUnit:      Unit.g,
-        //       amountForNutrients:   100,
-        //       nutrientsUnit:        Unit.g,
-        //       ingredients:          List.from(firstProducts),
-        //       nutrients:            prodNutrientValuesMap.entries.map((e) => ProductNutrient(
-        //                               productId: i,
-        //                               autoCalc: i > 3,
-        //                               value: e.value,
-        //                               nutritionalValueId: e.key
-        //                             )).toList()
-        //     );
-          
-        //   if (i <= 3) { 
-        //     firstProducts.add(
-        //       ProductQuantity(
-        //         productId: product.id,
-        //         amount: 100,
-        //         unit: Unit.g,
-        //       )
-        //     );
-        //   } else {
-        //     // recalculate the nutrient values
-        //     product = updateProductNutrients(product, productsMap);
-        //   }
-        //   products.add(product);
-        //   productsMap[i] = product;
-        // }
-        
         // update map
         for (var product in products) {
           productsMap[product.id] = product;
@@ -265,6 +227,7 @@ class DebugDataProvider implements DataProvider {
   Future<void> close() {
     _productsStreamController.close();
     _nutritionalValuesStreamController.close();
+    _mealsStreamController.close();
     return Future.value();
   }
   
@@ -452,5 +415,68 @@ class DebugDataProvider implements DataProvider {
     for (var product in products) {
       product.nutrients.removeWhere((element) => element.nutritionalValueId == nutritionalValueId);
     }
+  }
+  
+  // ----- Meals -----
+  
+  @override
+  Stream<List<Meal>> streamMeals() {
+    if (loaded) _mealsStreamController.add(meals);
+    return _mealsStreamController.stream;
+  }
+  
+  @override
+  void reloadMealStream() => loaded ? _mealsStreamController.add(meals) : {};
+  
+  @override
+  Future<Iterable<Meal>> getAllMeals() {
+    return Future.value(meals);
+  }
+  
+  @override
+  Future<Meal> getMeal(int id) {
+    var list = meals.where((element) => element.id == id);
+    if (list.isEmpty) throw NotFoundException();
+    if (list.length > 1) throw NotUniqueException();
+    return Future.value(list.first);
+  }
+  
+  @override
+  Future<Meal> createMeal(Meal meal) {
+    int highestId = 0;
+    for (final meal in meals) {
+      if (meal.id > highestId) highestId = meal.id;
+    }
+    final newMeal = Meal(
+      id: highestId + 1,
+      dateTime: meal.dateTime,
+      productQuantity: meal.productQuantity,
+    );
+    meals.add(newMeal);
+    _mealsStreamController.add(meals);
+    return Future.value(newMeal);
+  }
+  
+  @override
+  Future<Meal> updateMeal(Meal meal) {
+    int lenPrev = meals.length;
+    meals.removeWhere((element) => element.id == meal.id);
+    meals.add(meal);
+    if (lenPrev - meals.length != 0) {
+      throw InvalidUpdateException();
+    }
+    _mealsStreamController.add(meals);
+    return Future.value(meal);
+  }
+  
+  @override
+  Future<void> deleteMeal(int id) {
+    int lenPrev = meals.length;
+    meals.removeWhere((element) => element.id == id);
+    if (lenPrev - meals.length != 1) {
+      throw InvalidDeletionException();
+    }
+    _mealsStreamController.add(meals);
+    return Future.value();
   }
 }

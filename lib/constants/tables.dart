@@ -1,7 +1,7 @@
 import 'package:food_tracker/services/data/data_objects.dart';
 
 const createProductTable = '''
-CREATE TABLE IF NOT EXISTS "product" (
+CREATE TABLE "product" (
 	"id"	INTEGER,
 	"name"	TEXT,
 	"density_conversion"	TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "product" (
 );
 ''';
 const createNutritionalValueTable = '''
-CREATE TABLE IF NOT EXISTS "nutritional_value" (
+CREATE TABLE "nutritional_value" (
 	"id"	INTEGER,
 	"name"	TEXT,
 	"unit"	TEXT
@@ -44,11 +44,21 @@ CREATE TABLE "product_nutrient" (
 	"value"	INTEGER
 );
 ''';
+const createMealTable = '''
+CREATE TABLE "meal" (
+	"id"	INTEGER,
+	"date_time"	TEXT,
+	"product_id"	INTEGER,
+	"amount"	INTEGER,
+	"unit"	TEXT
+);
+''';
 
 const productTableName = "product";
 const nutritionalValueTableName = "nutritional_value";
 const ingredientTableName = "ingredient";
 const productNutrientTableName = "product_nutrient";
+const mealTableName = "meal";
 
 const productColumns = [
   '"id" INTEGER',
@@ -91,6 +101,14 @@ const productNutrientColumns = [
   '"value" INTEGER',
 ];
 
+const mealColumns = [
+  '"id" INTEGER',
+  '"date_time" TEXT',
+  '"product_id" INTEGER',
+  '"amount" INTEGER',
+  '"unit" TEXT',
+];
+
 var missingProductColumns = {
   "creation_date":  () => "UPDATE $productTableName SET creation_date = datetime('now') WHERE creation_date IS NULL;",
   "last_edit_date": () => "UPDATE $productTableName SET last_edit_date = datetime('now') WHERE last_edit_date IS NULL;",
@@ -99,6 +117,7 @@ var missingProductColumns = {
 var missingNutritionalValueColumns = {};
 var missingIngredientColumns = {};
 var missingProductNutrientColumns = {};
+var missingMealColumns = {};
 
 final defaultNutritionalValues = [
   NutritionalValue(0, 0, "Calories", "kcal", false),

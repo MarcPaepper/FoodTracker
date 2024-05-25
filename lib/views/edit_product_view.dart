@@ -41,7 +41,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   bool get wantKeepAlive => true;
   
   bool _loaded = false;
+  int _numberOfLoads = 0;
   bool _error = false;
+  bool _forceReload = false;
   
   String? _copyName;
   
@@ -59,13 +61,16 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   final List<TextEditingController> _ingredientAmountControllers = [];
   final List<TextEditingController> _nutrientAmountControllers = [];
+  final List<FocusNode> _ingredientDropdownFocusNodes = [];
   
   late final bool _isEdit;
   
   int _id = -1;
   late Product _prevProduct;
   Product? _interimProduct;
-  // used to store the product while the user navigates to another page, can contain formal errors
+   // used to store the product while the user navigates to another page, can contain formal errors
+  List<int> _ingredientsToFocus = [];
+  DateTime? _autofocusTime;
   
   final _defaultUnitNotifier = ValueNotifier<Unit>(Unit.g);
   
@@ -152,6 +157,19 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   @override
   Widget build(BuildContext context) {
+    // if (_ingredientsToFocus.isNotEmpty) {
+    //   _requestIngredientFocus(_ingredientsToFocus[0], _ingredientsToFocus[1]);
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     _requestIngredientFocus(_ingredientsToFocus[0], _ingredientsToFocus[1]);
+    //   // _ingredientsToFocus.clear();
+    //   });
+    //   // after 200ms
+    //   Future.delayed(const Duration(milliseconds: 1000), () {
+    //     _requestIngredientFocus(_ingredientsToFocus[0], _ingredientsToFocus[1]);
+    //     _ingredientsToFocus.clear();
+    //   });
+    // }
+    // devtools.log("Building EditProductView");
     super.build(context);
     return PopScope(
       canPop: false,
@@ -171,6 +189,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               // if data has loaded
               if (snapshotN.hasData && snapshotP.hasData) {
                 _loaded = true;
+                _forceReload = false;
+                _numberOfLoads++;
                 
                 nutValues = snapshotN.data as List<NutritionalValue>;
                 products = snapshotP.data as List<Product>;
@@ -201,42 +221,44 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 
                 var copyNutrients = checkNutrients(copyProduct.id, copyProduct.nutrients, nutValues);
                 
-                // set initial values
-                _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
-                
-                if (widget.isCopy && _interimProduct == null && widget.productName != null) {
-                  var name = widget.productName!;
-                  // Remove the copy date and number from the name
-                  var regex = RegExp(r"\((\d{4}-\d{1,2}-\d{1,2})( #\d+)?\)$");
-                  var match = regex.firstMatch(_productNameController.text);
-                  if (match != null) {
-                    name = name.substring(0, match.start).trim();
-                  }
-                  // add the current date in the format YYYY-MM-DD
-                  name += " (${DateTime.now().toIso8601String().split("T")[0]}";
+                if (_forceReload || _numberOfLoads <= 1) {
+                  // set initial values
+                  _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
                   
-                  // check all products for the highest copy number
-                  // For example if there is a product "Product (2024-01-01)" the highest copy number is 0, if there is a product "Product (2024-01-01 #1)" the highest copy number is 1
-                  var copyNumber = -1;
-                  for (var product in products) {
-                    if (product.name.startsWith(name)) {
-                      var copy = product.name.substring(name.length).trim().replaceAll(RegExp(r"[\)#]"), "");
-                      if (copy.isEmpty) {
-                        copyNumber = 0;
-                      } else {
-                        try {
-                          var copyInt = int.parse(copy);
-                          if (copyInt > copyNumber) copyNumber = copyInt;
-                        } catch (e) {}
+                  if (widget.isCopy && _interimProduct == null && widget.productName != null) {
+                    var name = widget.productName!;
+                    // Remove the copy date and number from the name
+                    var regex = RegExp(r"\((\d{4}-\d{1,2}-\d{1,2})( #\d+)?\)$");
+                    var match = regex.firstMatch(_productNameController.text);
+                    if (match != null) {
+                      name = name.substring(0, match.start).trim();
+                    }
+                    // add the current date in the format YYYY-MM-DD
+                    name += " (${DateTime.now().toIso8601String().split("T")[0]}";
+                    
+                    // check all products for the highest copy number
+                    // For example if there is a product "Product (2024-01-01)" the highest copy number is 0, if there is a product "Product (2024-01-01 #1)" the highest copy number is 1
+                    var copyNumber = -1;
+                    for (var product in products) {
+                      if (product.name.startsWith(name)) {
+                        var copy = product.name.substring(name.length).trim().replaceAll(RegExp(r"[\)#]"), "");
+                        if (copy.isEmpty) {
+                          copyNumber = 0;
+                        } else {
+                          try {
+                            var copyInt = int.parse(copy);
+                            if (copyInt > copyNumber) copyNumber = copyInt;
+                          } catch (e) {}
+                        }
                       }
                     }
+                    if (copyNumber >= 0) {
+                      copyNumber = max(1, copyNumber);
+                      name += " #${copyNumber + 1}";
+                    }
+                    _copyName = "$name)";
+                    _productNameController.text = _copyName!;
                   }
-                  if (copyNumber >= 0) {
-                    copyNumber = max(1, copyNumber);
-                    name += " #${copyNumber + 1}";
-                  }
-                  _copyName = "$name)";
-                  _productNameController.text = _copyName!;
                 }
                 
                 _densityAmount1Controller.text = truncateZeros(copyProduct.densityConversion.amount1);
@@ -301,6 +323,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 title = "Add Product";
               }
               
+              int? focusIndex;
+              if (_ingredientsToFocus.isNotEmpty && _ingredientsToFocus[1] == 0) {
+                focusIndex = _ingredientsToFocus[0];
+              }
+              
               return Scaffold(
                 appBar: AppBar(
                   title: Text(title),
@@ -332,6 +359,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 isTemporaryNotifier: _isTemporaryNotifier,
                                 beginningNotifier: _temporaryBeginningNotifier,
                                 endNotifier: _temporaryEndNotifier,
+                                intermediateSave: () => _interimProduct = getProductFromForm().$1,
                               ),
                               const SizedBox(height: 8),
                               ConversionBoxes(
@@ -344,12 +372,21 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 quantityConversionNotifier: _quantityConversionNotifier,
                                 defaultUnitNotifier: _defaultUnitNotifier,
                                 onValidate: () => _formKey.currentState!.validate(),
+                                intermediateSave: () => _interimProduct = getProductFromForm().$1,
+                                onConversionChanged: (newDensityConversion, newQuantityConversion) {
+                                  _interimProduct = Product.copyWith(getProductFromForm().$1,
+                                    newDensityConversion: newDensityConversion,
+                                    newQuantityConversion: newQuantityConversion,
+                                  );
+                                },
                               ),
                               const SizedBox(height: 14),
                               IngredientsBox(
                                 id: _id,
                                 prevProduct: _prevProduct,
                                 productsMap: productsMap!,
+                                focusIndex: focusIndex,
+                                autofocusTime: _autofocusTime,
                                 defaultUnitNotifier: _defaultUnitNotifier,
                                 quantityNameController: _quantityNameController,
                                 autoCalcAmountNotifier: _autoCalcAmountNotifier,
@@ -362,7 +399,32 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 productNameController: _productNameController,
                                 resultingAmountController: _resultingAmountController,
                                 ingredientAmountControllers: _ingredientAmountControllers,
+                                ingredientDropdownFocusNodes: _ingredientDropdownFocusNodes,
                                 intermediateSave: () => _interimProduct = getProductFromForm().$1,
+                                onChange: (newIngredientsUnit, newIngredients, index) {
+                                  var oldP = getProductFromForm().$1;
+                                  _ingredientsToFocus = index == null ? [] : [index, 0];
+                                  _autofocusTime = DateTime.now();
+                                  _interimProduct = Product.copyWith(oldP,
+                                    newIngredientsUnit: newIngredientsUnit,
+                                    newIngredients: newIngredients,
+                                  );
+                                  if (index != null) {
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      _ingredientsNotifier.value = newIngredients;
+                                      // focus the ingredient dropdown
+                                      _requestIngredientFocus(index, 0);
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        _requestIngredientFocus(index, 0);
+                                      });
+                                      // after 200ms
+                                      Future.delayed(const Duration(milliseconds: 200), () {
+                                        _requestIngredientFocus(index, 0);
+                                      });
+                                    });
+                                  }
+                                },
+                                requestIngredientFocus: _requestIngredientFocus,
                               ),
                               const SizedBox(height: 14),
                               NutrientsBox(
@@ -380,6 +442,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 quantityNameController: _quantityNameController,
                                 nutrientAmountController: _nutrientAmountController,
                                 nutrientAmountControllers: _nutrientAmountControllers,
+                                onUnitChanged: (unit) {
+                                  _interimProduct = Product.copyWith(getProductFromForm().$1, newNutrientsUnit: unit);
+                                },
+                                intermediateSave: () => _interimProduct = getProductFromForm().$1,
                               ),
                               const SizedBox(height: 8),
                               _buildAddButton(),
@@ -418,14 +484,14 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       return;
     }
     
-    bool willPop = await showContinueWithoutSavingDialog(context) == true;
+    bool willPop = await showContinueWithoutSavingDialog(context, save: saveProduct) == true;
     
     if (willPop) {
       Future(() => navigator.pop(product));
     }
   }
   
-  Widget _buildInfoButton() => Container(
+  Widget _buildInfoButton() => SizedBox(
     width: 30,
     child: IconButton(
       onPressed: () {
@@ -500,6 +566,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       child: TextFormField(
         autofocus: !(_isEdit || widget.isCopy || _interimProduct != null),
         controller: _productNameController,
+        textCapitalization: TextCapitalization.words,
         decoration: const InputDecoration(
           labelText: "Name"
         ),
@@ -611,9 +678,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       current: _defaultUnitNotifier.value,
                       onChanged: (Unit? unit) {
                         if (unit != null) {
-                          setState(() {
-                            _defaultUnitNotifier.value = unit;
-                          });
+                          _defaultUnitNotifier.value = unit;
+                          _interimProduct = Product.copyWith(getProductFromForm().$1, newDefaultUnit: unit);
                         }
                       }
                     )
@@ -631,34 +697,56 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     padding: const EdgeInsets.all(8.0),
     child: ElevatedButton(
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(Colors.teal.shade400),
-        foregroundColor: MaterialStateProperty.all(Colors.white),
-        minimumSize: MaterialStateProperty.all(const Size(double.infinity, 60)),
-        textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16)),
-        shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+        backgroundColor: WidgetStateProperty.all(Colors.teal.shade400),
+        foregroundColor: WidgetStateProperty.all(Colors.white),
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 60)),
+        textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
+        shape: WidgetStateProperty.all(const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(14)),
         )),
       ),
-      onPressed: () {
-        var (product, isValid) = getProductFromForm();
-        
-        if (isValid) {
-          Future<Product> future;
-          
-          if (_isEdit) {
-            future = _dataService.updateProduct(product);
-          } else {
-            future = _dataService.createProduct(product);
-          }
-          
-          future.then((newProduct) {
-            Navigator.of(context).pop(newProduct);
-          });
-        }
-      },
+      onPressed: () => saveProduct(),
       child: Text(_isEdit ? "Update Product" : "Add Product"),
     ),
   );
+  
+  void saveProduct() {
+    var (product, isValid) = getProductFromForm();
+    
+    if (isValid) {
+      Future<Product> future;
+      
+      if (_isEdit) {
+        future = _dataService.updateProduct(product);
+      } else {
+        future = _dataService.createProduct(product);
+      }
+      
+      future.then((newProduct) {
+        Navigator.of(context).pop(newProduct);
+      });
+    }
+  }
+  
+  void _requestIngredientFocus(int index, int subIndex) {
+    try {
+      if (index < _ingredientDropdownFocusNodes.length) {
+        if (subIndex == 0) {
+          // If sub index = 0, focus the product dropdown
+          _ingredientDropdownFocusNodes[index].requestFocus();
+        } else {
+          // If sub index = 1, focus the amount field
+          devtools.log("focus text field");
+          _ingredientDropdownFocusNodes[index].requestFocus();
+          Future.delayed(const Duration(milliseconds: 20), () {
+            for (var i = 0; i < 1; i++) FocusManager.instance.primaryFocus?.nextFocus();
+          });
+        }
+      }
+    } catch (e) {
+      devtools.log("Error focusing ingredient $index: $e");
+    }
+  }
   
   (Product, bool) getProductFromForm() {
     final name = _productNameController.text;

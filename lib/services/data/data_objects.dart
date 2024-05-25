@@ -75,6 +75,19 @@ class Product {
       String? newName,
       DateTime? newCreationDate,
       DateTime? newLastEditDate,
+      Unit? newDefaultUnit,
+      DateTime? newTemporaryBeginning,
+      DateTime? newTemporaryEnd,
+      bool? newIsTemporary,
+      Conversion? newDensityConversion,
+      Conversion? newQuantityConversion,
+      String? newQuantityName,
+      bool? newAutoCalc,
+      double? newAmountForIngredients,
+      Unit? newIngredientsUnit,
+      double? newAmountForNutrients,
+      Unit? newNutrientsUnit,
+      List<ProductQuantity>? newIngredients,
     }
   ) {
     // change nutrients product id
@@ -92,21 +105,21 @@ class Product {
     return Product(
       id:                   newId ?? product.id,
       name:                 newName ?? product.name,
-      defaultUnit:          product.defaultUnit,
+      defaultUnit:          newDefaultUnit ?? product.defaultUnit,
       creationDate:         newCreationDate ?? product.creationDate,
       lastEditDate:         newLastEditDate ?? product.lastEditDate,
-      temporaryBeginning:   product.temporaryBeginning,
-      temporaryEnd:         product.temporaryEnd,
-      isTemporary:          product.isTemporary,
-      densityConversion:    product.densityConversion,
-      quantityConversion:   product.quantityConversion,
-      quantityName:         product.quantityName,
-      autoCalc:             product.autoCalc,
-      amountForIngredients: product.amountForIngredients,
-      ingredientsUnit:      product.ingredientsUnit,
-      amountForNutrients:   product.amountForNutrients,
-      nutrientsUnit:        product.nutrientsUnit,
-      ingredients:          product.ingredients,
+      temporaryBeginning:   newTemporaryBeginning ?? product.temporaryBeginning,
+      temporaryEnd:         newTemporaryEnd ?? product.temporaryEnd,
+      isTemporary:          newIsTemporary ?? product.isTemporary,
+      densityConversion:    newDensityConversion ?? product.densityConversion,
+      quantityConversion:   newQuantityConversion ?? product.quantityConversion,
+      quantityName:         newQuantityName ?? product.quantityName,
+      autoCalc:             newAutoCalc ?? product.autoCalc,
+      amountForIngredients: newAmountForIngredients ?? product.amountForIngredients,
+      ingredientsUnit:      newIngredientsUnit ?? product.ingredientsUnit,
+      amountForNutrients:   newAmountForNutrients ?? product.amountForNutrients,
+      nutrientsUnit:        newNutrientsUnit ?? product.nutrientsUnit,
+      ingredients:          newIngredients ?? product.ingredients,
       nutrients:            newNutrients ?? product.nutrients,
     );
   }
@@ -198,6 +211,29 @@ class ProductQuantity {
   @override
   String toString() {
     return "<ProductQuantity $amount ${unitToString(unit)} prod id $productId>";
+  }
+}
+
+class Meal {
+  final int id;
+  final DateTime dateTime;
+  final ProductQuantity productQuantity;
+  
+  Meal({
+    required this.id,
+    required this.dateTime,
+    required this.productQuantity,
+  });
+  
+  @override
+  bool operator ==(covariant Meal other) => dateTime == other.dateTime && productQuantity == other.productQuantity;
+  
+  @override
+  int get hashCode => dateTime.hashCode ^ productQuantity.hashCode;
+  
+  @override
+  String toString() {
+    return "<Meal $dateTime: $productQuantity.amount ${unitToString(productQuantity.unit)} prod id $productQuantity.productId>";
   }
 }
 

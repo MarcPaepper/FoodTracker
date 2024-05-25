@@ -4,10 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../services/data/data_objects.dart';
 
+import 'dart:developer' as devtools show log;
+
 class UnitDropdown extends StatefulWidget {
   final Map<Unit, Widget> items;
   final Unit current;
   final bool? enabled;
+  final void Function()? intermediateSave;
   final Function(Unit? unit)? onChanged;
   final bool skipTraversal;
   
@@ -16,6 +19,7 @@ class UnitDropdown extends StatefulWidget {
     required this.items,
     required this.current,
     this.enabled,
+    this.intermediateSave,
     this.onChanged,
     this.skipTraversal = !kIsWeb,
   });
@@ -56,7 +60,7 @@ class _UnitDropdownState extends State<UnitDropdown> {
     
     return ExcludeFocusTraversal(
       excluding: widget.skipTraversal,
-      child: DropdownButtonFormField<Unit>(
+      child: DropdownButtonFormField(
         decoration: decoration,
         isExpanded: true,
         value: widget.current,
@@ -64,6 +68,7 @@ class _UnitDropdownState extends State<UnitDropdown> {
           value: entry.key,
           child: entry.value,
         )).toList(),
+        // onTap: () {devtools.log("unit tap"); widget.intermediateSave;},
         onChanged: enabled ? widget.onChanged : null,
       ),
     );

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 class SearchField extends StatelessWidget {
   final TextEditingController searchController;
   final Function(String) onChanged;
+  final bool autofocus;
   
   const SearchField({
     required this.searchController,
     required this.onChanged,
+    this.autofocus = false,
     super.key
   });
 
@@ -27,6 +29,7 @@ class SearchField extends StatelessWidget {
             )
           : const Icon(Icons.search),
       ),
+      autofocus: autofocus,
       textInputAction: TextInputAction.search,
       onChanged: (value) => onChanged(value),
     );
