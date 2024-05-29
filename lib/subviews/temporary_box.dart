@@ -69,7 +69,7 @@ class TemporaryBox extends StatelessWidget {
         var endTextNat = "";
         
         if (isTemporary) {
-          var texts = conditionallyRemoveYear([beginning!, end!]);
+          var texts = conditionallyRemoveYear(context, [beginning!, end!]);
           beginningText = texts[0];
           endText = texts[1];
           

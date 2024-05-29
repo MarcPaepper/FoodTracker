@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/text_logic.dart';
-// import 'package:flutter/foundation.dart';
 
 class AddMealBox extends StatefulWidget {
   // final DateTime copyDateTime;
@@ -44,9 +43,9 @@ class _AddMealBoxState extends State<AddMealBox> {
             ),
           ),
           const SizedBox(height: 14),
-          _buildDateTimeField(false, dateTime, updateDateTime),
+          _buildDateTimeField(context, false, dateTime, updateDateTime),
           const SizedBox(height: 12),
-          _buildDateTimeField(true, dateTime, updateDateTime),
+          _buildDateTimeField(context, true, dateTime, updateDateTime),
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: () {},
@@ -60,6 +59,7 @@ class _AddMealBoxState extends State<AddMealBox> {
   void updateDateTime(DateTime newDateTime) => setState(() => dateTime = newDateTime);
   
   Widget _buildDateTimeField(
+    BuildContext context,
     bool isTime,
     DateTime dateTime,
     Function(DateTime) onChanged,
@@ -68,7 +68,7 @@ class _AddMealBoxState extends State<AddMealBox> {
     if (isTime) {
       label = "${dateTime.hour}h";
     } else {
-      label = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear([dateTime], showWeekDay: false)[0]})";
+      label = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear(context, [dateTime], showWeekDay: false)[0]})";
     }
     
     return Column(
@@ -81,49 +81,64 @@ class _AddMealBoxState extends State<AddMealBox> {
               color: Colors.teal.shade100.withAlpha(200),
               borderRadius: const BorderRadius.all(Radius.circular(12)),
             ),
-            child: Row(
-              children: [
-                InkWell(
-                  onTap: () {
-                    var duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
-                    onChanged(dateTime.subtract(duration));
-                  },
-                  child: const Padding(
-                    padding: EdgeInsets.fromLTRB(9, 8, 7, 8),
-                    child: Icon(Icons.chevron_left),
-                  ),
-                ),
-                // vertical divider
-                Container(
-                  width: 1,
-                  height: 25,
-                  color: Colors.black.withAlpha(100),
-                ),
-                Expanded(
-                  child: InkWell(
-                    onTap: () {},
-                    child: Center(
-                      child: Text(label),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      var duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
+                      onChanged(dateTime.subtract(duration));
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.fromLTRB(9, 8, 7, 8),
+                      child: Icon(Icons.chevron_left),
                     ),
                   ),
-                ),
-                // vertical divider
-                Container(
-                  width: 1,
-                  height: 25,
-                  color: Colors.black.withAlpha(100),
-                ),
-                InkWell(
-                  onTap: () {
-                    var duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
-                    onChanged(dateTime.add(duration));
-                  },
-                  child: const Padding(
-                    padding: EdgeInsets.fromLTRB(7, 8, 9, 8),
-                    child: Icon(Icons.chevron_right),
+                  // vertical divider
+                  Container(
+                    width: 1,
+                    height: 25,
+                    color: Colors.black.withAlpha(100),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        if (isTime) {
+                          // show time picker
+                          showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.fromDateTime(dateTime),
+                          ).then((time) {
+                            if (time != null) {
+                              onChanged(DateTime(dateTime.year, dateTime.month, dateTime.day, time.hour, time.minute));
+                            }
+                          });
+                        }
+                      },
+                      child: Center(
+                        child: Text(label),
+                      ),
+                    ),
+                  ),
+                  // vertical divider
+                  Container(
+                    width: 1,
+                    height: 25,
+                    color: Colors.black.withAlpha(100),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      var duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
+                      onChanged(dateTime.add(duration));
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.fromLTRB(7, 8, 9, 8),
+                      child: Icon(Icons.chevron_right),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         )

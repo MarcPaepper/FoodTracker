@@ -117,7 +117,9 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     // reload product stream
     Future(() {
-      _dataService.reloadProductStream();// If it's a copy, toast via SnackBar
+      _dataService.reloadProductStream();
+      
+      // If it's a copy, toast via SnackBar
       if (widget.isCopy) {
         Future(() {
           showSnackbar(context, "Product duplicated from '${widget.productName}'");

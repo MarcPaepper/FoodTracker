@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class OptionsView extends StatefulWidget {
   const OptionsView({super.key});
 
@@ -32,7 +34,7 @@ class _OptionsViewState extends State<OptionsView> {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 16 : 12),
         ),
         onPressed: () => exportData(),
         child: Row(

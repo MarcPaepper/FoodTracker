@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui_web' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
   
 List<TextSpan> highlightOccurrences(String source, List<String> search) {
   var spans = <TextSpan>[];
@@ -109,10 +111,11 @@ extension MyDateExtension on DateTime {
   }
 }
 
-List<String> conditionallyRemoveYear(List<DateTime> dates, {bool showWeekDay = true}) {
+List<String> conditionallyRemoveYear(BuildContext context, List<DateTime> dates, {bool showWeekDay = true}) {
   var reg = RegExp(r"(\d{4})"); // match a year
   var function = showWeekDay ? DateFormat.yMEd : DateFormat.yMd;
-  var texts = dates.map((date) => function(Platform.localeName).format(date)).toList(); // format dates
+  String locale = kIsWeb ? Localizations.localeOf(context).toString() : Platform.localeName;
+  var texts = dates.map((date) => function(locale).format(date)).toList(); // format dates
   var matches = texts.map((text) => reg.firstMatch(text)).toList();
   var years = matches.map((match) => match?.group(1)).toList();
   var currentYear = DateTime.now().year.toString();

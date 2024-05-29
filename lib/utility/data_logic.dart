@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-// import 'package:archive/archive_io.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:archive/archive_io.dart';
 
 import '../services/data/data_service.dart';
 import '../services/data/data_exceptions.dart';
@@ -483,23 +485,39 @@ Future<void> exportData() async {
   var nameP = "products_$date.json";
   var nameNv = "nutritional_values_$date.json";
   
-  var pathP = await storeFileTemporarily(pJsonUtf8, nameP);
-  var pathNv = await storeFileTemporarily(nvJsonUtf8, nameNv);
-  
-  // share both files separately
-  await Share.shareXFiles(
-    [
-      XFile(pathP),
-      XFile(pathNv),
-    ],
-  );
-  
-  // delete
-  await File(pathP).delete();
-  await File(pathNv).delete();
+  if (kIsWeb) {
+    // create a zip file
+    var archive = Archive()
+      ..addFile(ArchiveFile(nameP, pJsonUtf8.length, pJsonUtf8))
+      ..addFile(ArchiveFile(nameNv, nvJsonUtf8.length, nvJsonUtf8));
+    
+    var zip = ZipEncoder().encode(archive);
+    
+    if (zip != null) {
+      // use the download function
+      final url = "data:application/zip;base64,${base64Encode(zip)}";
+      await launchUrl(Uri.parse(url), webOnlyWindowName: "export.zip");
+    }
+  } else {
+    var pathP = await storeFileTemporarily(pJsonUtf8, nameP);
+    var pathNv = await storeFileTemporarily(nvJsonUtf8, nameNv);
+    
+    // share both files separately
+    await Share.shareXFiles(
+      [
+        XFile(pathP),
+        XFile(pathNv),
+      ],
+    );
+    
+    // delete
+    await File(pathP).delete();
+    await File(pathNv).delete();
+  }
 }
 
 Future<String> storeFileTemporarily(Uint8List image, String name) async {
+  WidgetsFlutterBinding.ensureInitialized();
   final tempDir = await getTemporaryDirectory();
   
   final path = '${tempDir.path}/$name';

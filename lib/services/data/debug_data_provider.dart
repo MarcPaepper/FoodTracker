@@ -208,6 +208,7 @@ class DebugDataProvider implements DataProvider {
         for (var product in products) {
           productsMap[product.id] = product;
         }
+        _mealsStreamController.add(meals);
         _productsStreamController.add(products);
         _nutritionalValuesStreamController.add(nutValues);
         
