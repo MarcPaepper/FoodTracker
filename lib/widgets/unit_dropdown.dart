@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../services/data/data_objects.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class UnitDropdown extends StatefulWidget {
   final Map<Unit, Widget> items;

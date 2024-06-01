@@ -3,8 +3,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-
-import "dart:developer" as devtools show log;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../subviews/conversion_boxes.dart';
@@ -19,6 +17,8 @@ import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
 import '../widgets/loading_page.dart';
+
+import "dart:developer" as devtools show log;
 
 class EditProductView extends StatefulWidget {
   final String? productName;
@@ -376,6 +376,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 onValidate: () => _formKey.currentState!.validate(),
                                 intermediateSave: () => _interimProduct = getProductFromForm().$1,
                                 onConversionChanged: (newDensityConversion, newQuantityConversion) {
+                                  devtools.log("Conversion changed");
                                   _interimProduct = Product.copyWith(getProductFromForm().$1,
                                     newDensityConversion: newDensityConversion,
                                     newQuantityConversion: newQuantityConversion,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/services/data/data_objects.dart';
-import 'package:food_tracker/subviews/add_meal_box.dart';
 
+import '../services/data/data_objects.dart';
+import '../subviews/add_meal_box.dart';
 import '../services/data/data_service.dart';
 import '../utility/theme.dart';
 

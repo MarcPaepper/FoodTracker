@@ -45,50 +45,47 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save})
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Discard changes?'),
-      content: const Text('If you continue, you lose your changes.'),
+      title: const Text('Continue without saving?'),
+      content: const Text('You have unsaved changes.'),
       surfaceTintColor: Colors.transparent,
       actionsAlignment: MainAxisAlignment.spaceEvenly,
       actions: <Widget>[
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: ElevatedButton(
-                style: actionButtonStyle,
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                  child: Text('Yes'),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                style: actionButtonStyle,
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                  child: Text('No'),
-                ),
+            ElevatedButton(
+              style: actionButtonStyle,
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                child: Text('Continue editing'),
               ),
             ),
             if (save != null) ...[
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  style: actionButtonStyle,
-                  onPressed: () {
-                    save();
-                    Navigator.of(context).pop(true);
-                  },
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                    child: Text('Save'),
-                  ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: actionButtonStyle,
+                onPressed: () {
+                  save();
+                  Navigator.of(context).pop(true);
+                },
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                  child: Text('Save changes'),
                 ),
               ),
             ],
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: actionButtonStyle.copyWith(
+                backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 192, 92, 90)),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                child: Text('Exit without saving'),
+              ),
+            ),
           ],
         ),
       ],

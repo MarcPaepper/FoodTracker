@@ -267,6 +267,7 @@ class ConversionBoxes extends StatelessWidget {
                       Future(() => onValidate());
                     }
                     notifier.value = notifier.value.switched(value);
+                    onConversionChanged(densityConversionNotifier.value, quantityConversionNotifier.value);
                   },
                   title: Padding(
                     padding: const EdgeInsets.only(top: 2),

@@ -17,7 +17,8 @@ class BorderBox extends StatefulWidget {
     this.borderColor,
     this.child,
     this.title,
-    this.titleBgColor = const Color(0xFFFAFDFB),
+    // this.titleBgColor = const Color(0xFFFAFDFB),
+    this.titleBgColor = Colors.white,
     this.titlePosition = TitlePosition.center,
   });
 
