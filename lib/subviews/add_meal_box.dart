@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../utility/text_logic.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class AddMealBox extends StatefulWidget {
   // final DateTime copyDateTime;
@@ -200,49 +200,65 @@ Widget _getTimeSelector(
 ) {
   var selectedHour = dateTime.hour;
   
-  return Expanded(
+    return Expanded(
     child: Padding(
-      padding: const EdgeInsets.only(top: 3),
+      padding: const EdgeInsets.only(top: 3.0),
       child: RotatedBox(
         quarterTurns: -1,
-        child: ScrollConfiguration(
-          behavior: MouseDragScrollBehavior(),
-          child: ListWheelScrollView(
-            controller: controller,
-            itemExtent: 35,
-            diameterRatio: 12.5,
-            physics: const FixedExtentScrollPhysics(),
-            onSelectedItemChanged: (index) {
-              Future.delayed(const Duration(milliseconds: 100), () {
-                SystemSound.play(SystemSoundType.click);
-              });
-              var newDateTime = DateTime(dateTime.year, dateTime.month, dateTime.day, index, 0);
-              onChanged(newDateTime);
-            },
-            children: List.generate(24, (index) {
-              var hour = (index % 24).toString();
-              var selected = index == selectedHour;
-              return RotatedBox(
-                quarterTurns: 1,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  child: Center(
-                    child: Text(
-                      hour,
-                      style: TextStyle(
-                        color: selected ? Colors.black : Colors.black.withAlpha(150),
-                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+        child: Stack(
+          children: [
+            ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
+                  stops: [0.0, 0.1, 0.9, 1.0],
+                ).createShader(bounds);
+              },
+              blendMode: BlendMode.dstIn,
+              child: ListWheelScrollView.useDelegate(
+                controller: controller,
+                itemExtent: 38.0,
+                diameterRatio: 12.5,
+                physics: const FixedExtentScrollPhysics(),
+                onSelectedItemChanged: (index) {
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    SystemSound.play(SystemSoundType.click);
+                  });
+                  var newDateTime = DateTime(dateTime.year, dateTime.month, dateTime.day, index, dateTime.minute);
+                  onChanged(newDateTime);
+                },
+                childDelegate: ListWheelChildBuilderDelegate(
+                  builder: (context, index) {
+                    var hour = (index % 24).toString();
+                    var selected = index == selectedHour;
+                    return RotatedBox(
+                      quarterTurns: 1,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        child: Center(
+                          child: Text(
+                            hour,
+                            style: TextStyle(
+                              color: selected ? Colors.black : Colors.black.withAlpha(150),
+                              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
+                  childCount: 24,
                 ),
-              );
-            }),
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
   );
+
 }
 
 class MouseDragScrollBehavior extends MaterialScrollBehavior {
