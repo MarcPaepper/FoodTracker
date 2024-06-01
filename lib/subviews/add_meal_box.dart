@@ -213,14 +213,14 @@ Widget _getTimeSelector(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
-                  stops: [0.0, 0.1, 0.9, 1.0],
+                  stops: [0.02, 0.12, 0.88, 0.98],
                 ).createShader(bounds);
               },
               blendMode: BlendMode.dstIn,
               child: ListWheelScrollView.useDelegate(
                 controller: controller,
                 itemExtent: 38.0,
-                diameterRatio: 12.5,
+                diameterRatio: 5.5,
                 physics: const FixedExtentScrollPhysics(),
                 onSelectedItemChanged: (index) {
                   Future.delayed(const Duration(milliseconds: 500), () {
