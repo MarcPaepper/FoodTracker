@@ -30,7 +30,7 @@ class _MealsViewState extends State<MealsView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildListView(snapshot),
-            _buildAddButton(snapshot.hasData ? snapshot.data as List<Meal> : []),
+            // _buildAddButton(snapshot.hasData ? snapshot.data as List<Meal> : []),
           ]
         );
       }
@@ -51,7 +51,7 @@ class _MealsViewState extends State<MealsView> {
           physics: const ClampingScrollPhysics(),
           padding: const EdgeInsets.all(0.0),
           children: [
-            AddMealBox()
+            AddMealBox(copyDateTime: DateTime.now(), onDateTimeChanged: (newDateTime) => {})
           ],
         )
       );

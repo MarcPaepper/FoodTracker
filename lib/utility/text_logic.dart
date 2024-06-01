@@ -88,6 +88,7 @@ String truncateZeros(double number) => _truncateZeros(number.toString());
 
 // text should be yesterday / today / tomorrow / x days ago / in x days
 String relativeDaysNatural(DateTime date) {
+  date = date.getDateOnly();
   // Select beginning of current day
   var now = DateTime.now().getDateOnly();
   var diff = date.difference(now).inDays;

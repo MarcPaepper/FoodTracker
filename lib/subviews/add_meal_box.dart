@@ -2,16 +2,19 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:food_tracker/utility/theme.dart';
 
 import '../utility/text_logic.dart';
 
 // import 'dart:developer' as devtools show log;
 
 class AddMealBox extends StatefulWidget {
-  // final DateTime copyDateTime;
+  final DateTime copyDateTime;
+  final Function(DateTime) onDateTimeChanged;
   
   const AddMealBox({
-    // required this.copyDateTime,
+    required this.copyDateTime,
+    required this.onDateTimeChanged,
     super.key,
   });
 
@@ -60,16 +63,22 @@ class _AddMealBoxState extends State<AddMealBox> {
           const SizedBox(height: 10),
           _buildDateTimeField(context, _scrollController, true, dateTime, updateDateTime),
           const SizedBox(height: 12),
-          ElevatedButton(
+          ElevatedButton.icon(
+            style: addButtonStyle.copyWith(
+              
+            ),
+            icon: const Icon(Icons.add),
             onPressed: () {},
-            child: const Text("Add"),
+            label: const Text("Add"),
           )
         ],
       ),
     );
   }
   
-  void updateDateTime(DateTime newDateTime) => setState(() => dateTime = newDateTime);
+  void updateDateTime(DateTime newDateTime) {
+    setState(() => dateTime = newDateTime);
+  }
   
   Widget _buildDateTimeField(
     BuildContext context,
@@ -79,13 +88,6 @@ class _AddMealBoxState extends State<AddMealBox> {
     Function(DateTime) onChanged,
   ) {
     assert(controller != null || !isTime);
-    
-    var label = "";
-    if (isTime) {
-      label = "${dateTime.hour}h";
-    } else {
-      label = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear(context, [dateTime], showWeekDay: false)[0]})";
-    }
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -139,26 +141,7 @@ class _AddMealBoxState extends State<AddMealBox> {
                         ),
                         isTime ?
                           _getTimeSelector(context, controller, dateTime, onChanged) :
-                          Expanded(
-                            child: InkWell(
-                              onTap: () {
-                                // if (isTime) {
-                                //   // show time picker
-                                //   showTimePicker(
-                                //     context: context,
-                                //     initialTime: TimeOfDay.fromDateTime(dateTime),
-                                //   ).then((time) {
-                                //     if (time != null) {
-                                //       onChanged(DateTime(dateTime.year, dateTime.month, dateTime.day, time.hour, time.minute));
-                                //     }
-                                //   });
-                                // }
-                              },
-                              child: Center(
-                                child: Text(label),
-                              ),
-                            ),
-                          ),
+                          _getDateSelector(context, dateTime, onChanged),
                         // vertical divider
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -192,6 +175,30 @@ class _AddMealBoxState extends State<AddMealBox> {
   }
 }
 
+Widget _getDateSelector(BuildContext context, DateTime dateTime, Function(DateTime) onChanged) {
+  var label = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear(context, [dateTime], showWeekDay: false)[0]})";
+  
+  return Expanded(
+    child: InkWell(
+      onTap: () {
+        showDatePicker(
+          context: context,
+          initialDate: dateTime,
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        ).then((newDateTime) {
+          if (newDateTime != null) {
+            onChanged(newDateTime);
+          }
+        });
+      },
+      child: Center(
+        child: Text(label),
+      ),
+    ),
+  );
+}
+
 Widget _getTimeSelector(
   BuildContext context,
   ScrollController? controller,
@@ -209,7 +216,7 @@ Widget _getTimeSelector(
           children: [
             ShaderMask(
               shaderCallback: (Rect bounds) {
-                return LinearGradient(
+                return const LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
@@ -223,7 +230,7 @@ Widget _getTimeSelector(
                 diameterRatio: 5.5,
                 physics: const FixedExtentScrollPhysics(),
                 onSelectedItemChanged: (index) {
-                  Future.delayed(const Duration(milliseconds: 500), () {
+                  Future.delayed(const Duration(milliseconds: 100), () {
                     SystemSound.play(SystemSoundType.click);
                   });
                   var newDateTime = DateTime(dateTime.year, dateTime.month, dateTime.day, index, dateTime.minute);
