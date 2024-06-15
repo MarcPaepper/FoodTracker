@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/constants/data.dart';
-import 'package:food_tracker/services/data/data_objects.dart';
-// import "dart:developer" as devtools show log;
 
-import 'package:food_tracker/services/data/data_service.dart';
-import 'package:food_tracker/utility/modals.dart';
-import 'package:food_tracker/widgets/loading_page.dart';
+import '../constants/data.dart';
+import '../services/data/data_objects.dart';
+import '../services/data/data_service.dart';
+import '../utility/modals.dart';
+import '../widgets/loading_page.dart';
+
+// import "dart:developer" as devtools show log;
 
 class EditNutritionalValueView extends StatefulWidget {
   final int? nutvalueId;
@@ -24,9 +25,12 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   late final TextEditingController _unit;
   final _showFullName = ValueNotifier(false);
   
-  late final int _orderId;
+  int? _orderId;
   
   late final bool isEdit;
+  
+  // late NutritionalValue _prevValue;
+  NutritionalValue? _interimValue;
   
   @override
   void initState() {
@@ -95,16 +99,24 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
             case ConnectionState.done:
               final nutValues = snapshot.data as List<NutritionalValue>;
               if (isEdit) {
-                try {
-                  final value = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
-                  
-                  _orderId            = value.orderId;
-                  _name.text          = value.name;
-                  _unit.text          = value.unit;
-                  _showFullName.value = value.showFullName;
-                } catch (e) {
-                  return const Text("Error: Value not found");
+                if (_interimValue == null) {
+                  try {
+                    final value = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
+                    
+                    // _prevValue          = value;
+                    _interimValue       = value;
+                  } catch (e) {
+                    return const Text("Error: Value not found");
+                  }
                 }
+              } else {
+                _interimValue = NutritionalValue(-1, -1, "", "g", false);
+              }
+              if (_interimValue != null) {
+                _orderId            = _interimValue!.orderId;
+                _name.text          = _interimValue!.name;
+                _unit.text          = _interimValue!.unit;
+                _showFullName.value = _interimValue!.showFullName;
               }
               return Padding(
                 padding: const EdgeInsets.all(7.0),
@@ -149,6 +161,9 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
           }
           return null;
         },
+        onChanged: (value) {
+          _interimValue = NutritionalValue.copyWith(_interimValue!, newName: value);
+        },
         autovalidateMode: AutovalidateMode.onUserInteraction,
       ),
     );
@@ -166,6 +181,9 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
           }
           return null;
         },
+        onChanged: (value) {
+          _interimValue = NutritionalValue.copyWith(_interimValue!, newUnit: value);
+        },
         autovalidateMode: AutovalidateMode.onUserInteraction,
       ),
     );
@@ -178,7 +196,10 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
           child: SwitchListTile(
             title: const Text("Show Full Name"),
             value: value,
-            onChanged: (newValue) => _showFullName.value = newValue,
+            onChanged: (newValue) {
+              _showFullName.value = newValue;
+              _interimValue = NutritionalValue.copyWith(_interimValue!, newShowFullName: newValue);
+            },
             controlAffinity: ListTileControlAffinity.leading,
           ),
         );
@@ -189,11 +210,11 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
       padding: const EdgeInsets.all(8.0),
       child: ElevatedButton(
         style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(Colors.teal.shade400),
-          foregroundColor: MaterialStateProperty.all(Colors.white),
-          minimumSize: MaterialStateProperty.all(const Size(double.infinity, 60)),
-          textStyle: MaterialStateProperty.all(const TextStyle(fontSize: 16)),
-          shape: MaterialStateProperty.all(const RoundedRectangleBorder(
+          backgroundColor: WidgetStateProperty.all(Colors.teal.shade400),
+          foregroundColor: WidgetStateProperty.all(Colors.white),
+          minimumSize: WidgetStateProperty.all(const Size(double.infinity, 60)),
+          textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
+          shape: WidgetStateProperty.all(const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(14)),
           )),
         ),
@@ -204,10 +225,14 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
           final isValid = _formKey.currentState!.validate();
           if (isValid) {
             if (isEdit) {
-              var nval = NutritionalValue(widget.nutvalueId!, _orderId, name, unit, showFullName);
+              if (_orderId == null) {
+                showErrorbar(context, "Error: Order ID not found");
+                return;
+              }
+              var nval = NutritionalValue(widget.nutvalueId!, _orderId!, name, unit, showFullName);
               _dataService.updateNutritionalValue(nval);
             } else {
-              var nval = NutritionalValue(-1, _orderId, name, unit, showFullName);
+              var nval = NutritionalValue(-1, -1, name, unit, showFullName);
               _dataService.createNutritionalValue(nval);
             }
             Navigator.of(context).pop();

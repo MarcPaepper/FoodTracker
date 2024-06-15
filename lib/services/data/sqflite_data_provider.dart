@@ -96,8 +96,8 @@ class SqfliteDataProvider implements DataProvider {
   
   @override
   Future<String> open(String dbName) async {
-    devtools.log("Opening sqflite database");
     if (isLoaded()) return Future.value("data already loaded");
+    devtools.log("Opening sqflite database");
     var tables = {
       productTable: (createProductTable, productColumns, missingProductColumns),
       nutritionalValueTable: (createNutritionalValueTable, nutritionalValueColumns, missingNutritionalValueColumns),
@@ -119,6 +119,7 @@ class SqfliteDataProvider implements DataProvider {
         if (forceReset) {
           try {
             await deleteDatabase(dbPath);
+            devtools.log("Database deleted");
           } catch (e) {
             devtools.log("Error deleting database: $e");
           }
@@ -138,7 +139,7 @@ class SqfliteDataProvider implements DataProvider {
           // If table is Nutritional Value, insert the default values
           if (entry.key == nutritionalValueTable) {
             for (var value in defaultNutritionalValues) {
-              createNutritionalValue(value);
+              await createNutritionalValue(value);
             }
           }
         } else {
@@ -437,14 +438,25 @@ class SqfliteDataProvider implements DataProvider {
     final results = await _db!.query(nutritionalValueTable, where: '$nameColumn = ?', whereArgs: [nutVal.name]);
     if (results.isNotEmpty) throw NotUniqueException();
     
+    // find highest order id
+    var orderId = 0;
+    try {
+      var orderResults = await _db!.query(nutritionalValueTable, columns: [orderIdColumn], orderBy: '$orderIdColumn DESC', limit: 1);
+      orderId = (orderResults.first[orderIdColumn] as int) + 1;
+    } catch (e) {
+      // ignore
+    }
+    
     final id = await _db!.insert(nutritionalValueTable, {
-      nameColumn: nutVal.name,
-      unitNameColumn: nutVal.unit,
+      nameColumn:         nutVal.name,
+      orderIdColumn:      orderId,
+      unitNameColumn:     nutVal.unit,
+      showFullNameColumn: nutVal.showFullName ? 1 : 0,
     });
     
     _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
     
-    _nutritionalValues.add(NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit, nutVal.showFullName));
+    _nutritionalValues.add(NutritionalValue.copyWith(nutVal, newId: id, newOrderId: orderId));
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
     return NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit, nutVal.showFullName);
@@ -465,7 +477,7 @@ class SqfliteDataProvider implements DataProvider {
     _nutritionalValues.removeWhere((p) => p.id == nutVal.id);
     _nutritionalValues.add(nutVal);
     _nutritionalValuesStreamController.add(_nutritionalValues);
-    
+     
     return nutVal;
   }
   
@@ -477,6 +489,7 @@ class SqfliteDataProvider implements DataProvider {
       final updatedCount = await _db!.update(nutritionalValueTable, {
         orderIdColumn: entry.value,
       }, where: '$idColumn = ?', whereArgs: [entry.key]);
+      _nutritionalValues.firstWhere((p) => p.id == entry.key).orderId = entry.value;
       if (updatedCount != 1) throw InvalidUpdateException();
     }
     

@@ -444,6 +444,25 @@ class NutritionalValue {
 	
 	NutritionalValue(this.id, this.orderId, this.name, this.unit, this.showFullName);
   
+  factory NutritionalValue.copyWith(
+    NutritionalValue value,
+    {
+      int? newId,
+      int? newOrderId,
+      String? newName,
+      String? newUnit,
+      bool? newShowFullName,
+    }
+  ) {
+    return NutritionalValue(
+      newId ?? value.id,
+      newOrderId ?? value.orderId,
+      newName ?? value.name,
+      newUnit ?? value.unit,
+      newShowFullName ?? value.showFullName,
+    );
+  }
+  
   @override
   bool operator ==(covariant NutritionalValue other) => id == other.id;
   

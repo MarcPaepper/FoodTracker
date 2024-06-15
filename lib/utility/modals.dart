@@ -41,28 +41,19 @@ void _showSnackbar({
   );
 }
 
-Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save}) => 
+Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, String? prodName}) => 
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Continue without saving?'),
-      content: const Text('You have unsaved changes.'),
+      title: const Text('Unsaved changes'),
+      content: const Text('The product has unsaved changes. How do you want to proceed?'),
       surfaceTintColor: Colors.transparent,
       actionsAlignment: MainAxisAlignment.spaceEvenly,
       actions: <Widget>[
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ElevatedButton(
-              style: actionButtonStyle,
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                child: Text('Continue editing'),
-              ),
-            ),
             if (save != null) ...[
-              const SizedBox(height: 16),
               ElevatedButton(
                 style: actionButtonStyle,
                 onPressed: () {
@@ -74,16 +65,54 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save})
                   child: Text('Save changes'),
                 ),
               ),
+              const SizedBox(height: 16),
             ],
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: actionButtonStyle.copyWith(
-                backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 192, 92, 90)),
-              ),
+            ElevatedButton.icon(
+              style: actionButtonStyle,
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Padding(
+              icon: const Icon(Icons.delete, color: Colors.white),
+              label: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                child: Text('Exit without saving'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Exit without saving',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      "Changes will be lost.",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              style: actionButtonStyle,
+              onPressed: () => Navigator.of(context).pop(false),
+              icon: RotatedBox(
+                quarterTurns: 2,
+                child: Image.asset("assets/geschwungen_arrow.png", width: 24, height: 24)
+              ),
+              label: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Cancel',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Continue editing ${prodName != null ? "'$prodName'" : "the product"}',
+                      style: const TextStyle(fontSize: 14)
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

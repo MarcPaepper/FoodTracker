@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:food_tracker/utility/theme.dart';
 
+import '../utility/theme.dart';
 import '../utility/text_logic.dart';
 
 // import 'dart:developer' as devtools show log;
@@ -24,7 +24,7 @@ class AddMealBox extends StatefulWidget {
 
 class _AddMealBoxState extends State<AddMealBox> {
   late DateTime dateTime;
-  late final ScrollController _scrollController;
+  late final FixedExtentScrollController _scrollController;
   
   @override
   void initState() {
@@ -42,6 +42,7 @@ class _AddMealBoxState extends State<AddMealBox> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      minVerticalPadding: 0,
       contentPadding: const EdgeInsets.all(0.0),
       title: Column(
         
@@ -59,18 +60,50 @@ class _AddMealBoxState extends State<AddMealBox> {
             ),
           ),
           const SizedBox(height: 14),
-          _buildDateTimeField(context, null, false, dateTime, updateDateTime),
-          const SizedBox(height: 10),
-          _buildDateTimeField(context, _scrollController, true, dateTime, updateDateTime),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            style: addButtonStyle.copyWith(
-              
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Table(
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              columnWidths: const {
+                0: IntrinsicColumnWidth(),
+                1: IntrinsicColumnWidth(),
+                2: FlexColumnWidth(1),
+              },
+              children: [
+                _buildDateTimeField(context, null, false, dateTime, updateDateTime),
+                const TableRow( // spacer
+                  children: [
+                    SizedBox(height: 10),
+                    SizedBox(height: 10),
+                    SizedBox(height: 10),
+                  ],
+                ),
+                _buildDateTimeField(context, _scrollController, true, dateTime, updateDateTime),
+              ]
             ),
-            icon: const Icon(Icons.add),
-            onPressed: () {},
-            label: const Text("Add"),
-          )
+          ),
+          const SizedBox(height: 12),
+          // FoodBox(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ElevatedButton.icon(
+              style: addButtonStyle.copyWith(
+                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
+                padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 11)),
+                alignment: Alignment.center,
+                iconSize: WidgetStateProperty.all<double>(20),
+              ),
+              icon: const Icon(Icons.add),
+              onPressed: () {},
+              label: const Text("Add Meal"),
+            ),
+          ),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -80,100 +113,112 @@ class _AddMealBoxState extends State<AddMealBox> {
     setState(() => dateTime = newDateTime);
   }
   
-  Widget _buildDateTimeField(
+  TableRow _buildDateTimeField(
     BuildContext context,
-    ScrollController? controller,
+    FixedExtentScrollController? controller,
     bool isTime,
     DateTime dateTime,
     Function(DateTime) onChanged,
   ) {
     assert(controller != null || !isTime);
     
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (isTime) ...[
-            const Text(
-              "Select hour:",
-              style: TextStyle(
-              ),
+    return TableRow(
+      children: [
+        isTime
+          ? const Text(
+            "Hour:",
+            style: TextStyle(
             ),
-            const SizedBox(height: 4),
-          ],
-          Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              Padding(
-                padding: EdgeInsets.only(top: isTime ? 2 : 0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.teal.shade100.withAlpha(200),
-                    borderRadius: const BorderRadius.all(Radius.circular(12)),
-                  ),
-                  child: IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(
-                          width: 0,
-                          height: 25,
+          )
+          : const Text(
+            "Date:",
+            style: TextStyle(
+            ),
+          ),
+        const SizedBox(width: 12),
+        Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: isTime ? 2 : 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade100.withAlpha(200),
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(
+                        width: 0,
+                        height: 25,
+                      ),
+                      _getChevronButton(false, isTime, dateTime, onChanged, controller),
+                      // vertical divider
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Container(
+                          width: 1,
+                          height: 8,
+                          color: Colors.black.withAlpha(100),
                         ),
-                        InkWell(
-                          onTap: () {
-                            var duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
-                            onChanged(dateTime.subtract(duration));
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.fromLTRB(9, 8, 7, 8),
-                            child: Icon(Icons.chevron_left),
-                          ),
+                      ),
+                      isTime ?
+                        _getTimeSelector(context, controller, dateTime, onChanged) :
+                        _getDateSelector(context, dateTime, onChanged),
+                      // vertical divider
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Container(
+                          width: 1,
+                          height: 8,
+                          color: Colors.black.withAlpha(100),
                         ),
-                        // vertical divider
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Container(
-                            width: 1,
-                            height: 10,
-                            color: Colors.black.withAlpha(100),
-                          ),
-                        ),
-                        isTime ?
-                          _getTimeSelector(context, controller, dateTime, onChanged) :
-                          _getDateSelector(context, dateTime, onChanged),
-                        // vertical divider
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Container(
-                            width: 1,
-                            height: 10,
-                            color: Colors.black.withAlpha(100),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            var duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
-                            onChanged(dateTime.add(duration));
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.fromLTRB(7, 8, 9, 8),
-                            child: Icon(Icons.chevron_right),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      _getChevronButton(true, isTime, dateTime, onChanged, controller),
+                    ],
                   ),
                 ),
               ),
-              if (isTime) const Mark(),
-            ],
-          )
-        ],
-      ),
+            ),
+            if (isTime) const Mark(),
+          ],
+        )
+      ],
     );
   }
 }
+
+Widget _getChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(DateTime) onChanged, FixedExtentScrollController? scrollController) =>
+  InkWell(
+    enableFeedback: !isTime,
+    onTap: () {
+      Duration duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
+      if (isTime) {
+        if ((isUp && dateTime.hour == 23) || (!isUp && dateTime.hour == 0)) {
+          duration = const Duration(hours: -23);
+          dateTime = isUp ? dateTime.add(duration) : dateTime.subtract(duration);
+          scrollController?.jumpToItem(isUp ? 0 : 23);
+        } else {
+          duration = isUp ? const Duration(hours: 1) : const Duration(hours: -1);
+          var newDateTime = dateTime.add(duration);
+          Future.delayed(const Duration(milliseconds: 400), () {
+            // dateTime = newDateTime;
+          });
+          scrollController?.animateToItem(newDateTime.hour, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
+        }
+      } else {
+        duration = isUp ? const Duration(days: 1) : const Duration(days: -1);
+        dateTime = dateTime.add(duration);
+      }
+      onChanged(dateTime);
+    },
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(7, 8, 9, 8),
+      child: Icon(isUp ? Icons.chevron_right : Icons.chevron_left),
+    ),
+  );
 
 Widget _getDateSelector(BuildContext context, DateTime dateTime, Function(DateTime) onChanged) {
   var label = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear(context, [dateTime], showWeekDay: false)[0]})";

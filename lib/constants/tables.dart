@@ -2,7 +2,7 @@ import 'package:food_tracker/services/data/data_objects.dart';
 
 const createProductTable = '''
 CREATE TABLE "product" (
-	"id"	INTEGER,
+	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"name"	TEXT,
 	"density_conversion"	TEXT,
 	"quantity_conversion"	TEXT,
@@ -17,14 +17,16 @@ CREATE TABLE "product" (
 	"amount_for_nutrients"	INTEGER,
 	"nutrients_unit"	TEXT,
 	"creation_date"	TEXT,
-	"last_edit_date"	TEXT,
+	"last_edit_date"	TEXT
 );
 ''';
 const createNutritionalValueTable = '''
 CREATE TABLE "nutritional_value" (
-	"id"	INTEGER,
+	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"name"	TEXT,
-	"unit"	TEXT
+	"unit"	TEXT,
+  "order_id"	INTEGER,
+  "show_full_name"	INTEGER
 );
 ''';
 const createIngredientTable = '''
@@ -46,7 +48,7 @@ CREATE TABLE "product_nutrient" (
 ''';
 const createMealTable = '''
 CREATE TABLE "meal" (
-	"id"	INTEGER,
+	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"date_time"	TEXT,
 	"product_id"	INTEGER,
 	"amount"	INTEGER,
@@ -61,7 +63,7 @@ const productNutrientTableName = "product_nutrient";
 const mealTableName = "meal";
 
 const productColumns = [
-  '"id" INTEGER',
+  '"id" INTEGER PRIMARY KEY AUTOINCREMENT',
   '"name" TEXT',
   '"density_conversion" TEXT',
   '"quantity_conversion" TEXT',
@@ -80,7 +82,7 @@ const productColumns = [
 ];
 
 const nutritionalValueColumns = [
-  '"id" INTEGER',
+  '"id" INTEGER PRIMARY KEY AUTOINCREMENT',
   '"name" TEXT',
   '"unit" TEXT',
   '"order_id" INTEGER',
@@ -102,7 +104,7 @@ const productNutrientColumns = [
 ];
 
 const mealColumns = [
-  '"id" INTEGER',
+  '"id" INTEGER PRIMARY KEY AUTOINCREMENT',
   '"date_time" TEXT',
   '"product_id" INTEGER',
   '"amount" INTEGER',
@@ -114,7 +116,10 @@ var missingProductColumns = {
   "last_edit_date": () => "UPDATE $productTableName SET last_edit_date = datetime('now') WHERE last_edit_date IS NULL;",
 };
 
-var missingNutritionalValueColumns = {};
+var missingNutritionalValueColumns = {
+  // set order id to id
+  "order_id": () => "UPDATE $nutritionalValueTableName SET order_id = id WHERE order_id IS NULL;",
+};
 var missingIngredientColumns = {};
 var missingProductNutrientColumns = {};
 var missingMealColumns = {};

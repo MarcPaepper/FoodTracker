@@ -487,7 +487,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       return;
     }
     
-    bool willPop = await showContinueWithoutSavingDialog(context, save: saveProduct) == true;
+    bool willPop = await showContinueWithoutSavingDialog(context, save: saveProduct, prodName: product.name) == true;
     
     if (willPop) {
       Future(() => navigator.pop(product));
@@ -681,8 +681,31 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       current: _defaultUnitNotifier.value,
                       onChanged: (Unit? unit) {
                         if (unit != null) {
+                          // if ingredient and nutrient values are default, change them to the new unit
+                          Unit ingredientsUnit = _ingredientsUnitNotifier.value;
+                          Unit nutrientsUnit = _nutrientsUnitNotifier.value;
+                          if (
+                            _ingredientsNotifier.value.isEmpty
+                            && ingredientsUnit == _defaultUnitNotifier.value
+                            && _resultingAmountNotifier.value == Product.defaultValues().amountForIngredients
+                          ) {
+                            ingredientsUnit = unit;
+                            _ingredientsUnitNotifier.value = unit;
+                          }
+                          if (
+                            _nutrientsNotifier.value.every((nutrient) => nutrient.autoCalc)
+                            && nutrientsUnit == _defaultUnitNotifier.value
+                            && _resultingAmountNotifier.value == Product.defaultValues().amountForIngredients
+                          ) {
+                            nutrientsUnit = unit;
+                            _nutrientsUnitNotifier.value = unit;
+                          }
                           _defaultUnitNotifier.value = unit;
-                          _interimProduct = Product.copyWith(getProductFromForm().$1, newDefaultUnit: unit);
+                          _interimProduct = Product.copyWith(getProductFromForm().$1,
+                            newDefaultUnit: unit,
+                            newIngredientsUnit: ingredientsUnit,
+                            newNutrientsUnit: nutrientsUnit,
+                          );
                         }
                       }
                     )
