@@ -39,7 +39,7 @@ class IngredientsBox extends StatefulWidget {
   final List<FocusNode>                      ingredientDropdownFocusNodes;
   
   final Function() intermediateSave;
-  final Function(Unit, List<ProductQuantity>, int?) onChange;
+  final Function(Unit, List<ProductQuantity>, int?) onChanged;
   final Function(int, int) requestIngredientFocus;
   
   const IngredientsBox({
@@ -62,7 +62,7 @@ class IngredientsBox extends StatefulWidget {
     required this.ingredientAmountControllers,
     required this.ingredientDropdownFocusNodes,
     required this.intermediateSave,
-    required this.onChange,
+    required this.onChanged,
     required this.requestIngredientFocus,
     super.key,
   });
@@ -218,7 +218,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                         intermediateSave: widget.intermediateSave,
                         onChanged: (Unit? unit) {
                           var newUnit = unit ?? Unit.g;
-                          widget.onChange(newUnit, valueIngredients, null);
+                          widget.onChanged(newUnit, valueIngredients, null);
                         },
                       ),
                     ),
@@ -279,7 +279,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
         buildDefaultDragHandles: false,
         
-        entries: _getIngredientEntries(context, productsMap, ingredients, amounts, circRefs, targetUnit, widget.id, quantityName),
+        entries: _getIngredientEntries(context, productsMap, ingredients, amounts, circRefs, targetUnit, widget.id),
         menuWidth: 90,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
@@ -304,7 +304,6 @@ class _IngredientsBoxState extends State<IngredientsBox> {
     List<bool> circRefs,
     Unit targetUnit,
     int id,
-    String quantityName,
   ) {
     // remove all ingredient products from products list
     var reducedProducts = reduceProducts(productsMap, ingredients, id);
@@ -403,7 +402,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                               amount:    ingredient.amount,
                               unit:      newUnit,
                             );
-                            widget.onChange(widget.ingredientsUnitNotifier.value, ingredients, index);
+                            widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, index);
                             widget.ingredientsNotifier.value = List.from(ingredients);
                             // WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index, 0));
                             // // request after 200 ms
@@ -435,7 +434,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                           // unit dropdown
                           Expanded(
                             child: UnitDropdown(
-                              items: buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values, quantityName: quantityName),
+                              items: buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values, quantityName: product?.quantityName ?? "x"),
                               current: unit,
                               onChanged: (Unit? unit) {
                                 if (unit != null) {
@@ -495,6 +494,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                       ingredients.removeAt(index);
                       widget.ingredientAmountControllers.removeAt(index);
                       widget.ingredientsNotifier.value = List.from(ingredients);
+                      widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, null);
                     },
                   ),
                 ),
@@ -556,6 +556,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               newController.text = truncateZeros(amount);
               widget.ingredientAmountControllers.add(newController);
               widget.ingredientsNotifier.value = List.from(ingredients);
+              widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, null);
               Future.delayed(const Duration(milliseconds: 50), () => widget.requestIngredientFocus(ingredients.length - 1, 1));
             }
           },

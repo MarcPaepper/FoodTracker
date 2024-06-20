@@ -25,19 +25,30 @@ class _MealsViewState extends State<MealsView> {
   Widget build(BuildContext context) {
     return StreamBuilder(
       stream: _dataService.streamMeals(),
-      builder: (context, snapshot) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildListView(snapshot),
-            // _buildAddButton(snapshot.hasData ? snapshot.data as List<Meal> : []),
-          ]
+      builder: (contextM, snapshotM) {
+        return StreamBuilder<List<Product>>(
+          stream: _dataService.streamProducts(),
+          builder: (contextP, snapshotP) {
+            Map<int, Product>? productsMap;
+            if (snapshotP.hasData) {
+              final List<Product> products = snapshotP.data as List<Product>;
+              productsMap = Map.fromEntries(products.map((prod) => MapEntry(prod.id, prod)));
+            }
+            
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildListView(snapshotM, productsMap),
+                // _buildAddButton(snapshot.hasData ? snapshot.data as List<Meal> : []),
+              ]
+            );
+          }
         );
       }
     );
   }
   
-  Widget _buildListView(AsyncSnapshot snapshot) {
+  Widget _buildListView(AsyncSnapshot snapshot, Map<int, Product>? productsMap) {
     if (snapshot.hasData) {
       // final List<Meal> meals = snapshot.data;
       // var now = DateTime.now();
@@ -51,7 +62,11 @@ class _MealsViewState extends State<MealsView> {
           physics: const ClampingScrollPhysics(),
           padding: const EdgeInsets.all(0.0),
           children: [
-            AddMealBox(copyDateTime: DateTime.now(), onDateTimeChanged: (newDateTime) => {})
+            AddMealBox(
+              copyDateTime: DateTime.now(),
+              onDateTimeChanged: (newDateTime) => {},
+              productsMap: productsMap ?? {},
+            )
           ],
         )
       );

@@ -54,15 +54,34 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (save != null) ...[
-              ElevatedButton(
+              ElevatedButton.icon(
                 style: actionButtonStyle,
                 onPressed: () {
                   save();
-                  Navigator.of(context).pop(true);
+                  
+                  // Navigator.of(context).pop(true);
+                  // after 10 ms
+                  // Future.delayed(const Duration(milliseconds: 10), () {
+                    Navigator.of(context).pop(true);
+                  // });
                 },
-                child: const Padding(
+                icon: const Icon(Icons.save, color: Colors.white),
+                label: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                  child: Text('Save changes'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Save',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 2),
+                       Text(
+                        'Save changes and exit',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -77,12 +96,12 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Exit without saving',
+                      'Discard',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
                     ),
                     SizedBox(height: 2),
                     Text(
-                      "Changes will be lost.",
+                      "Unsaved changes will be ignored",
                       style: TextStyle(fontSize: 14),
                     ),
                   ],

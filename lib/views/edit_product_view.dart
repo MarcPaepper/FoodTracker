@@ -404,7 +404,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 ingredientAmountControllers: _ingredientAmountControllers,
                                 ingredientDropdownFocusNodes: _ingredientDropdownFocusNodes,
                                 intermediateSave: () => _interimProduct = getProductFromForm().$1,
-                                onChange: (newIngredientsUnit, newIngredients, index) {
+                                onChanged: (newIngredientsUnit, newIngredients, index) {
                                   var oldP = getProductFromForm().$1;
                                   _ingredientsToFocus = index == null ? [] : [index, 0];
                                   _autofocusTime = DateTime.now();
@@ -487,7 +487,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       return;
     }
     
-    bool willPop = await showContinueWithoutSavingDialog(context, save: saveProduct, prodName: product.name) == true;
+    bool willPop = await showContinueWithoutSavingDialog(context, save: () => saveProduct(popAfter: false), prodName: product.name) == true;
     
     if (willPop) {
       Future(() => navigator.pop(product));
@@ -736,7 +736,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     ),
   );
   
-  void saveProduct() {
+  void saveProduct({bool popAfter = true}) {
     var (product, isValid) = getProductFromForm();
     
     if (isValid) {
@@ -748,9 +748,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         future = _dataService.createProduct(product);
       }
       
-      future.then((newProduct) {
-        Navigator.of(context).pop(newProduct);
-      });
+      if (popAfter) {
+        future.then((newProduct) {
+          Navigator.of(context).pop(newProduct);
+        });
+      }
     }
   }
   

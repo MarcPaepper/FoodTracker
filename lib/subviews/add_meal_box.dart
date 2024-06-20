@@ -3,18 +3,22 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../services/data/data_objects.dart';
 import '../utility/theme.dart';
 import '../utility/text_logic.dart';
+import '../widgets/food_box.dart';
 
 // import 'dart:developer' as devtools show log;
 
 class AddMealBox extends StatefulWidget {
   final DateTime copyDateTime;
   final Function(DateTime) onDateTimeChanged;
+  final Map<int, Product> productsMap;
   
   const AddMealBox({
     required this.copyDateTime,
     required this.onDateTimeChanged,
+    required this.productsMap,
     super.key,
   });
 
@@ -25,6 +29,10 @@ class AddMealBox extends StatefulWidget {
 class _AddMealBoxState extends State<AddMealBox> {
   late DateTime dateTime;
   late final FixedExtentScrollController _scrollController;
+  
+  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier = ValueNotifier([]);
+  final List<TextEditingController> ingredientAmountControllers = [];
+  final List<FocusNode> ingredientDropdownFocusNodes = [];
   
   @override
   void initState() {
@@ -82,28 +90,18 @@ class _AddMealBoxState extends State<AddMealBox> {
               ]
             ),
           ),
-          const SizedBox(height: 12),
-          // FoodBox(),
+          const SizedBox(height: 6),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: ElevatedButton.icon(
-              style: addButtonStyle.copyWith(
-                shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
-                padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 11)),
-                alignment: Alignment.center,
-                iconSize: WidgetStateProperty.all<double>(20),
-              ),
-              icon: const Icon(Icons.add),
-              onPressed: () {},
-              label: const Text("Add Meal"),
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: FoodBox(
+              productsMap: widget.productsMap,
+              ingredientsNotifier: ingredientsNotifier,
+              ingredientAmountControllers: ingredientAmountControllers,
+              ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          _buildAddMealButton(context, ingredientsNotifier.value.isNotEmpty),
         ],
       ),
     );
@@ -271,6 +269,7 @@ Widget _getTimeSelector(
               blendMode: BlendMode.dstIn,
               child: ListWheelScrollView.useDelegate(
                 controller: controller,
+                scrollBehavior: MouseDragScrollBehavior().copyWith(scrollbars: false),
                 itemExtent: 38.0,
                 diameterRatio: 5.5,
                 physics: const FixedExtentScrollPhysics(),
@@ -311,6 +310,25 @@ Widget _getTimeSelector(
     ),
   );
 
+}
+
+Widget _buildAddMealButton(BuildContext context, bool enabled) {
+  return ElevatedButton.icon(
+    style: addButtonStyle.copyWith(
+      minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
+      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 21)),
+      alignment: Alignment.center,
+      iconSize: WidgetStateProperty.all<double>(20),
+    ),
+    icon: const Icon(Icons.send, color: Color.fromARGB(90, 0, 0, 0),),
+    iconAlignment: IconAlignment.end,
+    
+    onPressed: enabled ? () {} : null,
+    label: const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8),
+      child: Text("Add Meal"),
+    ),
+  );
 }
 
 class MouseDragScrollBehavior extends MaterialScrollBehavior {
