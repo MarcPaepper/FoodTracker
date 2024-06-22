@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -244,7 +245,7 @@ Widget _getDateSelector(BuildContext context, DateTime dateTime, Function(DateTi
 
 Widget _getTimeSelector(
   BuildContext context,
-  ScrollController? controller,
+  FixedExtentScrollController? controller,
   DateTime dateTime,
   Function(DateTime) onChanged,
 ) {
@@ -275,7 +276,7 @@ Widget _getTimeSelector(
                 physics: const FixedExtentScrollPhysics(),
                 onSelectedItemChanged: (index) {
                   Future.delayed(const Duration(milliseconds: 100), () {
-                    SystemSound.play(SystemSoundType.click);
+                    SystemSound.play(SystemSoundType.click); // not working
                   });
                   var newDateTime = DateTime(dateTime.year, dateTime.month, dateTime.day, index, dateTime.minute);
                   onChanged(newDateTime);
@@ -284,16 +285,25 @@ Widget _getTimeSelector(
                   builder: (context, index) {
                     var hour = (index % 24).toString();
                     var selected = index == selectedHour;
-                    return RotatedBox(
-                      quarterTurns: 1,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        child: Center(
-                          child: Text(
-                            hour,
-                            style: TextStyle(
-                              color: selected ? Colors.black : Colors.black.withAlpha(150),
-                              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                    return InkWell(
+                      mouseCursor: SystemMouseCursors.basic,
+                      onTap: () {
+                        var time = (sqrt((index - selectedHour).abs()) * 150).round();
+                        controller?.animateToItem(index, duration: Duration(milliseconds: time), curve: Curves.easeInOut);
+                        dateTime = DateTime(dateTime.year, dateTime.month, dateTime.day, index, dateTime.minute);
+                        onChanged(dateTime);
+                      },
+                      child: RotatedBox(
+                        quarterTurns: 1,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          child: Center(
+                            child: Text(
+                              hour,
+                              style: TextStyle(
+                                color: selected ? Colors.black : Colors.black.withAlpha(150),
+                                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                              ),
                             ),
                           ),
                         ),
