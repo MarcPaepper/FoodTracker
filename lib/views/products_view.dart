@@ -107,6 +107,7 @@ class _ProductsViewState extends State<ProductsView> {
           products: products,
           search: _searchController.text,
           sorting: (_sortType, _sortOrder),
+          colorFromTop: true,
           onSelected: (name, id) => Navigator.pushNamed (
             context,
             editProductRoute,

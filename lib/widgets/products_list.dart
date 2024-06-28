@@ -119,6 +119,7 @@ class _ProductTileState extends State<ProductTile> {
           }
         },
         child: ListTile(
+          dense: true,
           title: RichText(
             text: TextSpan(
               style: DefaultTextStyle.of(context).style.copyWith(

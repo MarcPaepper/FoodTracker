@@ -3,15 +3,16 @@ import "package:food_tracker/utility/theme.dart";
 
 import "../constants/routes.dart";
 import '../services/data/data_objects.dart';
-
-import "dart:developer" as devtools show log;
-
 import "../utility/data_logic.dart";
+import "../utility/modals.dart";
+import "../utility/text_logic.dart";
 import "amount_field.dart";
 import "border_box.dart";
 import "product_dropdown.dart";
 import "slidable_list.dart";
 import "unit_dropdown.dart";
+
+// import "dart:developer" as devtools show log;
 
 class FoodBox extends StatefulWidget {
   final Map<int, Product> productsMap;
@@ -46,14 +47,19 @@ class FoodBox extends StatefulWidget {
 class _FoodBoxState extends State<FoodBox> {
   @override
   Widget build(BuildContext context) {
-    return BorderBox(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // _buildIngredientsList(context, widget.ingredientsNotifier.value),
-          _buildAddButton(context, true),
-        ],
-      ),
+    return ValueListenableBuilder(
+      valueListenable: widget.ingredientsNotifier,
+      builder: (context, List<ProductQuantity> ingredients, _) {
+        return BorderBox(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildIngredientsList(context, ingredients),
+              _buildAddButton(context, true, ingredients),
+            ],
+          ),
+        );
+      },
     );
   }
   
@@ -255,8 +261,8 @@ class _FoodBoxState extends State<FoodBox> {
     return entries;
   }
   
-  Widget _buildAddButton(BuildContext context, bool roundedTop) {
-    return ElevatedButton(
+  Widget _buildAddButton(BuildContext context, bool roundedTop, List<ProductQuantity> ingredients) {
+    return ElevatedButton.icon(
       style: addButtonStyle.copyWith(
         shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
@@ -270,8 +276,39 @@ class _FoodBoxState extends State<FoodBox> {
         ),
         minimumSize: WidgetStateProperty.all<Size>(const Size(0, 50)),
       ),
-      onPressed: () {},
-      child: const Text("Add Ingredient"),
+      onPressed: () {
+        showProductDialog(
+          context: context,
+          productsMap: widget.productsMap,
+          selectedProduct: null,
+          autofocus: true,
+          onSelected: (Product? product) {
+            if (product != null) {
+              var defUnit = product.defaultUnit;
+              double amount;
+              if (defUnit == Unit.quantity || defUnit == Unit.l || defUnit == Unit.kg) {
+                amount = 1.0;
+              } else {
+                amount = 100.0;
+              }
+              ingredients.add(ProductQuantity(
+                productId: product.id,
+                amount: amount,
+                unit: defUnit,
+              ));
+              var newController = TextEditingController();
+              newController.text = truncateZeros(amount);
+              widget.ingredientAmountControllers.add(newController);
+              widget.ingredientsNotifier.value = List.from(ingredients);
+              // widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, null);
+              // Future.delayed(const Duration(milliseconds: 50), () => widget.requestIngredientFocus(ingredients.length - 1, 1));
+            }
+          },
+          beforeAdd: () => {},//widget.intermediateSave(),
+        );
+      },
+      label: const Text("Add Ingredient"),
+      icon: const Icon(Icons.add),
     );
   }
 }

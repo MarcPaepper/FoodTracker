@@ -57,7 +57,7 @@ class _BorderBoxState extends State<BorderBox> {
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.only(top: widget.title == null ? 0 : 17),
+              padding: EdgeInsets.only(top: widget.title == null ? 0 : 15),
               child: widget.child,
             ),
           ),

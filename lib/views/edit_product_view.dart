@@ -571,7 +571,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         controller: _productNameController,
         textCapitalization: TextCapitalization.words,
         decoration: const InputDecoration(
-          labelText: "Name"
+          labelText: "Name",
+          contentPadding: EdgeInsets.fromLTRB(12, 6, 12, 2),
         ),
         validator: (String? value) {
           for (var prod in products) {
@@ -730,6 +731,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         shape: WidgetStateProperty.all(const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(14)),
         )),
+        padding: WidgetStateProperty.all(const EdgeInsets.all(12)),
       ),
       onPressed: () => saveProduct(),
       child: Text(_isEdit ? "Update Product" : "Add Product"),

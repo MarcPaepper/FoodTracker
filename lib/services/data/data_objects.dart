@@ -1,5 +1,7 @@
 import 'package:collection/collection.dart';
 
+import 'dart:developer' as devtools show log;
+
 class Product {
 	int id = -1; // unique identifier
 	String name = "example Product"; // must be unique
@@ -128,6 +130,10 @@ class Product {
   bool operator ==(covariant Product other) => id == other.id;
   
   bool equals(Product other) {
+    // order other nutrients by id
+    var otherNutrients = other.nutrients.toList();
+    otherNutrients.sort((a, b) => a.nutritionalValueId - b.nutritionalValueId);
+    
     return id == other.id &&
            name == other.name &&
            temporaryBeginning == other.temporaryBeginning &&
@@ -143,7 +149,7 @@ class Product {
            amountForNutrients == other.amountForNutrients &&
            nutrientsUnit == other.nutrientsUnit &&
            const ListEquality().equals(ingredients, other.ingredients) &&
-           const ListEquality().equals(nutrients, other.nutrients);
+           const ListEquality().equals(nutrients, otherNutrients);
   }
   
   @override

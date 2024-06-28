@@ -80,11 +80,12 @@ class TemporaryBox extends StatelessWidget {
         return BorderBox(
           borderColor: borderColor,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(0, 8, 12, isTemporary ? 14 : 0),
+            padding: EdgeInsets.fromLTRB(0, 6, 12, isTemporary ? 14 : 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SwitchListTile(
+                  visualDensity: VisualDensity.compact,
                   value: isTemporary,
                   controlAffinity: ListTileControlAffinity.leading,
                   onChanged: (value) {
@@ -102,7 +103,7 @@ class TemporaryBox extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isTemporary ? 8 : 6),
                 // Single button to show a date range picker
                 if (isTemporary)
                   Padding(

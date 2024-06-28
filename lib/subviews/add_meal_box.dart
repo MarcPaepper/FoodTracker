@@ -27,22 +27,25 @@ class AddMealBox extends StatefulWidget {
   State<AddMealBox> createState() => _AddMealBoxState();
 }
 
-class _AddMealBoxState extends State<AddMealBox> {
-  late DateTime dateTime;
+class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMixin {
+  // late DateTime dateTime;
   late final FixedExtentScrollController _scrollController;
   
   final ValueNotifier<List<ProductQuantity>> ingredientsNotifier = ValueNotifier([]);
+  late final ValueNotifier<DateTime> dateTimeNotifier;
   final List<TextEditingController> ingredientAmountControllers = [];
   final List<FocusNode> ingredientDropdownFocusNodes = [];
   
   @override
   void initState() {
+    // dateTimeNotifier = ValueNotifier<DateTime>(widget.copyDateTime);
+    dateTimeNotifier = ValueNotifier<DateTime>(DateTime.now());
     // dateTime = widget.copyDateTime;
-    dateTime = DateTime.now();
+    // dateTime = DateTime.now();
     
     _scrollController = FixedExtentScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(dateTime.hour * 38.0);
+      _scrollController.jumpTo(dateTimeNotifier.value.hour * 38.0);
     });
     
     super.initState();
@@ -50,6 +53,8 @@ class _AddMealBoxState extends State<AddMealBox> {
   
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    
     return ListTile(
       minVerticalPadding: 0,
       contentPadding: const EdgeInsets.all(0.0),
@@ -79,7 +84,7 @@ class _AddMealBoxState extends State<AddMealBox> {
                 2: FlexColumnWidth(1),
               },
               children: [
-                _buildDateTimeField(context, null, false, dateTime, updateDateTime),
+                _buildDateTimeField(context, null, false, dateTimeNotifier, updateDateTime),
                 const TableRow( // spacer
                   children: [
                     SizedBox(height: 10),
@@ -87,7 +92,7 @@ class _AddMealBoxState extends State<AddMealBox> {
                     SizedBox(height: 10),
                   ],
                 ),
-                _buildDateTimeField(context, _scrollController, true, dateTime, updateDateTime),
+                _buildDateTimeField(context, _scrollController, true, dateTimeNotifier, updateDateTime),
               ]
             ),
           ),
@@ -109,14 +114,15 @@ class _AddMealBoxState extends State<AddMealBox> {
   }
   
   void updateDateTime(DateTime newDateTime) {
-    setState(() => dateTime = newDateTime);
+    // setState(() => dateTime = newDateTime);
+    dateTimeNotifier.value = newDateTime;
   }
   
   TableRow _buildDateTimeField(
     BuildContext context,
     FixedExtentScrollController? controller,
     bool isTime,
-    DateTime dateTime,
+    ValueNotifier<DateTime> dateTimeNotifier,
     Function(DateTime) onChanged,
   ) {
     assert(controller != null || !isTime);
@@ -145,39 +151,44 @@ class _AddMealBoxState extends State<AddMealBox> {
                   color: Colors.teal.shade100.withAlpha(200),
                   borderRadius: const BorderRadius.all(Radius.circular(12)),
                 ),
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(
-                        width: 0,
-                        height: 25,
+                child: ValueListenableBuilder(
+                  valueListenable: dateTimeNotifier,
+                  builder: (context, dateTime, child) {
+                    return IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(
+                            width: 0,
+                            height: 25,
+                          ),
+                          _getChevronButton(false, isTime, dateTime, onChanged, controller),
+                          // vertical divider
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Container(
+                              width: 1,
+                              height: 8,
+                              color: Colors.black.withAlpha(100),
+                            ),
+                          ),
+                          isTime ?
+                            _getTimeSelector(context, controller, dateTime, onChanged) :
+                            _getDateSelector(context, dateTime, onChanged),
+                          // vertical divider
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Container(
+                              width: 1,
+                              height: 8,
+                              color: Colors.black.withAlpha(100),
+                            ),
+                          ),
+                          _getChevronButton(true, isTime, dateTime, onChanged, controller),
+                        ],
                       ),
-                      _getChevronButton(false, isTime, dateTime, onChanged, controller),
-                      // vertical divider
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Container(
-                          width: 1,
-                          height: 8,
-                          color: Colors.black.withAlpha(100),
-                        ),
-                      ),
-                      isTime ?
-                        _getTimeSelector(context, controller, dateTime, onChanged) :
-                        _getDateSelector(context, dateTime, onChanged),
-                      // vertical divider
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Container(
-                          width: 1,
-                          height: 8,
-                          color: Colors.black.withAlpha(100),
-                        ),
-                      ),
-                      _getChevronButton(true, isTime, dateTime, onChanged, controller),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -187,6 +198,9 @@ class _AddMealBoxState extends State<AddMealBox> {
       ],
     );
   }
+  
+  @override
+  bool get wantKeepAlive => true;
 }
 
 Widget _getChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(DateTime) onChanged, FixedExtentScrollController? scrollController) =>
@@ -214,7 +228,7 @@ Widget _getChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(Dat
       onChanged(dateTime);
     },
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(7, 8, 9, 8),
+      padding: const EdgeInsets.fromLTRB(7, 9, 9, 9),
       child: Icon(isUp ? Icons.chevron_right : Icons.chevron_left),
     ),
   );
@@ -326,16 +340,16 @@ Widget _buildAddMealButton(BuildContext context, bool enabled) {
   return ElevatedButton.icon(
     style: addButtonStyle.copyWith(
       minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
-      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 21)),
+      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 17)),
       alignment: Alignment.center,
       iconSize: WidgetStateProperty.all<double>(20),
     ),
-    icon: const Icon(Icons.send, color: Color.fromARGB(90, 0, 0, 0),),
+    icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0),),
     iconAlignment: IconAlignment.end,
     
     onPressed: enabled ? () {} : null,
     label: const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.symmetric(horizontal: 4),
       child: Text("Add Meal"),
     ),
   );

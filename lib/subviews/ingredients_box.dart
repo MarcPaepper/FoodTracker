@@ -172,6 +172,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               SwitchListTile(
                 value: valueAutoCalc,
                 controlAffinity: ListTileControlAffinity.leading,
+                visualDensity: VisualDensity.compact,
                 onChanged: (bool value) {
                   widget.autoCalcAmountNotifier.value = value;
                 },
@@ -258,6 +259,9 @@ class _IngredientsBoxState extends State<IngredientsBox> {
     // if ingredients is empty, return a single list tile with a message
     if (ingredients.isEmpty) {
       return const ListTile(
+        contentPadding: EdgeInsets.zero,
+        minVerticalPadding: 0,
+        visualDensity: VisualDensity(horizontal: 0, vertical: -2),
         title: Center(
           child: Text(
             "No ingredients yet",
@@ -378,7 +382,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               title: Container(
                 color: color,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -410,7 +414,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                           }
                         },
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 12),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -430,7 +434,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                               }
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 9),
                           // unit dropdown
                           Expanded(
                             child: UnitDropdown(
@@ -513,7 +517,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 210, 235, 198),
         foregroundColor: Colors.black,
-        minimumSize: const Size(double.infinity, 60),
+        minimumSize: const Size(double.infinity, 50),
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         shape: const RoundedRectangleBorder(

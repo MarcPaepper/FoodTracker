@@ -101,7 +101,7 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
                     ),
                     SizedBox(height: 2),
                     Text(
-                      "Unsaved changes will be ignored",
+                      "Ignore unsaved changes",
                       style: TextStyle(fontSize: 14),
                     ),
                   ],

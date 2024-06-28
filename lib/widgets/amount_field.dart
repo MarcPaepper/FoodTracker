@@ -44,7 +44,7 @@ class AmountField extends StatelessWidget {
     var inputTheme = getTheme().inputDecorationTheme;
     
     var inputDec = InputDecoration(
-      contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 16 : 12, horizontal: 14),
+      contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 16 : 9, horizontal: 14),
       hintText: hintText,
       hintStyle: TextStyle(color: hintColor ?? inputTheme.hintStyle?.color),
       fillColor: fillColor ?? inputTheme.fillColor,

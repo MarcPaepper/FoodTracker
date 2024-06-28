@@ -117,7 +117,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
           child: Focus(
             skipTraversal: true,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(14, 12, 13, 10),
+              padding: const EdgeInsets.fromLTRB(14, 10, 13, 8),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(

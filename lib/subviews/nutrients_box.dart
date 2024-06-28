@@ -131,7 +131,7 @@ class NutrientsBox extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   children: [

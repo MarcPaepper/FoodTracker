@@ -107,6 +107,12 @@ class ConversionBoxes extends StatelessWidget {
             controller: quantityNameController,
             decoration: const InputDecoration(
               labelText: "Designation",
+              labelStyle: TextStyle(color: Colors.black),
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              floatingLabelStyle: TextStyle(color: Colors.black),
+              floatingLabelAlignment: FloatingLabelAlignment.start,
+              contentPadding: EdgeInsets.fromLTRB(12, 3, 12, 0),
+              alignLabelWithHint: true,
             ),
             textInputAction: TextInputAction.next,
             validator: (String? value) {
@@ -219,9 +225,9 @@ class ConversionBoxes extends StatelessWidget {
               // spacing
               const TableRow(
                 children: [
-                  SizedBox(height: 15),
-                  SizedBox(height: 15),
-                  SizedBox(height: 15),
+                  SizedBox(height: 14),
+                  SizedBox(height: 14),
+                  SizedBox(height: 14),
                 ]
               ),
               TableRow(
@@ -255,12 +261,13 @@ class ConversionBoxes extends StatelessWidget {
         return BorderBox(
           borderColor: borderColor,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(0, 8, 12, conversion.enabled ? 16 : 0),
+            padding: EdgeInsets.fromLTRB(0, 6, 12, conversion.enabled ? 14 : 0),
             child: Column(
               children: [
                 SwitchListTile(
                   value: enabled,
                   controlAffinity: ListTileControlAffinity.leading,
+                  visualDensity: VisualDensity.compact,
                   onChanged: (bool value) {
                     // validate form after future build
                     if (!value) {
@@ -280,7 +287,7 @@ class ConversionBoxes extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: conversion.enabled ? 8 : 6),
                 inputFields,
                 // Text for validation message
                 if (validationString != null)
@@ -343,7 +350,7 @@ String? validateConversionBox(int index, Unit defUnit, Conversion densityConvers
       if (defUnit != Unit.quantity) {
         bool different = volumetricUnits.contains(defUnit) ^ volumetricUnits.contains(conv.unit2);
         if (different && !otherConv.enabled) {
-          return "Cannot convert quantity ($quantityName) to default unit (${unitToString(defUnit)}) without density conversion.";
+          return "Cannot convert quantity ($quantityName) to default unit (${unitToString(defUnit)}) without volumetric conversion.";
         }
       }
     } else {

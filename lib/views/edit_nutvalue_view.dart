@@ -194,6 +194,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: SwitchListTile(
+            visualDensity: VisualDensity.compact,
             title: const Text("Show Full Name"),
             value: value,
             onChanged: (newValue) {

@@ -36,7 +36,7 @@ class _SortFieldState extends State<SortField> {
     hintText: 'Search',
     fillColor: Colors.white,
     filled: true,
-    contentPadding: kIsWeb ? EdgeInsets.fromLTRB(13, 11, 8, 11) : EdgeInsets.fromLTRB(13, 11, 8, 9),
+    contentPadding: kIsWeb ? EdgeInsets.fromLTRB(13, 11, 8, 11) : EdgeInsets.fromLTRB(13, 110, 8, 9),
   );
   
   final _dropdownTextStyle = const TextStyle(
@@ -58,7 +58,7 @@ class _SortFieldState extends State<SortField> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 12 : 9),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 12 : 8),
       ),
       onPressed: () {
         setState(() {
