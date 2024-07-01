@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class Product {
 	int id = -1; // unique identifier
@@ -225,15 +225,41 @@ class Meal {
   final DateTime dateTime;
   final ProductQuantity productQuantity;
   
+  DateTime? creationDate;
+  DateTime? lastEditDate;
+  
   Meal({
     required this.id,
     required this.dateTime,
     required this.productQuantity,
+             this.creationDate,
+             this.lastEditDate,
   });
   
-  @override
-  bool operator ==(covariant Meal other) => dateTime == other.dateTime && productQuantity == other.productQuantity;
+  factory Meal.copyWith(
+    Meal meal,
+    {
+      int? newId,
+      DateTime? newDateTime,
+      ProductQuantity? newProductQuantity,
+      DateTime? newCreationDate,
+      DateTime? newLastEditDate,
+    }
+  ) {
+    return Meal(
+      id:               newId ?? meal.id,
+      dateTime:         newDateTime ?? meal.dateTime,
+      productQuantity:  newProductQuantity ?? meal.productQuantity,
+      creationDate:     newCreationDate ?? meal.creationDate,
+      lastEditDate:     newLastEditDate ?? meal.lastEditDate,
+    );
+  }
   
+  @override
+  bool operator ==(covariant Meal other) =>
+    dateTime == other.dateTime &&
+    productQuantity == other.productQuantity &&
+    creationDate == other.creationDate;
   @override
   int get hashCode => dateTime.hashCode ^ productQuantity.hashCode;
   

@@ -601,8 +601,10 @@ class SqfliteDataProvider implements DataProvider {
   
   Meal _dbRowToMeal(Map<String, Object?> row) =>
     Meal(
-      id:         row[idColumn] as int,
-      dateTime:   DateTime.parse(row[dateTimeColumn] as String),
+      id:           row[idColumn] as int,
+      dateTime:     DateTime.parse(row[dateTimeColumn] as String),
+      creationDate: DateTime.parse(row[creationDateColumn] as String),
+      lastEditDate: DateTime.parse(row[lastEditDateColumn] as String),
       productQuantity: ProductQuantity(
         productId: row[productIdColumn] as int,
         amount:    toDouble(row[mealAmountColumn]),
@@ -615,16 +617,19 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     final id = await _db!.insert(mealTable, {
-      dateTimeColumn:   meal.dateTime.toIso8601String(),
-      productIdColumn:  meal.productQuantity.productId,
-      mealAmountColumn: meal.productQuantity.amount,
-      mealUnitColumn:   unitToString(meal.productQuantity.unit),
+      dateTimeColumn:     meal.dateTime.toIso8601String(),
+      productIdColumn:    meal.productQuantity.productId,
+      mealAmountColumn:   meal.productQuantity.amount,
+      mealUnitColumn:     unitToString(meal.productQuantity.unit),
+      creationDateColumn: DateTime.now().toIso8601String(),
+      lastEditDateColumn: DateTime.now().toIso8601String(),
     });
     
-    _meals.add(Meal(id: id, dateTime: meal.dateTime, productQuantity: meal.productQuantity));
+    var newMeal = Meal.copyWith(meal, newId: id, newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
+    _meals.add(newMeal);
     _mealsStreamController.add(_meals);
     
-    return Meal(id: id, dateTime: meal.dateTime, productQuantity: meal.productQuantity);
+    return newMeal;
   }
   
   @override
@@ -632,10 +637,12 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     final updatedCount = await _db!.update(mealTable, {
-      dateTimeColumn:   meal.dateTime.toIso8601String(),
-      productIdColumn:  meal.productQuantity.productId,
-      mealAmountColumn: meal.productQuantity.amount,
-      mealUnitColumn:   unitToString(meal.productQuantity.unit),
+      dateTimeColumn:     meal.dateTime.toIso8601String(),
+      productIdColumn:    meal.productQuantity.productId,
+      mealAmountColumn:   meal.productQuantity.amount,
+      mealUnitColumn:     unitToString(meal.productQuantity.unit),
+      creationDateColumn: meal.creationDate?.toIso8601String(),
+      lastEditDateColumn: DateTime.now().toIso8601String(),
     }, where: '$idColumn = ?', whereArgs: [meal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     

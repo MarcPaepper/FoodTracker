@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'dart:math';
 import 'dart:ui';
 
@@ -5,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/data/data_objects.dart';
-import '../utility/theme.dart';
+import '../services/data/data_service.dart';
 import '../utility/text_logic.dart';
 import '../widgets/food_box.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 class AddMealBox extends StatefulWidget {
   final DateTime copyDateTime;
@@ -35,6 +37,11 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   late final ValueNotifier<DateTime> dateTimeNotifier;
   final List<TextEditingController> ingredientAmountControllers = [];
   final List<FocusNode> ingredientDropdownFocusNodes = [];
+  
+  final _dataService = DataService.current();
+  
+  @override
+  bool get wantKeepAlive => true;
   
   @override
   void initState() {
@@ -104,10 +111,16 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
               ingredientsNotifier: ingredientsNotifier,
               ingredientAmountControllers: ingredientAmountControllers,
               ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
+              requestIngredientFocus: _requestIngredientFocus,
             ),
           ),
           const SizedBox(height: 12),
-          _buildAddMealButton(context, ingredientsNotifier.value.isNotEmpty),
+          ValueListenableBuilder(
+            valueListenable: ingredientsNotifier,
+            builder: (context, ingredients, child) {
+              return _buildAddMealButton(context, ingredients.isNotEmpty);
+            },
+          ),
         ],
       ),
     );
@@ -199,8 +212,68 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     );
   }
   
-  @override
-  bool get wantKeepAlive => true;
+  void _requestIngredientFocus(int index, int subIndex) {
+    try {
+      if (index < ingredientDropdownFocusNodes.length) {
+        if (subIndex == 0) {
+          // If sub index = 0, focus the product dropdown
+          ingredientDropdownFocusNodes[index].requestFocus();
+        } else {
+          // If sub index = 1, focus the amount field
+          devtools.log("focus text field");
+          ingredientDropdownFocusNodes[index].requestFocus();
+          Future.delayed(const Duration(milliseconds: 20), () {
+            for (var i = 0; i < 1; i++) FocusManager.instance.primaryFocus?.nextFocus();
+          });
+        }
+      }
+    } catch (e) {
+      devtools.log("Error focusing ingredient $index: $e");
+    }
+  }
+  
+  
+
+Widget _buildAddMealButton(BuildContext context, bool enabled) {
+  return ElevatedButton.icon(
+    // style: addButtonStyle.copyWith(
+    //   minimumSize: WidgetStateProperty.all<Size>(const Size(0, 50)),
+    //   padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 0)),
+    //   alignment: Alignment.center,
+    //   iconSize: WidgetStateProperty.all<double>(20),
+    // ),
+    style: ElevatedButton.styleFrom(
+      minimumSize: const Size(double.infinity, 50),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      alignment: Alignment.center,
+      textStyle: const TextStyle(fontSize: 16),
+      // foregroundColor: Colors.white,
+      foregroundColor: Colors.black,
+      // backgroundColor: Color.fromARGB(255, 93, 202, 191),
+      backgroundColor: Colors.teal.shade300,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+    ),
+    icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0),),
+    // icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 255, 255, 255),),
+    iconAlignment: IconAlignment.end,
+    onPressed: enabled ? () {
+      for (var ingredient in ingredientsNotifier.value) {
+        _dataService.createMeal(
+          Meal(
+            id: -1,
+            dateTime: dateTimeNotifier.value,
+            productQuantity: ingredient,
+          ),
+        );
+      }
+      ingredientsNotifier.value = [];
+    } : null,
+    label: const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4),
+      child: Text("Add Meal"),
+    ),
+  );
+}
 }
 
 Widget _getChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(DateTime) onChanged, FixedExtentScrollController? scrollController) =>
@@ -331,26 +404,6 @@ Widget _getTimeSelector(
           ],
         ),
       ),
-    ),
-  );
-
-}
-
-Widget _buildAddMealButton(BuildContext context, bool enabled) {
-  return ElevatedButton.icon(
-    style: addButtonStyle.copyWith(
-      minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
-      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 12, vertical: 17)),
-      alignment: Alignment.center,
-      iconSize: WidgetStateProperty.all<double>(20),
-    ),
-    icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0),),
-    iconAlignment: IconAlignment.end,
-    
-    onPressed: enabled ? () {} : null,
-    label: const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
-      child: Text("Add Meal"),
     ),
   );
 }

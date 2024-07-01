@@ -25,7 +25,7 @@ class FoodBox extends StatefulWidget {
   
   // final Function() intermediateSave;
   // final Function(List<ProductQuantity>) onChanged;
-  // final Function(int, int) requestIngredientFocus;
+  final Function(int, int) requestIngredientFocus;
   
   const FoodBox({
     required this.productsMap,
@@ -36,7 +36,7 @@ class FoodBox extends StatefulWidget {
     required this.ingredientDropdownFocusNodes,
     // required this.intermediateSave,
     // required this.onChanged,
-    // required this.requestIngredientFocus,
+    required this.requestIngredientFocus,
     super.key,
   });
 
@@ -51,12 +51,19 @@ class _FoodBoxState extends State<FoodBox> {
       valueListenable: widget.ingredientsNotifier,
       builder: (context, List<ProductQuantity> ingredients, _) {
         return BorderBox(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildIngredientsList(context, ingredients),
-              _buildAddButton(context, true, ingredients),
-            ],
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            // rounded corners
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildIngredientsList(context, ingredients),
+                _buildAddButton(context, ingredients.isEmpty, ingredients),
+              ],
+            ),
           ),
         );
       },
@@ -163,6 +170,7 @@ class _FoodBoxState extends State<FoodBox> {
                             );
                             // widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, index);
                             widget.ingredientsNotifier.value = List.from(ingredients);
+                            widget.requestIngredientFocus(index, 0);
                           }
                         },
                       ),
@@ -301,7 +309,7 @@ class _FoodBoxState extends State<FoodBox> {
               widget.ingredientAmountControllers.add(newController);
               widget.ingredientsNotifier.value = List.from(ingredients);
               // widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, null);
-              // Future.delayed(const Duration(milliseconds: 50), () => widget.requestIngredientFocus(ingredients.length - 1, 1));
+              Future.delayed(const Duration(milliseconds: 50), () => widget.requestIngredientFocus(ingredients.length - 1, 1));
             }
           },
           beforeAdd: () => {},//widget.intermediateSave(),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../services/data/data_objects.dart';
 import '../subviews/add_meal_box.dart';
 import '../services/data/data_service.dart';
-import '../utility/theme.dart';
 
 class MealsView extends StatefulWidget {
   const MealsView({super.key});
@@ -66,7 +65,15 @@ class _MealsViewState extends State<MealsView> {
               copyDateTime: DateTime.now(),
               onDateTimeChanged: (newDateTime) => {},
               productsMap: productsMap ?? {},
-            )
+            ),
+            ListTile(
+              title: Text('Apples'),
+              subtitle: Text('100g'),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => {},
+              ),
+            ),
           ],
         )
       );
@@ -77,17 +84,5 @@ class _MealsViewState extends State<MealsView> {
         )
       );
     }
-  }
-  
-  Widget _buildAddButton(List<Meal> meals) {
-    return ElevatedButton.icon(
-      style: addButtonStyle,
-      icon: const Icon(Icons.add),
-      label: const Padding(
-        padding: EdgeInsets.only(left: 5.0),
-        child: Text("Add Meal"),
-      ),
-      onPressed: () {},
-    );
   }
 }

@@ -137,7 +137,7 @@ class _CustomUnderlinePainter extends BoxPainter {
 var addButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: const Color.fromARGB(255, 210, 235, 198),
   foregroundColor: Colors.black,
-  minimumSize: const Size(double.infinity, 50),
+  minimumSize: const Size(double.infinity, 49),
   alignment: Alignment.centerLeft,
   padding: const EdgeInsets.symmetric(horizontal: 16),
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),

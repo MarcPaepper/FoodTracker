@@ -448,11 +448,7 @@ class DebugDataProvider implements DataProvider {
     for (final meal in meals) {
       if (meal.id > highestId) highestId = meal.id;
     }
-    final newMeal = Meal(
-      id: highestId + 1,
-      dateTime: meal.dateTime,
-      productQuantity: meal.productQuantity,
-    );
+    final newMeal = Meal.copyWith(meal, newId: highestId + 1);
     meals.add(newMeal);
     _mealsStreamController.add(meals);
     return Future.value(newMeal);
