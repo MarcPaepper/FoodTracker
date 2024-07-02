@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/widgets/meal_list.dart';
 
 import '../services/data/data_objects.dart';
-import '../subviews/add_meal_box.dart';
+import '../widgets/add_meal_box.dart';
 import '../services/data/data_service.dart';
 
 class MealsView extends StatefulWidget {
@@ -56,25 +57,8 @@ class _MealsViewState extends State<MealsView> {
       
       
       return Expanded(
-        child: ListView(
-          reverse: true,
-          physics: const ClampingScrollPhysics(),
-          padding: const EdgeInsets.all(0.0),
-          children: [
-            AddMealBox(
-              copyDateTime: DateTime.now(),
-              onDateTimeChanged: (newDateTime) => {},
-              productsMap: productsMap ?? {},
-            ),
-            ListTile(
-              title: Text('Apples'),
-              subtitle: Text('100g'),
-              trailing: IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => {},
-              ),
-            ),
-          ],
+        child: MealList(
+          productsMap: productsMap,
         )
       );
     } else {

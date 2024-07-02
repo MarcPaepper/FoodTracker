@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/text_logic.dart';
-import '../widgets/food_box.dart';
+import 'food_box.dart';
 
 import 'dart:developer' as devtools show log;
 
