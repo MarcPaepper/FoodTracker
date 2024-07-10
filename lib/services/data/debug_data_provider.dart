@@ -208,6 +208,48 @@ class DebugDataProvider implements DataProvider {
         for (var product in products) {
           productsMap[product.id] = product;
         }
+        
+        // add meals
+        
+        meals = [
+          Meal(
+            id: 0,
+            productQuantity: ProductQuantity(
+              productId: 0,
+              amount: 200,
+              unit: Unit.ml,
+            ),
+            dateTime: DateTime.now().subtract(const Duration(days: 1)),
+          ),
+          Meal(
+            id: 1,
+            productQuantity: ProductQuantity(
+              productId: 1,
+              amount: 100,
+              unit: Unit.g,
+            ),
+            dateTime: DateTime.now().subtract(const Duration(days: 2)),
+          ),
+          Meal(
+            id: 2,
+            productQuantity: ProductQuantity(
+              productId: 2,
+              amount: 1,
+              unit: Unit.quantity,
+            ),
+            dateTime: DateTime.now().subtract(const Duration(days: 3)),
+          ),
+          Meal(
+            id: 3,
+            productQuantity: ProductQuantity(
+              productId: 3,
+              amount: 1,
+              unit: Unit.quantity,
+            ),
+            dateTime: DateTime.now().subtract(const Duration(days: 4)),
+          ),
+        ];
+        
         _mealsStreamController.add(meals);
         _productsStreamController.add(products);
         _nutritionalValuesStreamController.add(nutValues);
@@ -449,7 +491,7 @@ class DebugDataProvider implements DataProvider {
       if (meal.id > highestId) highestId = meal.id;
     }
     final newMeal = Meal.copyWith(meal, newId: highestId + 1);
-    meals.add(newMeal);
+    meals.insert(findInsertIndex(meals, newMeal), newMeal);
     _mealsStreamController.add(meals);
     return Future.value(newMeal);
   }
@@ -458,7 +500,7 @@ class DebugDataProvider implements DataProvider {
   Future<Meal> updateMeal(Meal meal) {
     int lenPrev = meals.length;
     meals.removeWhere((element) => element.id == meal.id);
-    meals.add(meal);
+    meals.insert(findInsertIndex(meals, meal), meal);
     if (lenPrev - meals.length != 0) {
       throw InvalidUpdateException();
     }

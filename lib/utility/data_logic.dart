@@ -526,3 +526,21 @@ Future<String> storeFileTemporarily(Uint8List image, String name) async {
 
   return path;
 }
+
+// index according to the meal datetime
+int findInsertIndex(meals, newMeal) {
+  // find the index where the new meal should be inserted
+  // the index should be the one after the last meal that has the same or an earlier datetime
+  int min = 0;
+  int max = meals.length - 1;
+  while (min <= max) {
+    var mid = min + ((max - min) ~/ 2);
+    var midMeal = meals[mid];
+    if (midMeal.dateTime.isAfter(newMeal.dateTime)) {
+      max = mid - 1;
+    } else {
+      min = mid + 1;
+    }
+  }
+  return min;
+}

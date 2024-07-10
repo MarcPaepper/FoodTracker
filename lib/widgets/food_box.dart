@@ -1,3 +1,4 @@
+import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:food_tracker/utility/theme.dart";
 
@@ -144,7 +145,7 @@ class _FoodBoxState extends State<FoodBox> {
               title: Container(
                 color: color,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: kIsWeb ? 16: 18), // TODO: Should mobile also have 16 padding?
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -174,7 +175,7 @@ class _FoodBoxState extends State<FoodBox> {
                           }
                         },
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 14),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

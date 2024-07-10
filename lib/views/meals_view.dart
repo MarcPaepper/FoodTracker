@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/widgets/meal_list.dart';
 
 import '../services/data/data_objects.dart';
-import '../widgets/add_meal_box.dart';
 import '../services/data/data_service.dart';
 
 class MealsView extends StatefulWidget {
@@ -39,7 +38,6 @@ class _MealsViewState extends State<MealsView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildListView(snapshotM, productsMap),
-                // _buildAddButton(snapshot.hasData ? snapshot.data as List<Meal> : []),
               ]
             );
           }
@@ -50,15 +48,21 @@ class _MealsViewState extends State<MealsView> {
   
   Widget _buildListView(AsyncSnapshot snapshot, Map<int, Product>? productsMap) {
     if (snapshot.hasData) {
-      // final List<Meal> meals = snapshot.data;
-      // var now = DateTime.now();
-      // now = DateTime(now.year, now.month, now.day, now.hour);
-      // // find last recorded meal (except those in the future)
-      
+      final List<Meal> meals = snapshot.data;
+      var now = DateTime.now();
+      now = DateTime(now.year, now.month, now.day, now.hour);
+      // find last recorded meal (except those in the future)
+      DateTime? lastMeal;
+      for (final meal in meals) {
+        if (lastMeal == null || meal.dateTime.isBefore(lastMeal)) {
+          lastMeal = meal.dateTime;
+        }
+      }
       
       return Expanded(
         child: MealList(
           productsMap: productsMap,
+          meals: meals,
         )
       );
     } else {

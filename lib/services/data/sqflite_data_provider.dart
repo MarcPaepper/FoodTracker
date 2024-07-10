@@ -578,6 +578,12 @@ class SqfliteDataProvider implements DataProvider {
     
     var mealRows = await _db!.query(mealTable);
     _meals = mealRows.map((row) => _dbRowToMeal(row)).toList();
+    // sort by datetime (ascending), secondary by creation date (ascending)
+    _meals.sort((a, b) {
+      var dateComp = a.dateTime.compareTo(b.dateTime);
+      if (dateComp != 0 || a.creationDate == null || b.creationDate == null) return dateComp;
+      return a.creationDate!.compareTo(b.creationDate!);
+    });
     
     _mealsStreamController.add(_meals);
     
@@ -626,7 +632,7 @@ class SqfliteDataProvider implements DataProvider {
     });
     
     var newMeal = Meal.copyWith(meal, newId: id, newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
-    _meals.add(newMeal);
+    _meals.insert(findInsertIndex(_meals, newMeal), newMeal);
     _mealsStreamController.add(_meals);
     
     return newMeal;
@@ -647,7 +653,7 @@ class SqfliteDataProvider implements DataProvider {
     if (updatedCount != 1) throw InvalidUpdateException();
     
     _meals.removeWhere((m) => m.id == meal.id);
-    _meals.add(meal);
+    _meals.insert(findInsertIndex(_meals, meal), meal);
     _mealsStreamController.add(_meals);
     
     return meal;

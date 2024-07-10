@@ -111,25 +111,34 @@ extension MyDateExtension on DateTime {
   }
 }
 
-List<String> conditionallyRemoveYear(BuildContext context, List<DateTime> dates, {bool showWeekDay = true}) {
+List<String> conditionallyRemoveYear(BuildContext context, List<DateTime> dates, {bool showWeekDay = true, bool removeYear = true}) {
   var reg = RegExp(r"(\d{4})"); // match a year
-  var function = showWeekDay ? DateFormat.yMEd : DateFormat.yMd;
+  var function = showWeekDay ? DateFormat.yMd : DateFormat.yMd;// yMEd
   String locale = kIsWeb ? Localizations.localeOf(context).toString() : Platform.localeName;
   var texts = dates.map((date) => function(locale).format(date)).toList(); // format dates
   var matches = texts.map((text) => reg.firstMatch(text)).toList();
   var years = matches.map((match) => match?.group(1)).toList();
   var currentYear = DateTime.now().year.toString();
   
-  if (years.every((year) => year == currentYear)) {
+  if (removeYear && years.every((year) => year == currentYear)) {
     for (var i = 0; i < texts.length; i++) {
       // remove year completely and leading and trailing "/" or "-"
       texts[i] = texts[i].replaceFirst(currentYear, "")
                  .replaceAll(RegExp(r"^[/-]"), "")
                  .replaceAll(RegExp(r"[/-]$"), "");
     }
-    return texts;
   } else {
     // replace year with last two digits
-    return texts.map((text) => text.replaceFirst(currentYear, currentYear.substring(2))).toList();
+    texts = texts.map((text) => text.replaceFirst(currentYear, currentYear.substring(2))).toList();
   }
+  
+  if (showWeekDay) {
+    // dont use the abbreviated weekday, but the full one
+    var weekDayFunction = DateFormat("EEEE");
+    for (var i = 0; i < texts.length; i++) {
+      var weekDay = weekDayFunction.format(dates[i]);
+      texts[i] = "$weekDay, ${texts[i]}";
+    }
+  }
+  return texts;
 }
