@@ -98,6 +98,7 @@ class SqfliteDataProvider implements DataProvider {
   Future<String> open(String dbName) async {
     if (isLoaded()) return Future.value("data already loaded");
     devtools.log("Opening sqflite database");
+    
     var tables = {
       productTable: (createProductTable, productColumns, missingProductColumns),
       nutritionalValueTable: (createNutritionalValueTable, nutritionalValueColumns, missingNutritionalValueColumns),

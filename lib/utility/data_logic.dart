@@ -528,7 +528,7 @@ Future<String> storeFileTemporarily(Uint8List image, String name) async {
 }
 
 // index according to the meal datetime
-int findInsertIndex(meals, newMeal) {
+int findInsertIndex(List<Meal> meals, Meal newMeal) {
   // find the index where the new meal should be inserted
   // the index should be the one after the last meal that has the same or an earlier datetime
   int min = 0;

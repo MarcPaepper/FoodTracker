@@ -45,20 +45,25 @@ class _MealListState extends State<MealList> {
 
 List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int, Product>? productsMap, List<Meal> meals) {
   List<Widget> children = [];                                                                                                         
-  DateTime lastHeader = meals.isNotEmpty
-    ? DateTime(meals[0].dateTime.year, meals[0].dateTime.month, meals[0].dateTime.day)
-    : DateTime(0);
+  DateTime lastHeader = DateTime(0);
+  if (meals.isNotEmpty) {
+    var lastMeal = meals[meals.length - 1];
+    var lastDate = lastMeal.dateTime;
+    lastHeader = DateTime(lastDate.year, lastDate.month, lastDate.day);
+  }
   devtools.log('----');
-  for (int i = 0; i < meals.length; i++) {
+  //for (int i = 0; i < meals.length; i++) {
+  for (int i = meals.length - 1; i >= 0; i--) {
     final meal = meals[i];
     final product = productsMap?[meal.productQuantity.productId];
     final mealDate = DateTime(meal.dateTime.year, meal.dateTime.month, meal.dateTime.day);
-    devtools.log('mealDate: $mealDate');
+    devtools.log('mealDate: $mealDate lastHeader: $lastHeader');
     
-    if (lastHeader.isAfter(mealDate)) {
+    if (lastHeader.isBefore(mealDate)) {
       // print error
       devtools.log('MealList: meals are not sorted by date');
     } else if (lastHeader.isAfter(mealDate)) {
+      devtools.log('MealList: Adding date strip for $mealDate');
       children.add(getDateStrip(context, lastHeader));
       lastHeader = mealDate;
     } else {
@@ -67,41 +72,52 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
     }
     
     var unitName = unitToString(meal.productQuantity.unit);
+    var productName = product?.name ?? 'Unknown';
+    var amountText = '${truncateZeros(meal.productQuantity.amount)}\u2009$unitName';
     
     children.add(
       ListTile(
-        title: Text(product?.name ?? 'Unknown', style: const TextStyle(fontSize: 16)),
-        subtitle: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('${meal.productQuantity.amount}\u2009$unitName', style: const TextStyle(fontSize: 14)),
-            Text('  ${meal.dateTime.hour}h', style: const TextStyle(fontSize: 14)),
-          ],
-        ),
-        dense: true,
-        minVerticalPadding: 0,
-        visualDensity: const VisualDensity(vertical: -2),
-        trailing: // three dot menu
-          PopupMenuButton(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 0,
-                child: const Text('Edit'),
+        title: Container(
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 2.5),
+                    Text(productName, style: const TextStyle(fontSize: 16.5)),
+                    Text(amountText, style: const TextStyle(fontSize: 14)),
+                    const SizedBox(height: 2),
+                  ],
+                ),
               ),
-              PopupMenuItem(
-                value: 1,
-                child: const Text('Delete'),
+              PopupMenuButton(
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 0,
+                    child: Text('Edit'),
+                  ),
+                  PopupMenuItem(
+                    value: 1,
+                    child: Text('Delete'),
+                  ),
+                ],
+                onSelected: (int value) {
+                  if (value == 0) {
+                    // edit
+                  } else if (value == 1) {
+                    // delete
+                    dataService.deleteMeal(meal.id);
+                  }
+                },
               ),
             ],
-            onSelected: (int value) {
-              if (value == 0) {
-                // edit
-              } else if (value == 1) {
-                // delete
-                dataService.deleteMeal(meal.id);
-              }
-            },
           ),
+        ),
+        minVerticalPadding: 0,
+        visualDensity: const VisualDensity(vertical: -4, horizontal: 0),
+        contentPadding: EdgeInsets.zero,
       ),
     );
   }
@@ -115,7 +131,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
 
 Widget getHorizontalLine() =>
   const Divider(
-    indent: 10,
+    indent: 7,
     endIndent: 10,
     height: 1,
   );
@@ -130,15 +146,20 @@ Widget getDateStrip(BuildContext context, DateTime dateTime) {
         text = conditionallyRemoveYear(context, [dateTime], showWeekDay: true)[0];
       }
   
-  return Container(
-    decoration: const BoxDecoration(
-      color: Color.fromARGB(255, 200, 200, 200),
-    ),
-    child: Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Text(text),
+  return Column(
+    children: [
+      //const SizedBox(height: 5),
+      Container(
+        decoration: const BoxDecoration(
+          color: Color.fromARGB(255, 200, 200, 200),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Text(text, style: const TextStyle(fontSize: 15.5)),
+          ),
+        ),
       ),
-    ),
+    ],
   );
 }

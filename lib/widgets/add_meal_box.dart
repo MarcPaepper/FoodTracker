@@ -45,8 +45,9 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   
   @override
   void initState() {
-    // dateTimeNotifier = ValueNotifier<DateTime>(widget.copyDateTime);
-    dateTimeNotifier = ValueNotifier<DateTime>(DateTime.now());
+    var now = DateTime.now();
+    now = DateTime(now.year, now.month, now.day, now.hour);
+    dateTimeNotifier = ValueNotifier<DateTime>(now);
     // dateTime = widget.copyDateTime;
     // dateTime = DateTime.now();
     
