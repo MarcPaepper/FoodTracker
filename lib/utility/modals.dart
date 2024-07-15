@@ -234,7 +234,9 @@ void showProductDialog({
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      style: actionButtonStyle,
+                      style: actionButtonStyle.copyWith(
+                        padding: WidgetStateProperty.all(EdgeInsets.zero),
+                      ),
                       onPressed: () {
                         String? name = searchController.text;
                         name = name == '' ? null : name;

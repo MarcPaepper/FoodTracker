@@ -66,7 +66,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
       devtools.log('MealList: Adding date strip for $mealDate');
       children.add(getDateStrip(context, lastHeader));
       lastHeader = mealDate;
-    } else {
+    } else if (i < meals.length - 1) {
       // add divider
       children.add(getHorizontalLine());
     }
@@ -74,46 +74,51 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
     var unitName = unitToString(meal.productQuantity.unit);
     var productName = product?.name ?? 'Unknown';
     var amountText = '${truncateZeros(meal.productQuantity.amount)}\u2009$unitName';
+    var hourText = '${meal.dateTime.hour}h';
     
     children.add(
       ListTile(
-        title: Container(
-          child: Row(
-            children: [
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 2.5),
-                    Text(productName, style: const TextStyle(fontSize: 16.5)),
-                    Text(amountText, style: const TextStyle(fontSize: 14)),
-                    const SizedBox(height: 2),
-                  ],
-                ),
-              ),
-              PopupMenuButton(
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: 0,
-                    child: Text('Edit'),
+        title: Row(
+          children: [
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 2.5),
+                  Text(productName, style: const TextStyle(fontSize: 16.5)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(amountText, style: const TextStyle(fontSize: 14)),
+                      Text(hourText, style: const TextStyle(fontSize: 14)),
+                    ],
                   ),
-                  PopupMenuItem(
-                    value: 1,
-                    child: Text('Delete'),
-                  ),
+                  const SizedBox(height: 2),
                 ],
-                onSelected: (int value) {
-                  if (value == 0) {
-                    // edit
-                  } else if (value == 1) {
-                    // delete
-                    dataService.deleteMeal(meal.id);
-                  }
-                },
               ),
-            ],
-          ),
+            ),
+            PopupMenuButton(
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 0,
+                  child: Text('Edit'),
+                ),
+                PopupMenuItem(
+                  value: 1,
+                  child: Text('Delete'),
+                ),
+              ],
+              onSelected: (int value) {
+                if (value == 0) {
+                  // edit
+                } else if (value == 1) {
+                  // delete
+                  dataService.deleteMeal(meal.id);
+                }
+              },
+            ),
+          ],
         ),
         minVerticalPadding: 0,
         visualDensity: const VisualDensity(vertical: -4, horizontal: 0),

@@ -23,7 +23,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _unit;
-  final _showFullName = ValueNotifier(false);
+  final _showFullName = ValueNotifier(true);
   
   int? _orderId;
   
