@@ -428,14 +428,13 @@ String? validateTemporaryInterval(DateTime? begin, DateTime? end) {
 DateTime? condParse(String? date) => date == null ? null : DateTime.parse(date);
 
 Future<void> exportData() async {
-  // export nutritional values and products separately as json
-  
-  // load nutritional values, products, ingredients, and product nutrients
+  // load nutritional values, products, ingredients, product nutrients, meals
   
   var service = DataService.current();
   
   var nutritionalValues = await service.getAllNutritionalValues();
   var products = await service.getAllProducts();
+  var meals = await service.getAllMeals();
   
   // convert nutritional values to json
   Map<String, dynamic> nutValuesJson = {};
@@ -455,6 +454,13 @@ Future<void> exportData() async {
     productsJson[product.id.toString()] = {
       "id":                     product.id,
       "name":                   product.name,
+      "creation_date":          product.creationDate?.toIso8601String(),
+      "last_edit_date":         product.lastEditDate?.toIso8601String(),
+      "temporary_beginning":    product.temporaryBeginning?.toIso8601String(),
+      "temporary_end":          product.temporaryEnd?.toIso8601String(),
+      "is_temporary":           product.isTemporary,
+      "default_unit":           product.defaultUnit.toString(),
+      "quantity_name":          product.quantityName,
       "auto_calc":              product.autoCalc,
       "ingredients_unit":       product.ingredientsUnit.toString(),
       "nutrients_unit":         product.nutrientsUnit.toString(),
@@ -475,11 +481,27 @@ Future<void> exportData() async {
     };
   }
   
+  // convert meals to json
+  
+  Map<String, dynamic> mealsJson = {};
+  for (var meal in meals) {
+    mealsJson[meal.id.toString()] = {
+      "id":             meal.id,
+      "date_time":      meal.dateTime.toIso8601String(),
+      "product_id":     meal.productQuantity.productId,
+      "amount":         meal.productQuantity.amount,
+      "unit":           unitToString(meal.productQuantity.unit),
+      "creation_date":  meal.creationDate?.toIso8601String(),
+      "last_edit_date": meal.lastEditDate?.toIso8601String(),
+    };
+  }
+  
   // convert to products.json and nutritional_values.json
   const encoder = JsonEncoder.withIndent("  ");
   
-  var pJsonUtf8 = utf8.encode(encoder.convert(productsJson));
+  var pJsonUtf8  = utf8.encode(encoder.convert(productsJson));
   var nvJsonUtf8 = utf8.encode(encoder.convert(nutValuesJson));
+  var mJsonUtf8  = utf8.encode(encoder.convert(mealsJson));
   
   var date = DateTime.now().toString().split(" ")[0]; // format: YYYY-MM-DD
   var nameP = "products_$date.json";
@@ -489,7 +511,8 @@ Future<void> exportData() async {
     // create a zip file
     var archive = Archive()
       ..addFile(ArchiveFile(nameP, pJsonUtf8.length, pJsonUtf8))
-      ..addFile(ArchiveFile(nameNv, nvJsonUtf8.length, nvJsonUtf8));
+      ..addFile(ArchiveFile(nameNv, nvJsonUtf8.length, nvJsonUtf8))
+      ..addFile(ArchiveFile("meals_$date.json", mJsonUtf8.length, mJsonUtf8));
     
     var zip = ZipEncoder().encode(archive);
     
@@ -501,18 +524,21 @@ Future<void> exportData() async {
   } else {
     var pathP = await storeFileTemporarily(pJsonUtf8, nameP);
     var pathNv = await storeFileTemporarily(nvJsonUtf8, nameNv);
+    var pathM = await storeFileTemporarily(mJsonUtf8, "meals_$date.json");
     
     // share both files separately
     await Share.shareXFiles(
       [
         XFile(pathP),
         XFile(pathNv),
+        XFile(pathM),
       ],
     );
     
     // delete
     await File(pathP).delete();
     await File(pathNv).delete();
+    await File(pathM).delete();
   }
 }
 
