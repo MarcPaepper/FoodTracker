@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../services/data/data_service.dart';
 import '../widgets/search_field.dart';
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
@@ -399,4 +400,43 @@ class _MainListState extends State<_MainList> {
       ],
     );
   }
+}
+
+//void showEditMealDialog(context, dataService, meal, productsMap)
+void showEditMealDialog(
+  BuildContext context,
+  DataService dataService,
+  Meal meal,
+  Map<int, Product> productsMap,
+) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Edit Meal'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Edit the meal'),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          style: actionButtonStyle,
+          onPressed: () {
+            Navigator.of(context).pop();
+            dataService.deleteMeal(meal.id);
+          },
+          child: const Text('Delete'),
+        ),
+        ElevatedButton(
+          style: actionButtonStyle,
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Cancel'),
+        ),
+      ],
+    ),
+  );
 }

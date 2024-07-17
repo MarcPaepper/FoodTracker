@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 
 import "../services/data/data_objects.dart";
 import "../services/data/data_service.dart";
+import "../utility/modals.dart";
 import "../utility/text_logic.dart";
 import "add_meal_box.dart";
 
@@ -112,6 +113,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
               onSelected: (int value) {
                 if (value == 0) {
                   // edit
+                  showEditMealDialog(context, dataService, meal, productsMap!);
                 } else if (value == 1) {
                   // delete
                   dataService.deleteMeal(meal.id);
