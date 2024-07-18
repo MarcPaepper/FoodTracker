@@ -113,7 +113,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
               onSelected: (int value) {
                 if (value == 0) {
                   // edit
-                  showEditMealDialog(context, dataService, meal, productsMap!);
+                  //showEditMealDialog(context, dataService, meal, productsMap!);
                 } else if (value == 1) {
                   // delete
                   dataService.deleteMeal(meal.id);
