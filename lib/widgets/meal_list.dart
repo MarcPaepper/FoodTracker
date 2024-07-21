@@ -1,8 +1,8 @@
 import "package:flutter/material.dart";
 
+import "../constants/routes.dart";
 import "../services/data/data_objects.dart";
 import "../services/data/data_service.dart";
-import "../utility/modals.dart";
 import "../utility/text_logic.dart";
 import "add_meal_box.dart";
 
@@ -52,24 +52,18 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
     var lastDate = lastMeal.dateTime;
     lastHeader = DateTime(lastDate.year, lastDate.month, lastDate.day);
   }
-  devtools.log('----');
-  //for (int i = 0; i < meals.length; i++) {
   for (int i = meals.length - 1; i >= 0; i--) {
     final meal = meals[i];
     final product = productsMap?[meal.productQuantity.productId];
     final mealDate = DateTime(meal.dateTime.year, meal.dateTime.month, meal.dateTime.day);
-    devtools.log('mealDate: $mealDate lastHeader: $lastHeader');
     
     if (lastHeader.isBefore(mealDate)) {
-      // print error
       devtools.log('MealList: meals are not sorted by date');
     } else if (lastHeader.isAfter(mealDate)) {
-      devtools.log('MealList: Adding date strip for $mealDate');
       children.add(getDateStrip(context, lastHeader));
       lastHeader = mealDate;
     } else if (i < meals.length - 1) {
-      // add divider
-      children.add(getHorizontalLine());
+      children.add(_buildHorizontalLine());
     }
     
     var unitName = unitToString(meal.productQuantity.unit);
@@ -113,7 +107,8 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
               onSelected: (int value) {
                 if (value == 0) {
                   // edit
-                  //showEditMealDialog(context, dataService, meal, productsMap!);
+                  // navigate to edit meal view
+                  Navigator.pushNamed(context, editMealRoute, arguments: meal.id);
                 } else if (value == 1) {
                   // delete
                   dataService.deleteMeal(meal.id);
@@ -136,7 +131,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
   return children;
 }
 
-Widget getHorizontalLine() =>
+Widget _buildHorizontalLine() =>
   const Divider(
     indent: 7,
     endIndent: 10,

@@ -110,7 +110,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
                   }
                 }
               } else {
-                _interimValue = NutritionalValue(-1, -1, "", "g", false);
+                _interimValue = NutritionalValue(-1, -1, "", "g", true);
               }
               if (_interimValue != null) {
                 _orderId            = _interimValue!.orderId;

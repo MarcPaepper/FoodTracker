@@ -248,7 +248,7 @@ class DebugDataProvider implements DataProvider {
             ),
             dateTime: DateTime.now().subtract(const Duration(days: 4)),
           ),
-        ];
+        ].reversed.toList();
         
         _mealsStreamController.add(meals);
         _productsStreamController.add(products);
