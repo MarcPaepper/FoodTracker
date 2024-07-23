@@ -6,6 +6,7 @@ import 'package:food_tracker/widgets/datetime_selectors.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
+import '../utility/theme.dart';
 import 'food_box.dart';
 
 import 'dart:developer' as devtools show log;
@@ -61,6 +62,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     super.build(context);
     
     return ListTile(
+      //tileColor: Colors.green,
       minVerticalPadding: 0,
       contentPadding: const EdgeInsets.all(0.0),
       title: Column(
@@ -138,16 +140,19 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   
 
 Widget _buildAddMealButton(BuildContext context, bool enabled) {
+  var style = addButtonStyle.copyWith(
+    //minimumSize: WidgetStateProperty.all(const Size(double.infinity, 39)),
+    alignment: Alignment.center,
+  );
+  
+  if (enabled) {
+    style = style.copyWith(
+      backgroundColor: WidgetStateProperty.all(Colors.teal.shade300),
+    );
+  }
+  
   return ElevatedButton.icon(
-    style: ElevatedButton.styleFrom(
-      minimumSize: const Size(double.infinity, 50),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.center,
-      textStyle: const TextStyle(fontSize: 16),
-      foregroundColor: Colors.black,
-      backgroundColor: Colors.teal.shade300,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-    ),
+    style: style,
     icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0),),
     iconAlignment: IconAlignment.end,
     onPressed: enabled ? () {

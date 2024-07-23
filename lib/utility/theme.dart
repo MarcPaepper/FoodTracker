@@ -142,4 +142,5 @@ var addButtonStyle = ElevatedButton.styleFrom(
   padding: const EdgeInsets.symmetric(horizontal: 16),
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
   textStyle: const TextStyle(fontSize: 16),
+  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
 );

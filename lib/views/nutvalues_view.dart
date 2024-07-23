@@ -5,6 +5,8 @@ import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
 
+import '../utility/theme.dart';
+
 // import "dart:developer" as devtools show log;
 
 class NutritionalValueView extends StatefulWidget {
@@ -124,15 +126,7 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
   }
   
   Widget _buildAddButton() => ElevatedButton.icon(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color.fromARGB(255, 210, 235, 198),
-      foregroundColor: Colors.black,
-      minimumSize: const Size(double.infinity, 56),
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
-      textStyle: Theme.of(context).textTheme.bodyLarge,
-    ),
+    style: addButtonStyle,
     icon: const Icon(Icons.add),
     label: const Padding(
       padding: EdgeInsets.only(left: 5.0),
