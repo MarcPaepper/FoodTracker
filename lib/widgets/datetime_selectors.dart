@@ -7,6 +7,64 @@ import 'package:flutter/services.dart';
 import '../utility/text_logic.dart';
 
 // import 'dart:developer' as devtools show log;
+
+class DateAndTimeTable extends StatefulWidget {
+  final ValueNotifier<DateTime> dateTimeNotifier;
+  final Function(DateTime) updateDateTime;
+  final FixedExtentScrollController? scrollController;
+  
+  const DateAndTimeTable({
+    required this.dateTimeNotifier,
+    required this.updateDateTime,
+             this.scrollController,
+    super.key,
+  });
+
+  @override
+  State<DateAndTimeTable> createState() => _DateAndTimeTableState();
+}
+
+class _DateAndTimeTableState extends State<DateAndTimeTable> {
+  late final FixedExtentScrollController _scrollController;
+  
+  @override
+  void initState() {
+    if (widget.scrollController != null) {
+      _scrollController = widget.scrollController!;
+    } else {
+      _scrollController = FixedExtentScrollController();
+    }
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0);
+    });
+    
+    super.initState();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Table(
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      columnWidths: const {
+        0: IntrinsicColumnWidth(),
+        1: IntrinsicColumnWidth(),
+        2: FlexColumnWidth(1),
+      },
+      children: [
+        getDateTimeField(context, null, false, widget.dateTimeNotifier, widget.updateDateTime),
+        const TableRow( // spacer
+          children: [
+            SizedBox(height: 10),
+            SizedBox(height: 10),
+            SizedBox(height: 10),
+          ],
+        ),
+        getDateTimeField(context, _scrollController, true, widget.dateTimeNotifier, widget.updateDateTime),
+      ]
+    );
+  }
+}
   
 TableRow getDateTimeField(
   BuildContext context,

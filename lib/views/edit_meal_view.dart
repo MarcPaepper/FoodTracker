@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
+import '../utility/modals.dart';
 import '../widgets/datetime_selectors.dart';
 import '../widgets/loading_page.dart';
+
+import 'dart:developer' as devtools show log;
 
 class EditMealView extends StatefulWidget {
   final int mealId;
@@ -22,6 +25,18 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
   
   final ValueNotifier<DateTime> _dateTimeNotifier = ValueNotifier(DateTime.now());
   final ValueNotifier<ProductQuantity?> _productQuantityNotifier = ValueNotifier(null);
+  
+  @override
+  void initState() {
+    if (widget.mealId < 0) {
+      Future(() {
+        showErrorbar(context, "Error: Product not found");
+        Navigator.of(context).pop(null);
+      });
+    }
+    
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,30 +82,19 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Table(
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              columnWidths: const {
-                0: IntrinsicColumnWidth(),
-                1: IntrinsicColumnWidth(),
-                2: FlexColumnWidth(1),
-              },
-              children: [
-                getDateTimeField(context, null, false, dateTimeNotifier, updateDateTime),
-                const TableRow( // spacer
-                  children: [
-                    SizedBox(height: 10),
-                    SizedBox(height: 10),
-                    SizedBox(height: 10),
-                  ],
-                ),
-                getDateTimeField(context, _scrollController, true, dateTimeNotifier, updateDateTime),
-              ]
-            ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: DateAndTimeTable(
+            dateTimeNotifier: _dateTimeNotifier,
+            updateDateTime:   _updateDateTime,
           ),
+        ),
         _buildUpdateButton(),
       ],
     );
   }
+  
+  void _updateDateTime(DateTime newDateTime) => _dateTimeNotifier.value = newDateTime;
   
   Widget _buildUpdateButton() => Padding(
     padding: const EdgeInsets.all(8.0),

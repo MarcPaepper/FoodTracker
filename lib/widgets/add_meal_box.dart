@@ -81,25 +81,11 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Table(
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              columnWidths: const {
-                0: IntrinsicColumnWidth(),
-                1: IntrinsicColumnWidth(),
-                2: FlexColumnWidth(1),
-              },
-              children: [
-                getDateTimeField(context, null, false, dateTimeNotifier, updateDateTime),
-                const TableRow( // spacer
-                  children: [
-                    SizedBox(height: 10),
-                    SizedBox(height: 10),
-                    SizedBox(height: 10),
-                  ],
-                ),
-                getDateTimeField(context, _scrollController, true, dateTimeNotifier, updateDateTime),
-              ]
-            ),
+            child: DateAndTimeTable(
+              dateTimeNotifier: dateTimeNotifier,
+              updateDateTime:   updateDateTime,
+              scrollController: _scrollController,
+            )
           ),
           const SizedBox(height: 6),
           Padding(
