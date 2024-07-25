@@ -31,19 +31,11 @@ class _ProductsViewState extends State<ProductsView> {
   @override
   void initState() {
     _dataService = DataService.current();
-    // _dataService.streamProducts().listen((_) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     if (_scrollController.hasClients) {
-    //       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    //     }
-    //   });
-    // });
     super.initState();
   }
   
   @override
   void dispose() {
-    // _scrollController.dispose();
     super.dispose();
   }
   
@@ -101,7 +93,6 @@ class _ProductsViewState extends State<ProductsView> {
       var products = snapshot.data as List<Product>;
       return ListView(
         physics: const ClampingScrollPhysics(),
-        // controller: _scrollController,
         children: getProductTiles(
           context: context,
           products: products,

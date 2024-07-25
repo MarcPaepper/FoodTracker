@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
 import '../widgets/datetime_selectors.dart';
+import '../widgets/food_box.dart';
 import '../widgets/loading_page.dart';
+import '../widgets/products_list.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class EditMealView extends StatefulWidget {
   final int mealId;
@@ -79,18 +82,54 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
   }
   
   Widget _buildView(List<Product> products, Meal meal) {
+    var product = products.firstWhere((element) => element.id == meal.productQuantity.productId);
+    Map<int, Product> productsMap = { for (var e in products) e.id : e };
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Product Selector
+        FoodBox(
+          productsMap: productsMap,
+          ingredientsNotifier: ingredientsNotifier,
+          ingredientAmountControllers: ingredientAmountControllers,
+          ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
+          requestIngredientFocus: _requestIngredientFocus,
+        ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: DateAndTimeTable(
             dateTimeNotifier: _dateTimeNotifier,
             updateDateTime:   _updateDateTime,
           ),
         ),
+        Expanded(child: Container()),
         _buildUpdateButton(),
       ],
+    );
+  }
+  
+  Widget _buildProductList(List<Product> products, Product product) {
+    return Column(
+      // physics: const ClampingScrollPhysics(),
+      children: getProductTiles(
+        context: context,
+        products: products,
+        search: "",
+        colorFromTop: true,
+        onSelected: (name, id) => Navigator.pushNamed (
+          context,
+          editProductRoute,
+          arguments: (name, false),
+        ),
+        onLongPress: (name, id) {
+          Navigator.pushNamed (
+            context,
+            addProductRoute,
+            arguments: (name, true),
+          );
+        },
+      ),
     );
   }
   
@@ -102,7 +141,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all(Colors.teal.shade400),
         foregroundColor: WidgetStateProperty.all(Colors.white),
-        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 60)),
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 50)),
         textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
         shape: WidgetStateProperty.all(const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(14)),
