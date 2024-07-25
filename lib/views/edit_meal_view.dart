@@ -24,10 +24,12 @@ class EditMealView extends StatefulWidget {
 }
 
 class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClientMixin {
-  final DataService _dataService = DataService.current();
+  final DataService dataService = DataService.current();
   
-  final ValueNotifier<DateTime> _dateTimeNotifier = ValueNotifier(DateTime.now());
-  final ValueNotifier<ProductQuantity?> _productQuantityNotifier = ValueNotifier(null);
+  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier = ValueNotifier([]);
+  final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now());
+  List<TextEditingController> ingredientAmountControllers = [];
+  //final List<FocusNode> ingredientDropdownFocusNodes = [];
   
   @override
   void initState() {
@@ -50,7 +52,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
         title: const Text('Edit Meal'),
       ),
       body: StreamBuilder(
-        stream: _dataService.streamProducts(),
+        stream: dataService.streamProducts(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text("Error: ${snapshot.error}");
@@ -58,7 +60,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
           if (snapshot.hasData) {
             var products = snapshot.data as List<Product>;
             return FutureBuilder(
-              future: _dataService.getMeal(widget.mealId),
+              future: dataService.getMeal(widget.mealId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Text("Error: ${snapshot.error}");
@@ -66,8 +68,9 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
                 if (snapshot.hasData) {
                   var meal = snapshot.data as Meal;
                   
-                  _dateTimeNotifier.value = meal.dateTime;
-                  _productQuantityNotifier.value = meal.productQuantity;
+                  dateTimeNotifier.value = meal.dateTime;
+                  ingredientsNotifier.value = [meal.productQuantity];
+                  ingredientAmountControllers = [TextEditingController(text: meal.productQuantity.amount.toString())];
                   
                   return _buildView(products, meal);
                 }
@@ -93,13 +96,12 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
           productsMap: productsMap,
           ingredientsNotifier: ingredientsNotifier,
           ingredientAmountControllers: ingredientAmountControllers,
-          ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
-          requestIngredientFocus: _requestIngredientFocus,
+          requestIngredientFocus: (i, j) => null,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: DateAndTimeTable(
-            dateTimeNotifier: _dateTimeNotifier,
+            dateTimeNotifier: dateTimeNotifier,
             updateDateTime:   _updateDateTime,
           ),
         ),
@@ -133,7 +135,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
     );
   }
   
-  void _updateDateTime(DateTime newDateTime) => _dateTimeNotifier.value = newDateTime;
+  void _updateDateTime(DateTime newDateTime) => dateTimeNotifier.value = newDateTime;
   
   Widget _buildUpdateButton() => Padding(
     padding: const EdgeInsets.all(8.0),

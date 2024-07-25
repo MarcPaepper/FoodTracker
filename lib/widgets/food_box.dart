@@ -22,7 +22,7 @@ class FoodBox extends StatefulWidget {
   
   final ValueNotifier<List<ProductQuantity>> ingredientsNotifier;
   final List<TextEditingController> ingredientAmountControllers;
-  final List<FocusNode> ingredientDropdownFocusNodes;
+  final List<FocusNode>? ingredientDropdownFocusNodes;
   
   // final Function() intermediateSave;
   // final Function(List<ProductQuantity>) onChanged;
@@ -34,7 +34,7 @@ class FoodBox extends StatefulWidget {
              this.autofocusTime,
     required this.ingredientsNotifier,
     required this.ingredientAmountControllers,
-    required this.ingredientDropdownFocusNodes,
+             this.ingredientDropdownFocusNodes,
     // required this.intermediateSave,
     // required this.onChanged,
     required this.requestIngredientFocus,
@@ -46,6 +46,14 @@ class FoodBox extends StatefulWidget {
 }
 
 class _FoodBoxState extends State<FoodBox> {
+  bool hasFocusNodes = false;
+  
+  @override
+  void initState() {
+    hasFocusNodes = widget.ingredientDropdownFocusNodes != null;
+    super.initState();
+  }
+  
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
@@ -96,18 +104,20 @@ class _FoodBoxState extends State<FoodBox> {
     var entries = <SlidableListEntry>[];
     
     // check whether there are the correct number of focus nodes
-    for (int i = widget.ingredientDropdownFocusNodes.length; i < ingredients.length; i++) {
-      widget.ingredientDropdownFocusNodes.add(FocusNode());
-    }
-    for (int i = widget.ingredientDropdownFocusNodes.length; i > ingredients.length; i--) {
-      widget.ingredientDropdownFocusNodes.removeLast();
+    if (hasFocusNodes) {
+      for (int i = widget.ingredientDropdownFocusNodes!.length; i < ingredients.length; i++) {
+        widget.ingredientDropdownFocusNodes!.add(FocusNode());
+      }
+      for (int i = widget.ingredientDropdownFocusNodes!.length; i > ingredients.length; i--) {
+        widget.ingredientDropdownFocusNodes!.removeLast();
+      }
     }
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
-      var focusNode1 = widget.ingredientDropdownFocusNodes[index];
+      var focusNode1 = hasFocusNodes ? widget.ingredientDropdownFocusNodes![index] : null;
       
       var product = ingredient.productId != null 
         ? productsMap[ingredient.productId]
