@@ -354,7 +354,10 @@ class _IngredientsBoxState extends State<IngredientsBox> {
       var errorType = circRefs[index] ? ErrorType.error : ErrorType.none;
       String? errorMsg = errorType == ErrorType.error ? "Circular Reference" : null;
       
-      if (errorType == ErrorType.none && amounts != null && amounts[index].isNaN) {
+      if (product == null) {
+        errorType = ErrorType.error;
+        errorMsg = "Must select a product";
+      } else if (errorType == ErrorType.none && amounts != null && amounts[index].isNaN) {
         errorType = ErrorType.warning;
         errorMsg = "Conversion to ${unitToLongString(targetUnit)} not possible";
       }
@@ -386,33 +389,36 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ProductDropdown(
-                        productsMap: availableProducts,
-                        selectedProduct: product,
-                        index: index,
-                        focusNode: focusNode1,
-                        autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
-                        autofocusSearch: true,
-                        beforeTap: () => widget.intermediateSave(),
-                        onChanged: (Product? newProduct) {
-                          if (newProduct != null) {
-                            // Check whether the new product supports the current unit
-                            late Unit newUnit;
-                            var currentUnit = unit;
-                            newUnit = (newProduct.getAvailableUnits().contains(currentUnit)) ? currentUnit : newProduct.defaultUnit;
-                            
-                            ingredients[index] = ProductQuantity(
-                              productId: newProduct.id,
-                              amount:    ingredient.amount,
-                              unit:      newUnit,
-                            );
-                            widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, index);
-                            widget.ingredientsNotifier.value = List.from(ingredients);
-                            // WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index, 0));
-                            // // request after 200 ms
-                            // Future.delayed(const Duration(milliseconds: 200), () => _requestIngredientFocus(index, 0));
-                          }
-                        },
+                      FormField(
+                        builder: (context) => ProductDropdown(
+                          productsMap: availableProducts,
+                          selectedProduct: product,
+                          index: index,
+                          focusNode: focusNode1,
+                          autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
+                          autofocusSearch: true,
+                          beforeTap: () => widget.intermediateSave(),
+                          onChanged: (Product? newProduct) {
+                            if (newProduct != null) {
+                              // Check whether the new product supports the current unit
+                              late Unit newUnit;
+                              var currentUnit = unit;
+                              newUnit = (newProduct.getAvailableUnits().contains(currentUnit)) ? currentUnit : newProduct.defaultUnit;
+                              
+                              ingredients[index] = ProductQuantity(
+                                productId: newProduct.id,
+                                amount:    ingredient.amount,
+                                unit:      newUnit,
+                              );
+                              widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, index);
+                              widget.ingredientsNotifier.value = List.from(ingredients);
+                              // WidgetsBinding.instance.addPostFrameCallback((_) => _requestIngredientFocus(index, 0));
+                              // // request after 200 ms
+                              // Future.delayed(const Duration(milliseconds: 200), () => _requestIngredientFocus(index, 0));
+                            }
+                          },
+                        ),
+                        validator: (value) => errorType == ErrorType.none ? null : errorMsg,
                       ),
                       const SizedBox(height: 12),
                       Row(

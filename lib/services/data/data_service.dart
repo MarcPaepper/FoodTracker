@@ -40,15 +40,13 @@ class DataService implements DataProvider {
     }
     return _cache["sqflite"]!;
   }
-
-  @override
-  Future<String> open(String dbName) => _provider.open(dbName);
-
-  @override
-  Future<void> close() => _provider.close();
-
-  @override
-  bool isLoaded() => _provider.isLoaded();
+  
+  // General
+  
+  @override Future<String> open(String dbName) => _provider.open(dbName);
+  @override Future<void> close() => _provider.close();
+  @override bool isLoaded() => _provider.isLoaded();
+  @override Future<void> cleanUp() => _provider.cleanUp();
   
   // Products
 

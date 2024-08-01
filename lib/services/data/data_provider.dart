@@ -5,6 +5,7 @@ abstract class DataProvider {
   Future<String> open(String dbName);
   Future<void> close();
   bool isLoaded();
+  Future<void> cleanUp();
   
   Stream<List<Product>> streamProducts();
   Future<Iterable<Product>> getAllProducts();

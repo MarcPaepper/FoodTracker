@@ -168,6 +168,7 @@ class SqfliteDataProvider implements DataProvider {
       await getAllProducts();
       await getAllNutritionalValues();
       await getAllMeals();
+      await cleanUp();
       
       return "data loaded";
     } on MissingPlatformDirectoryException {
@@ -182,6 +183,22 @@ class SqfliteDataProvider implements DataProvider {
     _mealsStreamController.close();
     await _db!.close();
     _db = null;
+  }
+  
+  @override
+  Future<void> cleanUp() async {
+    // remove all meals with invalid product ids
+    int invalidProductCount = 0;
+    var mealRows = await _db!.query(mealTable);
+    for (var row in mealRows) {
+      var productId = row[productIdColumn] as int;
+      if (!_productsMap.containsKey(productId)) {
+        await _db!.delete(mealTable, where: '$idColumn = ?', whereArgs: [row[idColumn] as int]);
+        _meals.removeWhere((m) => m.id == row[idColumn]);
+        invalidProductCount++;
+      }
+    }
+    if (invalidProductCount > 0) _mealsStreamController.add(_meals);
   }
   
   // ----- Products -----

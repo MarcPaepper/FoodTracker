@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
 import '../widgets/datetime_selectors.dart';
 import '../widgets/food_box.dart';
 import '../widgets/loading_page.dart';
-import '../widgets/products_list.dart';
 
 // import 'dart:developer' as devtools show log;
 
@@ -26,10 +24,12 @@ class EditMealView extends StatefulWidget {
 class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClientMixin {
   final DataService dataService = DataService.current();
   
+  late final GlobalKey<FormState> _formKey;
   final ValueNotifier<List<ProductQuantity>> ingredientsNotifier = ValueNotifier([]);
-  final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now());
+  final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now().add(const Duration(hours: 1)));
   List<TextEditingController> ingredientAmountControllers = [];
   //final List<FocusNode> ingredientDropdownFocusNodes = [];
+  bool loaded = false;
   
   @override
   void initState() {
@@ -40,6 +40,8 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
       });
     }
     
+    _formKey = GlobalKey<FormState>();
+    
     super.initState();
   }
 
@@ -47,45 +49,54 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
   Widget build(BuildContext context) {
     super.build(context);
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Meal'),
-      ),
-      body: StreamBuilder(
-        stream: dataService.streamProducts(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Text("Error: ${snapshot.error}");
-          }
-          if (snapshot.hasData) {
-            var products = snapshot.data as List<Product>;
-            return FutureBuilder(
-              future: dataService.getMeal(widget.mealId),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Text("Error: ${snapshot.error}");
-                }
-                if (snapshot.hasData) {
-                  var meal = snapshot.data as Meal;
-                  
-                  dateTimeNotifier.value = meal.dateTime;
-                  ingredientsNotifier.value = [meal.productQuantity];
-                  ingredientAmountControllers = [TextEditingController(text: meal.productQuantity.amount.toString())];
-                  
-                  return _buildView(products, meal);
-                }
-                return const LoadingPage();
-              },
-            );
-          }
-          return const LoadingPage();
-        },
-      ),
+     return PopScope(
+      canPop: false,
+      onPopInvoked: _onPopInvoked,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Meal'),
+        ),
+        body: StreamBuilder(
+          stream: dataService.streamProducts(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text("Error: ${snapshot.error}");
+            }
+            if (snapshot.hasData) {
+              var products = snapshot.data as List<Product>;
+              return FutureBuilder(
+                future: dataService.getMeal(widget.mealId),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Text("Error: ${snapshot.error}");
+                  }
+                  if (snapshot.hasData) {
+                    var meal = snapshot.data as Meal;
+                    
+                    if (!loaded) {
+                      dateTimeNotifier.value = meal.dateTime;
+                      ingredientsNotifier.value = [meal.productQuantity];
+                      ingredientAmountControllers = [TextEditingController(text: meal.productQuantity.amount.toString())];
+                      loaded = true;
+                    }
+                    
+                    return Form(
+                      key: _formKey,
+                      child: _buildView(products, meal),
+                    );
+                  }
+                  return const LoadingPage();
+                },
+              );
+            }
+            return const LoadingPage();
+          },
+        ),
+      )
     );
   }
   
   Widget _buildView(List<Product> products, Meal meal) {
-    var product = products.firstWhere((element) => element.id == meal.productQuantity.productId);
     Map<int, Product> productsMap = { for (var e in products) e.id : e };
     
     return Column(
@@ -97,6 +108,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
           ingredientsNotifier: ingredientsNotifier,
           ingredientAmountControllers: ingredientAmountControllers,
           requestIngredientFocus: (i, j) => null,
+          canChangeProducts: false,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -108,30 +120,6 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
         Expanded(child: Container()),
         _buildUpdateButton(),
       ],
-    );
-  }
-  
-  Widget _buildProductList(List<Product> products, Product product) {
-    return Column(
-      // physics: const ClampingScrollPhysics(),
-      children: getProductTiles(
-        context: context,
-        products: products,
-        search: "",
-        colorFromTop: true,
-        onSelected: (name, id) => Navigator.pushNamed (
-          context,
-          editProductRoute,
-          arguments: (name, false),
-        ),
-        onLongPress: (name, id) {
-          Navigator.pushNamed (
-            context,
-            addProductRoute,
-            arguments: (name, true),
-          );
-        },
-      ),
     );
   }
   
@@ -150,11 +138,29 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
         )),
       ),
       onPressed: () {
-        
+        // get meal from value listeners
+        var meal = Meal(
+          id: widget.mealId,
+          dateTime: dateTimeNotifier.value,
+          productQuantity: ingredientsNotifier.value[0],
+        );
       },
       child: const Text("Apply Changes"),
     ),
   );
+  
+  Future _onPopInvoked(bool didPop) async {
+    if (didPop) return;
+    
+    final NavigatorState navigator = Navigator.of(context);
+    
+    var valid = _formKey.currentState?.validate() ?? false;
+    
+    if (valid) {
+      dataService.cleanUp();
+      Future(() => navigator.pop());
+    }
+  }
   
   @override
   bool get wantKeepAlive => true;

@@ -318,9 +318,10 @@ class _DateSelectorState extends State<DateSelector> {
             initialDate: widget.dateTime,
             firstDate: DateTime(2000),
             lastDate: DateTime(2100),
-          ).then((newDateTime) {
-            if (newDateTime != null) {
-              widget.onChanged(newDateTime);
+          ).then((nDT) {
+            if (nDT != null) {
+              nDT = DateTime(nDT.year, nDT.month, nDT.day, widget.dateTime.hour);
+              widget.onChanged(nDT);
             }
           });
         },

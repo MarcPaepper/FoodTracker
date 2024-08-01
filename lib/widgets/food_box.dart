@@ -13,7 +13,7 @@ import "product_dropdown.dart";
 import "slidable_list.dart";
 import "unit_dropdown.dart";
 
-// import "dart:developer" as devtools show log;
+import "dart:developer" as devtools show log;
 
 class FoodBox extends StatefulWidget {
   final Map<int, Product> productsMap;
@@ -23,6 +23,8 @@ class FoodBox extends StatefulWidget {
   final ValueNotifier<List<ProductQuantity>> ingredientsNotifier;
   final List<TextEditingController> ingredientAmountControllers;
   final List<FocusNode>? ingredientDropdownFocusNodes;
+  
+  final bool? canChangeProducts;
   
   // final Function() intermediateSave;
   // final Function(List<ProductQuantity>) onChanged;
@@ -35,6 +37,7 @@ class FoodBox extends StatefulWidget {
     required this.ingredientsNotifier,
     required this.ingredientAmountControllers,
              this.ingredientDropdownFocusNodes,
+             this.canChangeProducts,
     // required this.intermediateSave,
     // required this.onChanged,
     required this.requestIngredientFocus,
@@ -47,10 +50,12 @@ class FoodBox extends StatefulWidget {
 
 class _FoodBoxState extends State<FoodBox> {
   bool hasFocusNodes = false;
+  late final bool canChange;
   
   @override
   void initState() {
     hasFocusNodes = widget.ingredientDropdownFocusNodes != null;
+    canChange = widget.canChangeProducts ?? true;
     super.initState();
   }
   
@@ -69,8 +74,8 @@ class _FoodBoxState extends State<FoodBox> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildIngredientsList(context, ingredients),
-                _buildAddButton(context, ingredients.isEmpty, ingredients),
+                _buildIngredientsList(context, ingredients, widget.canChangeProducts ?? true),
+                canChange ? _buildAddButton(context, ingredients.isEmpty, ingredients) : const SizedBox(height: 0),
               ],
             ),
           ),
@@ -82,18 +87,33 @@ class _FoodBoxState extends State<FoodBox> {
   Widget _buildIngredientsList(
     BuildContext context,
     List<ProductQuantity> ingredients,
+    bool canDelete,
   ) {
-    return SlidableList(
-      entries: _getIngredientEntries(
-        context,
-        widget.productsMap,
-        ingredients,
-      ),
-      menuWidth: 90,
+    List<SlidableListEntry> entries;
+    bool valid;
+    (entries, valid) = _getIngredientEntries(context, widget.productsMap, ingredients);
+    
+    
+    return FormField(
+      validator: (value) {
+        if (!valid) {
+          devtools.log("Invalid $canDelete");
+          return "Please fill out all ingredients";
+        }
+        devtools.log("Valid $canDelete");
+        return null;
+      },
+      autovalidateMode: AutovalidateMode.always,
+      builder: (state) {
+        return SlidableList(
+          entries: entries,
+          menuWidth: canChange ? 90 : 50,
+        );
+      },
     );
   }
   
-  List<SlidableListEntry> _getIngredientEntries(
+  (List<SlidableListEntry>, bool) _getIngredientEntries(
     BuildContext context,
     Map<int, Product> productsMap,
     List<ProductQuantity> ingredients,
@@ -112,6 +132,8 @@ class _FoodBoxState extends State<FoodBox> {
         widget.ingredientDropdownFocusNodes!.removeLast();
       }
     }
+    
+    bool valid = true;
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
@@ -141,6 +163,25 @@ class _FoodBoxState extends State<FoodBox> {
           widget.ingredientsNotifier.value = List.from(ingredients);
         });
       }
+      
+      var errorType = ErrorType.none;
+      var errorMsg = "";
+      
+      if (product == null) {
+        errorType = ErrorType.error;
+        errorMsg = "Must select a product";
+        valid = false;
+      }
+      
+      var errorBox = errorType == ErrorType.none
+        ? const SizedBox()
+        : Text(
+          " ⚠ $errorMsg",
+          style: TextStyle(
+            color: errorType == ErrorType.error ? Colors.red : warningColor,
+            fontSize: 16,
+          ),
+        );
       
       entries.add(
         SlidableListEntry(
@@ -226,6 +267,8 @@ class _FoodBoxState extends State<FoodBox> {
                           ),
                         ]
                       ),
+                      SizedBox(height: errorType == ErrorType.none ? 0 : 10),
+                      errorBox,
                     ],
                   ),
                 ),
@@ -255,29 +298,31 @@ class _FoodBoxState extends State<FoodBox> {
                 ),
               ),
             ),
-            Container(
-              color: Colors.red,
-              child: Tooltip(
-                message: "Delete Ingredient",
-                child: ExcludeFocusTraversal(
-                  child: IconButton(
-                    color: Colors.white,
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      ingredients.removeAt(index);
-                      widget.ingredientAmountControllers.removeAt(index);
-                      widget.ingredientsNotifier.value = List.from(ingredients);
-                    },
+            ...canChange ? [
+              Container(
+                color: Colors.red,
+                child: Tooltip(
+                  message: "Delete Ingredient",
+                  child: ExcludeFocusTraversal(
+                    child: IconButton(
+                      color: Colors.white,
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        ingredients.removeAt(index);
+                        widget.ingredientAmountControllers.removeAt(index);
+                        widget.ingredientsNotifier.value = List.from(ingredients);
+                      },
+                    ),
                   ),
                 ),
               ),
-            ),
+            ] : [],
           ],
         )
       );
     }
     
-    return entries;
+    return (entries, valid);
   }
   
   Widget _buildAddButton(BuildContext context, bool roundedTop, List<ProductQuantity> ingredients) {

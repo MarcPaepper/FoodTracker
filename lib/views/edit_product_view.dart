@@ -24,6 +24,7 @@ class EditProductView extends StatefulWidget {
   final String? productName;
   final bool? isEdit;
   final bool isCopy; // If the product settings should be copied from another product
+  final bool canDelete = true;
   
   const EditProductView({
     this.isEdit,
@@ -333,7 +334,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               return Scaffold(
                 appBar: AppBar(
                   title: Text(title),
-                  actions: _isEdit && _loaded ? [
+                  actions: _isEdit && _loaded && widget.canDelete ? [
                     _buildInfoButton(),
                     ValueListenableBuilder(
                       valueListenable: _productNameController,
@@ -514,7 +515,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         return IconButton(
           padding: const EdgeInsets.fromLTRB(kIsWeb ? 5 : 0, 0, kIsWeb ? 10 : 0, 0),
           constraints: const BoxConstraints(),
-          onPressed: () {
+          onPressed: () async {
             // Map all products which include the current product (_id) as an ingredient
             Map<int, Product> usedAsIngredientIn = {};
             for (var product in productsMap.values) {
@@ -524,11 +525,35 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             }
             
             if (usedAsIngredientIn.isEmpty) {
+              // count how many meals contain the product
+              var meals = await _dataService.getAllMeals();
+              
+              var mealCount = meals.where((meal) => meal.productQuantity.productId == _id).length;
+              
+              var text = Text("If you delete this product, all associated data will be lost.");
+              if (mealCount > 0) {
+                // msg = "Deleting this product will also delete $mealCount meal${mealCount == 1 ? "" : "s"}.";
+                // same as above but the number is bold
+                text = Text.rich(
+                  TextSpan(
+                    children: [
+                      const TextSpan(text: "Deleting this product will also delete "),
+                      TextSpan(
+                        text: "$mealCount ",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      TextSpan(text: "meal${mealCount == 1 ? "" : "s"}."),
+                    ],
+                  ),
+                );
+              }
+              
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text("Delete Product"),
-                  content: const Text("If you delete this product, all associated data will be lost."),
+                  content: text,
+                  icon: mealCount > 0 ? const Icon(Icons.warning) : null,
                   surfaceTintColor: Colors.transparent,
                   actions: [
                     TextButton(

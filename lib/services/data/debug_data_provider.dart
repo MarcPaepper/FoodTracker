@@ -23,6 +23,9 @@ class DebugDataProvider implements DataProvider {
   final _mealsStreamController = BehaviorSubject<List<Meal>>();
   
   @override
+  bool isLoaded() => loaded;
+  
+  @override
   Future<String> open(String dbName) async {
     if (loaded) return Future.value("data already loaded");
     return Future.delayed(
@@ -275,7 +278,18 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
-  bool isLoaded() => loaded;
+  Future<void> cleanUp() async {
+    // remove all meals with invalid product ids
+    int invalidProductCount = 0;
+    for (var meal in meals) {
+      var productId = meal.productQuantity.productId;
+      if (!productsMap.containsKey(productId)) {
+        meals.removeWhere((m) => m.id == meal.id);
+        invalidProductCount++;
+      }
+    }
+    if (invalidProductCount > 0) _mealsStreamController.add(meals);
+  }
   
   // Products
   
