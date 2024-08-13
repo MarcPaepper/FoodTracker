@@ -177,6 +177,20 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
+  Future<void> reset(String dbName) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    try {
+      await deleteDatabase(_db!.path);
+      devtools.log("Database deleted");
+    } catch (e) {
+      devtools.log("Error deleting database: $e");
+    }
+    _db = null;
+    open(dbName);
+  }
+  
+  @override
   Future<void> close() async {
     _productsStreamController.close();
     _nutritionalValuesStreamController.close();
@@ -217,7 +231,7 @@ class SqfliteDataProvider implements DataProvider {
     _products = <Product>[];
     _productsMap = {};
     for (var row in productRows) {
-      var product = _dbRowToProduct(row);
+      var product = mapToProduct(row);
       _products.add(product);
       _productsMap[product.id] = product;
     }
@@ -249,7 +263,7 @@ class SqfliteDataProvider implements DataProvider {
     else throw NotFoundException();
   }
   
-  Product _dbRowToProduct(Map<String, Object?> row) =>
+  Product mapToProduct(Map<String, dynamic> row) =>
     Product(
       id:                    row[idColumn] as int,
       name:                  row[nameColumn] as String,

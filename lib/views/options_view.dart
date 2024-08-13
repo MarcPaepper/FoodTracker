@@ -17,13 +17,13 @@ class _OptionsViewState extends State<OptionsView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 8),
-        _buildPortButton(true),
-        // _buildPortButton(false),
+        _buildPortButton(context, true),
+        _buildPortButton(context, false),
       ]
     );
   }
   
-  _buildPortButton(bool isExport) {
+  _buildPortButton(BuildContext context, bool isExport) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: ElevatedButton(
@@ -36,7 +36,7 @@ class _OptionsViewState extends State<OptionsView> {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 16 : 12),
         ),
-        onPressed: () => exportData(),
+        onPressed: () => isExport ? exportData() : importData(context),
         child: Row(
           children: [
             Image.asset("assets/${isExport ? "up" : "down"}load.png", width: 24, height: 24),

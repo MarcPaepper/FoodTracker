@@ -278,6 +278,18 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<void> reset(String dbName) async {
+    loaded = false;
+    products = [];
+    productsMap = {};
+    nutValues = [];
+    meals = [];
+    _productsStreamController.add(products);
+    _nutritionalValuesStreamController.add(nutValues);
+    _mealsStreamController.add(meals);
+  }
+  
+  @override
   Future<void> cleanUp() async {
     // remove all meals with invalid product ids
     int invalidProductCount = 0;

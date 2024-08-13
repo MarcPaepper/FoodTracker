@@ -13,7 +13,7 @@ import "product_dropdown.dart";
 import "slidable_list.dart";
 import "unit_dropdown.dart";
 
-import "dart:developer" as devtools show log;
+// import "dart:developer" as devtools show log;
 
 class FoodBox extends StatefulWidget {
   final Map<int, Product> productsMap;
@@ -97,10 +97,8 @@ class _FoodBoxState extends State<FoodBox> {
     return FormField(
       validator: (value) {
         if (!valid) {
-          devtools.log("Invalid $canDelete");
           return "Please fill out all ingredients";
         }
-        devtools.log("Valid $canDelete");
         return null;
       },
       autovalidateMode: AutovalidateMode.always,

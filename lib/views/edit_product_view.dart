@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:food_tracker/utility/theme.dart';
 
 import '../subviews/conversion_boxes.dart';
 import '../subviews/nutrients_box.dart';
@@ -530,10 +531,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               
               var mealCount = meals.where((meal) => meal.productQuantity.productId == _id).length;
               
-              var text = Text("If you delete this product, all associated data will be lost.");
+              var text = const Text("If you delete this product, all associated data will be lost.");
               if (mealCount > 0) {
-                // msg = "Deleting this product will also delete $mealCount meal${mealCount == 1 ? "" : "s"}.";
-                // same as above but the number is bold
                 text = Text.rich(
                   TextSpan(
                     children: [
@@ -548,29 +547,40 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 );
               }
               
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Delete Product"),
-                  content: text,
-                  icon: mealCount > 0 ? const Icon(Icons.warning) : null,
-                  surfaceTintColor: Colors.transparent,
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        _dataService.deleteProductWithName(widget.productName!);
-                        Navigator.of(context).pop(null);
-                        Navigator.of(context).pop(null);
-                      },
-                      child: const Text("Delete"),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text("Cancel"),
-                    )
-                  ],
-                )
-              );
+              if (context.mounted) showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Delete Product"),
+                    content: text,
+                    icon: mealCount > 0 ? const Icon(Icons.warning) : null,
+                    surfaceTintColor: Colors.transparent,
+                    actions: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              style: actionButtonStyle,
+                              onPressed: () {
+                                _dataService.deleteProductWithName(widget.productName!);
+                                Navigator.of(context).pop(null);
+                                Navigator.of(context).pop(null);
+                              },
+                              child: const Text("Delete"),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: TextButton(
+                              style: actionButtonStyle,
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text("Cancel"),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  )
+                );
             } else {
               // Tell the user that the product is used in following recipes
               showUsedAsIngredientDialog(

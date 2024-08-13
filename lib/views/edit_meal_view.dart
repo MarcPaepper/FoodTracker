@@ -138,12 +138,13 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
         )),
       ),
       onPressed: () {
-        // get meal from value listeners
         var meal = Meal(
           id: widget.mealId,
           dateTime: dateTimeNotifier.value,
           productQuantity: ingredientsNotifier.value[0],
         );
+        dataService.updateMeal(meal);
+        Navigator.of(context).pop();
       },
       child: const Text("Apply Changes"),
     ),
