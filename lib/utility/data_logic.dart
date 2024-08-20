@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:food_tracker/services/data/sqflite_data_provider.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -550,58 +551,46 @@ Future<void> importData(BuildContext context) async {
   var fileList = await FilePicker.platform.pickFiles(
     withData: true,
     type: FileType.custom,
-    allowedExtensions: ["json", "zip"],
-    allowMultiple: true,
+    allowedExtensions: ["zip"],
   );
   
-  List files;
   if (fileList == null || fileList.files.isEmpty) {
     if (context.mounted) showSnackbar(context, "No files selected");
     return;
   }
-  if (fileList.files.any((file) => file.extension == "zip")) {
-    if ( fileList.files.length > 1) {
-      if (context.mounted) showSnackbar(context, "Please select only one archive");
-      return;
-    }
-    // extract
-    var zip = fileList.files.first;
-    var bytes = zip.bytes;
-    if (bytes == null) {
-      if (context.mounted) showSnackbar(context, "Error while reading the file");
-      return;
-    }
-    var archive = ZipDecoder().decodeBytes(bytes);
-    files = archive.files;
-  } else {
-    files = fileList.files;
+  if (fileList.files.none((file) => file.extension == "zip")) {
+    // throw error
+    if (context.mounted) showSnackbar(context, "Please select a zip archive");
+    return;
   }
+  
+  if ( fileList.files.length > 1) {
+    if (context.mounted) showSnackbar(context, "Please select only one archive");
+    return;
+  }
+  // extract
+  var zip = fileList.files.first;
+  var bytes = zip.bytes;
+  if (bytes == null) {
+    if (context.mounted) showSnackbar(context, "Error while reading the file");
+    return;
+  }
+  var archive = ZipDecoder().decodeBytes(bytes);
+  var files = archive.files;
+  
   // load the files
   var productsJson = <String, dynamic>{};
   var nutritionalValuesJson = <String, dynamic>{};
   var mealsJson = <String, dynamic>{};
   for (var file in files) {
-    String name;
-    dynamic json;
-    if (file is ArchiveFile) {
-      ArchiveFile aFile = file;
-      name = aFile.name;
-      var data = aFile.content;
-      if (data == null) {
-        if (context.mounted) showSnackbar(context, "Error while reading the file");
-        return;
-      }
-      json = jsonDecode(utf8.decode(data));
-    } else {
-      name = file.name;
-      var data = file.bytes;
-      devtools.log("$name $data");
-      if (data == null) {
-        if (context.mounted) showSnackbar(context, "Error while reading the file");
-        return;
-      }
-      json = jsonDecode(utf8.decode(data));
+    String name = file.name;
+    dynamic data = file.content;
+    
+    if (data == null) {
+      if (context.mounted) showSnackbar(context, "Error while reading the file");
+      return;
     }
+    var json = jsonDecode(utf8.decode(data));
     
     if (name.startsWith("products")) {
       productsJson = json;
@@ -633,7 +622,34 @@ Future<void> importData(BuildContext context) async {
     if (result != true) return;
     
     // import the data
-    devtools.log("$productsJson");
+    var service = DataService.current();
+    
+    try {
+      await service.cleanUp();
+      await service.reset("test");
+      
+      // import nutritional values
+      var nutritionalValues = nutritionalValuesJson.values.map((value) => mapToNutritionalValue(value)).toList();
+      for (var nutValue in nutritionalValues) {
+        await service.createNutritionalValue(nutValue);
+      }
+      
+      // import products
+      var products = productsJson.values.map((value) => mapToProduct(value)).toList();
+      for (var product in products) {
+        await service.createProduct(product);
+      }
+      
+      // import meals
+      var meals = mealsJson.values.map((value) => mapToMeal(value)).toList();
+      for (var meal in meals) {
+        await service.createMeal(meal);
+      }
+      
+      if(context.mounted) showSnackbar(context, "Data imported successfully");
+    } on Exception catch (e) {
+      if(context.mounted) showSnackbar(context, "Error while importing the data: $e");
+    }
   }
 }
 

@@ -240,14 +240,14 @@ class SqfliteDataProvider implements DataProvider {
     for (var row in ingredientRows) {
       var id = row[isContainedInIdColumn] as int;
       var containedInProduct = _productsMap[id]!;
-      containedInProduct.ingredients.add(await _dbRowToProductQuantity(row));
+      containedInProduct.ingredients.add(await mapToProductQuantity(row));
     }
     // add nutrients to products
     var nutrientRows = await _db!.query(productNutrientTable);
     for (var row in nutrientRows) {
       var id = row[productIdColumn] as int;
       var product = _productsMap[id]!;
-      product.nutrients.add(await _dbRowToProductNutrient(row));
+      product.nutrients.add(await mapToProductNutrient(row));
     }
     
     _productsStreamController.add(_products);
@@ -262,28 +262,6 @@ class SqfliteDataProvider implements DataProvider {
     if (_productsMap.containsKey(id)) return _productsMap[id]!;
     else throw NotFoundException();
   }
-  
-  Product mapToProduct(Map<String, dynamic> row) =>
-    Product(
-      id:                    row[idColumn] as int,
-      name:                  row[nameColumn] as String,
-      creationDate:          DateTime.parse(row[creationDateColumn] as String),
-      lastEditDate:          DateTime.parse(row[lastEditDateColumn] as String),
-      temporaryBeginning:    condParse(row[temporaryBeginningColumn] as String?),
-      temporaryEnd:          condParse(row[temporaryEndColumn] as String?),
-      isTemporary:           row[isTemporaryColumn] == 1,
-      defaultUnit:           unitFromString(row[defaultUnitColumn] as String),
-      densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
-      quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
-      quantityName:          row[quantityNameColumn] as String,
-      autoCalc:              row[autoCalcAmountColumn] == 1,
-      amountForIngredients:  toDouble(row[amountForIngredientsColumn] ?? 100),
-      ingredientsUnit:       unitFromString((row[ingredientsUnitColumn] ?? row[defaultUnitColumn]) as String),
-      amountForNutrients:    toDouble(row[amountForNutrientsColumn] ?? 100),
-      nutrientsUnit:         unitFromString((row[nutrientsUnitColumn] ?? row[defaultUnitColumn]) as String),
-      ingredients:           [],
-      nutrients:             [],
-    );
   
   @override
   Future<Product> createProduct(Product product) async {
@@ -395,14 +373,6 @@ class SqfliteDataProvider implements DataProvider {
   
   // ----- Ingredients -----
   
-  Future<ProductQuantity> _dbRowToProductQuantity(Map<String, Object?> row) async {
-    return ProductQuantity(
-      productId: row[ingredientIdColumn] as int,
-      amount:    toDouble(row[amountColumn]),
-      unit:      unitFromString(row[unitColumn] as String),
-    );
-  }
-  
   Future<void> _addIngredients({required Product product, required int containedInId}) async {
     for (final ingredient in product.ingredients) {
       if (ingredient.productId == null) throw ArgumentError("Ingredient product id is null");
@@ -432,7 +402,7 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     var nutValRows = await _db!.query(nutritionalValueTable);
-    _nutritionalValues = nutValRows.map((row) => _dbRowToNutritionalValue(row)).toList();
+    _nutritionalValues = nutValRows.map((row) => mapToNutritionalValue(row)).toList();
     
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
@@ -447,21 +417,12 @@ class SqfliteDataProvider implements DataProvider {
     if (results.isEmpty) throw NotFoundException();
     if (results.length > 1) throw NotUniqueException();
     
-    var nutritionalValue = _dbRowToNutritionalValue(results.first);
+    var nutritionalValue = mapToNutritionalValue(results.first);
     
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
     return nutritionalValue;
   }
-  
-  NutritionalValue _dbRowToNutritionalValue(Map<String, Object?> row) =>
-    NutritionalValue(
-      row[idColumn] as int,
-      (row[orderIdColumn] ?? row[idColumn]) as int,
-      row[nameColumn] as String,
-      row[unitNameColumn] as String,
-      row[showFullNameColumn] == 1,
-    );
   
   @override
   Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal) async {
@@ -555,15 +516,6 @@ class SqfliteDataProvider implements DataProvider {
   
   // ----- Product Nutrients -----
   
-  Future<ProductNutrient> _dbRowToProductNutrient(Map<String, Object?> row) async {
-    return ProductNutrient(
-      nutritionalValueId: row[nutritionalValueIdColumn] as int,
-      productId:          row[productIdColumn] as int,
-      autoCalc:           row[autoCalcColumn] == 1,
-      value:              toDouble(row[valueColumn]),
-    );
-  }
-  
   Future<void> _addProductNutrientsForProduct({required Product product, required int productId}) async {
     for (final nutrient in product.nutrients) {
       await _db!.insert(productNutrientTable, {
@@ -609,7 +561,7 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     var mealRows = await _db!.query(mealTable);
-    _meals = mealRows.map((row) => _dbRowToMeal(row)).toList();
+    _meals = mealRows.map((row) => mapToMeal(row)).toList();
     // sort by datetime (ascending), secondary by creation date (ascending)
     _meals.sort((a, b) {
       var dateComp = a.dateTime.compareTo(b.dateTime);
@@ -630,25 +582,12 @@ class SqfliteDataProvider implements DataProvider {
     if (results.isEmpty) throw NotFoundException();
     if (results.length > 1) throw NotUniqueException();
     
-    var meal = _dbRowToMeal(results.first);
+    var meal = mapToMeal(results.first);
     
     _mealsStreamController.add(_meals);
     
     return meal;
   }
-  
-  Meal _dbRowToMeal(Map<String, Object?> row) =>
-    Meal(
-      id:           row[idColumn] as int,
-      dateTime:     DateTime.parse(row[dateTimeColumn] as String),
-      creationDate: DateTime.parse(row[creationDateColumn] as String),
-      lastEditDate: DateTime.parse(row[lastEditDateColumn] as String),
-      productQuantity: ProductQuantity(
-        productId: row[productIdColumn] as int,
-        amount:    toDouble(row[mealAmountColumn]),
-        unit:      unitFromString(row[mealUnitColumn] as String),
-      ),
-    );
   
   @override
   Future<Meal> createMeal(Meal meal) async {
@@ -702,3 +641,66 @@ class SqfliteDataProvider implements DataProvider {
     _mealsStreamController.add(_meals);
   }
 }
+
+Product mapToProduct(Map<String, dynamic> row) =>
+  Product(
+    id:                    row[idColumn] as int,
+    name:                  row[nameColumn] as String,
+    creationDate:          DateTime.parse(row[creationDateColumn] as String),
+    lastEditDate:          DateTime.parse(row[lastEditDateColumn] as String),
+    temporaryBeginning:    condParse(row[temporaryBeginningColumn] as String?),
+    temporaryEnd:          condParse(row[temporaryEndColumn] as String?),
+    isTemporary:           row[isTemporaryColumn] == 1,
+    defaultUnit:           unitFromString(row[defaultUnitColumn] as String),
+    densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
+    quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
+    quantityName:          row[quantityNameColumn] as String,
+    autoCalc:              row[autoCalcAmountColumn] == 1,
+    amountForIngredients:  toDouble(row[amountForIngredientsColumn] ?? 100),
+    ingredientsUnit:       unitFromString((row[ingredientsUnitColumn] ?? row[defaultUnitColumn]) as String),
+    amountForNutrients:    toDouble(row[amountForNutrientsColumn] ?? 100),
+    nutrientsUnit:         unitFromString((row[nutrientsUnitColumn] ?? row[defaultUnitColumn]) as String),
+    ingredients:           [],
+    nutrients:             [],
+  );
+  
+  Future<ProductQuantity> mapToProductQuantity(Map<String, Object?> row) async {
+    return ProductQuantity(
+      productId: row[ingredientIdColumn] as int,
+      amount:    toDouble(row[amountColumn]),
+      unit:      unitFromString(row[unitColumn] as String),
+    );
+  }
+  
+  NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
+    NutritionalValue(
+      row[idColumn] as int,
+      (row[orderIdColumn] ?? row[idColumn]) as int,
+      row[nameColumn] as String,
+      row[unitNameColumn] as String,
+      row[showFullNameColumn] == 1,
+    );
+
+
+  
+  Future<ProductNutrient> mapToProductNutrient(Map<String, Object?> row) async {
+    return ProductNutrient(
+      nutritionalValueId: row[nutritionalValueIdColumn] as int,
+      productId:          row[productIdColumn] as int,
+      autoCalc:           row[autoCalcColumn] == 1,
+      value:              toDouble(row[valueColumn]),
+    );
+  }
+  
+  Meal mapToMeal(Map<String, Object?> row) =>
+    Meal(
+      id:           row[idColumn] as int,
+      dateTime:     DateTime.parse(row[dateTimeColumn] as String),
+      creationDate: DateTime.parse(row[creationDateColumn] as String),
+      lastEditDate: DateTime.parse(row[lastEditDateColumn] as String),
+      productQuantity: ProductQuantity(
+        productId: row[productIdColumn] as int,
+        amount:    toDouble(row[mealAmountColumn]),
+        unit:      unitFromString(row[mealUnitColumn] as String),
+      ),
+    );

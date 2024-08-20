@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../services/data/data_service.dart';
 import '../widgets/search_field.dart';
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
