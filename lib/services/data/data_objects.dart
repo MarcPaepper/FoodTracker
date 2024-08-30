@@ -221,9 +221,9 @@ class ProductQuantity {
 }
 
 class Meal {
-  final int id;
-  final DateTime dateTime;
-  final ProductQuantity productQuantity;
+  int id;
+  DateTime dateTime;
+  ProductQuantity productQuantity;
   
   DateTime? creationDate;
   DateTime? lastEditDate;

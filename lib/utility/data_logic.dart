@@ -5,8 +5,6 @@ import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:food_tracker/services/data/sqflite_data_provider.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -18,6 +16,8 @@ import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 
 import "dart:developer" as devtools show log;
+
+import '../services/data/object_mapping.dart';
 
 enum ErrorType {
   none,
@@ -511,14 +511,14 @@ Future<void> exportData() async {
   var nameP = "products_$date.json";
   var nameNv = "nutritional_values_$date.json";
   
+  // create a zip file
+  var archive = Archive()
+    ..addFile(ArchiveFile(nameP, pJsonUtf8.length, pJsonUtf8))
+    ..addFile(ArchiveFile(nameNv, nvJsonUtf8.length, nvJsonUtf8))
+    ..addFile(ArchiveFile("meals_$date.json", mJsonUtf8.length, mJsonUtf8));
+  
+  var zip = ZipEncoder().encode(archive);
   if (kIsWeb) {
-    // create a zip file
-    var archive = Archive()
-      ..addFile(ArchiveFile(nameP, pJsonUtf8.length, pJsonUtf8))
-      ..addFile(ArchiveFile(nameNv, nvJsonUtf8.length, nvJsonUtf8))
-      ..addFile(ArchiveFile("meals_$date.json", mJsonUtf8.length, mJsonUtf8));
-    
-    var zip = ZipEncoder().encode(archive);
     
     if (zip != null) {
       // use the download function
@@ -526,23 +526,29 @@ Future<void> exportData() async {
       await launchUrl(Uri.parse(url), webOnlyWindowName: "export.zip");
     }
   } else {
-    var pathP = await storeFileTemporarily(pJsonUtf8, nameP);
-    var pathNv = await storeFileTemporarily(nvJsonUtf8, nameNv);
-    var pathM = await storeFileTemporarily(mJsonUtf8, "meals_$date.json");
+    // convert to Uint8List
+    Uint8List zipUint8 = Uint8List.fromList(zip!);
     
-    // share both files separately
+    // var pathP = await storeFileTemporarily(pJsonUtf8, nameP);
+    // var pathNv = await storeFileTemporarily(nvJsonUtf8, nameNv);
+    // var pathM = await storeFileTemporarily(mJsonUtf8, "meals_$date.json");
+    var pathZip = await storeFileTemporarily(zipUint8, "foodtracker_$date.zip");
+    
+    // // share both files separately
     await Share.shareXFiles(
       [
-        XFile(pathP),
-        XFile(pathNv),
-        XFile(pathM),
+        // XFile(pathP),
+        // XFile(pathNv),
+        // XFile(pathM),
+        XFile(pathZip),
       ],
     );
     
     // delete
-    await File(pathP).delete();
-    await File(pathNv).delete();
-    await File(pathM).delete();
+    // await File(pathP).delete();
+    // await File(pathNv).delete();
+    // await File(pathM).delete();
+    await File(pathZip).delete();
   }
 }
 
@@ -628,26 +634,58 @@ Future<void> importData(BuildContext context) async {
       await service.cleanUp();
       await service.reset("test");
       
+      // map old ids to new ids
+      var nutValIds = <int, int>{};
+      var productIds = <int, int>{};
+      
       // import nutritional values
       var nutritionalValues = nutritionalValuesJson.values.map((value) => mapToNutritionalValue(value)).toList();
       for (var nutValue in nutritionalValues) {
-        await service.createNutritionalValue(nutValue);
+        try {
+          var n = await service.createNutritionalValue(nutValue);
+          nutValIds[nutValue.id] = n.id;
+        } catch (e) {
+          // nothing
+        }
       }
       
       // import products
       var products = productsJson.values.map((value) => mapToProduct(value)).toList();
       for (var product in products) {
-        await service.createProduct(product);
+        // change the nutritional value ids
+        product.nutrients = product.nutrients.map((nut) {
+          var newId = nutValIds[nut.nutritionalValueId];
+          if (newId == null) throw Exception("Nutritional value id not found");
+          return ProductNutrient(
+            productId: product.id,
+            nutritionalValueId: newId,
+            autoCalc: nut.autoCalc,
+            value: nut.value,
+          );
+        }).toList();
+        
+        var p = await service.createProduct(product);
+        productIds[product.id] = p.id;
       }
       
       // import meals
       var meals = mealsJson.values.map((value) => mapToMeal(value)).toList();
       for (var meal in meals) {
+        // change the product id
+        var newId = productIds[meal.productQuantity.productId];
+        if (newId == null) throw Exception("Product id not found");
+        meal.productQuantity = ProductQuantity(
+          productId: newId,
+          amount: meal.productQuantity.amount,
+          unit: meal.productQuantity.unit,
+        );
         await service.createMeal(meal);
       }
       
       if(context.mounted) showSnackbar(context, "Data imported successfully");
     } on Exception catch (e) {
+      // log
+      devtools.log("Error while importing the data: $e");
       if(context.mounted) showSnackbar(context, "Error while importing the data: $e");
     }
   }

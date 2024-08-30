@@ -3,7 +3,6 @@
 import 'dart:async';
 
 import 'package:food_tracker/constants/tables.dart';
-import 'package:food_tracker/utility/text_logic.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -19,6 +18,7 @@ import 'package:food_tracker/services/data/data_provider.dart';
 import "dart:developer" as devtools show log;
 
 import '../../utility/data_logic.dart';
+import 'object_mapping.dart';
 
 const productTable = "product";
 const mealTable = "meal";
@@ -95,7 +95,7 @@ class SqfliteDataProvider implements DataProvider {
   bool isLoaded() => _db != null;
   
   @override
-  Future<String> open(String dbName) async {
+  Future<String> open(String dbName, {bool addDefNutVals = true}) async {
     if (isLoaded()) return Future.value("data already loaded");
     devtools.log("Opening sqflite database");
     
@@ -138,7 +138,7 @@ class SqfliteDataProvider implements DataProvider {
           await _db!.execute(createTable);
           
           // If table is Nutritional Value, insert the default values
-          if (entry.key == nutritionalValueTable) {
+          if (entry.key == nutritionalValueTable && addDefNutVals) {
             for (var value in defaultNutritionalValues) {
               await createNutritionalValue(value);
             }
@@ -187,7 +187,7 @@ class SqfliteDataProvider implements DataProvider {
       devtools.log("Error deleting database: $e");
     }
     _db = null;
-    open(dbName);
+    await open(dbName, addDefNutVals: false);
   }
   
   @override
@@ -641,66 +641,3 @@ class SqfliteDataProvider implements DataProvider {
     _mealsStreamController.add(_meals);
   }
 }
-
-Product mapToProduct(Map<String, dynamic> row) =>
-  Product(
-    id:                    row[idColumn] as int,
-    name:                  row[nameColumn] as String,
-    creationDate:          DateTime.parse(row[creationDateColumn] as String),
-    lastEditDate:          DateTime.parse(row[lastEditDateColumn] as String),
-    temporaryBeginning:    condParse(row[temporaryBeginningColumn] as String?),
-    temporaryEnd:          condParse(row[temporaryEndColumn] as String?),
-    isTemporary:           row[isTemporaryColumn] == 1,
-    defaultUnit:           unitFromString(row[defaultUnitColumn] as String),
-    densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
-    quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
-    quantityName:          row[quantityNameColumn] as String,
-    autoCalc:              row[autoCalcAmountColumn] == 1,
-    amountForIngredients:  toDouble(row[amountForIngredientsColumn] ?? 100),
-    ingredientsUnit:       unitFromString((row[ingredientsUnitColumn] ?? row[defaultUnitColumn]) as String),
-    amountForNutrients:    toDouble(row[amountForNutrientsColumn] ?? 100),
-    nutrientsUnit:         unitFromString((row[nutrientsUnitColumn] ?? row[defaultUnitColumn]) as String),
-    ingredients:           [],
-    nutrients:             [],
-  );
-  
-  Future<ProductQuantity> mapToProductQuantity(Map<String, Object?> row) async {
-    return ProductQuantity(
-      productId: row[ingredientIdColumn] as int,
-      amount:    toDouble(row[amountColumn]),
-      unit:      unitFromString(row[unitColumn] as String),
-    );
-  }
-  
-  NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
-    NutritionalValue(
-      row[idColumn] as int,
-      (row[orderIdColumn] ?? row[idColumn]) as int,
-      row[nameColumn] as String,
-      row[unitNameColumn] as String,
-      row[showFullNameColumn] == 1,
-    );
-
-
-  
-  Future<ProductNutrient> mapToProductNutrient(Map<String, Object?> row) async {
-    return ProductNutrient(
-      nutritionalValueId: row[nutritionalValueIdColumn] as int,
-      productId:          row[productIdColumn] as int,
-      autoCalc:           row[autoCalcColumn] == 1,
-      value:              toDouble(row[valueColumn]),
-    );
-  }
-  
-  Meal mapToMeal(Map<String, Object?> row) =>
-    Meal(
-      id:           row[idColumn] as int,
-      dateTime:     DateTime.parse(row[dateTimeColumn] as String),
-      creationDate: DateTime.parse(row[creationDateColumn] as String),
-      lastEditDate: DateTime.parse(row[lastEditDateColumn] as String),
-      productQuantity: ProductQuantity(
-        productId: row[productIdColumn] as int,
-        amount:    toDouble(row[mealAmountColumn]),
-        unit:      unitFromString(row[mealUnitColumn] as String),
-      ),
-    );
