@@ -26,54 +26,6 @@ const nutritionalValueTable = "nutritional_value";
 const ingredientTable = "ingredient";
 const productNutrientTable = "product_nutrient";
 
-// multiple tables
-
-const idColumn                    = "id";
-
-// product table
-
-const nameColumn                  = "name";
-const creationDateColumn          = "creation_date";
-const lastEditDateColumn          = "last_edit_date";
-const temporaryBeginningColumn    = "temporary_beginning";
-const temporaryEndColumn          = "temporary_end";
-const isTemporaryColumn           = "is_temporary";
-const quantityNameColumn          = "quantity_name";
-const densityConversionColumn     = "density_conversion";
-const quantityConversionColumn    = "quantity_conversion";
-const defaultUnitColumn           = "default_unit";
-const autoCalcAmountColumn        = "auto_calc_amount";
-const amountForIngredientsColumn  = "amount_for_ingredients";
-const ingredientsUnitColumn       = "ingredients_unit";
-const amountForNutrientsColumn    = "amount_for_nutrients";
-const nutrientsUnitColumn         = "nutrients_unit";
-
-// nutritional value table
-
-const unitNameColumn              = "unit";
-const orderIdColumn               = "order_id";
-const showFullNameColumn          = "show_full_name";
-
-// ingredient table
-
-const ingredientIdColumn          = "ingredient_id";
-const isContainedInIdColumn       = "is_contained_in_id";
-const amountColumn                = "amount";
-const unitColumn                  = "unit";
-
-// product nutrient table
-
-const nutritionalValueIdColumn    = "nutritional_value_id";
-const productIdColumn             = "product_id";
-const autoCalcColumn              = "auto_calc";
-const valueColumn                 = "value";
-
-// meal table
-
-const dateTimeColumn               = "date_time";
-const mealAmountColumn             = "amount";
-const mealUnitColumn               = "unit";
-
 const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
@@ -156,8 +108,8 @@ class SqfliteDataProvider implements DataProvider {
             if (!existingColumns.contains(columnName)) {
               devtools.log("Adding column $column to table ${entry.key}");
               await _db!.execute("ALTER TABLE ${entry.key} ADD COLUMN $column");
-              // check whether there are any missing columns
               if (missingColumns.containsKey(columnName)) {
+                devtools.log("Executing missing column query for $columnName");
                 await _db!.execute(missingColumns[columnName]!());
               }
             }
@@ -240,14 +192,14 @@ class SqfliteDataProvider implements DataProvider {
     for (var row in ingredientRows) {
       var id = row[isContainedInIdColumn] as int;
       var containedInProduct = _productsMap[id]!;
-      containedInProduct.ingredients.add(await mapToProductQuantity(row));
+      containedInProduct.ingredients.add(mapToProductQuantity(row));
     }
     // add nutrients to products
     var nutrientRows = await _db!.query(productNutrientTable);
     for (var row in nutrientRows) {
       var id = row[productIdColumn] as int;
       var product = _productsMap[id]!;
-      product.nutrients.add(await mapToProductNutrient(row));
+      product.nutrients.add(mapToProductNutrient(row));
     }
     
     _productsStreamController.add(_products);
@@ -441,18 +393,22 @@ class SqfliteDataProvider implements DataProvider {
     }
     
     final id = await _db!.insert(nutritionalValueTable, {
-      nameColumn:         nutVal.name,
-      orderIdColumn:      orderId,
-      unitNameColumn:     nutVal.unit,
-      showFullNameColumn: nutVal.showFullName ? 1 : 0,
+      nameColumn:             nutVal.name,
+      orderIdColumn:          orderId,
+      unitNameColumn:         nutVal.unit,
+      showFullNameColumn:     nutVal.showFullName ? 1 : 0,
+      hasTargetColumn:        nutVal.hasTarget ? 1 : 0,
+      targetColumn:           nutVal.target,
+      alwaysShowTargetColumn: nutVal.alwaysShowTarget ? 1 : 0,
     });
     
     _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
     
-    _nutritionalValues.add(NutritionalValue.copyWith(nutVal, newId: id, newOrderId: orderId));
+    var newNutVal = NutritionalValue.copyWith(nutVal, newId: id, newOrderId: orderId);
+    _nutritionalValues.add(newNutVal);
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
-    return NutritionalValue(id, nutVal.orderId, nutVal.name, nutVal.unit, nutVal.showFullName);
+    return newNutVal;
   }
   
   @override
@@ -460,10 +416,13 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     final updatedCount = await _db!.update(nutritionalValueTable, {
-      nameColumn:         nutVal.name,
-      orderIdColumn:      nutVal.orderId,
-      unitNameColumn:     nutVal.unit,
-      showFullNameColumn: nutVal.showFullName ? 1 : 0,
+      nameColumn:             nutVal.name,
+      orderIdColumn:          nutVal.orderId,
+      unitNameColumn:         nutVal.unit,
+      showFullNameColumn:     nutVal.showFullName ? 1 : 0,
+      hasTargetColumn:        nutVal.hasTarget ? 1 : 0,
+      targetColumn:           nutVal.target,
+      alwaysShowTargetColumn: nutVal.alwaysShowTarget ? 1 : 0,
     }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     

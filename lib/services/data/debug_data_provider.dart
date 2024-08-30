@@ -418,7 +418,7 @@ class DebugDataProvider implements DataProvider {
     for (final nutVal in nutValues) {
       if (nutVal.id > highestId) highestId = nutVal.id;
     }
-    final newNutVal = NutritionalValue(highestId + 1, highestId + 1, nutVal.name, nutVal.unit, nutVal.showFullName);
+    final newNutVal = NutritionalValue.copyWith(nutVal, newId: highestId + 1, newOrderId: highestId + 1);
     _addProductNutrientsForNutritionalValue(nutritionalValueId: newNutVal.id);
     nutValues.add(newNutVal);
     _nutritionalValuesStreamController.add(nutValues);

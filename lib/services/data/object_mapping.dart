@@ -1,7 +1,52 @@
 import '../../utility/data_logic.dart';
 import '../../utility/text_logic.dart';
 import 'data_objects.dart';
-import 'sqflite_data_provider.dart';
+
+// multiple tables
+const idColumn                    = "id";
+
+// product table
+const nameColumn                  = "name";
+const creationDateColumn          = "creation_date";
+const lastEditDateColumn          = "last_edit_date";
+const temporaryBeginningColumn    = "temporary_beginning";
+const temporaryEndColumn          = "temporary_end";
+const isTemporaryColumn           = "is_temporary";
+const quantityNameColumn          = "quantity_name";
+const densityConversionColumn     = "density_conversion";
+const quantityConversionColumn    = "quantity_conversion";
+const defaultUnitColumn           = "default_unit";
+const autoCalcAmountColumn        = "auto_calc_amount";
+const amountForIngredientsColumn  = "amount_for_ingredients";
+const ingredientsUnitColumn       = "ingredients_unit";
+const amountForNutrientsColumn    = "amount_for_nutrients";
+const nutrientsUnitColumn         = "nutrients_unit";
+
+// nutritional value table
+const unitNameColumn              = "unit";
+const orderIdColumn               = "order_id";
+const showFullNameColumn          = "show_full_name";
+const hasTargetColumn             = "has_target";
+const targetColumn                = "target";
+const alwaysShowTargetColumn      = "always_show_target";
+
+// ingredient table
+const ingredientIdColumn          = "ingredient_id";
+const isContainedInIdColumn       = "is_contained_in_id";
+const amountColumn                = "amount";
+const unitColumn                  = "unit";
+
+// product nutrient table
+const nutritionalValueIdColumn    = "nutritional_value_id";
+const productIdColumn             = "product_id";
+const autoCalcColumn              = "auto_calc";
+const valueColumn                 = "value";
+
+// meal table
+const dateTimeColumn               = "date_time";
+const mealAmountColumn             = "amount";
+const mealUnitColumn               = "unit";
+
 
 // Maps to objects
 
@@ -41,6 +86,9 @@ NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
     row[nameColumn] as String,
     row[unitNameColumn] as String,
     row[showFullNameColumn] == 1,
+    row[hasTargetColumn] == 1,
+    toDouble(row[targetColumn]),
+    row[alwaysShowTargetColumn] == 1,
   );
 
 
@@ -70,50 +118,53 @@ Meal mapToMeal(Map<String, Object?> row) =>
   
 Map<String, dynamic> productToMap(Product product) =>
   {
-    "id":                     product.id,
-    "name":                   product.name,
-    "creation_date":          product.creationDate?.toIso8601String(),
-    "last_edit_date":         product.lastEditDate?.toIso8601String(),
-    "temporary_beginning":    product.temporaryBeginning?.toIso8601String(),
-    "temporary_end":          product.temporaryEnd?.toIso8601String(),
-    "is_temporary":           product.isTemporary,
-    "default_unit":           product.defaultUnit.toString(),
-    "quantity_name":          product.quantityName,
-    "auto_calc":              product.autoCalc,
-    "ingredients_unit":       product.ingredientsUnit.toString(),
-    "nutrients_unit":         product.nutrientsUnit.toString(),
-    "amount_for_ingredients": product.amountForIngredients,
-    "amount_for_nutrients":   product.amountForNutrients,
-    "density_conversion":     product.densityConversion.toString(),
-    "quantity_conversion":    product.quantityConversion.toString(),
-    "ingredients":            product.ingredients.map((ingr) => {
-      "product_id":             ingr.productId,
-      "amount":                 ingr.amount,
-      "unit":                   ingr.unit.toString(),
+    idColumn:                   product.id,
+    nameColumn:                 product.name,
+    creationDateColumn:         product.creationDate?.toIso8601String(),
+    lastEditDateColumn:         product.lastEditDate?.toIso8601String(),
+    temporaryBeginningColumn:   product.temporaryBeginning?.toIso8601String(),
+    temporaryEndColumn:         product.temporaryEnd?.toIso8601String(),
+    isTemporaryColumn:          product.isTemporary,
+    defaultUnitColumn:          product.defaultUnit.toString(),
+    quantityNameColumn:         product.quantityName,
+    autoCalcAmountColumn:       product.autoCalc,
+    ingredientsUnitColumn:      product.ingredientsUnit.toString(),
+    nutrientsUnitColumn:        product.nutrientsUnit.toString(),
+    amountForIngredientsColumn: product.amountForIngredients,
+    amountForNutrientsColumn:   product.amountForNutrients,
+    densityConversionColumn:    product.densityConversion.toString(),
+    quantityConversionColumn:   product.quantityConversion.toString(),
+    "ingredients":              product.ingredients.map((ingr) => {
+      productIdColumn:            ingr.productId,
+      amountColumn:               ingr.amount,
+      unitColumn:                 unitToString(ingr.unit),
     }).toList(),
-    "nutrients":              product.nutrients.map((nut) => {
-      "nutritional_value_id":   nut.nutritionalValueId,
-      "auto_calc":              nut.autoCalc,
-      "value":                  nut.value,
+    "nutrients":                product.nutrients.map((nut) => {
+      nutritionalValueIdColumn:   nut.nutritionalValueId,
+      autoCalcColumn:             nut.autoCalc,
+      valueColumn:                nut.value,
     }).toList(),
   };
   
 Map<String, dynamic> nutValueToMap(NutritionalValue nutValue) =>
   {
-    "id":           nutValue.id,
-    "order_id":     nutValue.orderId,
-    "name":         nutValue.name,
-    "unit":         nutValue.unit,
-    "showFullName": nutValue.showFullName,
+    idColumn:               nutValue.id,
+    orderIdColumn:          nutValue.orderId,
+    nameColumn:             nutValue.name,
+    unitNameColumn:         nutValue.unit,
+    showFullNameColumn:     nutValue.showFullName,
+    hasTargetColumn:        nutValue.hasTarget,
+    targetColumn:           nutValue.target,
+    alwaysShowTargetColumn: nutValue.alwaysShowTarget,
   };
   
 Map<String, dynamic> mealToMap(Meal meal) =>
   {
-    "id":             meal.id,
-    "date_time":      meal.dateTime.toIso8601String(),
-    "product_id":     meal.productQuantity.productId,
-    "amount":         meal.productQuantity.amount,
-    "unit":           unitToString(meal.productQuantity.unit),
-    "creation_date":  meal.creationDate?.toIso8601String(),
-    "last_edit_date": meal.lastEditDate?.toIso8601String(),
+    idColumn:             meal.id,
+    dateTimeColumn:       meal.dateTime.toIso8601String(),
+    productIdColumn:      meal.productQuantity.productId,
+    mealAmountColumn:     meal.productQuantity.amount,
+    mealUnitColumn:       unitToString(meal.productQuantity.unit),
+    creationDateColumn:   meal.creationDate?.toIso8601String(),
+    lastEditDateColumn:   meal.lastEditDate?.toIso8601String(),
   };

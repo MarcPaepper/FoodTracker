@@ -26,7 +26,10 @@ CREATE TABLE "nutritional_value" (
 	"name"	TEXT,
 	"unit"	TEXT,
   "order_id"	INTEGER,
-  "show_full_name"	INTEGER
+  "show_full_name"	INTEGER,
+  "has_target"  INTEGER,
+  "target"  INTEGER,
+  "always_show_target"  INTEGER
 );
 ''';
 const createIngredientTable = '''
@@ -89,6 +92,9 @@ const nutritionalValueColumns = [
   '"unit" TEXT',
   '"order_id" INTEGER',
   '"show_full_name" INTEGER',
+  '"has_target" INTEGER',
+  '"target" INTEGER',
+  '"always_show_target" INTEGER',
 ];
 
 const ingredientColumns = [
@@ -121,8 +127,8 @@ var missingProductColumns = {
 };
 
 var missingNutritionalValueColumns = {
-  // set order id to id
   "order_id": () => "UPDATE $nutritionalValueTableName SET order_id = id WHERE order_id IS NULL;",
+  "target": () => "UPDATE $nutritionalValueTableName SET target = 0 WHERE target IS NULL;",
 };
 var missingIngredientColumns = {};
 var missingProductNutrientColumns = {};
@@ -132,11 +138,11 @@ var missingMealColumns = {
 };
 
 final defaultNutritionalValues = [
-  NutritionalValue(0, 0, "Calories", "kcal", false),
-  NutritionalValue(1, 1, "Fat", "g", true),
-  NutritionalValue(2, 2, "Saturated Fat", "g", true),
-  NutritionalValue(3, 3, "Carbohydrates", "g", true),
-  NutritionalValue(4, 4, "Sugar", "g", true),
-  NutritionalValue(5, 5, "Protein", "g", true),
-  NutritionalValue(6, 6, "Salt", "g", true),
+  NutritionalValue(0, 0, "Calories", "kcal", false, true, 2000, true),
+  NutritionalValue(1, 1, "Fat", "g", true, true, 70, true),
+  NutritionalValue(2, 2, "Saturated Fat", "g", true, true, 20, true),
+  NutritionalValue(3, 3, "Carbohydrates", "g", true, true, 260, true),
+  NutritionalValue(4, 4, "Sugar", "g", true, true, 90, true),
+  NutritionalValue(5, 5, "Protein", "g", true, true, 50, true),
+  NutritionalValue(6, 6, "Salt", "g", true, true, 6, true),
 ];
