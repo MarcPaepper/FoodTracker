@@ -475,9 +475,9 @@ class NutritionalValue {
   bool showFullName = true;
   bool hasTarget = false;
   double target = 0;
-  bool alwaysShowTarget = false;
+  bool primaryTarget = false;
 	
-	NutritionalValue(this.id, this.orderId, this.name, this.unit, this.showFullName, this.hasTarget, this.target, this.alwaysShowTarget);
+	NutritionalValue(this.id, this.orderId, this.name, this.unit, this.showFullName, this.hasTarget, this.target, this.primaryTarget);
   
   factory NutritionalValue.copyWith(
     NutritionalValue value,
@@ -489,7 +489,7 @@ class NutritionalValue {
       bool? newShowFullName,
       bool? newHasTarget,
       double? newTarget,
-      bool? newAlwaysShowTarget,
+      bool? newPrimaryTarget,
     }
   ) {
     return NutritionalValue(
@@ -500,7 +500,7 @@ class NutritionalValue {
       newShowFullName ?? value.showFullName,
       newHasTarget ?? value.hasTarget,
       newTarget ?? value.target,
-      newAlwaysShowTarget ?? value.alwaysShowTarget,
+      newPrimaryTarget ?? value.primaryTarget,
     );
   }
   

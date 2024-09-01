@@ -2,6 +2,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:food_tracker/subviews/daily_targets_box.dart';
 import 'package:food_tracker/widgets/datetime_selectors.dart';
 
 import '../services/data/data_objects.dart';
@@ -71,7 +72,8 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
         children: [
           Container(
             decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 200, 200, 200),
+              // color: Color.fromARGB(255, 200, 200, 200),
+              color: Color.fromARGB(255, 197, 176, 202),
             ),
             child: const Center(
               child: Padding(
@@ -79,6 +81,11 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                 child: Text("New Meal"),
               ),
             ),
+          ),
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: DailyTargetsBox(),
           ),
           const SizedBox(height: 14),
           Padding(

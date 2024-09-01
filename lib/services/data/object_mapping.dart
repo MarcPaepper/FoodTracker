@@ -28,7 +28,7 @@ const orderIdColumn               = "order_id";
 const showFullNameColumn          = "show_full_name";
 const hasTargetColumn             = "has_target";
 const targetColumn                = "target";
-const alwaysShowTargetColumn      = "always_show_target";
+const primaryTargetColumn         = "primary_target";
 
 // ingredient table
 const ingredientIdColumn          = "ingredient_id";
@@ -88,7 +88,7 @@ NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
     row[showFullNameColumn] == 1,
     row[hasTargetColumn] == 1,
     toDouble(row[targetColumn]),
-    row[alwaysShowTargetColumn] == 1,
+    row[primaryTargetColumn] == 1,
   );
 
 
@@ -155,7 +155,7 @@ Map<String, dynamic> nutValueToMap(NutritionalValue nutValue) =>
     showFullNameColumn:     nutValue.showFullName,
     hasTargetColumn:        nutValue.hasTarget,
     targetColumn:           nutValue.target,
-    alwaysShowTargetColumn: nutValue.alwaysShowTarget,
+    primaryTargetColumn: nutValue.primaryTarget,
   };
   
 Map<String, dynamic> mealToMap(Meal meal) =>

@@ -29,7 +29,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   final _hasTarget = ValueNotifier(false);
   final _targetNotifier = ValueNotifier(0.0);
   late final TextEditingController _target;
-  final _alwaysShowTarget = ValueNotifier(false);
+  final _primaryTarget = ValueNotifier(false);
   
   int? _orderId;
   
@@ -124,7 +124,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
                 _hasTarget.value        = _interimValue!.hasTarget;
                 _targetNotifier.value   = _interimValue!.target;
                 _target.text            = _interimValue!.target.toString();
-                _alwaysShowTarget.value = _interimValue!.alwaysShowTarget;
+                _primaryTarget.value = _interimValue!.primaryTarget;
               }
               return Padding(
                 padding: const EdgeInsets.all(7.0),
@@ -137,7 +137,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
                       _buildShowFullNameToggle(),
                       _buildTargetSwitch(),
                       _buildTargetField(),
-                      _buildAlwaysShowTargetSwitch(),
+                      _buildPrimaryTargetSwitch(),
                       _buildAddButton(),
                     ]
                   ),
@@ -236,7 +236,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
         final showFullName = _showFullName.value;
         final hasTarget = _hasTarget.value;
         final target = _targetNotifier.value;
-        final alwaysShowTarget = _alwaysShowTarget.value;
+        final primaryTarget = _primaryTarget.value;
         final isValid = _formKey.currentState!.validate();
         if (isValid) {
           if (isEdit) {
@@ -244,10 +244,10 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
               showErrorbar(context, "Error: Order ID not found");
               return;
             }
-            var nval = NutritionalValue(widget.nutvalueId!, _orderId!, name, unit, showFullName, hasTarget, target, alwaysShowTarget);
+            var nval = NutritionalValue(widget.nutvalueId!, _orderId!, name, unit, showFullName, hasTarget, target, primaryTarget);
             _dataService.updateNutritionalValue(nval);
           } else {
-            var nval = NutritionalValue(-1, -1, name, unit, showFullName, hasTarget, target, alwaysShowTarget);
+            var nval = NutritionalValue(-1, -1, name, unit, showFullName, hasTarget, target, primaryTarget);
             _dataService.createNutritionalValue(nval);
           }
           Navigator.of(context).pop();
@@ -298,28 +298,28 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
     }
   );
   
-  Widget _buildAlwaysShowTargetSwitch() => MultiValueListenableBuilder(
+  Widget _buildPrimaryTargetSwitch() => MultiValueListenableBuilder(
     listenables: [
       _hasTarget,
-      _alwaysShowTarget,
+      _primaryTarget,
     ],
     builder: (context, values, child) {
       final hasTarget = values[0] as bool;
-      final alwaysShowTarget = values[1] as bool;
+      final primaryTarget = values[1] as bool;
       
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: SwitchListTile(
-          value: alwaysShowTarget,
+          value: primaryTarget,
           controlAffinity: ListTileControlAffinity.leading,
           visualDensity: VisualDensity.compact,
           onChanged: hasTarget ? (newValue) {
-            _alwaysShowTarget.value = newValue;
-            _interimValue = NutritionalValue.copyWith(_interimValue!, newAlwaysShowTarget: newValue);
+            _primaryTarget.value = newValue;
+            _interimValue = NutritionalValue.copyWith(_interimValue!, newPrimaryTarget: newValue);
           } : null,
           title: const Padding(
             padding: EdgeInsets.only(top: 2),
-            child: Text("Always show target"),
+            child: Text("Primary target"),
           ),
         ),
       );

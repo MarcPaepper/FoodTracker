@@ -29,7 +29,7 @@ CREATE TABLE "nutritional_value" (
   "show_full_name"	INTEGER,
   "has_target"  INTEGER,
   "target"  INTEGER,
-  "always_show_target"  INTEGER
+  "primary_target"  INTEGER
 );
 ''';
 const createIngredientTable = '''
@@ -94,7 +94,7 @@ const nutritionalValueColumns = [
   '"show_full_name" INTEGER',
   '"has_target" INTEGER',
   '"target" INTEGER',
-  '"always_show_target" INTEGER',
+  '"primary_target" INTEGER',
 ];
 
 const ingredientColumns = [

@@ -399,7 +399,7 @@ class SqfliteDataProvider implements DataProvider {
       showFullNameColumn:     nutVal.showFullName ? 1 : 0,
       hasTargetColumn:        nutVal.hasTarget ? 1 : 0,
       targetColumn:           nutVal.target,
-      alwaysShowTargetColumn: nutVal.alwaysShowTarget ? 1 : 0,
+      primaryTargetColumn: nutVal.primaryTarget ? 1 : 0,
     });
     
     _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
@@ -422,7 +422,7 @@ class SqfliteDataProvider implements DataProvider {
       showFullNameColumn:     nutVal.showFullName ? 1 : 0,
       hasTargetColumn:        nutVal.hasTarget ? 1 : 0,
       targetColumn:           nutVal.target,
-      alwaysShowTargetColumn: nutVal.alwaysShowTarget ? 1 : 0,
+      primaryTargetColumn: nutVal.primaryTarget ? 1 : 0,
     }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
