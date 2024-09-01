@@ -83,9 +83,14 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             ),
           ),
           const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: DailyTargetsBox(),
+          ValueListenableBuilder(
+            valueListenable: dateTimeNotifier,
+            builder: (context, dateTime, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: DailyTargetsBox(dateTime),
+              );
+            },
           ),
           const SizedBox(height: 14),
           Padding(

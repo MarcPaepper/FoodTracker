@@ -9,7 +9,12 @@ import '../widgets/graph.dart';
 import '../widgets/loading_page.dart';
 
 class DailyTargetsBox extends StatefulWidget {
-  const DailyTargetsBox({super.key});
+  final DateTime dateTime;
+  
+  const DailyTargetsBox(
+    this.dateTime,
+    {super.key}
+  );
 
   @override
   State<DailyTargetsBox> createState() => _DailyTargetsBoxState();
@@ -23,7 +28,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
     return BorderBox(
       title: "Daily Targets",
       child: Padding(
-        padding: EdgeInsets.fromLTRB(0, 4, 0, 12),
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 12),
         child: StreamBuilder(
           stream: _dataService.streamNutritionalValues(),
           builder: (contextN, snapshotN) {
@@ -44,6 +49,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 var nutritionalValues = snapshotN.data!;
                 var meals = snapshotM.data!;
                 return Graph(
+                  dateTime: widget.dateTime,
                   nutritionalValues: nutritionalValues,
                   meals: meals,
                 );

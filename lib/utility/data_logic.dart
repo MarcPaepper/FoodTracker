@@ -719,3 +719,23 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
   }
   return min;
 }
+
+// daily target progress
+Map getDailyTargetProgress(
+  DateTime dateTime,
+  List<NutritionalValue> nutritionalValues,
+  List<Meal> meals,
+  List<Meal>? oldMeals,
+) {
+  // Only include nutritional values that have a daily target
+  List<NutritionalValue> dailyTargets = [];
+  List<bool> primaryTargets = [];
+  for (var nutValue in nutritionalValues) {
+    if (nutValue.hasTarget) {
+      dailyTargets.add(nutValue);
+      primaryTargets.add(nutValue.primaryTarget);
+    }
+  }
+  
+  Map<NutritionalValue, double> dailyTargetValues = {};
+}
