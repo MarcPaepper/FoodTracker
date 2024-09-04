@@ -473,11 +473,8 @@ class NutritionalValue {
 	String name = ""; // must be unique
   String unit = "";
   bool showFullName = true;
-  bool hasTarget = false;
-  double target = 0;
-  bool primaryTarget = false;
 	
-	NutritionalValue(this.id, this.orderId, this.name, this.unit, this.showFullName, this.hasTarget, this.target, this.primaryTarget);
+	NutritionalValue(this.id, this.orderId, this.name, this.unit, this.showFullName);
   
   factory NutritionalValue.copyWith(
     NutritionalValue value,
@@ -487,9 +484,6 @@ class NutritionalValue {
       String? newName,
       String? newUnit,
       bool? newShowFullName,
-      bool? newHasTarget,
-      double? newTarget,
-      bool? newPrimaryTarget,
     }
   ) {
     return NutritionalValue(
@@ -498,9 +492,6 @@ class NutritionalValue {
       newName ?? value.name,
       newUnit ?? value.unit,
       newShowFullName ?? value.showFullName,
-      newHasTarget ?? value.hasTarget,
-      newTarget ?? value.target,
-      newPrimaryTarget ?? value.primaryTarget,
     );
   }
   

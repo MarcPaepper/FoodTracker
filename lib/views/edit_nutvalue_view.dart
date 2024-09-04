@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
 
 import '../constants/data.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
-import '../widgets/amount_field.dart';
 import '../widgets/loading_page.dart';
 
 // import "dart:developer" as devtools show log;
@@ -26,10 +24,6 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   late final TextEditingController _name;
   late final TextEditingController _unit;
   final _showFullName = ValueNotifier(true);
-  final _hasTarget = ValueNotifier(false);
-  final _targetNotifier = ValueNotifier(0.0);
-  late final TextEditingController _target;
-  final _primaryTarget = ValueNotifier(false);
   
   int? _orderId;
   
@@ -51,7 +45,6 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
     
     _name = TextEditingController();
     _unit = TextEditingController(text: "g");
-    _target = TextEditingController();
     _dataService.open(dbName);
     super.initState();
   }
@@ -114,17 +107,13 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
                   }
                 }
               } else {
-                _interimValue = NutritionalValue(-1, -1, "", "g", true, false, 0, false);
+                _interimValue = NutritionalValue(-1, -1, "", "g", true);
               }
               if (_interimValue != null) {
                 _orderId                = _interimValue!.orderId;
                 _name.text              = _interimValue!.name;
                 _unit.text              = _interimValue!.unit;
                 _showFullName.value     = _interimValue!.showFullName;
-                _hasTarget.value        = _interimValue!.hasTarget;
-                _targetNotifier.value   = _interimValue!.target;
-                _target.text            = _interimValue!.target.toString();
-                _primaryTarget.value = _interimValue!.primaryTarget;
               }
               return Padding(
                 padding: const EdgeInsets.all(7.0),
@@ -135,9 +124,6 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
                       _buildNameField(nutValues),
                       _buildUnitField(),
                       _buildShowFullNameToggle(),
-                      _buildTargetSwitch(),
-                      _buildTargetField(),
-                      _buildPrimaryTargetSwitch(),
                       _buildAddButton(),
                     ]
                   ),
@@ -234,9 +220,6 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
         final name = _name.text;
         final unit = _unit.text;
         final showFullName = _showFullName.value;
-        final hasTarget = _hasTarget.value;
-        final target = _targetNotifier.value;
-        final primaryTarget = _primaryTarget.value;
         final isValid = _formKey.currentState!.validate();
         if (isValid) {
           if (isEdit) {
@@ -244,10 +227,10 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
               showErrorbar(context, "Error: Order ID not found");
               return;
             }
-            var nval = NutritionalValue(widget.nutvalueId!, _orderId!, name, unit, showFullName, hasTarget, target, primaryTarget);
+            var nval = NutritionalValue(widget.nutvalueId!, _orderId!, name, unit, showFullName);
             _dataService.updateNutritionalValue(nval);
           } else {
-            var nval = NutritionalValue(-1, -1, name, unit, showFullName, hasTarget, target, primaryTarget);
+            var nval = NutritionalValue(-1, -1, name, unit, showFullName);
             _dataService.createNutritionalValue(nval);
           }
           Navigator.of(context).pop();
@@ -255,74 +238,5 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
       },
       child: Text(isEdit ? "Update" : "Add"),
     ),
-  );
-  
-  Widget _buildTargetSwitch() => ValueListenableBuilder(
-    valueListenable: _hasTarget,
-    builder: (context, value, child) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: SwitchListTile(
-          value: value,
-          controlAffinity: ListTileControlAffinity.leading,
-          visualDensity: VisualDensity.compact,
-          onChanged: (newValue) {
-            _hasTarget.value = newValue;
-            _interimValue = NutritionalValue.copyWith(_interimValue!, newHasTarget: newValue);
-          },
-          title: const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Text("Daily target"),
-          ),
-        ),
-      );
-    }
-  );
-  
-  Widget _buildTargetField() => MultiValueListenableBuilder(
-    listenables: [
-      _hasTarget,
-      _target,
-    ],
-    builder: (context, values, child) {
-      final hasTarget = values[0] as bool;
-      // final target = values[1] as String;
-      
-      return AmountField(
-        controller: _target,
-        enabled: hasTarget,
-        onChangedAndParsed: (value) {
-          _targetNotifier.value = value;
-        },
-      );
-    }
-  );
-  
-  Widget _buildPrimaryTargetSwitch() => MultiValueListenableBuilder(
-    listenables: [
-      _hasTarget,
-      _primaryTarget,
-    ],
-    builder: (context, values, child) {
-      final hasTarget = values[0] as bool;
-      final primaryTarget = values[1] as bool;
-      
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: SwitchListTile(
-          value: primaryTarget,
-          controlAffinity: ListTileControlAffinity.leading,
-          visualDensity: VisualDensity.compact,
-          onChanged: hasTarget ? (newValue) {
-            _primaryTarget.value = newValue;
-            _interimValue = NutritionalValue.copyWith(_interimValue!, newPrimaryTarget: newValue);
-          } : null,
-          title: const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Text("Primary target"),
-          ),
-        ),
-      );
-    }
   );
 }
