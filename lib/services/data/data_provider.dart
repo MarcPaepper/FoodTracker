@@ -34,4 +34,12 @@ abstract class DataProvider {
   Future<Meal> createMeal(Meal meal);
   Future<Meal> updateMeal(Meal meal);
   Future<void> deleteMeal(int id);
+  
+  Stream<List<Target>> streamTargets();
+  Future<Iterable<Target>> getAllTargets();
+  void reloadTargetStream();
+  Future<Target> getTarget(Type targetType, int targetId);
+  Future<Target> createTarget(Target target);
+  Future<Target> updateTarget(Target target);
+  Future<void> deleteTarget(Type targetType, int targetId);
 }

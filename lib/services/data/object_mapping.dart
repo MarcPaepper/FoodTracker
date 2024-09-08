@@ -4,6 +4,9 @@ import 'data_objects.dart';
 
 // multiple tables
 const idColumn                    = "id";
+const amountColumn                = "amount";
+const orderIdColumn               = "order_id";
+const unitColumn                  = "unit";
 
 // product table
 const nameColumn                  = "name";
@@ -24,14 +27,11 @@ const nutrientsUnitColumn         = "nutrients_unit";
 
 // nutritional value table
 const unitNameColumn              = "unit";
-const orderIdColumn               = "order_id";
 const showFullNameColumn          = "show_full_name";
 
 // ingredient table
 const ingredientIdColumn          = "ingredient_id";
 const isContainedInIdColumn       = "is_contained_in_id";
-const amountColumn                = "amount";
-const unitColumn                  = "unit";
 
 // product nutrient table
 const nutritionalValueIdColumn    = "nutritional_value_id";
@@ -41,14 +41,25 @@ const valueColumn                 = "value";
 
 // meal table
 const dateTimeColumn               = "date_time";
-const mealAmountColumn             = "amount";
-const mealUnitColumn               = "unit";
 
+// target table
+const typeColumn                   = "type";
+const trackedIdColumn              = "tracked_id";
+const primaryColumn                = "is_primary";
 
 // Maps to objects
 
-Product mapToProduct(Map<String, dynamic> row) =>
-  Product(
+Product mapToProduct(Map<String, dynamic> row) {
+  List<ProductQuantity> ingredients = [];
+  List<ProductNutrient> nutrients = [];
+  if (row["ingredients"] != null) {
+    ingredients = (row["ingredients"] as List).map((ingr) => mapToProductQuantity(ingr)).toList();
+  }
+  if (row["nutrients"] != null) {
+    nutrients = (row["nutrients"] as List).map((nut) => mapToProductNutrient(nut)).toList();
+  }
+  
+  return Product(
     id:                    row[idColumn] as int,
     name:                  row[nameColumn] as String,
     creationDate:          DateTime.parse(row[creationDateColumn] as String),
@@ -65,9 +76,10 @@ Product mapToProduct(Map<String, dynamic> row) =>
     ingredientsUnit:       unitFromString((row[ingredientsUnitColumn] ?? row[defaultUnitColumn]) as String),
     amountForNutrients:    toDouble(row[amountForNutrientsColumn] ?? 100),
     nutrientsUnit:         unitFromString((row[nutrientsUnitColumn] ?? row[defaultUnitColumn]) as String),
-    ingredients:           [],
-    nutrients:             [],
+    ingredients:           ingredients,
+    nutrients:             nutrients,
   );
+}
   
 ProductQuantity mapToProductQuantity(Map<String, Object?> row) =>
   ProductQuantity(
@@ -85,8 +97,6 @@ NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
     row[showFullNameColumn] == 1,
   );
 
-
-
 ProductNutrient mapToProductNutrient(Map<String, Object?> row) =>
   ProductNutrient(
     nutritionalValueId: row[nutritionalValueIdColumn] as int,
@@ -103,10 +113,32 @@ Meal mapToMeal(Map<String, Object?> row) =>
     lastEditDate:     DateTime.parse(row[lastEditDateColumn] as String),
     productQuantity:  ProductQuantity(
       productId:        row[productIdColumn] as int,
-      amount:           toDouble(row[mealAmountColumn]),
-      unit:             unitFromString(row[mealUnitColumn] as String),
+      amount:           toDouble(row[amountColumn]),
+      unit:             unitFromString(row[unitColumn] as String),
     ),
   );
+
+Target mapToTarget(Map<String, Object?> map) {
+  Type trackedType;
+  switch (map[typeColumn]) {
+    case "Product":
+      trackedType = Product;
+      break;
+    case "NutritionalValue":
+      trackedType = NutritionalValue;
+      break;
+    default:
+      throw ArgumentError("Unknown target type: ${map[typeColumn]}");
+  }
+  
+  return Target(
+    trackedType: trackedType,
+    trackedId:   map[trackedIdColumn] as int,
+    isPrimary:   map[primaryColumn] == 1,
+    amount:      map[amountColumn] as double,
+    orderId:     map[orderIdColumn] as int,
+  );
+}
 
 // Objects to maps
   
@@ -114,28 +146,28 @@ Map<String, dynamic> productToMap(Product product) =>
   {
     idColumn:                   product.id,
     nameColumn:                 product.name,
+    defaultUnitColumn:          unitToString(product.defaultUnit),
     creationDateColumn:         product.creationDate?.toIso8601String(),
     lastEditDateColumn:         product.lastEditDate?.toIso8601String(),
-    temporaryBeginningColumn:   product.temporaryBeginning?.toIso8601String(),
-    temporaryEndColumn:         product.temporaryEnd?.toIso8601String(),
-    isTemporaryColumn:          product.isTemporary,
-    defaultUnitColumn:          product.defaultUnit.toString(),
+    temporaryBeginningColumn:   product.temporaryBeginning?.toIso8601String().split("T")[0], // YYYY-MM-DD format
+    temporaryEndColumn:         product.temporaryEnd?.toIso8601String().split("T")[0], // YYYY-MM-DD format
+    isTemporaryColumn:          product.isTemporary ? 1 : 0,
     quantityNameColumn:         product.quantityName,
-    autoCalcAmountColumn:       product.autoCalc,
-    ingredientsUnitColumn:      product.ingredientsUnit.toString(),
-    nutrientsUnitColumn:        product.nutrientsUnit.toString(),
-    amountForIngredientsColumn: product.amountForIngredients,
-    amountForNutrientsColumn:   product.amountForNutrients,
     densityConversionColumn:    product.densityConversion.toString(),
     quantityConversionColumn:   product.quantityConversion.toString(),
+    autoCalcAmountColumn:       product.autoCalc ? 1 : 0,
+    amountForIngredientsColumn: product.amountForIngredients,
+    ingredientsUnitColumn:      unitToString(product.ingredientsUnit),
+    amountForNutrientsColumn:   product.amountForNutrients,
+    nutrientsUnitColumn:        unitToString(product.nutrientsUnit),
     "ingredients":              product.ingredients.map((ingr) => {
-      productIdColumn:            ingr.productId,
+      productIdColumn:            ingr.productId!,
       amountColumn:               ingr.amount,
       unitColumn:                 unitToString(ingr.unit),
     }).toList(),
     "nutrients":                product.nutrients.map((nut) => {
       nutritionalValueIdColumn:   nut.nutritionalValueId,
-      autoCalcColumn:             nut.autoCalc,
+      autoCalcColumn:             nut.autoCalc ? 1 : 0,
       valueColumn:                nut.value,
     }).toList(),
   };
@@ -143,19 +175,38 @@ Map<String, dynamic> productToMap(Product product) =>
 Map<String, dynamic> nutValueToMap(NutritionalValue nutValue) =>
   {
     idColumn:               nutValue.id,
-    orderIdColumn:          nutValue.orderId,
     nameColumn:             nutValue.name,
+    orderIdColumn:          nutValue.orderId,
     unitNameColumn:         nutValue.unit,
-    showFullNameColumn:     nutValue.showFullName,
+    showFullNameColumn:     nutValue.showFullName ? 1 : 0,
   };
   
 Map<String, dynamic> mealToMap(Meal meal) =>
   {
-    idColumn:             meal.id,
-    dateTimeColumn:       meal.dateTime.toIso8601String(),
-    productIdColumn:      meal.productQuantity.productId,
-    mealAmountColumn:     meal.productQuantity.amount,
-    mealUnitColumn:       unitToString(meal.productQuantity.unit),
-    creationDateColumn:   meal.creationDate?.toIso8601String(),
-    lastEditDateColumn:   meal.lastEditDate?.toIso8601String(),
+    idColumn:           meal.id,
+    dateTimeColumn:     meal.dateTime.toIso8601String(),
+    productIdColumn:    meal.productQuantity.productId,
+    amountColumn:       meal.productQuantity.amount,
+    unitColumn:         unitToString(meal.productQuantity.unit),
+    creationDateColumn: meal.creationDate?.toIso8601String(),
+    lastEditDateColumn: meal.lastEditDate?.toIso8601String(),
   };
+
+Map<String, dynamic> targetToMap(Target target) {
+  String targetType;
+  if (target.trackedType == Product) {
+    targetType = "Product";
+  } else if (target.trackedType == NutritionalValue) {
+    targetType = "NutritionalValue";
+  } else {
+    throw ArgumentError("Unknown target type: ${target.trackedType}");
+  }
+  
+  return {
+    typeColumn:      targetType,
+    trackedIdColumn: target.trackedId,
+    amountColumn:    target.amount,
+    primaryColumn:   target.isPrimary,
+    orderIdColumn:   target.orderId,
+  };
+}

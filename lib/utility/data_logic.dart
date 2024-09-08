@@ -432,72 +432,34 @@ String? validateTemporaryInterval(DateTime? begin, DateTime? end) {
 DateTime? condParse(String? date) => date == null ? null : DateTime.parse(date);
 
 Future<void> exportData() async {
-  // load nutritional values, products, ingredients, product nutrients, meals
+  // load
   
   var service = DataService.current();
   
   var nutritionalValues = await service.getAllNutritionalValues();
   var products = await service.getAllProducts();
   var meals = await service.getAllMeals();
+  var targets = await service.getAllTargets();
   
-  // convert nutritional values to json
-  Map<String, dynamic> nutValuesJson = {};
+  // convert to json
+  
+  Map<String, dynamic> nutValuesJson = {}, productsJson = {}, mealsJson = {};
+  List<Map<String, dynamic>> targetsJson = [];
+  
   for (var nutValue in nutritionalValues) {
-    nutValuesJson[nutValue.id.toString()] = {
-      "id":           nutValue.id,
-      "order_id":     nutValue.orderId,
-      "name":         nutValue.name,
-      "unit":         nutValue.unit,
-      "showFullName": nutValue.showFullName,
-    };
+    nutValuesJson[nutValue.id.toString()] = nutValueToMap(nutValue);
   }
   
-  // convert products to json
-  Map<String, dynamic> productsJson = {};
   for (var product in products) {
-    productsJson[product.id.toString()] = {
-      "id":                     product.id,
-      "name":                   product.name,
-      "creation_date":          product.creationDate?.toIso8601String(),
-      "last_edit_date":         product.lastEditDate?.toIso8601String(),
-      "temporary_beginning":    product.temporaryBeginning?.toIso8601String(),
-      "temporary_end":          product.temporaryEnd?.toIso8601String(),
-      "is_temporary":           product.isTemporary,
-      "default_unit":           product.defaultUnit.toString(),
-      "quantity_name":          product.quantityName,
-      "auto_calc":              product.autoCalc,
-      "ingredients_unit":       product.ingredientsUnit.toString(),
-      "nutrients_unit":         product.nutrientsUnit.toString(),
-      "amount_for_ingredients": product.amountForIngredients,
-      "amount_for_nutrients":   product.amountForNutrients,
-      "density_conversion":     product.densityConversion.toString(),
-      "quantity_conversion":    product.quantityConversion.toString(),
-      "ingredients": product.ingredients.map((ingr) => {
-        "product_id": ingr.productId,
-        "amount":     ingr.amount,
-        "unit":       ingr.unit.toString(),
-      }).toList(),
-      "nutrients": product.nutrients.map((nut) => {
-        "nutritional_value_id": nut.nutritionalValueId,
-        "auto_calc":            nut.autoCalc,
-        "value":                nut.value,
-      }).toList(),
-    };
+    productsJson[product.id.toString()] = productToMap(product);
   }
   
-  // convert meals to json
-  
-  Map<String, dynamic> mealsJson = {};
   for (var meal in meals) {
-    mealsJson[meal.id.toString()] = {
-      "id":             meal.id,
-      "date_time":      meal.dateTime.toIso8601String(),
-      "product_id":     meal.productQuantity.productId,
-      "amount":         meal.productQuantity.amount,
-      "unit":           unitToString(meal.productQuantity.unit),
-      "creation_date":  meal.creationDate?.toIso8601String(),
-      "last_edit_date": meal.lastEditDate?.toIso8601String(),
-    };
+    mealsJson[meal.id.toString()] = mealToMap(meal);
+  }
+  
+  for (var target in targets) {
+    targetsJson.add(targetToMap(target));
   }
   
   // convert to products.json and nutritional_values.json
@@ -506,16 +468,20 @@ Future<void> exportData() async {
   var pJsonUtf8  = utf8.encode(encoder.convert(productsJson));
   var nvJsonUtf8 = utf8.encode(encoder.convert(nutValuesJson));
   var mJsonUtf8  = utf8.encode(encoder.convert(mealsJson));
+  var tJsonUtf8  = utf8.encode(encoder.convert(targetsJson));
   
   var date = DateTime.now().toString().split(" ")[0]; // format: YYYY-MM-DD
   var nameP = "products_$date.json";
   var nameNv = "nutritional_values_$date.json";
+  var nameM = "meals_$date.json";
+  var nameT = "targets_$date.json";
   
   // create a zip file
   var archive = Archive()
     ..addFile(ArchiveFile(nameP, pJsonUtf8.length, pJsonUtf8))
     ..addFile(ArchiveFile(nameNv, nvJsonUtf8.length, nvJsonUtf8))
-    ..addFile(ArchiveFile("meals_$date.json", mJsonUtf8.length, mJsonUtf8));
+    ..addFile(ArchiveFile(nameM, mJsonUtf8.length, mJsonUtf8))
+    ..addFile(ArchiveFile(nameT, tJsonUtf8.length, tJsonUtf8));
   
   var zip = ZipEncoder().encode(archive);
   if (kIsWeb) {
@@ -529,25 +495,15 @@ Future<void> exportData() async {
     // convert to Uint8List
     Uint8List zipUint8 = Uint8List.fromList(zip!);
     
-    // var pathP = await storeFileTemporarily(pJsonUtf8, nameP);
-    // var pathNv = await storeFileTemporarily(nvJsonUtf8, nameNv);
-    // var pathM = await storeFileTemporarily(mJsonUtf8, "meals_$date.json");
     var pathZip = await storeFileTemporarily(zipUint8, "foodtracker_$date.zip");
     
-    // // share both files separately
     await Share.shareXFiles(
       [
-        // XFile(pathP),
-        // XFile(pathNv),
-        // XFile(pathM),
         XFile(pathZip),
       ],
     );
     
     // delete
-    // await File(pathP).delete();
-    // await File(pathNv).delete();
-    // await File(pathM).delete();
     await File(pathZip).delete();
   }
 }
@@ -588,6 +544,7 @@ Future<void> importData(BuildContext context) async {
   var productsJson = <String, dynamic>{};
   var nutritionalValuesJson = <String, dynamic>{};
   var mealsJson = <String, dynamic>{};
+  var targetsJson = const Iterable<Map<String, dynamic>>.empty();
   for (var file in files) {
     String name = file.name;
     dynamic data = file.content;
@@ -604,6 +561,8 @@ Future<void> importData(BuildContext context) async {
       nutritionalValuesJson = json;
     } else if (name.startsWith("meals")) {
       mealsJson = json;
+    } else if (name.startsWith("targets")) {
+      targetsJson = json;
     }
   }
   if (context.mounted) {
@@ -638,6 +597,9 @@ Future<void> importData(BuildContext context) async {
       var nutValIds = <int, int>{};
       var productIds = <int, int>{};
       
+      // save the ingredients, so they can be added later with the updated product ids
+      var ingredientsMap = <int, List<ProductQuantity>>{};
+      
       // import nutritional values
       var nutritionalValues = nutritionalValuesJson.values.map((value) => mapToNutritionalValue(value)).toList();
       for (var nutValue in nutritionalValues) {
@@ -657,15 +619,38 @@ Future<void> importData(BuildContext context) async {
           var newId = nutValIds[nut.nutritionalValueId];
           if (newId == null) throw Exception("Nutritional value id not found");
           return ProductNutrient(
-            productId: product.id,
             nutritionalValueId: newId,
+            productId: product.id,
             autoCalc: nut.autoCalc,
             value: nut.value,
           );
         }).toList();
+        // save the ingredients
+        ingredientsMap[product.id] = product.ingredients;
+        product.ingredients = [];
         
         var p = await service.createProduct(product);
         productIds[product.id] = p.id;
+      }
+      // add the ingredients
+      for (var entry in ingredientsMap.entries) {
+        var newParentId = productIds[entry.key];
+        if (newParentId == null) throw Exception("Product id not found");
+        var ingredientsOld = entry.value;
+        // change all product ids
+        var ingredientsNew = ingredientsOld.map((ingr) {
+          var newIngredientProductId = productIds[ingr.productId];
+          if (newIngredientProductId == null) throw Exception("Product id not found");
+          return ProductQuantity(
+            productId: newIngredientProductId,
+            amount: ingr.amount,
+            unit: ingr.unit,
+          );
+        }).toList();
+        // update the product
+        var product = await service.getProduct(newParentId);
+        product.ingredients = ingredientsNew;
+        await service.updateProduct(product);
       }
       
       // import meals
@@ -680,6 +665,22 @@ Future<void> importData(BuildContext context) async {
           unit: meal.productQuantity.unit,
         );
         await service.createMeal(meal);
+      }
+      
+      // import targets
+      var targets = targetsJson.map((value) => mapToTarget(value)).toList();
+      for (var target in targets) {
+        // change the tracked id
+        if (target.trackedType == Product) {
+          var newId = productIds[target.trackedId];
+          if (newId == null) throw Exception("Product id not found");
+          target.trackedId = newId;
+        } else if (target.trackedType == NutritionalValue) {
+          var newId = nutValIds[target.trackedId];
+          if (newId == null) throw Exception("Nutritional value id not found");
+          target.trackedId = newId;
+        }
+        await service.createTarget(target);
       }
       
       if(context.mounted) showSnackbar(context, "Data imported successfully");

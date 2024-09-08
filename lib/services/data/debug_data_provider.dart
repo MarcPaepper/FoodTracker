@@ -16,11 +16,13 @@ class DebugDataProvider implements DataProvider {
   Map<int, Product> productsMap = {};
   List<NutritionalValue> nutValues = [];
   List<Meal> meals = [];
+  List<Target> targets = [];
   bool loaded = false;
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
   final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();
   final _mealsStreamController = BehaviorSubject<List<Meal>>();
+  final _targetsStreamController = BehaviorSubject<List<Target>>();
   
   @override
   bool isLoaded() => loaded;
@@ -34,11 +36,17 @@ class DebugDataProvider implements DataProvider {
         nutValues = defaultNutritionalValues;
         
         // product nutritient values
-        List<double> prodNutrientValues = [2000, 50, 360, 90, 70, 20, 6];
-        // convert to map with indices as keys
-        Map<int, double> prodNutrientValuesMap = {};
-        for (int i = 0; i < prodNutrientValues.length; i++) {
-          prodNutrientValuesMap[i] = prodNutrientValues[i];
+        List<double> targetValues = [2000, 50, 360, 90, 70, 20, 6];
+        for (var i = 0; i < targetValues.length; i++) {
+          targets.add(
+            Target(
+              isPrimary: i == 0,
+              trackedType: NutritionalValue,
+              trackedId: i,
+              amount: targetValues[i],
+              orderId: i,
+            )
+          );
         }
         
         products = [];
@@ -542,6 +550,65 @@ class DebugDataProvider implements DataProvider {
       throw InvalidDeletionException();
     }
     _mealsStreamController.add(meals);
+    return Future.value();
+  }
+  
+  // ----- Targets -----
+  
+  @override
+  Stream<List<Target>> streamTargets() {
+    if (loaded) _targetsStreamController.add(targets);
+    return _targetsStreamController.stream;
+  }
+  
+  @override
+  void reloadTargetStream() => loaded ? _targetsStreamController.add(targets) : {};
+  
+  @override
+  Future<Iterable<Target>> getAllTargets() {
+    return Future.value(targets);
+  }
+  
+  @override
+  Future<Target> getTarget(Type targetType, int targetId) {
+    var list = targets.where((element) => element.trackedType == targetType && element.trackedId == targetId);
+    if (list.isEmpty) throw NotFoundException();
+    if (list.length > 1) throw NotUniqueException();
+    return Future.value(list.first);
+  }
+  
+  @override
+  Future<Target> createTarget(Target target) {
+    int highestOrderId = 0;
+    for (final target in targets) {
+      if (target.orderId > highestOrderId) highestOrderId = target.orderId;
+    }
+    final newTarget = Target.copyWith(target, newOrderId: highestOrderId + 1);
+    targets.add(newTarget);
+    _targetsStreamController.add(targets);
+    return Future.value(newTarget);
+  }
+  
+  @override
+  Future<Target> updateTarget(Target target) {
+    int lenPrev = targets.length;
+    targets.removeWhere((element) => element.trackedType == target.trackedType && element.trackedId == target.trackedId);
+    targets.add(target);
+    if (lenPrev - targets.length != 0) {
+      throw InvalidUpdateException();
+    }
+    _targetsStreamController.add(targets);
+    return Future.value(target);
+  }
+  
+  @override
+  Future<void> deleteTarget(Type targetType, int targetId) {
+    int lenPrev = targets.length;
+    targets.removeWhere((element) => element.trackedType == targetType && element.trackedId == targetId);
+    if (lenPrev - targets.length != 1) {
+      throw InvalidDeletionException();
+    }
+    _targetsStreamController.add(targets);
     return Future.value();
   }
 }

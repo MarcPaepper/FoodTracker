@@ -57,6 +57,15 @@ CREATE TABLE "meal" (
 	"last_edit_date"	TEXT
 );
 ''';
+const createTargetTable = '''
+CREATE TABLE "target" (
+  "type" TEXT,
+  "tracked_id" INTEGER,
+  "amount" INTEGER,
+  "order_id" INTEGER,
+  "is_primary" INTEGER UNIQUE
+);
+''';
 
 const productTableName = "product";
 const nutritionalValueTableName = "nutritional_value";
@@ -115,6 +124,14 @@ const mealColumns = [
   '"last_edit_date" TEXT',
 ];
 
+const targetColumns = [
+  '"type" TEXT',
+  '"tracked_id" INTEGER',
+  '"amount" INTEGER',
+  '"order_id" INTEGER',
+  '"is_primary" INTEGER',
+];
+
 var missingProductColumns = {
   "creation_date":  () => "UPDATE $productTableName SET creation_date = datetime('now') WHERE creation_date IS NULL;",
   "last_edit_date": () => "UPDATE $productTableName SET last_edit_date = datetime('now') WHERE last_edit_date IS NULL;",
@@ -129,6 +146,7 @@ var missingMealColumns = {
   "creation_date": () => "UPDATE $mealTableName SET creation_date = date_time WHERE creation_date IS NULL;",
   "last_edit_date": () => "UPDATE $mealTableName SET last_edit_date = date_time WHERE last_edit_date IS NULL;",
 };
+var missingTargetColumns = {};
 
 final defaultNutritionalValues = [
   NutritionalValue(0, 0, "Calories", "kcal", false),

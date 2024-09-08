@@ -20,11 +20,12 @@ import "dart:developer" as devtools show log;
 import '../../utility/data_logic.dart';
 import 'object_mapping.dart';
 
-const productTable = "product";
-const mealTable = "meal";
+const productTable          = "product";
+const mealTable             = "meal";
 const nutritionalValueTable = "nutritional_value";
-const ingredientTable = "ingredient";
-const productNutrientTable = "product_nutrient";
+const ingredientTable       = "ingredient";
+const productNutrientTable  = "product_nutrient";
+const targetTable           = "target";
 
 const forceReset = false;
 
@@ -36,10 +37,12 @@ class SqfliteDataProvider implements DataProvider {
   Map<int, Product> _productsMap = {};
   List<NutritionalValue> _nutritionalValues = [];
   List<Meal> _meals = [];
+  List<Target> _targets = [];
   
   final _productsStreamController = BehaviorSubject<List<Product>>();
   final _nutritionalValuesStreamController = BehaviorSubject<List<NutritionalValue>>();
   final _mealsStreamController = BehaviorSubject<List<Meal>>();
+  final _targetsStreamController = BehaviorSubject<List<Target>>();
 
   SqfliteDataProvider(String dbName);
   
@@ -57,6 +60,7 @@ class SqfliteDataProvider implements DataProvider {
       ingredientTable: (createIngredientTable, ingredientColumns, missingIngredientColumns),
       productNutrientTable: (createProductNutrientTable, productNutrientColumns, missingProductNutrientColumns),
       mealTable: (createMealTable, mealColumns, missingMealColumns),
+      targetTable: (createTargetTable, targetColumns, missingTargetColumns),
     };
     try {
       // Find file
@@ -120,6 +124,7 @@ class SqfliteDataProvider implements DataProvider {
       await getAllProducts();
       await getAllNutritionalValues();
       await getAllMeals();
+      await getAllTargets();
       await cleanUp();
       
       return "data loaded";
@@ -222,28 +227,22 @@ class SqfliteDataProvider implements DataProvider {
     final results = await _db!.query(productTable, where: '$nameColumn = ?', whereArgs: [product.name]);
     if (results.isNotEmpty) throw NotUniqueException();
     
-    final id = await _db!.insert(productTable, {
-      nameColumn:                  product.name,
-      defaultUnitColumn:           unitToString(product.defaultUnit),
-      creationDateColumn:          DateTime.now().toIso8601String(),
-      lastEditDateColumn:          DateTime.now().toIso8601String(),
-      temporaryBeginningColumn:    product.temporaryBeginning?.toIso8601String().split("T")[0], // YYYY-MM-DD format
-      temporaryEndColumn:          product.temporaryEnd?.toIso8601String().split("T")[0], // YYYY-MM-DD format
-      isTemporaryColumn:           product.isTemporary ? 1 : 0,
-      quantityNameColumn:          product.quantityName,
-      densityConversionColumn:     product.densityConversion.toString(),
-      quantityConversionColumn:    product.quantityConversion.toString(),
-      autoCalcAmountColumn:        product.autoCalc ? 1 : 0,
-      amountForIngredientsColumn:  product.amountForIngredients,
-      ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
-      amountForNutrientsColumn:    product.amountForNutrients,
-      nutrientsUnitColumn:         unitToString(product.nutrientsUnit),
-    });
+    var map = productToMap(product);
+    var now = DateTime.now();
+    // remove id, ingredients, nutrients
+    map.remove(idColumn);
+    map.remove("ingredients");
+    map.remove("nutrients");
+    // set creation and last edit date
+    map[creationDateColumn] = now.toIso8601String();
+    map[lastEditDateColumn] = now.toIso8601String();
+    
+    final id = await _db!.insert(productTable, map);
     
     _addIngredients(product: product, containedInId: id);
     _addProductNutrientsForProduct(product: product, productId: id);
     
-    var newProduct = Product.copyWith(product, newId: id, newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
+    var newProduct = Product.copyWith(product, newId: id, newCreationDate: now, newLastEditDate: now);
     _products.add(newProduct);
     _productsMap[id] = newProduct;
     _productsStreamController.add(_products);
@@ -264,22 +263,13 @@ class SqfliteDataProvider implements DataProvider {
     
     product.lastEditDate = DateTime.now();
     
-    final updatedCount = await _db!.update(productTable, {
-      nameColumn:                  product.name,
-      creationDateColumn:          product.creationDate!.toIso8601String(),
-      lastEditDateColumn:          product.lastEditDate!.toIso8601String(),
-      temporaryBeginningColumn:    product.temporaryBeginning?.toIso8601String().split("T")[0], // YYYY-MM-DD format
-      temporaryEndColumn:          product.temporaryEnd?.toIso8601String().split("T")[0], // YYYY-MM-DD format
-      isTemporaryColumn:           product.isTemporary ? 1 : 0,
-      defaultUnitColumn:           unitToString(product.defaultUnit),
-      densityConversionColumn:     product.densityConversion.toString(),
-      quantityConversionColumn:    product.quantityConversion.toString(),
-      quantityNameColumn:          product.quantityName,
-      autoCalcAmountColumn:        product.autoCalc ? 1 : 0,
-      amountForIngredientsColumn:  product.amountForIngredients,
-      ingredientsUnitColumn:       unitToString(product.ingredientsUnit),
-      amountForNutrientsColumn:    product.amountForNutrients,
-    }, where: '$idColumn = ?', whereArgs: [product.id]);
+    var map = productToMap(product);
+    // remove id, ingredients, nutrients
+    map.remove(idColumn);
+    map.remove("ingredients");
+    map.remove("nutrients");
+    
+    final updatedCount = await _db!.update(productTable, map, where: '$idColumn = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
     await _deleteIngredients(containedInId: product.id);
@@ -392,16 +382,15 @@ class SqfliteDataProvider implements DataProvider {
       // ignore
     }
     
-    final id = await _db!.insert(nutritionalValueTable, {
-      nameColumn:             nutVal.name,
-      orderIdColumn:          orderId,
-      unitNameColumn:         nutVal.unit,
-      showFullNameColumn:     nutVal.showFullName ? 1 : 0,
-    });
+    nutVal = NutritionalValue.copyWith(nutVal, newOrderId: orderId);
+    var map = nutValueToMap(nutVal);
+    map.remove(idColumn);
+    
+    final id = await _db!.insert(nutritionalValueTable, map);
     
     _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
     
-    var newNutVal = NutritionalValue.copyWith(nutVal, newId: id, newOrderId: orderId);
+    var newNutVal = NutritionalValue.copyWith(nutVal, newId: id);
     _nutritionalValues.add(newNutVal);
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
@@ -412,12 +401,9 @@ class SqfliteDataProvider implements DataProvider {
   Future<NutritionalValue> updateNutritionalValue(NutritionalValue nutVal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final updatedCount = await _db!.update(nutritionalValueTable, {
-      nameColumn:             nutVal.name,
-      orderIdColumn:          nutVal.orderId,
-      unitNameColumn:         nutVal.unit,
-      showFullNameColumn:     nutVal.showFullName ? 1 : 0,
-    }, where: '$idColumn = ?', whereArgs: [nutVal.id]);
+    var map = nutValueToMap(nutVal);
+    map.remove(idColumn);
+    final updatedCount = await _db!.update(nutritionalValueTable, map, where: '$idColumn = ?', whereArgs: [nutVal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
     _nutritionalValues.removeWhere((p) => p.id == nutVal.id);
@@ -546,16 +532,14 @@ class SqfliteDataProvider implements DataProvider {
   Future<Meal> createMeal(Meal meal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final id = await _db!.insert(mealTable, {
-      dateTimeColumn:     meal.dateTime.toIso8601String(),
-      productIdColumn:    meal.productQuantity.productId,
-      mealAmountColumn:   meal.productQuantity.amount,
-      mealUnitColumn:     unitToString(meal.productQuantity.unit),
-      creationDateColumn: DateTime.now().toIso8601String(),
-      lastEditDateColumn: DateTime.now().toIso8601String(),
-    });
+    var map = mealToMap(meal);
+    var now = DateTime.now();
+    map.remove(idColumn);
+    map[creationDateColumn] = now.toIso8601String();
+    map[lastEditDateColumn] = now.toIso8601String();
+    final id = await _db!.insert(mealTable, map);
     
-    var newMeal = Meal.copyWith(meal, newId: id, newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
+    var newMeal = Meal.copyWith(meal, newId: id, newCreationDate: now, newLastEditDate: now);
     _meals.insert(findInsertIndex(_meals, newMeal), newMeal);
     _mealsStreamController.add(_meals);
     
@@ -566,14 +550,11 @@ class SqfliteDataProvider implements DataProvider {
   Future<Meal> updateMeal(Meal meal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final updatedCount = await _db!.update(mealTable, {
-      dateTimeColumn:     meal.dateTime.toIso8601String(),
-      productIdColumn:    meal.productQuantity.productId,
-      mealAmountColumn:   meal.productQuantity.amount,
-      mealUnitColumn:     unitToString(meal.productQuantity.unit),
-      creationDateColumn: meal.creationDate?.toIso8601String(),
-      lastEditDateColumn: DateTime.now().toIso8601String(),
-    }, where: '$idColumn = ?', whereArgs: [meal.id]);
+    meal = Meal.copyWith(meal, newLastEditDate: DateTime.now());
+    var map = mealToMap(meal);
+    map.remove(idColumn);
+    
+    final updatedCount = await _db!.update(mealTable, map, where: '$idColumn = ?', whereArgs: [meal.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
     
     _meals.removeWhere((m) => m.id == meal.id);
@@ -592,5 +573,95 @@ class SqfliteDataProvider implements DataProvider {
     
     _meals.removeWhere((m) => m.id == id);
     _mealsStreamController.add(_meals);
+  }
+  
+  // ----- Target -----
+  
+  @override
+  Stream<List<Target>> streamTargets() => _targetsStreamController.stream;
+  
+  @override
+  void reloadTargetStream() => isLoaded() ? _targetsStreamController.add(_targets) : null;
+  
+  @override
+  Future<Iterable<Target>> getAllTargets() async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    var targetRows = await _db!.query(targetTable);
+    _targets = targetRows.map((row) => mapToTarget(row)).toList();
+    
+    _targetsStreamController.add(_targets);
+    
+    return _targets;
+  }
+  
+  @override
+  Future<Target> getTarget(Type targetType, int targetId) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final results = await _db!.query(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [targetType.toString(), targetId]);
+    if (results.isEmpty) throw NotFoundException();
+    if (results.length > 1) throw NotUniqueException();
+    
+    var target = mapToTarget(results.first);
+    
+    _targetsStreamController.add(_targets);
+    
+    return target;
+  }
+  
+  @override
+  Future<Target> createTarget(Target target) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final results = await _db!.query(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [target.trackedType.toString(), target.trackedId]);
+    if (results.isNotEmpty) throw NotUniqueException();
+    
+    // find highest order id
+    var orderId = 0;
+    try {
+      var orderResults = await _db!.query(targetTable, columns: [orderIdColumn], orderBy: '$orderIdColumn DESC', limit: 1);
+      orderId = (orderResults.first[orderIdColumn] as int) + 1;
+    } catch (e) {
+      // ignore
+    }
+    
+    target = Target.copyWith(target, newOrderId: orderId);
+    var map = targetToMap(target);
+    map.remove(idColumn);
+    
+    await _db!.insert(targetTable, map);
+    
+    _targets.add(target);
+    _targetsStreamController.add(_targets);
+    
+    return target;
+  }
+  
+  @override
+  Future<Target> updateTarget(Target target) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    var map = targetToMap(target);
+    map.remove(idColumn);
+    final updatedCount = await _db!.update(targetTable, map, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [target.trackedType.toString(), target.trackedId]);
+    if (updatedCount != 1) throw InvalidUpdateException();
+    
+    _targets.removeWhere((t) => t.trackedType == target.trackedType && t.trackedId == target.trackedId);
+    _targets.add(target);
+    _targetsStreamController.add(_targets);
+    
+    return target;
+  }
+  
+  @override
+  Future<void> deleteTarget(Type targetType, int targetId) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final deletedCount = await _db!.delete(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [targetType.toString(), targetId]);
+    if (deletedCount != 1) throw InvalidDeletionException();
+    
+    _targets.removeWhere((t) => t.trackedType == targetType && t.trackedId == targetId);
+    _targetsStreamController.add(_targets);
   }
 }

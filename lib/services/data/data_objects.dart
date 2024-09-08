@@ -535,3 +535,53 @@ class ProductNutrient {
     return "<ProductNutrient of prod $productId containing $value of nutr $nutritionalValueId${autoCalc ? " (autocalc)":""}>";
   }
 }
+
+class Target{
+  bool isPrimary;
+  Type trackedType;
+  int trackedId;
+  double amount;
+  int orderId;
+  
+  Target({
+    required this.isPrimary,
+    required this.trackedType,
+    required this.trackedId,
+    required this.amount,
+    required this.orderId,
+  });
+  
+  factory Target.copyWith(
+    Target target,
+    {
+      bool? newIsPrimary,
+      Type? newTrackedType,
+      int? newTrackedId,
+      double? newAmount,
+      int? newOrderId,
+    }
+  ) {
+    return Target(
+      isPrimary:   newIsPrimary   ?? target.isPrimary,
+      trackedType: newTrackedType ?? target.trackedType,
+      trackedId:   newTrackedId   ?? target.trackedId,
+      amount:      newAmount      ?? target.amount,
+      orderId:     newOrderId     ?? target.orderId,
+    );
+  }
+  
+  @override
+  bool operator ==(covariant Target other) =>
+    isPrimary == other.isPrimary &&
+    trackedType == other.trackedType &&
+    trackedId == other.trackedId &&
+    amount == other.amount;
+  
+  @override
+  int get hashCode => isPrimary.hashCode ^ trackedType.hashCode ^ trackedId.hashCode ^ amount.hashCode;
+  
+  @override
+  String toString() {
+    return "<Target $amount of $trackedType #$trackedId${isPrimary ? " primary" : ""}>";
+  }
+}
