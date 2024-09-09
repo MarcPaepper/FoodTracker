@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 const tabColorActive = Color.fromARGB(255, 193, 255, 253);
@@ -13,6 +14,16 @@ var actionButtonStyle = ButtonStyle(
   shape: WidgetStateProperty.all(const RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(12)),
   )),
+);
+
+var lightButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.teal.shade100.withOpacity(0.6),
+  shadowColor: Colors.transparent,
+  surfaceTintColor: Colors.transparent,
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(10)),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 16 : 12),
 );
 
 ThemeData getTheme() =>

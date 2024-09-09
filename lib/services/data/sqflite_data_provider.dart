@@ -148,6 +148,13 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
+  Future<String> reload() async {
+    await _db!.close();
+    _db = null;
+    return await open("test");
+  }
+  
+  @override
   Future<void> close() async {
     _productsStreamController.close();
     _nutritionalValuesStreamController.close();
@@ -532,14 +539,12 @@ class SqfliteDataProvider implements DataProvider {
   Future<Meal> createMeal(Meal meal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
+    meal = Meal.copyWith(meal, newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
     var map = mealToMap(meal);
-    var now = DateTime.now();
     map.remove(idColumn);
-    map[creationDateColumn] = now.toIso8601String();
-    map[lastEditDateColumn] = now.toIso8601String();
     final id = await _db!.insert(mealTable, map);
     
-    var newMeal = Meal.copyWith(meal, newId: id, newCreationDate: now, newLastEditDate: now);
+    var newMeal = Meal.copyWith(meal, newId: id);
     _meals.insert(findInsertIndex(_meals, newMeal), newMeal);
     _mealsStreamController.add(_meals);
     

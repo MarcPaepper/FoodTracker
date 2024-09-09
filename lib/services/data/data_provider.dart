@@ -5,6 +5,7 @@ abstract class DataProvider {
   Future<String> open(String dbName);
   Future<void> close();
   bool isLoaded();
+  Future<String> reload();
   Future<void> reset(String dbName);
   Future<void> cleanUp();
   

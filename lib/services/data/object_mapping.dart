@@ -2,6 +2,8 @@ import '../../utility/data_logic.dart';
 import '../../utility/text_logic.dart';
 import 'data_objects.dart';
 
+// import 'dart:developer' as devtools show log;
+
 // multiple tables
 const idColumn                    = "id";
 const amountColumn                = "amount";
@@ -47,7 +49,7 @@ const typeColumn                   = "type";
 const trackedIdColumn              = "tracked_id";
 const primaryColumn                = "is_primary";
 
-// Maps to objects
+// ----- Maps to objects -----
 
 Product mapToProduct(Map<String, dynamic> row) {
   List<ProductQuantity> ingredients = [];
@@ -140,7 +142,7 @@ Target mapToTarget(Map<String, Object?> map) {
   );
 }
 
-// Objects to maps
+// ----- Objects to maps -----
   
 Map<String, dynamic> productToMap(Product product) =>
   {

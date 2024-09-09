@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import '../services/data/data_service.dart';
+import '../utility/theme.dart';
 
 class OptionsView extends StatefulWidget {
   const OptionsView({super.key});
@@ -19,23 +20,16 @@ class _OptionsViewState extends State<OptionsView> {
         const SizedBox(height: 8),
         _buildPortButton(context, true),
         _buildPortButton(context, false),
+        _buildReloadButton(),
       ]
     );
   }
   
-  _buildPortButton(BuildContext context, bool isExport) {
+  Widget _buildPortButton(BuildContext context, bool isExport) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.teal.shade100.withOpacity(0.6),
-          shadowColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 16 : 12),
-        ),
+        style: lightButtonStyle,
         onPressed: () => isExport ? exportData() : importData(context),
         child: Row(
           children: [
@@ -47,4 +41,20 @@ class _OptionsViewState extends State<OptionsView> {
       ),
     );
   }
+  
+  Widget _buildReloadButton() =>
+    Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+      child: ElevatedButton(
+        style: lightButtonStyle,
+        onPressed: () => DataService.current().reload(),
+        child: const Row(
+          children: [
+            Icon(Icons.refresh),
+            SizedBox(width: 20),
+            Text("Reload Database"),
+          ],
+        ),
+      ),
+    );
 }

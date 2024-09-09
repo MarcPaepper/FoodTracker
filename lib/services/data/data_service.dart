@@ -46,6 +46,7 @@ class DataService implements DataProvider {
   @override Future<String> open(String dbName) => _provider.open(dbName);
   @override Future<void> close()               => _provider.close();
   @override bool isLoaded()                    => _provider.isLoaded();
+  @override Future<String> reload()            => _provider.reload();
   @override Future<void> reset(String dbName)  => _provider.reset(dbName);
   @override Future<void> cleanUp()             => _provider.cleanUp();
   

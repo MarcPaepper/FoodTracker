@@ -286,6 +286,20 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<String> reload() async {
+    if (!loaded) return Future.value("data not loaded");
+    products = List.from(products);
+    nutValues = List.from(nutValues);
+    meals = List.from(meals);
+    targets = List.from(targets);
+    _productsStreamController.add(products);
+    _nutritionalValuesStreamController.add(nutValues);
+    _mealsStreamController.add(meals);
+    _targetsStreamController.add(targets);
+    return Future.value("data reloaded");
+  }
+  
+  @override
   Future<void> reset(String dbName) async {
     loaded = false;
     products = [];
