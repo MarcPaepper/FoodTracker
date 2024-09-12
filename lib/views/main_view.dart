@@ -7,6 +7,7 @@ import '../services/data/data_service.dart';
 import 'products_view.dart';
 import 'nutvalues_view.dart';
 import 'options_view.dart';
+import 'targets_view.dart';
 
 // import 'dart:developer' as devtools show log;
 
@@ -39,7 +40,7 @@ class _MainViewState extends State<MainView> {
       // clamping scroll physics to avoid overscroll
       behavior: const ScrollBehavior().copyWith(overscroll: false),
       child: DefaultTabController(
-        length: 4,
+        length: 5,
         child: Scaffold(
           appBar: PreferredSize(
             preferredSize: _tabBar.preferredSize,
@@ -54,6 +55,7 @@ class _MainViewState extends State<MainView> {
               MealsView(),
               ProductsView(),
               NutritionalValueView(),
+              TargetsView(),
               OptionsView(),
             ],
           ),
@@ -70,6 +72,7 @@ class _MainViewState extends State<MainView> {
       Tab(text: "Meals"),
       Tab(text: "Products"),
       Tab(text: "Nutrition"),
+      Tab(text: "Targets"),
       Tab(text: "Options"),
     ],
   );

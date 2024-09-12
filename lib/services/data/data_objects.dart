@@ -541,6 +541,7 @@ class Target{
   Type trackedType;
   int trackedId;
   double amount;
+  Unit? unit;
   int orderId;
   
   Target({
@@ -548,6 +549,7 @@ class Target{
     required this.trackedType,
     required this.trackedId,
     required this.amount,
+    required this.unit,
     required this.orderId,
   });
   
@@ -558,6 +560,7 @@ class Target{
       Type? newTrackedType,
       int? newTrackedId,
       double? newAmount,
+      Unit? newUnit,
       int? newOrderId,
     }
   ) {
@@ -566,6 +569,7 @@ class Target{
       trackedType: newTrackedType ?? target.trackedType,
       trackedId:   newTrackedId   ?? target.trackedId,
       amount:      newAmount      ?? target.amount,
+      unit:        newUnit        ?? target.unit,
       orderId:     newOrderId     ?? target.orderId,
     );
   }
@@ -575,13 +579,14 @@ class Target{
     isPrimary == other.isPrimary &&
     trackedType == other.trackedType &&
     trackedId == other.trackedId &&
-    amount == other.amount;
+    amount == other.amount &&
+    unit == other.unit;
   
   @override
-  int get hashCode => isPrimary.hashCode ^ trackedType.hashCode ^ trackedId.hashCode ^ amount.hashCode;
+  int get hashCode => isPrimary.hashCode ^ trackedType.hashCode ^ trackedId.hashCode ^ amount.hashCode ^ unit.hashCode;
   
   @override
   String toString() {
-    return "<Target $amount of $trackedType #$trackedId${isPrimary ? " primary" : ""}>";
+    return "<Target $amount${unit != null ? unitToString(unit!) : ""} of $trackedType #$trackedId${isPrimary ? " primary" : ""}>";
   }
 }

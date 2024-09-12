@@ -40,10 +40,11 @@ class DebugDataProvider implements DataProvider {
         for (var i = 0; i < targetValues.length; i++) {
           targets.add(
             Target(
-              isPrimary: i == 0,
+              isPrimary: true,
               trackedType: NutritionalValue,
               trackedId: i,
               amount: targetValues[i],
+              unit: null,
               orderId: i,
             )
           );

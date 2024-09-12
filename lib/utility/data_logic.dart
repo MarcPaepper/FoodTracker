@@ -390,6 +390,8 @@ Map<int, Product> reduceProducts(Map<int, Product> productsMap, List<ProductQuan
 
 List<NutritionalValue> sortNutValues(List<NutritionalValue> nutValues) => nutValues..sort((a, b) => a.orderId.compareTo(b.orderId));
 
+List<Target> sortTargets(List<Target> targets) => targets..sort((a, b) => a.orderId.compareTo(b.orderId));
+
 // check whether the product nutrients match the nutritional values
 List<ProductNutrient> checkNutrients(
   int productId,

@@ -132,12 +132,14 @@ Target mapToTarget(Map<String, Object?> map) {
     default:
       throw ArgumentError("Unknown target type: ${map[typeColumn]}");
   }
+  String unit = map[unitColumn] as String;
   
   return Target(
     trackedType: trackedType,
     trackedId:   map[trackedIdColumn] as int,
     isPrimary:   map[primaryColumn] == 1,
     amount:      map[amountColumn] as double,
+    unit:        unit == "" ? null : unitFromString(unit),
     orderId:     map[orderIdColumn] as int,
   );
 }
@@ -208,6 +210,7 @@ Map<String, dynamic> targetToMap(Target target) {
     typeColumn:      targetType,
     trackedIdColumn: target.trackedId,
     amountColumn:    target.amount,
+    unitColumn:      target.unit == null ? "" : unitToString(target.unit!),
     primaryColumn:   target.isPrimary,
     orderIdColumn:   target.orderId,
   };

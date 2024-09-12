@@ -62,6 +62,7 @@ CREATE TABLE "target" (
   "type" TEXT,
   "tracked_id" INTEGER,
   "amount" INTEGER,
+  "unit" TEXT,
   "order_id" INTEGER,
   "is_primary" INTEGER UNIQUE
 );
@@ -128,6 +129,7 @@ const targetColumns = [
   '"type" TEXT',
   '"tracked_id" INTEGER',
   '"amount" INTEGER',
+  '"unit" TEXT',
   '"order_id" INTEGER',
   '"is_primary" INTEGER',
 ];

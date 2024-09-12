@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/constants/routes.dart';
-import 'package:food_tracker/services/data/data_objects.dart';
-import 'package:food_tracker/services/data/data_service.dart';
-import 'package:food_tracker/utility/data_logic.dart';
-import 'package:food_tracker/widgets/loading_page.dart';
 
+import '../constants/routes.dart';
+import '../services/data/data_objects.dart';
+import '../services/data/data_service.dart';
+import '../utility/data_logic.dart';
+import '../widgets/loading_page.dart';
 import '../utility/theme.dart';
 
 // import "dart:developer" as devtools show log;
