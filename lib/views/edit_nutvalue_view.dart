@@ -45,7 +45,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
     
     _name = TextEditingController();
     _unit = TextEditingController(text: "g");
-    _dataService.open(dbName);
+    _dataService.open(dbName); // why?
     super.initState();
   }
   
