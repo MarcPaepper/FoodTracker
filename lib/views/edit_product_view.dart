@@ -379,7 +379,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 intermediateSave: () => _interimProduct = getProductFromForm().$1,
                                 onConversionChanged: (newDensityConversion, newQuantityConversion) {
                                   devtools.log("Conversion changed");
-                                  _interimProduct = Product.copyWith(getProductFromForm().$1,
+                                  _interimProduct = getProductFromForm().$1.copyWith(
                                     newDensityConversion: newDensityConversion,
                                     newQuantityConversion: newQuantityConversion,
                                   );
@@ -410,7 +410,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                   var oldP = getProductFromForm().$1;
                                   _ingredientsToFocus = index == null ? [] : [index, 0];
                                   _autofocusTime = DateTime.now();
-                                  _interimProduct = Product.copyWith(oldP,
+                                  _interimProduct = oldP.copyWith(
                                     newIngredientsUnit: newIngredientsUnit,
                                     newIngredients: newIngredients,
                                   );
@@ -448,7 +448,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 nutrientAmountController: _nutrientAmountController,
                                 nutrientAmountControllers: _nutrientAmountControllers,
                                 onUnitChanged: (unit) {
-                                  _interimProduct = Product.copyWith(getProductFromForm().$1, newNutrientsUnit: unit);
+                                  _interimProduct = getProductFromForm().$1.copyWith(newNutrientsUnit: unit);
                                 },
                                 intermediateSave: () => _interimProduct = getProductFromForm().$1,
                               ),
@@ -482,7 +482,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     var (product, _) = getProductFromForm();
     
     var compProduct = _prevProduct;
-    if (_copyName != null) compProduct = Product.copyWith(product, newName: _copyName!);
+    if (_copyName != null) compProduct = product.copyWith(newName: _copyName!);
     
     if (product.equals(compProduct)) {
       Future(() => navigator.pop(_prevProduct));
@@ -737,7 +737,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                             _nutrientsUnitNotifier.value = unit;
                           }
                           _defaultUnitNotifier.value = unit;
-                          _interimProduct = Product.copyWith(getProductFromForm().$1,
+                          _interimProduct = getProductFromForm().$1.copyWith(
                             newDefaultUnit: unit,
                             newIngredientsUnit: ingredientsUnit,
                             newNutrientsUnit: nutrientsUnit,

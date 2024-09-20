@@ -17,7 +17,7 @@ const underlineColorError = Color.fromARGB(210, 193, 46, 27);
 class ProductDropdown extends StatefulWidget {
   final Map<int, Product> productsMap;
   final Product? selectedProduct;
-  final int index;
+  // final int index;
   final void Function()? beforeTap;
   final void Function(Product?) onChanged;
   final FocusNode? focusNode;
@@ -31,7 +31,7 @@ class ProductDropdown extends StatefulWidget {
   ProductDropdown({
     required this.productsMap,
     required this.selectedProduct,
-    required this.index,
+    // required this.index,
     required this.onChanged,
     this.beforeTap,
     this.focusNode,

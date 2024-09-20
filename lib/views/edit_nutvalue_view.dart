@@ -159,7 +159,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
         return null;
       },
       onChanged: (value) {
-        _interimValue = NutritionalValue.copyWith(_interimValue!, newName: value);
+        _interimValue = _interimValue!.copyWith(newName: value);
       },
       autovalidateMode: AutovalidateMode.onUserInteraction,
     ),
@@ -179,7 +179,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
         return null;
       },
       onChanged: (value) {
-        _interimValue = NutritionalValue.copyWith(_interimValue!, newUnit: value);
+        _interimValue = _interimValue!.copyWith(newUnit: value);
       },
       autovalidateMode: AutovalidateMode.onUserInteraction,
     ),
@@ -196,7 +196,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
           value: value,
           onChanged: (newValue) {
             _showFullName.value = newValue;
-            _interimValue = NutritionalValue.copyWith(_interimValue!, newShowFullName: newValue);
+            _interimValue = _interimValue!.copyWith(newShowFullName: newValue);
           },
           controlAffinity: ListTileControlAffinity.leading,
         ),

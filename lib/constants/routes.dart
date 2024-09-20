@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../views/edit_meal_view.dart';
 import '../views/edit_nutvalue_view.dart';
 import '../views/edit_product_view.dart';
+import '../views/edit_target_view.dart';
 import '../views/main_view.dart';
 import '../views/meals_view.dart';
 import '../views/nutvalues_view.dart';
@@ -54,15 +55,17 @@ var routes = {
   },
   nutvaluesRoute:	(context) => const NutritionalValueView(),
   addNutritionalValueRoute:	(context) => const EditNutritionalValueView(isEdit: false),
-  editNutritionalValueRoute: (context) {
-    return EditNutritionalValueView(
-      isEdit: true,
-      nutvalueId: ModalRoute.of(context)!.settings.arguments as int?,
-    );
-  },
-  targetsRoute:		(context) => const TargetsView(),
-  // addTargetRoute:	(context) => const EditTargetView(isEdit: false),
-  // editTargetRoute:	(context) => const EditTargetView(isEdit: true),
+  editNutritionalValueRoute: (context) => EditNutritionalValueView(
+    isEdit: true,
+    nutvalueId: ModalRoute.of(context)!.settings.arguments as int?,
+  ),
+  targetsRoute:		  (context) => const TargetsView(),
+  addTargetRoute:	  (context) => const EditTargetView(isEdit: false),
+  editTargetRoute:	(context) => EditTargetView(
+    isEdit: true,
+    trackedId: ModalRoute.of(context)!.settings.arguments as int,
+    
+  ),
   statsRoute:		  	(context) => const StatsView(),
   testRoute:	  		(context) => const TestView(),
   optionsRoute:		  (context) => const OptionsView(),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/data/data_objects.dart';
@@ -34,22 +35,6 @@ class _UnitDropdownState extends State<UnitDropdown> {
     var items = widget.items;
     bool enabled = widget.enabled ?? true;
     
-    var decoration = enabled
-      ? const InputDecoration(
-        contentPadding: EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14),
-      ) 
-      : InputDecoration(
-        contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14),
-        // no enabled border
-        enabledBorder: UnderlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide(
-            width: 3.5,
-            color: Colors.grey.shade300
-          )
-        ),
-      );
-    
     if (!enabled) {
       // reduce opacity of items
       items = items.map((key, value) => MapEntry(key, Opacity(
@@ -61,7 +46,7 @@ class _UnitDropdownState extends State<UnitDropdown> {
     return ExcludeFocusTraversal(
       excluding: widget.skipTraversal,
       child: DropdownButtonFormField(
-        decoration: decoration,
+        decoration: enabled ? dropdownStyleEnabled : dropdownStyleDisabled,
         isExpanded: true,
         value: widget.current,
         items: items.entries.map((entry) => DropdownMenuItem<Unit>(

@@ -201,7 +201,7 @@ class _FoodBoxState extends State<FoodBox> {
                       ProductDropdown(
                         productsMap: availableProducts,
                         selectedProduct: product,
-                        index: index,
+                        // index: index,
                         focusNode: focusNode1,
                         autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
                         autofocusSearch: true,

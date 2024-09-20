@@ -1,10 +1,15 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/theme.dart';
+import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
+import 'package:food_tracker/widgets/unit_dropdown.dart';
 
 import '../constants/data.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
 import '../widgets/loading_page.dart';
+import '../widgets/product_dropdown.dart';
 
 // import 'dart:developer' as devtools show log;
 
@@ -19,11 +24,18 @@ class EditTargetView extends StatefulWidget {
   State<EditTargetView> createState() => _EditTargetViewState();
 }
 
-class _EditTargetViewState extends State<EditTargetView> {
+class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+  
   final _dataService = DataService.current();
   final _formKey = GlobalKey<FormState>();
-  final _typeNotifier = ValueNotifier<Type>(NutritionalValue);
-  final _trackedIdNotifier = ValueNotifier<int>(-1);
+  
+  final _isPrimaryNotifier = ValueNotifier<bool>(true);
+  final _typeNotifier      = ValueNotifier<Type>(NutritionalValue);
+  final _trackedIdNotifier = ValueNotifier<int?>(null);
+  final _amountNotifier    = ValueNotifier<double>(0);
+  final _unitNotifier      = ValueNotifier<Unit?>(null);
   
   int? _orderId;
   
@@ -86,52 +98,185 @@ class _EditTargetViewState extends State<EditTargetView> {
                   }
                   
                   final products = snapshotP.data as List<Product>;
+                  final productsMap = Map<int, Product>.fromEntries(products.map((product) => MapEntry(product.id, product)));
                   final nutvalues = snapshotN.data as List<NutritionalValue>;
                   final targets = snapshotT.data as List<Target>;
                   
                   if (isEdit) {
-                    _interimTarget = targets.firstWhere((element) => element.type == widget.type && element.trackedId == widget.trackedId);
+                    if (_interimTarget == null) {
+                      try {
+                        _interimTarget = targets.firstWhere((target) => target.trackedType == widget.type && target.trackedId == widget.trackedId);
+                      } catch (e) {
+                        showErrorbar(context, "Error: Target not found");
+                        Navigator.of(context).pop();
+                      }
+                    }
+                  } else {
+                    _interimTarget = Target(
+                      orderId: -1,
+                      isPrimary: true,
+                      trackedType: NutritionalValue,
+                      trackedId: -1,
+                      unit: null,
+                      amount: 0,
+                    );
+                  }
+                  if (_interimTarget != null) {
+                    _isPrimaryNotifier.value = _interimTarget!.isPrimary;
+                    _typeNotifier.value      = _interimTarget!.trackedType;
+                    _trackedIdNotifier.value = _interimTarget!.trackedId == -1 ? null : _interimTarget!.trackedId;
+                    _amountNotifier.value    = _interimTarget!.amount;
+                    _unitNotifier.value      = _interimTarget!.unit;
+                    _orderId                 = _interimTarget!.orderId;
                   }
                   
-                  return Form(
-                    key: _formKey,
-                    child: ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        DropdownButton<Type>(
-                          value: _typeNotifier.value,
-                          onChanged: (value) {
-                            _typeNotifier.value = value!;
-                          },
-                          items: [
-                            for (var type in [Product, NutritionalValue])
-                              DropdownMenuItem(
-                                value: type,
-                                child: Text(type == Product ? "Product" : "Nutritional Value"),
-                              ),
-                          ],
-                        ),
-                        if (_typeNotifier.value == Product)
-                          DropdownButton<Product>(
-                            value: products.firstWhere((element) => element.id == _trackedIdNotifier.value),
-                            onChanged: (value) {
-                              _trackedIdNotifier.value = value.id!;
-                            },
-                            items: [
-                              for (var product in products)
-                                DropdownMenuItem(
-                                  value: product,
-                                  child: Text(product.name),
-                                ),
-                            ],
-                          ),
-                        if (_typeNotifier.value == NutritionalValue)
+                  return Padding(
+                    padding: const EdgeInsets.all(7.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          _buildPrimaryToggle(),
+                          const SizedBox(height: 6),
+                          const Text("Type of target:"),
+                          _buildTypeDropdown(),
+                          const SizedBox(height: 6),
+                          _buildSelectorDropdown(nutvalues, productsMap),
+                          // _buildAmountField(),
+                          _buildUnitDropdown(nutvalues, products),
+                          // _buildAddButton(),
+                        ]
+                      ),
+                    ),
+                  );
                 }
-              )
+              );
             }
-          )
+          );
         }
       )
+    );
+  }
+  
+  Widget _buildPrimaryToggle() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isPrimaryNotifier,
+      builder: (context, isPrimary, child) {
+        return SwitchListTile(
+          value: isPrimary,
+          controlAffinity: ListTileControlAffinity.leading,
+          onChanged: (isPrimary) {
+            _isPrimaryNotifier.value = isPrimary;
+            _interimTarget = _interimTarget?.copyWith(newIsPrimary: isPrimary);
+          },
+          title: const Text("Primary Target"),
+        );
+      }
+    );
+  }
+  
+  Widget _buildTypeDropdown() {
+    return ValueListenableBuilder<Type>(
+      valueListenable: _typeNotifier,
+      builder: (context, type, child) {
+        return DropdownButtonFormField<Type>(
+          decoration: dropdownStyleEnabled,
+          value: type,
+          items: const [
+            DropdownMenuItem(
+              value: NutritionalValue,
+              child: Text("Nutritional Value"),
+            ),
+            DropdownMenuItem(
+              value: Product,
+              child: Text("Product"),
+            ),
+          ],
+          onChanged: (value) {
+            _typeNotifier.value = value!;
+            _trackedIdNotifier.value = null;
+            if (value == Product) {
+              _unitNotifier.value = Unit.g;
+            } else {
+              _unitNotifier.value = null;
+            }
+          },
+        );
+      }
+    );
+  }
+  
+  Widget _buildSelectorDropdown(List<NutritionalValue> nutvalues, Map<int, Product> productsMap) {
+    return MultiValueListenableBuilder(
+      listenables: [_typeNotifier, _trackedIdNotifier],
+      builder: (context, values, child) {
+        Type type = values[0];
+        int? trackedId = values[1];
+        
+        if (type == Product) {
+          var product = productsMap[trackedId];
+          
+          return ProductDropdown(
+            productsMap: productsMap,
+            selectedProduct: product,
+            onChanged: (product) {
+              if (product != null) {
+                _trackedIdNotifier.value = product.id;
+              }
+            },
+          );
+        } else if (type == NutritionalValue) {
+          return DropdownButtonFormField<int>(
+            decoration: dropdownStyleEnabled,
+            value: trackedId,
+            items: nutvalues.map((nutvalue) => DropdownMenuItem<int>(
+              value: nutvalue.id,
+              child: Text(nutvalue.name),
+            )).toList(),
+            onChanged: (value) {
+              _trackedIdNotifier.value = value!;
+            },
+          );
+        } else {
+          return const SizedBox.shrink();
+        }
+      }
+    );
+  }
+  
+  Widget _buildUnitDropdown(List<NutritionalValue> nutvalues, List<Product> products) {
+    return MultiValueListenableBuilder(
+      listenables: [_unitNotifier, _typeNotifier, _trackedIdNotifier],
+      builder: (context, values, child) {
+        Unit? unit = values[0];
+        Type type = values[1];
+        int? trackedId = values[2];
+        
+        if (type == Product) {
+          var product = products.firstWhereOrNull((element) => element.id == trackedId);
+          
+          return UnitDropdown(
+            items: buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values, quantityName: product?.quantityName ?? "x"),
+            current: unit ?? Unit.g,
+            onChanged: (value) {
+              if (value != null) {
+                _unitNotifier.value = value;
+              }
+            },
+            enabled: product != null,
+          );
+        } else if (type == NutritionalValue) {
+          var nutvalue = nutvalues.firstWhereOrNull((element) => element.id == trackedId);
+          
+          if (nutvalue != null) {
+            return Text(nutvalue.unit);
+          } else {
+            return const SizedBox.shrink();
+          }
+        } else {
+          return const SizedBox.shrink();
+        }
+      }
     );
   }
 }

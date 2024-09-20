@@ -393,7 +393,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                         builder: (context) => ProductDropdown(
                           productsMap: availableProducts,
                           selectedProduct: product,
-                          index: index,
+                          // index: index,
                           focusNode: focusNode1,
                           autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
                           autofocusSearch: true,

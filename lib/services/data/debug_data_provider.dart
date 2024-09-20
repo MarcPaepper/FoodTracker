@@ -354,7 +354,7 @@ class DebugDataProvider implements DataProvider {
     for (final product in products) {
       if (product.id > highestId) highestId = product.id;
     }
-    final newProduct = Product.copyWith(product, newId: highestId + 1);
+    final newProduct = product.copyWith(newId: highestId + 1);
     
     newProduct.creationDate = DateTime.now();
     newProduct.lastEditDate = DateTime.now();
@@ -441,7 +441,7 @@ class DebugDataProvider implements DataProvider {
     for (final nutVal in nutValues) {
       if (nutVal.id > highestId) highestId = nutVal.id;
     }
-    final newNutVal = NutritionalValue.copyWith(nutVal, newId: highestId + 1, newOrderId: highestId + 1);
+    final newNutVal = nutVal.copyWith(newId: highestId + 1, newOrderId: highestId + 1);
     _addProductNutrientsForNutritionalValue(nutritionalValueId: newNutVal.id);
     nutValues.add(newNutVal);
     _nutritionalValuesStreamController.add(nutValues);
@@ -539,7 +539,7 @@ class DebugDataProvider implements DataProvider {
     for (final meal in meals) {
       if (meal.id > highestId) highestId = meal.id;
     }
-    final newMeal = Meal.copyWith(meal, newId: highestId + 1);
+    final newMeal = meal.copyWith(newId: highestId + 1);
     meals.insert(findInsertIndex(meals, newMeal), newMeal);
     _mealsStreamController.add(meals);
     return Future.value(newMeal);
@@ -598,7 +598,7 @@ class DebugDataProvider implements DataProvider {
     for (final target in targets) {
       if (target.orderId > highestOrderId) highestOrderId = target.orderId;
     }
-    final newTarget = Target.copyWith(target, newOrderId: highestOrderId + 1);
+    final newTarget = target.copyWith(newOrderId: highestOrderId + 1);
     targets.add(newTarget);
     _targetsStreamController.add(targets);
     return Future.value(newTarget);

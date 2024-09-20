@@ -249,7 +249,7 @@ class SqfliteDataProvider implements DataProvider {
     _addIngredients(product: product, containedInId: id);
     _addProductNutrientsForProduct(product: product, productId: id);
     
-    var newProduct = Product.copyWith(product, newId: id, newCreationDate: now, newLastEditDate: now);
+    var newProduct = product.copyWith(newId: id, newCreationDate: now, newLastEditDate: now);
     _products.add(newProduct);
     _productsMap[id] = newProduct;
     _productsStreamController.add(_products);
@@ -389,7 +389,7 @@ class SqfliteDataProvider implements DataProvider {
       // ignore
     }
     
-    nutVal = NutritionalValue.copyWith(nutVal, newOrderId: orderId);
+    nutVal = nutVal.copyWith(newOrderId: orderId);
     var map = nutValueToMap(nutVal);
     map.remove(idColumn);
     
@@ -397,7 +397,7 @@ class SqfliteDataProvider implements DataProvider {
     
     _addProductNutrientsForNutritionalValue(nutritionalValueId: id);
     
-    var newNutVal = NutritionalValue.copyWith(nutVal, newId: id);
+    var newNutVal = nutVal.copyWith(newId: id);
     _nutritionalValues.add(newNutVal);
     _nutritionalValuesStreamController.add(_nutritionalValues);
     
@@ -539,12 +539,12 @@ class SqfliteDataProvider implements DataProvider {
   Future<Meal> createMeal(Meal meal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    meal = Meal.copyWith(meal, newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
+    meal = meal.copyWith(newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
     var map = mealToMap(meal);
     map.remove(idColumn);
     final id = await _db!.insert(mealTable, map);
     
-    var newMeal = Meal.copyWith(meal, newId: id);
+    var newMeal = meal.copyWith(newId: id);
     _meals.insert(findInsertIndex(_meals, newMeal), newMeal);
     _mealsStreamController.add(_meals);
     
@@ -555,7 +555,7 @@ class SqfliteDataProvider implements DataProvider {
   Future<Meal> updateMeal(Meal meal) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    meal = Meal.copyWith(meal, newLastEditDate: DateTime.now());
+    meal = meal.copyWith(newLastEditDate: DateTime.now());
     var map = mealToMap(meal);
     map.remove(idColumn);
     
@@ -631,7 +631,7 @@ class SqfliteDataProvider implements DataProvider {
       // ignore
     }
     
-    target = Target.copyWith(target, newOrderId: orderId);
+    target = target.copyWith(newOrderId: orderId);
     var map = targetToMap(target);
     map.remove(idColumn);
     

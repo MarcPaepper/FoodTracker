@@ -155,3 +155,19 @@ var addButtonStyle = ElevatedButton.styleFrom(
   textStyle: const TextStyle(fontSize: 16),
   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
 );
+
+var dropdownStyleEnabled = const InputDecoration(
+  contentPadding: EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14),
+);
+
+var dropdownStyleDisabled = InputDecoration(
+  contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14),
+  // no enabled border
+  enabledBorder: UnderlineInputBorder(
+    borderRadius: BorderRadius.circular(10.0),
+    borderSide: BorderSide(
+      width: 3.5,
+      color: Colors.grey.shade300
+    )
+  ),
+);

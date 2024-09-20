@@ -69,34 +69,30 @@ class Product {
     );
   }
   
-  // same as above but as factory constructor
-  factory Product.copyWith(
-    Product product,
-    {
-      int? newId,
-      String? newName,
-      DateTime? newCreationDate,
-      DateTime? newLastEditDate,
-      Unit? newDefaultUnit,
-      DateTime? newTemporaryBeginning,
-      DateTime? newTemporaryEnd,
-      bool? newIsTemporary,
-      Conversion? newDensityConversion,
-      Conversion? newQuantityConversion,
-      String? newQuantityName,
-      bool? newAutoCalc,
-      double? newAmountForIngredients,
-      Unit? newIngredientsUnit,
-      double? newAmountForNutrients,
-      Unit? newNutrientsUnit,
-      List<ProductQuantity>? newIngredients,
-    }
-  ) {
+  copyWith({
+    int? newId,
+    String? newName,
+    DateTime? newCreationDate,
+    DateTime? newLastEditDate,
+    Unit? newDefaultUnit,
+    DateTime? newTemporaryBeginning,
+    DateTime? newTemporaryEnd,
+    bool? newIsTemporary,
+    Conversion? newDensityConversion,
+    Conversion? newQuantityConversion,
+    String? newQuantityName,
+    bool? newAutoCalc,
+    double? newAmountForIngredients,
+    Unit? newIngredientsUnit,
+    double? newAmountForNutrients,
+    Unit? newNutrientsUnit,
+    List<ProductQuantity>? newIngredients,
+  }) {
     // change nutrients product id
     List<ProductNutrient>? newNutrients;
     
     if (newId != null) {
-      newNutrients = product.nutrients.map((n) => ProductNutrient(
+      newNutrients = nutrients.map((n) => ProductNutrient(
         productId: newId,
         nutritionalValueId: n.nutritionalValueId,
         autoCalc: n.autoCalc,
@@ -105,24 +101,24 @@ class Product {
     }
     
     return Product(
-      id:                   newId ?? product.id,
-      name:                 newName ?? product.name,
-      defaultUnit:          newDefaultUnit ?? product.defaultUnit,
-      creationDate:         newCreationDate ?? product.creationDate,
-      lastEditDate:         newLastEditDate ?? product.lastEditDate,
-      temporaryBeginning:   newTemporaryBeginning ?? product.temporaryBeginning,
-      temporaryEnd:         newTemporaryEnd ?? product.temporaryEnd,
-      isTemporary:          newIsTemporary ?? product.isTemporary,
-      densityConversion:    newDensityConversion ?? product.densityConversion,
-      quantityConversion:   newQuantityConversion ?? product.quantityConversion,
-      quantityName:         newQuantityName ?? product.quantityName,
-      autoCalc:             newAutoCalc ?? product.autoCalc,
-      amountForIngredients: newAmountForIngredients ?? product.amountForIngredients,
-      ingredientsUnit:      newIngredientsUnit ?? product.ingredientsUnit,
-      amountForNutrients:   newAmountForNutrients ?? product.amountForNutrients,
-      nutrientsUnit:        newNutrientsUnit ?? product.nutrientsUnit,
-      ingredients:          newIngredients ?? product.ingredients,
-      nutrients:            newNutrients ?? product.nutrients,
+      id:                   newId ?? id,
+      name:                 newName ?? name,
+      defaultUnit:          newDefaultUnit ?? defaultUnit,
+      creationDate:         newCreationDate ?? creationDate,
+      lastEditDate:         newLastEditDate ?? lastEditDate,
+      temporaryBeginning:   newTemporaryBeginning ?? temporaryBeginning,
+      temporaryEnd:         newTemporaryEnd ?? temporaryEnd,
+      isTemporary:          newIsTemporary ?? isTemporary,
+      densityConversion:    newDensityConversion ?? densityConversion,
+      quantityConversion:   newQuantityConversion ?? quantityConversion,
+      quantityName:         newQuantityName ?? quantityName,
+      autoCalc:             newAutoCalc ?? autoCalc,
+      amountForIngredients: newAmountForIngredients ?? amountForIngredients,
+      ingredientsUnit:      newIngredientsUnit ?? ingredientsUnit,
+      amountForNutrients:   newAmountForNutrients ?? amountForNutrients,
+      nutrientsUnit:        newNutrientsUnit ?? nutrientsUnit,
+      ingredients:          newIngredients ?? ingredients,
+      nutrients:            newNutrients ?? nutrients,
     );
   }
   
@@ -236,24 +232,19 @@ class Meal {
              this.lastEditDate,
   });
   
-  factory Meal.copyWith(
-    Meal meal,
-    {
-      int? newId,
-      DateTime? newDateTime,
-      ProductQuantity? newProductQuantity,
-      DateTime? newCreationDate,
-      DateTime? newLastEditDate,
-    }
-  ) {
-    return Meal(
-      id:               newId ?? meal.id,
-      dateTime:         newDateTime ?? meal.dateTime,
-      productQuantity:  newProductQuantity ?? meal.productQuantity,
-      creationDate:     newCreationDate ?? meal.creationDate,
-      lastEditDate:     newLastEditDate ?? meal.lastEditDate,
-    );
-  }
+  copyWith({
+    int? newId,
+    DateTime? newDateTime,
+    ProductQuantity? newProductQuantity,
+    DateTime? newCreationDate,
+    DateTime? newLastEditDate,
+  }) => Meal(
+    id:               newId ?? id,
+    dateTime:         newDateTime ?? dateTime,
+    productQuantity:  newProductQuantity ?? productQuantity,
+    creationDate:     newCreationDate ?? creationDate,
+    lastEditDate:     newLastEditDate ?? lastEditDate,
+  );
   
   @override
   bool operator ==(covariant Meal other) =>
@@ -476,24 +467,19 @@ class NutritionalValue {
 	
 	NutritionalValue(this.id, this.orderId, this.name, this.unit, this.showFullName);
   
-  factory NutritionalValue.copyWith(
-    NutritionalValue value,
-    {
-      int? newId,
-      int? newOrderId,
-      String? newName,
-      String? newUnit,
-      bool? newShowFullName,
-    }
-  ) {
-    return NutritionalValue(
-      newId ?? value.id,
-      newOrderId ?? value.orderId,
-      newName ?? value.name,
-      newUnit ?? value.unit,
-      newShowFullName ?? value.showFullName,
-    );
-  }
+  copyWith({
+    int? newId,
+    int? newOrderId,
+    String? newName,
+    String? newUnit,
+    bool? newShowFullName,
+  }) => NutritionalValue(
+    newId ?? id,
+    newOrderId ?? orderId,
+    newName ?? name,
+    newUnit ?? unit,
+    newShowFullName ?? showFullName,
+  );
   
   @override
   bool operator ==(covariant NutritionalValue other) => id == other.id;
@@ -553,26 +539,22 @@ class Target{
     required this.orderId,
   });
   
-  factory Target.copyWith(
-    Target target,
-    {
-      bool? newIsPrimary,
-      Type? newTrackedType,
-      int? newTrackedId,
-      double? newAmount,
-      Unit? newUnit,
-      int? newOrderId,
-    }
-  ) {
-    return Target(
-      isPrimary:   newIsPrimary   ?? target.isPrimary,
-      trackedType: newTrackedType ?? target.trackedType,
-      trackedId:   newTrackedId   ?? target.trackedId,
-      amount:      newAmount      ?? target.amount,
-      unit:        newUnit        ?? target.unit,
-      orderId:     newOrderId     ?? target.orderId,
-    );
-  }
+  copyWith({
+    bool? newIsPrimary,
+    Type? newTrackedType,
+    int? newTrackedId,
+    double? newAmount,
+    bool changeUnit = false,
+    Unit? newUnit,
+    int? newOrderId,
+  }) => Target(
+    isPrimary:   newIsPrimary   ?? isPrimary,
+    trackedType: newTrackedType ?? trackedType,
+    trackedId:   newTrackedId   ?? trackedId,
+    amount:      newAmount      ?? amount,
+    unit:        changeUnit     ?  newUnit : unit,
+    orderId:     newOrderId     ?? orderId,
+  );
   
   @override
   bool operator ==(covariant Target other) =>

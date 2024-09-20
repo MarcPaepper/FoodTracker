@@ -558,13 +558,17 @@ Future<void> importData(BuildContext context) async {
     var json = jsonDecode(utf8.decode(data));
     
     if (name.startsWith("products")) {
-      productsJson = json;
+      productsJson = json as Map<String, dynamic>;
     } else if (name.startsWith("nutritional_values")) {
       nutritionalValuesJson = json;
     } else if (name.startsWith("meals")) {
       mealsJson = json;
     } else if (name.startsWith("targets")) {
-      targetsJson = json;
+      if ((json as List).isEmpty) {
+        targetsJson = const Iterable<Map<String, dynamic>>.empty();
+      } else {
+        targetsJson = json as Iterable<Map<String, dynamic>>;
+      }
     }
   }
   if (context.mounted) {
@@ -614,7 +618,12 @@ Future<void> importData(BuildContext context) async {
       }
       
       // import products
-      var products = productsJson.values.map((value) => mapToProduct(value)).toList();
+      var products = productsJson.values.map((value) {
+        value = Map<String, dynamic>.from(value);
+        value.remove("nutrients");
+        value.remove("ingredients");
+        return mapToProduct(value);
+      }).toList();
       for (var product in products) {
         // change the nutritional value ids
         product.nutrients = product.nutrients.map((nut) {
