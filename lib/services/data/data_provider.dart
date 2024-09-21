@@ -41,6 +41,6 @@ abstract class DataProvider {
   void reloadTargetStream();
   Future<Target> getTarget(Type targetType, int targetId);
   Future<Target> createTarget(Target target);
-  Future<Target> updateTarget(Target target);
+  Future<Target> updateTarget(Type origType, int origTrackedId, Target target);
   Future<void> deleteTarget(Type targetType, int targetId);
 }

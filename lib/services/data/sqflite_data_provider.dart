@@ -644,29 +644,19 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
-  Future<Target> updateTarget(Target target) async {
-    if (!isLoaded()) throw DataNotLoadedException();
-    
-    var map = targetToMap(target);
-    map.remove(idColumn);
-    final updatedCount = await _db!.update(targetTable, map, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [target.trackedType.toString(), target.trackedId]);
-    if (updatedCount != 1) throw InvalidUpdateException();
-    
-    _targets.removeWhere((t) => t.trackedType == target.trackedType && t.trackedId == target.trackedId);
-    _targets.add(target);
-    _targetsStreamController.add(_targets);
-    
-    return target;
+  Future<Target> updateTarget(Type origType, int origTrackedId, Target target) async {
+    await deleteTarget(origType, origTrackedId);
+    return createTarget(target);
   }
   
   @override
-  Future<void> deleteTarget(Type targetType, int targetId) async {
+  Future<void> deleteTarget(Type trackedType, int trackedId) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
-    final deletedCount = await _db!.delete(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [targetType.toString(), targetId]);
+    final deletedCount = await _db!.delete(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [trackedType.toString(), trackedId]);
     if (deletedCount != 1) throw InvalidDeletionException();
     
-    _targets.removeWhere((t) => t.trackedType == targetType && t.trackedId == targetId);
+    _targets.removeWhere((t) => t.trackedType == trackedType && t.trackedId == trackedId);
     _targetsStreamController.add(_targets);
   }
 }

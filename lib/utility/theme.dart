@@ -171,3 +171,13 @@ var dropdownStyleDisabled = InputDecoration(
     )
   ),
 );
+
+var importantButtonStyle = ButtonStyle(
+  backgroundColor: WidgetStateProperty.all(Colors.teal.shade400),
+  foregroundColor: WidgetStateProperty.all(Colors.white),
+  minimumSize: WidgetStateProperty.all(const Size(double.infinity, 60)),
+  textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
+  shape: WidgetStateProperty.all(const RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(14)),
+  )),
+);

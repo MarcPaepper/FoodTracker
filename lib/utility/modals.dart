@@ -207,6 +207,7 @@ void showProductDialog({
   required void Function(Product?) onSelected,
   void Function()? beforeAdd,
   bool autofocus = false,
+  bool allowNew = true,
 }) => showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -222,8 +223,9 @@ void showProductDialog({
               child: _MainList(
                 productsMap: productsMap,
                 onSelected: onSelected,
-                onLongPress: (product) =>
-                  onAddProduct(context, product.name, true, beforeAdd, onSelected),
+                onLongPress: (product) {
+                  if (allowNew) onAddProduct(context, product.name, true, beforeAdd, onSelected);
+                },
                 searchController: searchController,
                 autofocus: autofocus,
               ),
@@ -233,23 +235,25 @@ void showProductDialog({
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: actionButtonStyle.copyWith(
-                        padding: WidgetStateProperty.all(EdgeInsets.zero),
-                      ),
-                      onPressed: () {
-                        String? name = searchController.text;
-                        name = name == '' ? null : name;
-                        onAddProduct(context, name, false, beforeAdd, onSelected);
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10.0),
-                        child: Text('Create new'),
+                  if (allowNew) ...[
+                    Expanded(
+                      child: ElevatedButton(
+                        style: actionButtonStyle.copyWith(
+                          padding: WidgetStateProperty.all(EdgeInsets.zero),
+                        ),
+                        onPressed: () {
+                          String? name = searchController.text;
+                          name = name == '' ? null : name;
+                          onAddProduct(context, name, false, beforeAdd, onSelected);
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10.0),
+                          child: Text('Create new'),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
+                    const SizedBox(width: 16),
+                  ],
                   Expanded(
                     child: ElevatedButton(
                       style: actionButtonStyle,

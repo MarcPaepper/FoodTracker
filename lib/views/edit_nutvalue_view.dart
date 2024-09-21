@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/theme.dart';
 
 import '../constants/data.dart';
 import '../services/data/data_objects.dart';
@@ -207,15 +208,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   Widget _buildAddButton() => Padding(
     padding: const EdgeInsets.all(8.0),
     child: ElevatedButton(
-      style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.all(Colors.teal.shade400),
-        foregroundColor: WidgetStateProperty.all(Colors.white),
-        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 60)),
-        textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
-        shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(14)),
-        )),
-      ),
+      style: importantButtonStyle,
       onPressed: () {
         final name = _name.text;
         final unit = _unit.text;

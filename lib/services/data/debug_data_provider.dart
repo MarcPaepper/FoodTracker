@@ -605,9 +605,9 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
-  Future<Target> updateTarget(Target target) {
+  Future<Target> updateTarget(Type origType, int origTrackedId, Target target) {
     int lenPrev = targets.length;
-    targets.removeWhere((element) => element.trackedType == target.trackedType && element.trackedId == target.trackedId);
+    targets.removeWhere((element) => element.trackedType == origType && element.trackedId == origTrackedId);
     targets.add(target);
     if (lenPrev - targets.length != 0) {
       throw InvalidUpdateException();

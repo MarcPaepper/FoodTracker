@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/constants/routes.dart';
+import 'package:food_tracker/services/data/object_mapping.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
+import '../utility/text_logic.dart';
 import '../utility/theme.dart';
 import '../widgets/loading_page.dart';
 
@@ -91,10 +93,10 @@ class _TargetsViewState extends State<TargetsView> {
         if (type == NutritionalValue) {
           var nutvalue = nutvalues.firstWhere((element) => element.id == target.trackedId);
           name = nutvalue.name;
-          amount = "${target.amount} ${nutvalue.unit}";
+          amount = "${truncateZeros(target.amount)} ${nutvalue.unit}";
         } else if (type == Product) {
           var product = products.firstWhere((element) => element.id == target.trackedId);
-          amount = "${target.amount} ${unitToString(target.unit!)}";
+          amount = "${truncateZeros(target.amount)} ${unitToString(target.unit!)}";
           name = product.name;
         } else {
           name = "Unknown Target Type";
@@ -129,6 +131,9 @@ class _TargetsViewState extends State<TargetsView> {
           visualDensity: const VisualDensity(vertical: 1, horizontal: 0),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
           tileColor: color,
+          onTap: () {
+            Navigator.of(context).pushNamed(editTargetRoute, arguments: (/*targetTypeToInt(target.trackedType), */target.trackedId));
+          },
         );
       },
       onReorder: (oldIndex, newIndex) {

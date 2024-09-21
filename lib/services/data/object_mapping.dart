@@ -138,7 +138,7 @@ Target mapToTarget(Map<String, Object?> map) {
     trackedType: trackedType,
     trackedId:   map[trackedIdColumn] as int,
     isPrimary:   map[primaryColumn] == 1,
-    amount:      map[amountColumn] as double,
+    amount:      toDouble(map[amountColumn]),
     unit:        unit == "" ? null : unitFromString(unit),
     orderId:     map[orderIdColumn] as int,
   );
@@ -214,4 +214,28 @@ Map<String, dynamic> targetToMap(Target target) {
     primaryColumn:   target.isPrimary,
     orderIdColumn:   target.orderId,
   };
+}
+
+// ----- Utility -----
+
+Type targetIntToType(int typeInt) {
+  switch (typeInt) {
+    case 0:
+      return NutritionalValue;
+    case 1:
+      return Product;
+    default:
+      throw ArgumentError("Unknown target type: $typeInt");
+  }
+}
+
+int targetTypeToInt(Type type) {
+  switch (type) {
+    case NutritionalValue:
+      return 0;
+    case Product:
+      return 1;
+    default:
+      throw ArgumentError("Unknown target type: $type");
+  }
 }

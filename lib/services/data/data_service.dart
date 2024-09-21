@@ -85,13 +85,13 @@ class DataService implements DataProvider {
   
   // Targets
   
-  @override Stream<List<Target>> streamTargets()                     => _provider.streamTargets();
-  @override void reloadTargetStream()                                => _provider.reloadTargetStream();
-  @override Future<Iterable<Target>> getAllTargets()                 => _condLoad().then((_) => _provider.getAllTargets());
-  @override Future<Target> getTarget(Type targetType, int targetId)  => _condLoad().then((_) => _provider.getTarget(targetType, targetId));
-  @override Future<Target> createTarget(Target target)               => _condLoad().then((_) => _provider.createTarget(target));
-  @override Future<Target> updateTarget(Target target)               => _condLoad().then((_) => _provider.updateTarget(target));
-  @override Future<void> deleteTarget(Type targetType, int targetId) => _condLoad().then((_) => _provider.deleteTarget(targetType, targetId));
+  @override Stream<List<Target>> streamTargets()                                         => _provider.streamTargets();
+  @override void reloadTargetStream()                                                    => _provider.reloadTargetStream();
+  @override Future<Iterable<Target>> getAllTargets()                                     => _condLoad().then((_) => _provider.getAllTargets());
+  @override Future<Target> getTarget(Type targetType, int targetId)                      => _condLoad().then((_) => _provider.getTarget(targetType, targetId));
+  @override Future<Target> createTarget(Target target)                                   => _condLoad().then((_) => _provider.createTarget(target));
+  @override Future<Target> updateTarget(Type origType, int origTrackedId, Target target) => _condLoad().then((_) => _provider.updateTarget(origType, origTrackedId, target));
+  @override Future<void> deleteTarget(Type targetType, int targetId)                     => _condLoad().then((_) => _provider.deleteTarget(targetType, targetId));
   
   Future _condLoad() {
     if (_provider.isLoaded()) {

@@ -64,7 +64,7 @@ CREATE TABLE "target" (
   "amount" INTEGER,
   "unit" TEXT,
   "order_id" INTEGER,
-  "is_primary" INTEGER UNIQUE
+  "is_primary" INTEGER
 );
 ''';
 
