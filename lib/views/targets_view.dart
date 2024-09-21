@@ -132,7 +132,8 @@ class _TargetsViewState extends State<TargetsView> {
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
           tileColor: color,
           onTap: () {
-            Navigator.of(context).pushNamed(editTargetRoute, arguments: (/*targetTypeToInt(target.trackedType), */target.trackedId));
+            // Navigator.of(context).pushNamed(editTargetRoute, arguments: (/*targetTypeToInt(target.trackedType), */target.trackedId));
+            Navigator.pushNamed(context, editTargetRoute, arguments: (target.trackedType, target.trackedId));
           },
         );
       },

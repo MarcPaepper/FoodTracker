@@ -218,24 +218,24 @@ Map<String, dynamic> targetToMap(Target target) {
 
 // ----- Utility -----
 
-Type targetIntToType(int typeInt) {
-  switch (typeInt) {
-    case 0:
-      return NutritionalValue;
-    case 1:
-      return Product;
-    default:
-      throw ArgumentError("Unknown target type: $typeInt");
-  }
-}
+// Type targetIntToType(int typeInt) {
+//   switch (typeInt) {
+//     case 0:
+//       return NutritionalValue;
+//     case 1:
+//       return Product;
+//     default:
+//       throw ArgumentError("Unknown target type: $typeInt");
+//   }
+// }
 
-int targetTypeToInt(Type type) {
-  switch (type) {
-    case NutritionalValue:
-      return 0;
-    case Product:
-      return 1;
-    default:
-      throw ArgumentError("Unknown target type: $type");
-  }
-}
+// int targetTypeToInt(Type type) {
+//   switch (type) {
+//     case NutritionalValue:
+//       return 0;
+//     case Product:
+//       return 1;
+//     default:
+//       throw ArgumentError("Unknown target type: $type");
+//   }
+// }
