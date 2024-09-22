@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/constants/routes.dart';
-import 'package:food_tracker/services/data/object_mapping.dart';
+// import 'package:food_tracker/services/data/object_mapping.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 
 import '../services/data/data_objects.dart';
@@ -9,6 +9,8 @@ import '../services/data/data_service.dart';
 import '../utility/text_logic.dart';
 import '../utility/theme.dart';
 import '../widgets/loading_page.dart';
+
+// import "dart:developer" as devtools show log;
 
 class TargetsView extends StatefulWidget {
   const TargetsView({super.key});
@@ -118,13 +120,13 @@ class _TargetsViewState extends State<TargetsView> {
                   ],
                 ),
               ),
-              // dot indicator if target is primary
-              if (target.isPrimary) 
-                const Tooltip(
-                  message: "Primary Target",
-                  child: Icon(Icons.circle, size: 10, color: Colors.teal),
-                ),
-              const SizedBox(width: kIsWeb ? 30 : 10),
+              // // dot indicator if target is primary
+              // if (target.isPrimary) 
+              //   const Tooltip(
+              //     message: "Primary Target",
+              //     child: Icon(Icons.circle, size: 10, color: Colors.teal),
+              //   ),
+              // const SizedBox(width: kIsWeb ? 30 : 10),
             ],
           ),
           minVerticalPadding: 0,
@@ -132,16 +134,18 @@ class _TargetsViewState extends State<TargetsView> {
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
           tileColor: color,
           onTap: () {
-            // Navigator.of(context).pushNamed(editTargetRoute, arguments: (/*targetTypeToInt(target.trackedType), */target.trackedId));
             Navigator.pushNamed(context, editTargetRoute, arguments: (target.trackedType, target.trackedId));
           },
         );
       },
       onReorder: (oldIndex, newIndex) {
-        if (oldIndex < newIndex) {
-          newIndex -= 1;
+        List<((Type, int), int)> orderList = targets.map((t) => ((t.trackedType, t.trackedId), t.orderId)).toList();
+        var orderMap = getReorderMap(orderList, oldIndex, newIndex);
+        if (orderMap != null) {
+          // The map is of type Map<dynamic, int> but must be Map<(Type, int), int>
+          var orderMapNew = orderMap.map((key, value) => MapEntry(key as (Type, int), value));
+          _dataService.reorderTargets(orderMapNew);
         }
-        // _dataService.reorderTargets({oldIndex: newIndex});
       },
     );
   }

@@ -7,6 +7,7 @@ import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
 import 'package:food_tracker/widgets/unit_dropdown.dart';
 
 import '../constants/data.dart';
+import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
@@ -15,7 +16,7 @@ import '../widgets/amount_field.dart';
 import '../widgets/loading_page.dart';
 import '../widgets/product_dropdown.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class EditTargetView extends StatefulWidget {
   final bool? isEdit;
@@ -57,7 +58,6 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
         Navigator.of(context).pop();
       });
     }
-    devtools.log("initState");
     isEdit = widget.isEdit ?? false;
     
     _dataService.open(dbName);
@@ -72,7 +72,7 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
         title: Text(isEdit ? "Edit Target" : "Add Target"),
         // show the delete button if editing
         actions: [
-          // if (isEdit)
+          if (isEdit)
             IconButton(
               icon: const Icon(Icons.delete),
               // onPressed: () {}
@@ -93,8 +93,8 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
           return StreamBuilder(
             stream: _dataService.streamNutritionalValues(),
             builder: (contextN, snapshotN) {
-              return FutureBuilder(
-                future: _dataService.getAllTargets(),
+              return StreamBuilder(
+                stream: _dataService.streamTargets(),
                 builder: (contextT, snapshotT) {
                   if (snapshotP.connectionState == ConnectionState.waiting || snapshotN.connectionState == ConnectionState.waiting || snapshotT.connectionState == ConnectionState.waiting) {
                     return const LoadingPage();
@@ -112,7 +112,6 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
                   if (isEdit) {
                     if (_interimTarget == null) {
                       try {
-                        devtools.log("finding target");
                         _interimTarget = targets.firstWhere((target) => target.trackedType == widget.type && target.trackedId == widget.trackedId);
                       } catch (e) {
                         Future(() {
@@ -131,7 +130,7 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
                       amount: 0,
                     );
                   }
-                  devtools.log("rebuilding");
+                  
                   if (_interimTarget != null) {
                     _isPrimaryNotifier.value = _interimTarget!.isPrimary;
                     _typeNotifier.value      = _interimTarget!.trackedType;
@@ -149,7 +148,7 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildPrimaryToggle(),
+                          // _buildPrimaryToggle(),
                           const Padding(
                             padding: EdgeInsets.fromLTRB(6, 2, 0, 8),
                             child: Text("Type of target:", style: TextStyle(fontSize: 16)),
@@ -178,7 +177,7 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
                                     ],
                                   ),
                                   const SizedBox(height: 20),
-                                  _buildAddButton(),
+                                  _buildAddButton(nutvalues, products),
                                 ],
                               );
                             },
@@ -196,22 +195,22 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
     );
   }
   
-  Widget _buildPrimaryToggle() {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _isPrimaryNotifier,
-      builder: (context, isPrimary, child) {
-        return SwitchListTile(
-          value: isPrimary,
-          controlAffinity: ListTileControlAffinity.leading,
-          onChanged: (isPrimary) {
-            _isPrimaryNotifier.value = isPrimary;
-            _interimTarget = _interimTarget?.copyWith(newIsPrimary: isPrimary);
-          },
-          title: const Text("Primary Target"),
-        );
-      }
-    );
-  }
+  // Widget _buildPrimaryToggle() {
+  //   return ValueListenableBuilder<bool>(
+  //     valueListenable: _isPrimaryNotifier,
+  //     builder: (context, isPrimary, child) {
+  //       return SwitchListTile(
+  //         value: isPrimary,
+  //         controlAffinity: ListTileControlAffinity.leading,
+  //         onChanged: (isPrimary) {
+  //           _isPrimaryNotifier.value = isPrimary;
+  //           _interimTarget = _interimTarget?.copyWith(newIsPrimary: isPrimary);
+  //         },
+  //         title: const Text("Primary Target"),
+  //       );
+  //     }
+  //   );
+  // }
   
   Widget _buildTypeDropdown() {
     return ValueListenableBuilder<Type>(
@@ -358,9 +357,9 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
     );
   }
   
-  Widget _buildAddButton() => ElevatedButton(
+  Widget _buildAddButton(List<NutritionalValue> nutValues, List<Product> products) => ElevatedButton(
     style: importantButtonStyle,
-    onPressed: () {
+    onPressed: () async {
       final isPrimary = _isPrimaryNotifier.value;
       final type = _typeNotifier.value;
       final trackedId = _trackedIdNotifier.value;
@@ -403,9 +402,19 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
             unit: unit,
             orderId: -1,
           );
-          _dataService.createTarget(target);
+          // try to create the target if unique
+          try {
+            await _dataService.createTarget(target);
+          } on NotUniqueException {
+            var isProduct = type == Product;
+            var name = isProduct ?
+              products.firstWhere((element) => element.id == target.trackedId).name :
+              nutValues.firstWhere((element) => element.id == target.trackedId).name;
+            if(mounted) {showErrorbar(context, "Duplicate target for '$name'");}
+            return;
+          }
         }
-        Navigator.of(context).pop();
+        if (mounted) Navigator.of(context).pop();
       }
     },
     child: Text(isEdit ? "Update" : "Add"),

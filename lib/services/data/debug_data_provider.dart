@@ -617,6 +617,16 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<void> reorderTargets(Map<(Type, int), int> orderMap) {
+    for (var entry in orderMap.entries) {
+      var target = targets.firstWhere((element) => element.trackedType == entry.key.$1 && element.trackedId == entry.key.$2);
+      target.orderId = entry.value;
+    }
+    _targetsStreamController.add(targets);
+    return Future.value();
+  }
+  
+  @override
   Future<void> deleteTarget(Type targetType, int targetId) {
     int lenPrev = targets.length;
     targets.removeWhere((element) => element.trackedType == targetType && element.trackedId == targetId);

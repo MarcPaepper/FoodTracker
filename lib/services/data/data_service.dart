@@ -91,6 +91,7 @@ class DataService implements DataProvider {
   @override Future<Target> getTarget(Type targetType, int targetId)                      => _condLoad().then((_) => _provider.getTarget(targetType, targetId));
   @override Future<Target> createTarget(Target target)                                   => _condLoad().then((_) => _provider.createTarget(target));
   @override Future<Target> updateTarget(Type origType, int origTrackedId, Target target) => _condLoad().then((_) => _provider.updateTarget(origType, origTrackedId, target));
+  @override Future<void> reorderTargets(Map<(Type, int), int> orderMap)                  => _condLoad().then((_) => _provider.reorderTargets(orderMap));
   @override Future<void> deleteTarget(Type targetType, int targetId)                     => _condLoad().then((_) => _provider.deleteTarget(targetType, targetId));
   
   Future _condLoad() {

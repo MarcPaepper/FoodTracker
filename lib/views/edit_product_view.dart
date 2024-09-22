@@ -832,6 +832,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     
     var anyNutrientAutoCalc = nutrients.any((nutrient) => nutrient.autoCalc);
     var areNutrientsEmpty = !(anyNutrientAutoCalc || nutrients.any((nutrient) => nutrient.value != 0));
+    nutrients.sort((a, b) => a.nutritionalValueId - b.nutritionalValueId);
     
     final isValid = _formKey.currentState!.validate()
       && !_circRefNotifier.value

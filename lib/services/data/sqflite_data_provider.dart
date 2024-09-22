@@ -423,16 +423,22 @@ class SqfliteDataProvider implements DataProvider {
   @override
   Future<void> reorderNutritionalValues(Map<int, int> orderMap) async {
     if (!isLoaded()) throw DataNotLoadedException();
-    
+
+    final batch = _db!.batch();
+
     for (final entry in orderMap.entries) {
-      final updatedCount = await _db!.update(nutritionalValueTable, {
-        orderIdColumn: entry.value,
-      }, where: '$idColumn = ?', whereArgs: [entry.key]);
+      batch.update(
+        nutritionalValueTable,
+        {orderIdColumn: entry.value},
+        where: '$idColumn = ?',
+        whereArgs: [entry.key],
+      );
       _nutritionalValues.firstWhere((p) => p.id == entry.key).orderId = entry.value;
-      if (updatedCount != 1) throw InvalidUpdateException();
     }
     
     _nutritionalValuesStreamController.add(_nutritionalValues);
+
+    await batch.commit(noResult: true);
   }
   
   @override
@@ -616,19 +622,21 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
-  Future<Target> createTarget(Target target) async {
+  Future<Target> createTarget(Target target, {int? orderId}) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
     final results = await _db!.query(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [target.trackedType.toString(), target.trackedId]);
     if (results.isNotEmpty) throw NotUniqueException();
     
     // find highest order id
-    var orderId = 0;
-    try {
-      var orderResults = await _db!.query(targetTable, columns: [orderIdColumn], orderBy: '$orderIdColumn DESC', limit: 1);
-      orderId = (orderResults.first[orderIdColumn] as int) + 1;
-    } catch (e) {
-      // ignore
+    if (orderId == null) {
+      orderId = 0;
+      try {
+        var orderResults = await _db!.query(targetTable, columns: [orderIdColumn], orderBy: '$orderIdColumn DESC', limit: 1);
+        orderId = (orderResults.first[orderIdColumn] as int) + 1;
+      } catch (e) {
+        // ignore
+      }
     }
     
     target = target.copyWith(newOrderId: orderId);
@@ -645,8 +653,30 @@ class SqfliteDataProvider implements DataProvider {
   
   @override
   Future<Target> updateTarget(Type origType, int origTrackedId, Target target) async {
+    var oldOrderId = _targets.firstWhere((t) => t.trackedType == origType && t.trackedId == origTrackedId).orderId;
     await deleteTarget(origType, origTrackedId);
-    return createTarget(target);
+    return createTarget(target, orderId: oldOrderId);
+  }
+  
+  @override
+  Future<void> reorderTargets(Map<(Type, int), int> orderMap) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+
+    final batch = _db!.batch();
+
+    for (final entry in orderMap.entries) {
+      batch.update(
+        targetTable,
+        {orderIdColumn: entry.value},
+        where: '$typeColumn = ? AND $trackedIdColumn = ?',
+        whereArgs: [entry.key.$1.toString(), entry.key.$2],
+      );
+      _targets.firstWhere((t) => t.trackedType == entry.key.$1 && t.trackedId == entry.key.$2).orderId = entry.value;
+    }
+    
+    _targetsStreamController.add(_targets);
+
+    await batch.commit(noResult: true);
   }
   
   @override

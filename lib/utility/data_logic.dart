@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -712,6 +714,31 @@ Future<String> storeFileTemporarily(Uint8List image, String name) async {
   file.writeAsBytesSync(image);
 
   return path;
+}
+
+// get a reorder map when an item was moved
+Map<dynamic, int>? getReorderMap(List<(dynamic, int)> IdsAndOrderIds, int oldIndex, int newIndex) {
+  if (newIndex > oldIndex) {
+    newIndex -= 1;
+  }
+  if (oldIndex == newIndex) return null;
+  
+  var reorderMap = <dynamic, int>{};
+  reorderMap[IdsAndOrderIds[oldIndex].$1] = IdsAndOrderIds[newIndex].$2;
+  
+  if (newIndex > oldIndex) {
+    // reduce all other order ids by 1
+    for (var i = oldIndex + 1; i <= newIndex; i++) {
+      reorderMap[IdsAndOrderIds[i].$1] = IdsAndOrderIds[i].$2 - 1;
+    }
+  } else {
+    // increase all other order ids by 1
+    for (var i = newIndex; i < oldIndex; i++) {
+      reorderMap[IdsAndOrderIds[i].$1] = IdsAndOrderIds[i].$2 + 1;
+    }
+  }
+  
+  return reorderMap;
 }
 
 // index according to the meal datetime

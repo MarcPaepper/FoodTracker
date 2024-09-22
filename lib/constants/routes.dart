@@ -60,7 +60,7 @@ var routes = {
     nutvalueId: ModalRoute.of(context)!.settings.arguments as int?,
   ),
   targetsRoute:		  (context) => const TargetsView(),
-  addTargetRoute:	  (context) =>  EditTargetView(isEdit: false),
+  addTargetRoute:	  (context) => const EditTargetView(isEdit: false),
   editTargetRoute:	(context) {
     var result = ModalRoute.of(context)!.settings.arguments as (Type?, int?)?;
     return EditTargetView(

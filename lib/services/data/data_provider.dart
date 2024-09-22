@@ -42,5 +42,6 @@ abstract class DataProvider {
   Future<Target> getTarget(Type targetType, int targetId);
   Future<Target> createTarget(Target target);
   Future<Target> updateTarget(Type origType, int origTrackedId, Target target);
+  Future<void> reorderTargets(Map<(Type, int), int> orderMap);
   Future<void> deleteTarget(Type targetType, int targetId);
 }

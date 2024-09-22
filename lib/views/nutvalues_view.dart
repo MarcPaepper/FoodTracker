@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:flutter/material.dart';
 
 import '../constants/routes.dart';
@@ -98,27 +100,13 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
           );
         },
         onReorder: (oldIndex, newIndex) {
-          if (newIndex > oldIndex) {
-            newIndex -= 1;
+          List<(int, int)> IdsAndOrderIds = values.map((v) => (v.id, v.orderId)).toList();
+          var orderMap = getReorderMap(IdsAndOrderIds, oldIndex, newIndex);
+          if (orderMap != null) {
+            // The map is of type Map<dynamic, int> but must be Map<int, int>
+            var orderMapNew = orderMap.map((key, value) => MapEntry(key as int, value));
+            _dataService.reorderNutritionalValues(orderMapNew);
           }
-          if (oldIndex == newIndex) return;
-          
-          var orderMap = <int, int>{};
-          orderMap[values[oldIndex].id] = values[newIndex].orderId;
-          
-          if (newIndex > oldIndex) {
-            // reduce all other order ids by 1
-            for (var i = oldIndex + 1; i <= newIndex; i++) {
-              orderMap[values[i].id] = values[i].orderId - 1;
-            }
-          } else {
-            // increase all other order ids by 1
-            for (var i = newIndex; i < oldIndex; i++) {
-              orderMap[values[i].id] = values[i].orderId + 1;
-            }
-          }
-          
-          _dataService.reorderNutritionalValues(orderMap);
         },
       );
     }
