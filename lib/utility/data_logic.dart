@@ -548,7 +548,7 @@ Future<void> importData(BuildContext context) async {
   var productsJson = <String, dynamic>{};
   var nutritionalValuesJson = <String, dynamic>{};
   var mealsJson = <String, dynamic>{};
-  var targetsJson = const Iterable<Map<String, dynamic>>.empty();
+  var targetsJson = List<Map<String, dynamic>>.empty(growable: true);
   for (var file in files) {
     String name = file.name;
     dynamic data = file.content;
@@ -565,11 +565,10 @@ Future<void> importData(BuildContext context) async {
       nutritionalValuesJson = json;
     } else if (name.startsWith("meals")) {
       mealsJson = json;
-    } else if (name.startsWith("targets")) {
-      if ((json as List).isEmpty) {
-        targetsJson = const Iterable<Map<String, dynamic>>.empty();
-      } else {
-        targetsJson = json as Iterable<Map<String, dynamic>>;
+    } else if (name.startsWith("targets") && (json as List).isNotEmpty) {
+      // json is of type List<dynamic> and must be converted to Iterable<Map<String, dynamic>>
+      for (var entry in json) {
+        targetsJson.add(Map<String, dynamic>.from(entry as Map));
       }
     }
   }
@@ -610,6 +609,7 @@ Future<void> importData(BuildContext context) async {
       
       // import nutritional values
       var nutritionalValues = nutritionalValuesJson.values.map((value) => mapToNutritionalValue(value)).toList();
+      nutritionalValues.sort((a, b) => a.orderId.compareTo(b.orderId));
       for (var nutValue in nutritionalValues) {
         try {
           var n = await service.createNutritionalValue(nutValue);
@@ -682,6 +682,7 @@ Future<void> importData(BuildContext context) async {
       
       // import targets
       var targets = targetsJson.map((value) => mapToTarget(value)).toList();
+      targets.sort((a, b) => a.orderId.compareTo(b.orderId));
       for (var target in targets) {
         // change the tracked id
         if (target.trackedType == Product) {

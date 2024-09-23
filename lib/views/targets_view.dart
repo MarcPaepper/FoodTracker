@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:food_tracker/constants/routes.dart';
-// import 'package:food_tracker/services/data/object_mapping.dart';
-import 'package:food_tracker/utility/data_logic.dart';
 
+import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
+import '../utility/data_logic.dart';
 import '../utility/text_logic.dart';
 import '../utility/theme.dart';
 import '../widgets/loading_page.dart';
