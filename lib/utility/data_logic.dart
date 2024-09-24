@@ -622,8 +622,12 @@ Future<void> importData(BuildContext context) async {
       // import products
       var products = productsJson.values.map((value) {
         value = Map<String, dynamic>.from(value);
-        value.remove("nutrients");
-        value.remove("ingredients");
+        // give the nutrients a dummy id which is changed later
+        value["nutrients"] = (value["nutrients"] as List).map((nut) {
+          nut["product_id"] = -1;
+          return nut;
+        }).toList();
+        
         return mapToProduct(value);
       }).toList();
       for (var product in products) {

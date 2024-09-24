@@ -64,77 +64,96 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
         // show the delete button if editing
         actions: isEdit ? [
           IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Delete Nutritional Value"),
-                  content: const Text("If you delete this Nutritional Value, all associated data will be lost."),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        _dataService.deleteNutritionalValue(widget.nutvalueId!);
-                        Navigator.of(context).pop();
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text("Delete"),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text("Cancel"),
-                    )
-                  ],
-                )
-              );
+            onPressed: () async {
+              var targets = await _dataService.getAllTargets();
+              // Check if any target has the Type NutritionalValue and the nutval ID
+              targets = targets.where((target) => target.trackedType == NutritionalValue && target.trackedId == widget.nutvalueId).toList();
+              if(targets.isNotEmpty) {
+                if (!context.mounted) return;
+                // simple dialog informing that the product is used in a target
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Delete Nutritional Value"),
+                    content: const Text("This nutritional value is used in a daily target. You have to remove the target in order to delete the nutritional value."),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text("OK"),
+                      ),
+                    ],
+                  ),
+                );
+              } else if (context.mounted) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Delete Nutritional Value"),
+                    content: const Text("If you delete this Nutritional Value, all associated data will be lost."),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          _dataService.deleteNutritionalValue(widget.nutvalueId!);
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text("Delete"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text("Cancel"),
+                      )
+                    ],
+                  )
+                );
+              }
             },
             icon: const Icon(Icons.delete),
           )
         ] : null
       ),
-      body: FutureBuilder(
-        future: _dataService.getAllNutritionalValues(),
+      body: StreamBuilder(
+        stream: _dataService.streamNutritionalValues(),
         builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              final nutValues = snapshot.data as List<NutritionalValue>;
-              if (isEdit) {
-                if (_interimValue == null) {
-                  try {
-                    _interimValue = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
-                  } catch (e) {
-                    return const Text("Error: Value not found");
-                  }
+          if (snapshot.hasError) {
+            return const Text("Error: Could not load nutritional values");
+          } else if (snapshot.hasData) {
+            final nutValues = snapshot.data as List<NutritionalValue>;
+            if (isEdit) {
+              if (_interimValue == null) {
+                try {
+                  _interimValue = nutValues.firstWhere((nval) => nval.id == widget.nutvalueId);
+                } catch (e) {
+                  return const Text("Error: Value not found");
                 }
-              } else {
-                _interimValue = NutritionalValue(-1, -1, "", "g", true);
               }
-              if (_interimValue != null) {
-                _orderId                = _interimValue!.orderId;
-                _name.text              = _interimValue!.name;
-                _unit.text              = _interimValue!.unit;
-                _showFullName.value     = _interimValue!.showFullName;
-              }
-              return Padding(
-                padding: const EdgeInsets.all(7.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      _buildNameField(nutValues),
-                      _buildUnitField(),
-                      _buildShowFullNameToggle(),
-                      _buildAddButton(),
-                    ]
-                  ),
+            } else {
+              _interimValue = NutritionalValue(-1, -1, "", "g", true);
+            }
+            if (_interimValue != null) {
+              _orderId                = _interimValue!.orderId;
+              _name.text              = _interimValue!.name;
+              _unit.text              = _interimValue!.unit;
+              _showFullName.value     = _interimValue!.showFullName;
+            }
+            return Padding(
+              padding: const EdgeInsets.all(7.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildNameField(nutValues),
+                    _buildUnitField(),
+                    _buildShowFullNameToggle(),
+                    _buildAddButton(),
+                  ]
                 ),
-              );
-            case ConnectionState.none:
-            case ConnectionState.waiting:
-            case ConnectionState.active:
-            default:
-              return const LoadingPage();
+              ),
+            );
+          } else {
+            return const LoadingPage();
           }
         }
       )

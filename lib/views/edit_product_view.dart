@@ -206,7 +206,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     _id = _prevProduct.id;
                   } catch (e) {
                     _error = true;
-                    return const Text("Error: Product not found");
+                    return const Scaffold(body: LoadingPage());
                   }
                 } else {
                   _prevProduct = Product.defaultValues();
@@ -524,8 +524,38 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 usedAsIngredientIn[product.id] = product;
               }
             }
+            var targets = await _dataService.getAllTargets();
+            // Check if any target has the Type product and the product id
+            targets = targets.where((target) => target.trackedType == Product && target.trackedId == _id).toList();
             
-            if (usedAsIngredientIn.isEmpty) {
+            if (usedAsIngredientIn.isNotEmpty) {
+              if (!context.mounted) return;
+              // Tell the user that the product is used in following recipes
+              showUsedAsIngredientDialog(
+                name: name,
+                context: context,
+                usedAsIngredientIn: usedAsIngredientIn,
+                beforeNavigate: () {
+                  _interimProduct = getProductFromForm().$1;
+                },
+              );
+            } else if(targets.isNotEmpty) {
+              if (!context.mounted) return;
+              // simple dialog informing that the product is used in a target
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Delete Product"),
+                  content: const Text("This product is used in a daily target. You have to remove the target in order to delete the product."),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
+              );
+            } else {
               // count how many meals contain the product
               var meals = await _dataService.getAllMeals();
               
@@ -581,16 +611,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     ],
                   )
                 );
-            } else {
-              // Tell the user that the product is used in following recipes
-              showUsedAsIngredientDialog(
-                name: name,
-                context: context,
-                usedAsIngredientIn: usedAsIngredientIn,
-                beforeNavigate: () {
-                  _interimProduct = getProductFromForm().$1;
-                },
-              );
             }
           },
           icon: const Icon(Icons.delete),

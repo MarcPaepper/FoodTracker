@@ -31,7 +31,7 @@ CREATE TABLE "nutritional_value" (
 ''';
 const createIngredientTable = '''
 CREATE TABLE "ingredient" (
-	"ingredient_id"	INTEGER,
+	"product_id"	INTEGER,
 	"is_contained_in_id"	INTEGER,
 	"amount"	INTEGER,
 	"unit"	TEXT,
@@ -102,7 +102,7 @@ const nutritionalValueColumns = [
 ];
 
 const ingredientColumns = [
-  '"ingredient_id" INTEGER',
+  '"product_id" INTEGER',
   '"is_contained_in_id" INTEGER',
   '"amount" INTEGER',
   '"unit" TEXT',

@@ -326,7 +326,7 @@ class SqfliteDataProvider implements DataProvider {
     for (final ingredient in product.ingredients) {
       if (ingredient.productId == null) throw ArgumentError("Ingredient product id is null");
       await _db!.insert(ingredientTable, {
-        ingredientIdColumn:     ingredient.productId!,
+        productIdColumn:        ingredient.productId!,
         isContainedInIdColumn:  containedInId,
         amountColumn:           ingredient.amount,
         unitColumn:             unitToString(ingredient.unit),

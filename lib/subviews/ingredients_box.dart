@@ -206,7 +206,10 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                           child: AmountField(
                             controller: widget.resultingAmountController,
                             enabled: !valueAutoCalc,
-                            onChangedAndParsed: (value) => widget.resultingAmountNotifier.value = value,
+                            onChangedAndParsed: (value) {
+                              widget.resultingAmountNotifier.value = value;
+                              widget.intermediateSave();
+                            },
                             padding: 0,
                           )
                         ),
@@ -437,6 +440,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                                   unit: prev.unit,
                                 );
                                 widget.ingredientsNotifier.value = List.from(ingredients);
+                                widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, null);
                               }
                             ),
                           ),

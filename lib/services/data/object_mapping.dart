@@ -2,10 +2,11 @@ import '../../utility/data_logic.dart';
 import '../../utility/text_logic.dart';
 import 'data_objects.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 // multiple tables
 const idColumn                    = "id";
+const productIdColumn             = "product_id";
 const amountColumn                = "amount";
 const orderIdColumn               = "order_id";
 const unitColumn                  = "unit";
@@ -32,12 +33,10 @@ const unitNameColumn              = "unit";
 const showFullNameColumn          = "show_full_name";
 
 // ingredient table
-const ingredientIdColumn          = "ingredient_id";
 const isContainedInIdColumn       = "is_contained_in_id";
 
 // product nutrient table
 const nutritionalValueIdColumn    = "nutritional_value_id";
-const productIdColumn             = "product_id";
 const autoCalcColumn              = "auto_calc";
 const valueColumn                 = "value";
 
@@ -85,7 +84,7 @@ Product mapToProduct(Map<String, dynamic> row) {
   
 ProductQuantity mapToProductQuantity(Map<String, Object?> row) =>
   ProductQuantity(
-    productId: row[ingredientIdColumn] as int,
+    productId: row[productIdColumn] as int,
     amount:    toDouble(row[amountColumn]),
     unit:      unitFromString(row[unitColumn] as String),
   );
