@@ -628,14 +628,21 @@ class SqfliteDataProvider implements DataProvider {
     final results = await _db!.query(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [target.trackedType.toString(), target.trackedId]);
     if (results.isNotEmpty) throw NotUniqueException();
     
-    // find highest order id
+    // find highest order id for primary or secondary
     if (orderId == null) {
       orderId = 0;
-      try {
-        var orderResults = await _db!.query(targetTable, columns: [orderIdColumn], orderBy: '$orderIdColumn DESC', limit: 1);
-        orderId = (orderResults.first[orderIdColumn] as int) + 1;
-      } catch (e) {
-        // ignore
+      // if the target is primary, find the highest primary order id. If not, find the highest order id overall
+      for (var t in _targets) {
+        if ((t.isPrimary && target.isPrimary) && t.orderId > orderId!) orderId = t.orderId + 1;
+      }
+    }
+    if (target.isPrimary) {
+      // increase all secondary order ids by 1
+      for (var t in _targets) {
+        if (!t.isPrimary) {
+          t.orderId++;
+          await _db!.update(targetTable, {orderIdColumn: t.orderId}, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [t.trackedType.toString(), t.trackedId]);
+        }
       }
     }
     

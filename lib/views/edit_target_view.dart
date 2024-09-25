@@ -148,7 +148,7 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // _buildPrimaryToggle(),
+                          _buildPrimaryToggle(),
                           const Padding(
                             padding: EdgeInsets.fromLTRB(6, 2, 0, 8),
                             child: Text("Type of target:", style: TextStyle(fontSize: 16)),
@@ -195,22 +195,22 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
     );
   }
   
-  // Widget _buildPrimaryToggle() {
-  //   return ValueListenableBuilder<bool>(
-  //     valueListenable: _isPrimaryNotifier,
-  //     builder: (context, isPrimary, child) {
-  //       return SwitchListTile(
-  //         value: isPrimary,
-  //         controlAffinity: ListTileControlAffinity.leading,
-  //         onChanged: (isPrimary) {
-  //           _isPrimaryNotifier.value = isPrimary;
-  //           _interimTarget = _interimTarget?.copyWith(newIsPrimary: isPrimary);
-  //         },
-  //         title: const Text("Primary Target"),
-  //       );
-  //     }
-  //   );
-  // }
+  Widget _buildPrimaryToggle() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isPrimaryNotifier,
+      builder: (context, isPrimary, child) {
+        return SwitchListTile(
+          value: isPrimary,
+          controlAffinity: ListTileControlAffinity.leading,
+          onChanged: (isPrimary) {
+            _isPrimaryNotifier.value = isPrimary;
+            _interimTarget = _interimTarget?.copyWith(newIsPrimary: isPrimary);
+          },
+          title: const Text("Primary Target"),
+        );
+      }
+    );
+  }
   
   Widget _buildTypeDropdown() {
     return ValueListenableBuilder<Type>(

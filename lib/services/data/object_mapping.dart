@@ -2,7 +2,7 @@ import '../../utility/data_logic.dart';
 import '../../utility/text_logic.dart';
 import 'data_objects.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 // multiple tables
 const idColumn                    = "id";

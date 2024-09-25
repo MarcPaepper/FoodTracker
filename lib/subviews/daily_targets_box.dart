@@ -30,32 +30,45 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(0, 4, 0, 12),
         child: StreamBuilder(
-          stream: _dataService.streamNutritionalValues(),
-          builder: (contextN, snapshotN) {
+          stream: _dataService.streamProducts(),
+          builder: (contextP, snapshotP) {
             return StreamBuilder(
-              stream: _dataService.streamMeals(),
-              builder: (contextM, snapshotM) {
-                if (snapshotN.hasError) {
-                  devtools.log("Error retrieving nutritional values: ${snapshotN.error}");
-                  return Text("Error retrieving nutritional values: ${snapshotN.error}");
-                }
-                if (snapshotM.hasError) {
-                  devtools.log("Error retrieving meals: ${snapshotM.error}");
-                  return Text("Error retrieving meals: ${snapshotM.error}");
-                }
-                if (!snapshotM.hasData || !snapshotN.hasData) {
-                  return const LoadingPage();
-                }
-                var nutritionalValues = snapshotN.data!;
-                var meals = snapshotM.data!;
-                return Graph(
-                  dateTime: widget.dateTime,
-                  nutritionalValues: nutritionalValues,
-                  meals: meals,
+              stream: _dataService.streamNutritionalValues(),
+              builder: (contextN, snapshotN) {
+                return StreamBuilder(
+                  stream: _dataService.streamTargets(),
+                  builder: (contextT, snapshotT) {
+                    return StreamBuilder(
+                      stream: _dataService.streamMeals(),
+                      builder: (contextM, snapshotM) {
+                        String? errorMsg;
+                        if (snapshotP.hasError) errorMsg = "products";
+                        if (snapshotN.hasError) errorMsg = "nutritional values";
+                        if (snapshotT.hasError) errorMsg = "daily targets";
+                        if (snapshotM.hasError) errorMsg = "meals";
+                        if (errorMsg != null) return Text("Error loading $errorMsg");
+                        
+                        if (!snapshotP.hasData || !snapshotN.hasData || !snapshotT.hasData || !snapshotM.hasData) {
+                          return const LoadingPage();
+                        }
+                        
+                        var products = snapshotP.data!;
+                        var nutritionalValues = snapshotN.data!;
+                        var meals = snapshotM.data!;
+                        var targets = snapshotT.data!;
+                        
+                        return Graph(
+                          dateTime: widget.dateTime,
+                          nutritionalValues: nutritionalValues,
+                          meals: meals,
+                        );
+                      },
+                    );
+                  }
                 );
               },
             );
-          },
+          }
         ),
       ),
     );
