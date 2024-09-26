@@ -1,11 +1,54 @@
-class InputOutOfRangeException implements Exception {}
-class NotUniqueException implements Exception {}
-class CircularReferenceException implements Exception {}
-class DataNotLoadedException implements Exception {}
-class InvalidInsertionException implements Exception {}
-class InvalidUpdateException implements Exception {}
-class InvalidDeletionException implements Exception {}
-class NotFoundException implements Exception {}
-class DbAlreadyOpenException implements Exception {}
-class NoDocumentsDirectoryException implements Exception {}
-class InfiniteLoopException implements Exception {}
+class InputOutOfRangeException implements Exception {
+  final String? message;
+  InputOutOfRangeException([this.message]);
+}
+
+class NotUniqueException implements Exception {
+  final String? message;
+  NotUniqueException([this.message]);
+}
+
+class CircularReferenceException implements Exception {
+  final String? message;
+  CircularReferenceException([this.message]);
+}
+
+class DataNotLoadedException implements Exception {
+  final String? message;
+  DataNotLoadedException([this.message]);
+}
+
+class InvalidInsertionException implements Exception {
+  final String? message;
+  InvalidInsertionException([this.message]);
+}
+
+class InvalidUpdateException implements Exception {
+  final String? message;
+  InvalidUpdateException([this.message]);
+}
+
+class InvalidDeletionException implements Exception {
+  final String? message;
+  InvalidDeletionException([this.message]);
+}
+
+class NotFoundException implements Exception {
+  final String? message;
+  NotFoundException([this.message]);
+}
+
+class DbAlreadyOpenException implements Exception {
+  final String? message;
+  DbAlreadyOpenException([this.message]);
+}
+
+class NoDocumentsDirectoryException implements Exception {
+  final String? message;
+  NoDocumentsDirectoryException([this.message]);
+}
+
+class InfiniteLoopException implements Exception {
+  final String? message;
+  InfiniteLoopException([this.message]);
+}

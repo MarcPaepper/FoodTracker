@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
@@ -17,7 +18,7 @@ import '../services/data/data_service.dart';
 import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 
-import "dart:developer" as devtools show log;
+import "dart:developer" as devtools;
 
 import '../services/data/object_mapping.dart';
 
@@ -138,6 +139,7 @@ double convertIngredientToProductUnit(
   quantityConversion,
 );
 
+// How many target units are for the given amount and unit
 double convertToUnit(
   Unit targetUnit,
   Unit unit,
@@ -764,22 +766,87 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
   return min;
 }
 
-// // daily target progress
-// Map getDailyTargetProgress(
-//   DateTime dateTime,
-//   List<NutritionalValue> nutritionalValues,
-//   List<Meal> meals,
-//   List<Meal>? oldMeals,
-// ) {
-//   // Only include nutritional values that have a daily target
-//   List<NutritionalValue> dailyTargets = [];
-//   List<bool> primaryTargets = [];
-//   for (var nutValue in nutritionalValues) {
-//     if (nutValue.hasTarget) {
-//       dailyTargets.add(nutValue);
-//       primaryTargets.add(nutValue.primaryTarget);
-//     }
-//   }
+// daily target progress
+// Returns a map of all targets and how much of the target was fulfilled by every product
+// If more than 7 products contributed to a target, the additional ones are combined into the null product
+// Products in the oldMeals list are also combined into the null product
+Map<Target, Map<Product?, double>> getDailyTargetProgress(
+  DateTime dateTime,
+  List<Target> targets,
+  Map<int, Product> productsMap,
+  List<NutritionalValue> nutritionalValues,
+  List<Meal> meals,
+  List<Meal>? oldMeals,
+) {
+  if (targets.isEmpty) return {};
+  Map<Target, Map<Product?, double>> targetProgress = {};
+  List<Product> contributingProducts = [];
   
-//   Map<NutritionalValue, double> dailyTargetValues = {};
-// }
+  // filter oldMeals for the current date
+  if (oldMeals != null) {
+    oldMeals = oldMeals.where((meal) => meal.dateTime.isAtSameMomentAs(dateTime)).toList();
+  }
+  
+  for (var t in targets) {
+    var isProduct = t.trackedType == Product;
+    dynamic trackedObject = isProduct ? productsMap[t.trackedId] : nutritionalValues.firstWhere((nv) => nv.id == t.trackedId);
+    Map<Product?, double> progress = {null: 0.0};
+    
+    for (int i = 0; i < meals.length + (oldMeals?.length ?? 0); i++) {
+      var old = i >= meals.length;
+      var meal = old ? oldMeals![i - meals.length] : meals[i];
+      var pQ = meal.productQuantity;
+      var p = productsMap[pQ.productId];
+      
+      if (p == null) {
+        devtools.log("Error: Product not found");
+        continue;
+      }
+      
+      if (isProduct) {
+        // check how much of the target product is in the meal
+        
+      } else {
+        var nutVal = trackedObject as NutritionalValue;
+        // convert from the productQuantity unit to the unit used for the nutritional values
+        var amount = convertToUnit(p.nutrientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion); // in nutrient units
+        var nutrient = p.nutrients.firstWhere((n) => n.nutritionalValueId == nutVal.id);
+        if (amount == 0) continue;
+        if (!contributingProducts.contains(p)) contributingProducts.add(p);
+        progress[p] = (progress[p] ?? 0.0) + amount * nutrient.value / p.amountForNutrients;
+      }
+    }
+    
+    targetProgress[t] = progress;
+  }
+  
+  // rank the products by relevancy. The most relevant products are the ones that contributed the most to the target
+  // For each target, the products contribution to it is calulated. For each product, the root mean square of the contributions is calculated
+  
+  Map<Product, double> relevancy = {};
+  for (var p in contributingProducts) {
+    List<double> contributions = [];
+    for (var progress in targetProgress.values) {
+      contributions.add(progress[p] ?? 0.0);
+    }
+    // rms
+    relevancy[p] = sqrt(contributions.fold(0.0, (prev, contribution) => prev + contribution * contribution) / contributions.length);
+  }
+  
+  // sort the products by relevancy
+  contributingProducts.sort((a, b) => relevancy[b]!.compareTo(relevancy[a]!));
+  
+  // combine the products that contributed the least to the target
+  for (int i = 7; i < contributingProducts.length; i++) {
+    var p = contributingProducts[i];
+    // combine the product into the null product
+    for (var t in targets) {
+      var progress = targetProgress[t]!;
+      var pProgress = progress[p] ?? 0.0;
+      progress[null] = (progress[null] ?? 0.0) + pProgress;
+      progress.remove(p);
+    }
+  }
+  
+  return targetProgress;
+}

@@ -5,16 +5,18 @@ import '../services/data/data_objects.dart';
 
 class Graph extends StatefulWidget {
   final DateTime dateTime;
+  final List<Target> targets;
+  final List<Product> products;
   final List<NutritionalValue> nutritionalValues;
   final List<Meal> meals;
   
   const Graph(
-    {
-      required this.dateTime,
-      required this.nutritionalValues,
-      required this.meals,
-      super.key
-    }
+    this.dateTime,
+    this.targets,
+    this.products,
+    this.nutritionalValues,
+    this.meals,
+    {super.key}
   );
 
   @override
@@ -24,6 +26,8 @@ class Graph extends StatefulWidget {
 class _GraphState extends State<Graph> {
   @override
   Widget build(BuildContext context) {
+    
+    
     return const LimitedBox(
       maxWidth: 400,
       maxHeight: 400,
