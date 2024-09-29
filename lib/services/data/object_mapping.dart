@@ -2,7 +2,7 @@ import '../../utility/data_logic.dart';
 import '../../utility/text_logic.dart';
 import 'data_objects.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 // multiple tables
 const idColumn                    = "id";
@@ -82,12 +82,15 @@ Product mapToProduct(Map<String, dynamic> row) {
   );
 }
   
-ProductQuantity mapToProductQuantity(Map<String, Object?> row) =>
-  ProductQuantity(
+ProductQuantity mapToProductQuantity(Map<String, Object?> row) {
+  devtools.log("row = $row");
+  
+  return ProductQuantity(
     productId: row[productIdColumn] as int,
     amount:    toDouble(row[amountColumn]),
     unit:      unitFromString(row[unitColumn] as String),
   );
+}
 
 NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
   NutritionalValue(

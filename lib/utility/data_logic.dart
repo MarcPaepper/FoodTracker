@@ -771,7 +771,7 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
 // If more than 7 products contributed to a target, the additional ones are combined into the null product
 // Products in the oldMeals list are also combined into the null product
 Map<Target, Map<Product?, double>> getDailyTargetProgress(
-  DateTime dateTime,
+  DateTime dT,
   List<Target> targets,
   Map<int, Product> productsMap,
   List<NutritionalValue> nutritionalValues,
@@ -779,12 +779,12 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
   List<Meal>? oldMeals,
 ) {
   if (targets.isEmpty) return {};
-  Map<Target, Map<Product?, double>> targetProgress = {};
-  List<Product> contributingProducts = [];
+  Map<Target, Map<Product?, double>> targetProgress = {}; // contains each target and how many units of the target were fulfilled by each product
+  List<Product> contributingProducts = []; // contains all products that contributed to the target at all
   
   // filter oldMeals for the current date
   if (oldMeals != null) {
-    oldMeals = oldMeals.where((meal) => meal.dateTime.isAtSameMomentAs(dateTime)).toList();
+    oldMeals = oldMeals.where((m) => m.dateTime.year == dT.year && m.dateTime.month == dT.month && m.dateTime.day == dT.day).toList();
   }
   
   for (var t in targets) {
@@ -826,8 +826,12 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
   Map<Product, double> relevancy = {};
   for (var p in contributingProducts) {
     List<double> contributions = [];
-    for (var progress in targetProgress.values) {
-      contributions.add(progress[p] ?? 0.0);
+    for (var entry in targetProgress.entries) {
+      var progress = entry.value;
+      var target = entry.key;
+      
+      var absoluteContribution = progress[p] ?? 0.0;
+      contributions.add(absoluteContribution / target.amount);
     }
     // rms
     relevancy[p] = sqrt(contributions.fold(0.0, (prev, contribution) => prev + contribution * contribution) / contributions.length);

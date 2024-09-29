@@ -57,7 +57,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                         var meals = snapshotM.data!;
                         var targets = snapshotT.data!;
                         
-                        return Graph(widget.dateTime, targets, products, nutritionalValues, meals);
+                        return Graph(widget.dateTime, targets, products, nutritionalValues, const [], meals);
                       },
                     );
                   }

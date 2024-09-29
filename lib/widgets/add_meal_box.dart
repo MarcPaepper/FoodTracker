@@ -137,7 +137,6 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           ingredientDropdownFocusNodes[index].requestFocus();
         } else {
           // If sub index = 1, focus the amount field
-          devtools.log("focus text field");
           ingredientDropdownFocusNodes[index].requestFocus();
           Future.delayed(const Duration(milliseconds: 20), () {
             for (var i = 0; i < 1; i++) FocusManager.instance.primaryFocus?.nextFocus();

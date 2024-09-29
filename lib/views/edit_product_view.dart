@@ -378,7 +378,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 onValidate: () => _formKey.currentState!.validate(),
                                 intermediateSave: () => _interimProduct = getProductFromForm().$1,
                                 onConversionChanged: (newDensityConversion, newQuantityConversion) {
-                                  devtools.log("Conversion changed");
                                   _interimProduct = getProductFromForm().$1.copyWith(
                                     newDensityConversion: newDensityConversion,
                                     newQuantityConversion: newQuantityConversion,
@@ -821,7 +820,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           _ingredientDropdownFocusNodes[index].requestFocus();
         } else {
           // If sub index = 1, focus the amount field
-          devtools.log("focus text field");
           _ingredientDropdownFocusNodes[index].requestFocus();
           Future.delayed(const Duration(milliseconds: 20), () {
             for (var i = 0; i < 1; i++) FocusManager.instance.primaryFocus?.nextFocus();
