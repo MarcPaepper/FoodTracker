@@ -780,7 +780,7 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
 ) {
   if (targets.isEmpty) return {};
   Map<Target, Map<Product?, double>> targetProgress = {}; // contains each target and how many units of the target were fulfilled by each product
-  List<Product> contributingProducts = []; // contains all products that contributed to the target at all
+  List<Product> contributingProducts = []; // contains all products that contributed to any target at all
   
   // filter oldMeals for the current date
   if (oldMeals != null) {
@@ -835,9 +835,10 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
     }
     // rms
     relevancy[p] = sqrt(contributions.fold(0.0, (prev, contribution) => prev + contribution * contribution) / contributions.length);
+    devtools.log("Product ${p.name} has a relevancy of ${relevancy[p]}");
   }
   
-  // sort the products by relevancy
+  // sort the products by relevancy descending
   contributingProducts.sort((a, b) => relevancy[b]!.compareTo(relevancy[a]!));
   
   // combine the products that contributed the least to the target
@@ -850,6 +851,24 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
       progress[null] = (progress[null] ?? 0.0) + pProgress;
       progress.remove(p);
     }
+  }
+  
+  // make all progress maps in targetProgress have the same order as contributingProducts
+  for (var t in targets) {
+    var progress = targetProgress[t]!;
+    // sort the map entries by the relevancy of their product
+    var sortedEntries = progress.entries.toList()..sort((a, b) {
+      // if a or b is null, it will be ranked last
+      if (a.key == null) return 1;
+      if (b.key == null) return -1;
+      return relevancy[b.key]!.compareTo(relevancy[a.key]!);
+    });
+    var newProgress = <Product?, double>{};
+    for (var entry in sortedEntries) {
+      newProgress[entry.key] = entry.value;
+    }
+    
+    targetProgress[t] = newProgress;
   }
   
   return targetProgress;

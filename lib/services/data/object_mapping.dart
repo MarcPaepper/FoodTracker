@@ -82,15 +82,12 @@ Product mapToProduct(Map<String, dynamic> row) {
   );
 }
   
-ProductQuantity mapToProductQuantity(Map<String, Object?> row) {
-  devtools.log("row = $row");
-  
-  return ProductQuantity(
+ProductQuantity mapToProductQuantity(Map<String, Object?> row) =>
+ ProductQuantity(
     productId: row[productIdColumn] as int,
     amount:    toDouble(row[amountColumn]),
     unit:      unitFromString(row[unitColumn] as String),
   );
-}
 
 NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
   NutritionalValue(
@@ -109,8 +106,10 @@ ProductNutrient mapToProductNutrient(Map<String, Object?> row) =>
     value:              toDouble(row[valueColumn]),
   );
 
-Meal mapToMeal(Map<String, Object?> row) =>
-  Meal(
+Meal mapToMeal(Map<String, Object?> row) {
+  devtools.log("row = $row");
+  
+  return Meal(
     id:               row[idColumn] as int,
     dateTime:         DateTime.parse(row[dateTimeColumn] as String),
     creationDate:     DateTime.parse(row[creationDateColumn] as String),
@@ -121,6 +120,7 @@ Meal mapToMeal(Map<String, Object?> row) =>
       unit:             unitFromString(row[unitColumn] as String),
     ),
   );
+}
 
 Target mapToTarget(Map<String, Object?> map) {
   Type trackedType;

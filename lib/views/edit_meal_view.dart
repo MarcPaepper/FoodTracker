@@ -118,14 +118,14 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
           ),
         ),
         Expanded(child: Container()),
-        _buildUpdateButton(),
+        _buildUpdateButton(meal),
       ],
     );
   }
   
   void _updateDateTime(DateTime newDateTime) => dateTimeNotifier.value = newDateTime;
   
-  Widget _buildUpdateButton() => Padding(
+  Widget _buildUpdateButton(Meal meal) => Padding(
     padding: const EdgeInsets.all(8.0),
     child: ElevatedButton(
       style: ButtonStyle(
@@ -138,12 +138,11 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
         )),
       ),
       onPressed: () {
-        var meal = Meal(
-          id: widget.mealId,
-          dateTime: dateTimeNotifier.value,
-          productQuantity: ingredientsNotifier.value[0],
+        var newMeal = meal.copyWith(
+          newDateTime: dateTimeNotifier.value,
+          newProductQuantity: ingredientsNotifier.value[0],
         );
-        dataService.updateMeal(meal);
+        dataService.updateMeal(newMeal);
         Navigator.of(context).pop();
       },
       child: const Text("Apply Changes"),
