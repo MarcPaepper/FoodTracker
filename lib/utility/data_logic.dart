@@ -811,7 +811,7 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
         // convert from the productQuantity unit to the unit used for the nutritional values
         var amount = convertToUnit(p.nutrientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion); // in nutrient units
         var nutrient = p.nutrients.firstWhere((n) => n.nutritionalValueId == nutVal.id);
-        if (amount == 0) continue;
+        if (amount * nutrient.value == 0) continue;
         if (!contributingProducts.contains(p)) contributingProducts.add(p);
         progress[p] = (progress[p] ?? 0.0) + amount * nutrient.value / p.amountForNutrients;
       }
@@ -835,7 +835,6 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
     }
     // rms
     relevancy[p] = sqrt(contributions.fold(0.0, (prev, contribution) => prev + contribution * contribution) / contributions.length);
-    devtools.log("Product ${p.name} has a relevancy of ${relevancy[p]}");
   }
   
   // sort the products by relevancy descending

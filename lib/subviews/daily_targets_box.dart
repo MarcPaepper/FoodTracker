@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-import 'dart:developer' as devtools show log;
-
 import '../services/data/data_service.dart';
 import '../widgets/border_box.dart';
 import '../widgets/graph.dart';
 import '../widgets/loading_page.dart';
+
+// import 'dart:developer' as devtools show log;
 
 class DailyTargetsBox extends StatefulWidget {
   final DateTime dateTime;

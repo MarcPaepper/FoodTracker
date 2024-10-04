@@ -2,7 +2,7 @@ import '../../utility/data_logic.dart';
 import '../../utility/text_logic.dart';
 import 'data_objects.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 // multiple tables
 const idColumn                    = "id";
@@ -106,10 +106,8 @@ ProductNutrient mapToProductNutrient(Map<String, Object?> row) =>
     value:              toDouble(row[valueColumn]),
   );
 
-Meal mapToMeal(Map<String, Object?> row) {
-  devtools.log("row = $row");
-  
-  return Meal(
+Meal mapToMeal(Map<String, Object?> row) =>
+ Meal(
     id:               row[idColumn] as int,
     dateTime:         DateTime.parse(row[dateTimeColumn] as String),
     creationDate:     DateTime.parse(row[creationDateColumn] as String),
@@ -120,7 +118,6 @@ Meal mapToMeal(Map<String, Object?> row) {
       unit:             unitFromString(row[unitColumn] as String),
     ),
   );
-}
 
 Target mapToTarget(Map<String, Object?> map) {
   Type trackedType;

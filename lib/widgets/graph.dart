@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/data/data_objects.dart';
 import '../utility/data_logic.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class Graph extends StatefulWidget {
   final DateTime dateTime;
@@ -33,9 +33,7 @@ class _GraphState extends State<Graph> {
     // convert product list to map
     Map<int, Product> productMap = widget.products.asMap().map((key, value) => MapEntry(value.id, value));
     
-    // load daily target progress
     Map<Target, Map<Product?, double>> targetProgress = getDailyTargetProgress(widget.dateTime, widget.targets, productMap, widget.nutritionalValues, widget.oldMeals, widget.newMeals);
-    devtools.log("targetProgress = $targetProgress");
     
     return const LimitedBox(
       maxWidth: 400,
