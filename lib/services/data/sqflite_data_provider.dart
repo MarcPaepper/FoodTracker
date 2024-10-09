@@ -481,14 +481,19 @@ class SqfliteDataProvider implements DataProvider {
   
   Future<void> _addProductNutrientsForNutritionalValue({required int nutritionalValueId}) async {
     for (final product in _products) {
-      product.nutrients.add(
-        ProductNutrient(
-          nutritionalValueId: nutritionalValueId,
-          productId:          product.id,
-          autoCalc:           true,
-          value:              0,
-        )
+      var nutrient = ProductNutrient(
+        nutritionalValueId: nutritionalValueId,
+        productId:          product.id,
+        autoCalc:           true,
+        value:              0,
       );
+      await _db!.insert(productNutrientTable, {
+        nutritionalValueIdColumn: nutrient.nutritionalValueId,
+        productIdColumn:          nutrient.productId,
+        autoCalcColumn:           nutrient.autoCalc ? 1 : 0,
+        valueColumn:              nutrient.value,
+      });
+      product.nutrients.add(nutrient);
     }
   }
   

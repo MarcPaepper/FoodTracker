@@ -459,6 +459,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                                     unit: unit,
                                   );
                                   widget.ingredientsNotifier.value = List.from(ingredients);
+                                  widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, null);
                                 }
                               }
                             ),

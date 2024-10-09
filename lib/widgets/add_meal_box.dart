@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_tracker/subviews/daily_targets_box.dart';
 import 'package:food_tracker/widgets/datetime_selectors.dart';
+import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
@@ -83,12 +84,12 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             ),
           ),
           const SizedBox(height: 14),
-          ValueListenableBuilder(
-            valueListenable: dateTimeNotifier,
-            builder: (context, dateTime, child) {
+          MultiValueListenableBuilder(
+            listenables: [dateTimeNotifier, ingredientsNotifier],
+            builder: (context, values, child) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: DailyTargetsBox(dateTime),
+                child: DailyTargetsBox(values[0], values[1]),
               );
             },
           ),

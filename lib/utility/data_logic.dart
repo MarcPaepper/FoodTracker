@@ -807,13 +807,14 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
         // check how much of the target product is in the meal
         
       } else {
+        // check how much of the target nutritional value is in the meal
         var nutVal = trackedObject as NutritionalValue;
         // convert from the productQuantity unit to the unit used for the nutritional values
         var amount = convertToUnit(p.nutrientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion); // in nutrient units
         var nutrient = p.nutrients.firstWhere((n) => n.nutritionalValueId == nutVal.id);
         if (amount * nutrient.value == 0) continue;
-        if (!contributingProducts.contains(p)) contributingProducts.add(p);
-        progress[p] = (progress[p] ?? 0.0) + amount * nutrient.value / p.amountForNutrients;
+        if (!old && !contributingProducts.contains(p)) contributingProducts.add(p);
+        progress[old ? null : p] = (progress[old ? null : p] ?? 0.0) + amount * nutrient.value / p.amountForNutrients;
       }
     }
     

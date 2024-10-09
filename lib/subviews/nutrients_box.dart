@@ -79,7 +79,7 @@ class NutrientsBox extends StatelessWidget {
         var anyAutoCalc = valueNutrients.any((nutrient) => nutrient.autoCalc);
         var isEmpty = !(anyAutoCalc || valueNutrients.any((nutrient) => nutrient.value != 0));
         
-        // same as above but with the current values
+        // calculate the nutrient values
         var updatedNutrients = calcNutrients(
           nutrients: valueNutrients,
           ingredients: valueIngredients,

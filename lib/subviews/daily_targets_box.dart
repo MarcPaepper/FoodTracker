@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
+import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../widgets/border_box.dart';
 import '../widgets/graph.dart';
@@ -10,9 +11,11 @@ import '../widgets/loading_page.dart';
 
 class DailyTargetsBox extends StatefulWidget {
   final DateTime dateTime;
+  final List<ProductQuantity>? ingredients;
   
   const DailyTargetsBox(
     this.dateTime,
+    this.ingredients,
     {super.key}
   );
 
@@ -54,10 +57,24 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                         
                         var products = snapshotP.data!;
                         var nutritionalValues = snapshotN.data!;
-                        var meals = snapshotM.data!;
+                        List<Meal> newMeals;// = widget.ingredients == null ? snapshotM.data! : widget.ingredients!;
+                        List<Meal> oldMeals;// = widget.ingredients == null ? [] : snapshotM.data!;
                         var targets = snapshotT.data!;
                         
-                        return Graph(widget.dateTime, targets, products, nutritionalValues, const [], meals);
+                        if (widget.ingredients == null) {
+                          newMeals = snapshotM.data!;
+                          oldMeals = [];
+                        } else {
+                          // convert ProductQuantity to Meal
+                          newMeals = widget.ingredients!.map((ingr) => Meal(
+                            id: -1,
+                            dateTime: widget.dateTime,
+                            productQuantity: ingr,
+                          )).toList();
+                          oldMeals = snapshotM.data!;
+                        }
+                        
+                        return Graph(widget.dateTime, targets, products, nutritionalValues, oldMeals, newMeals);
                       },
                     );
                   }
