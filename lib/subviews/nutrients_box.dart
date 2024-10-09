@@ -9,6 +9,8 @@ import '../widgets/border_box.dart';
 import '../widgets/multi_value_listenable_builder.dart';
 import '../widgets/unit_dropdown.dart';
 
+// import 'dart:developer' as devtools show log;
+
 class NutrientsBox extends StatelessWidget {
   final List<NutritionalValue> nutValues;
   final Map<int, Product> productsMap;
@@ -199,6 +201,9 @@ class NutrientsBox extends StatelessWidget {
     List<ProductNutrient> nutrients,
     List<NutritionalValue> nutValues,
   ) {
+    // sort nutValues by order id
+    nutValues.sort((a, b) => a.orderId - b.orderId);
+    
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
