@@ -232,7 +232,7 @@ class Meal {
              this.lastEditDate,
   });
   
-  copyWith({
+  Meal copyWith({
     int? newId,
     DateTime? newDateTime,
     ProductQuantity? newProductQuantity,

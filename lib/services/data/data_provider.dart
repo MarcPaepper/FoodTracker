@@ -10,7 +10,7 @@ abstract class DataProvider {
   Future<void> cleanUp();
   
   Stream<List<Product>> streamProducts();
-  Future<Iterable<Product>> getAllProducts();
+  Future<Iterable<Product>> getAllProducts({bool cache = true});
   void reloadProductStream();
   Future<Product> getProduct(int id);
   Future<Product> createProduct(Product product);
@@ -19,7 +19,7 @@ abstract class DataProvider {
   Future<void> deleteProductWithName(String name);
   
   Stream<List<NutritionalValue>> streamNutritionalValues();
-  Future<Iterable<NutritionalValue>> getAllNutritionalValues();
+  Future<Iterable<NutritionalValue>> getAllNutritionalValues({bool cache = true});
   void reloadNutritionalValueStream();
   Future<NutritionalValue> getNutritionalValue(int id);
   Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal);
@@ -29,7 +29,7 @@ abstract class DataProvider {
   Future<void> deleteNutritionalValueWithName(String name);
   
   Stream<List<Meal>> streamMeals();
-  Future<Iterable<Meal>> getAllMeals();
+  Future<Iterable<Meal>> getAllMeals({bool cache = true});
   void reloadMealStream();
   Future<Meal> getMeal(int id);
   Future<Meal> createMeal(Meal meal);
@@ -37,7 +37,7 @@ abstract class DataProvider {
   Future<void> deleteMeal(int id);
   
   Stream<List<Target>> streamTargets();
-  Future<Iterable<Target>> getAllTargets();
+  Future<Iterable<Target>> getAllTargets({bool cache = true});
   void reloadTargetStream();
   Future<Target> getTarget(Type targetType, int targetId);
   Future<Target> createTarget(Target target);

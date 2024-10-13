@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/routes.dart';
+import '../services/data/async_provider.dart';
 import '../services/data/data_objects.dart';
 import '../utility/data_logic.dart';
 import '../utility/modals.dart';
@@ -15,7 +16,7 @@ import '../widgets/product_dropdown.dart';
 import '../widgets/slidable_list.dart';
 import '../widgets/unit_dropdown.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 class IngredientsBox extends StatefulWidget {
   final int id;
@@ -544,13 +545,19 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         padding: EdgeInsets.only(left: 5.0),
         child: Text("Add Ingredient"),
       ),
-      onPressed: () {// remove all ingredient products from products list
+      onPressed: () async {// remove all ingredient products from products list
         var reducedProducts = reduceProducts(productsMap, ingredients, id);
+        Map<int, double>? relevancies;
+        try {
+          relevancies = await AsyncProvider.getRelevancies();
+        } finally {}
+        
         // show product dialog
         widget.intermediateSave();
-        showProductDialog(
+        if (context.mounted) showProductDialog(
           context: context,
           productsMap: reducedProducts,
+          relevancies: relevancies,
           selectedProduct: null,
           autofocus: true,
           onSelected: (Product? product) {

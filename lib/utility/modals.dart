@@ -7,6 +7,7 @@ import '../widgets/search_field.dart';
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
 import '../widgets/products_list.dart';
+import '../widgets/sort_field.dart';
 import 'theme.dart';
 
 // import 'dart:developer' as devtools show log;
@@ -203,6 +204,7 @@ void showUsedAsIngredientDialog({
 void showProductDialog({
   required BuildContext context,
   required Map<int, Product> productsMap,
+  Map<int, double>? relevancies,
   Product? selectedProduct,
   required void Function(Product?) onSelected,
   void Function()? beforeAdd,
@@ -222,6 +224,7 @@ void showProductDialog({
             Expanded(
               child: _MainList(
                 productsMap: productsMap,
+                relevancies: relevancies,
                 onSelected: onSelected,
                 onLongPress: (product) {
                   if (allowNew) onAddProduct(context, product.name, true, beforeAdd, onSelected);
@@ -324,6 +327,7 @@ void onAddProduct(
 
 class _MainList extends StatefulWidget {
   final Map<int, Product> productsMap;
+  final Map<int, double>? relevancies;
   final Function(Product) onSelected;
   final Function(Product)? onLongPress;
   final bool showSearch;
@@ -333,6 +337,7 @@ class _MainList extends StatefulWidget {
   
   const _MainList({
     required this.productsMap,
+    this.relevancies,
     required this.onSelected,
     this.onLongPress,
     this.showSearch = true,
@@ -380,6 +385,8 @@ class _MainListState extends State<_MainList> {
             children: getProductTiles(
               context: context,
               products: widget.productsMap.values.toList(),
+              sorting: (SortType.relevancy, SortOrder.descending),
+              relevancies: widget.relevancies,
               search: _searchController.text,
               colorFromTop: widget.colorFromTop,
               onSelected: (name, id) {

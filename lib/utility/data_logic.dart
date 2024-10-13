@@ -252,6 +252,7 @@ bool conversionToUnitPossible(
 }
 
 // recalculate the nutrients for the product and all products that contain it
+// returns a list of all updated products
 List<Product> recalcProductNutrients(Product product, List<Product> products, Map<int, Product> productsMap) {
   Map<int, Product> alteredProductsMap = Map.from(productsMap);
   // create a tree of products that contain the product
@@ -764,6 +765,51 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
     }
   }
   return min;
+}
+
+// calculate how relevant a product currently is to the user
+double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) {
+  var now = DateTime.now();
+  // filter for the meals that contain the product
+  meals = meals.where((m) => m.productQuantity.productId == product.id).toList();
+  
+  // make the meals more relevant if they have more recent meals
+  compDT = DateTime(compDT.year, compDT.month, compDT.day, compDT.hour, compDT.minute);
+  var mealTimeDeltas = meals.map((m) => max(0, compDT.difference(m.dateTime).inHours / 24)).toList();
+  var mealRelevancy = 1 + mealTimeDeltas.fold(0.0, (prev, delta) => prev + 1 / (delta + 1));
+  
+  // make the product more relevant if it was created or edited more recently
+  var productRelevancy = 0.0;
+  var creationDelta = product.creationDate != null ? now.difference(product.creationDate!).inMinutes / 60 : 0;
+  if (creationDelta < 0) creationDelta = 0;
+  productRelevancy = max(7 * pow(1/7, creationDelta / 48) as double, 1);
+  
+  var editDelta = product.lastEditDate != null ? now.difference(product.lastEditDate!).inMinutes / 60 : 0;
+  if (editDelta < 0) editDelta = 0;
+  productRelevancy = max(4 * pow(1/4, editDelta / 24) as double, productRelevancy);
+  
+  // triple the relevancy if the product is temporary and compDT is inside the temporary interval
+  var temporaryRelevancy = 1;
+  if (product.isTemporary) {
+    if (product.temporaryBeginning != null && product.temporaryEnd != null) {
+      if (compDT.isAfter(product.temporaryBeginning!) && compDT.isBefore(product.temporaryEnd!)) {
+        productRelevancy = 3;
+      }
+    }
+  }
+  
+  // String name = product.name;
+  // // make name 20 characters long
+  // if (name.length > 20) name = name.substring(0, 20);
+  // if (name.length < 20) name = name.padRight(20);
+  
+  // String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
+  // String productRelevancyStr = productRelevancy.toStringAsFixed(3);
+  // String temporaryRelevancyStr = temporaryRelevancy.toStringAsFixed(3);
+  
+  // devtools.log("::: $name : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
+  
+  return mealRelevancy * productRelevancy * temporaryRelevancy;
 }
 
 // daily target progress

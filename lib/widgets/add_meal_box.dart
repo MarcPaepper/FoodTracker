@@ -128,6 +128,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   void updateDateTime(DateTime newDateTime) {
     // setState(() => dateTime = newDateTime);
     dateTimeNotifier.value = newDateTime;
+    widget.onDateTimeChanged(newDateTime);
   }
   
   void _requestIngredientFocus(int index, int subIndex) {

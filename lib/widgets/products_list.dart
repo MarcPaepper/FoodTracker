@@ -5,19 +5,19 @@ import 'package:food_tracker/widgets/sort_field.dart';
 
 import '../utility/text_logic.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 List<Widget> getProductTiles({
   required BuildContext context,
   required List<Product> products,
   required String search,
            (SortType sortType, SortOrder sortOrder)? sorting,
+           Map<int, double>? relevancies,
   required Function(String, int) onSelected,
   Function(String, int)? onLongPress,
   bool colorFromTop = false,
 }) {
   var searchWords = search.split(" ");
-  
   products = products.where((product) {
     var name = product.name.toLowerCase();
     return searchWords.every((word) => name.contains(word.toLowerCase()));
@@ -31,6 +31,15 @@ List<Widget> getProductTiles({
           products.sort((a, b) => a.name.compareTo(b.name));
           break;
         case SortType.relevancy:
+          if (relevancies != null) {
+            devtools.log("!!! sorting by relevancy");
+            products.sort((a, b) {
+              var relevancyA = relevancies[a.id] ?? 0;
+              var relevancyB = relevancies[b.id] ?? 0;
+              return relevancyA.compareTo(relevancyB);
+            });
+            break;
+          }
         case SortType.creationDate:
           products.sort((a, b) => a.creationDate!.compareTo(b.creationDate!));
           break;

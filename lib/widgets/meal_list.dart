@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:food_tracker/services/data/async_provider.dart";
 
 import "../constants/routes.dart";
 import "../services/data/data_objects.dart";
@@ -34,7 +35,7 @@ class _MealListState extends State<MealList> {
       children: [
         AddMealBox(
           copyDateTime: DateTime.now(),
-          onDateTimeChanged: (newDateTime) => {},
+          onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
           productsMap: widget.productsMap ?? {},
         ),
         const SizedBox(height: 5),

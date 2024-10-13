@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:food_tracker/services/data/async_provider.dart';
 import 'package:food_tracker/utility/theme.dart';
 
 import '../constants/routes.dart';
@@ -26,7 +27,7 @@ class _ProductsViewState extends State<ProductsView> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   SortType _sortType = SortType.relevancy;
-  SortOrder _sortOrder = SortOrder.ascending;
+  SortOrder _sortOrder = SortOrder.descending;
   
   @override
   void initState() {
@@ -43,54 +44,59 @@ class _ProductsViewState extends State<ProductsView> {
 	Widget build(BuildContext context) {
 		return StreamBuilder(
       stream: _dataService.streamProducts(),
-      builder: (context, snapshot) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              color: Colors.white,
-              child: Padding(
-                padding: kIsWeb ? const EdgeInsets.fromLTRB(12, 18, 12, 0) : const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: SortField(
-                  sortType: _sortType,
-                  sortOrder: _sortOrder,
-                  onChanged: (sortType, sortOrder) {
-                    setState(() {
-                      _sortType = sortType;
-                      _sortOrder = sortOrder;
-                    });
-                  }
+      builder: (contextP, snapshotP) {
+        return StreamBuilder(
+          stream: AsyncProvider.streamRelevancies(),
+          builder: (contextR, snapshotR) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  color: Colors.white,
+                  child: Padding(
+                    padding: kIsWeb ? const EdgeInsets.fromLTRB(12, 18, 12, 0) : const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    child: SortField(
+                      sortType: _sortType,
+                      sortOrder: _sortOrder,
+                      onChanged: (sortType, sortOrder) {
+                        setState(() {
+                          _sortType = sortType;
+                          _sortOrder = sortOrder;
+                        });
+                      }
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Container(
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: kIsWeb ? 16.0 : 12.0),
-                child: SearchField(
-                  searchController: _searchController,
-                  onChanged: (value) => setState(() {
-                    _isSearching = value.isNotEmpty;
-                  }),
+                Container(
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: kIsWeb ? 16.0 : 12.0),
+                    child: SearchField(
+                      searchController: _searchController,
+                      onChanged: (value) => setState(() {
+                        _isSearching = value.isNotEmpty;
+                      }),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: _buildProductList(snapshot)
-            ),
-            _buildAddButton(snapshot.hasData ? snapshot.data as List<Product> : []),
-          ]
+                Expanded(
+                  child: _buildProductList(snapshotP, snapshotR)
+                ),
+                _buildAddButton(snapshotP.hasData ? snapshotP.data as List<Product> : []),
+              ]
+            );
+          }
         );
       }
 		);
 	}
   
-  Widget _buildProductList(AsyncSnapshot snapshot) {
-    if (snapshot.hasError) {
-      return Text("Error: ${snapshot.error}");
-    }
-    if (snapshot.hasData) {
-      var products = snapshot.data as List<Product>;
+  Widget _buildProductList(AsyncSnapshot snapshotP, AsyncSnapshot snapshotR) {
+    if (snapshotP.hasError) return Text("Error: ${snapshotP.error}");
+    if (snapshotR.hasError) return Text("Error: ${snapshotR.error}");
+    if (snapshotP.hasData) {
+      var products = snapshotP.data as List<Product>;
+      var relevancies = snapshotR.hasData ? snapshotR.data as Map<int, double> : null;
       return ListView(
         physics: const ClampingScrollPhysics(),
         children: getProductTiles(
@@ -98,6 +104,7 @@ class _ProductsViewState extends State<ProductsView> {
           products: products,
           search: _searchController.text,
           sorting: (_sortType, _sortOrder),
+          relevancies: relevancies,
           colorFromTop: true,
           onSelected: (name, id) => Navigator.pushNamed (
             context,

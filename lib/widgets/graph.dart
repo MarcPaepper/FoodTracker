@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
@@ -134,14 +136,12 @@ class _GraphPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     if (oldDelegate is _GraphPainter) {
       var shouldRepaint = false;
-      shouldRepaint = shouldRepaint || oldDelegate.targetProgress != targetProgress;
-      shouldRepaint = shouldRepaint || oldDelegate.products != products;
-      shouldRepaint = shouldRepaint || oldDelegate.nutritionalValues != nutritionalValues;
-      shouldRepaint = shouldRepaint || oldDelegate.productColors != productColors;
-      devtools.log("shouldRepaint: $shouldRepaint");
+      if (!const DeepCollectionEquality().equals(targetProgress, oldDelegate.targetProgress)) shouldRepaint = true;
+      if (!listEquals(products, oldDelegate.products)) shouldRepaint = true;
+      if (!listEquals(nutritionalValues, oldDelegate.nutritionalValues)) shouldRepaint = true;
+      if (!listEquals(productColors, oldDelegate.productColors)) shouldRepaint = true;
       return shouldRepaint;
     } else {
-      devtools.log("shouldRepaint: true");
       return true;
     }
   }

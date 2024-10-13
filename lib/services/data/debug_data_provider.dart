@@ -338,7 +338,7 @@ class DebugDataProvider implements DataProvider {
   void reloadProductStream() => loaded ? _productsStreamController.add(products) : {};
   
   @override
-  Future<Iterable<Product>> getAllProducts() {
+  Future<Iterable<Product>> getAllProducts({bool cache = true}) {
     return Future.value(products);
   }
   
@@ -423,7 +423,7 @@ class DebugDataProvider implements DataProvider {
   void reloadNutritionalValueStream() => loaded ? _nutritionalValuesStreamController.add(nutValues) : {};
   
   @override
-  Future<Iterable<NutritionalValue>> getAllNutritionalValues() {
+  Future<Iterable<NutritionalValue>> getAllNutritionalValues({bool cache = true}) {
     return Future.value(nutValues);
   }
   
@@ -521,7 +521,7 @@ class DebugDataProvider implements DataProvider {
   void reloadMealStream() => loaded ? _mealsStreamController.add(meals) : {};
   
   @override
-  Future<Iterable<Meal>> getAllMeals() {
+  Future<Iterable<Meal>> getAllMeals({bool cache = true}) {
     return Future.value(meals);
   }
   
@@ -580,7 +580,7 @@ class DebugDataProvider implements DataProvider {
   void reloadTargetStream() => loaded ? _targetsStreamController.add(targets) : {};
   
   @override
-  Future<Iterable<Target>> getAllTargets() {
+  Future<Iterable<Target>> getAllTargets({bool cache = true}) {
     return Future.value(targets);
   }
   

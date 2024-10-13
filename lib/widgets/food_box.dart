@@ -1,8 +1,11 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:food_tracker/utility/theme.dart";
 
 import "../constants/routes.dart";
+import "../services/data/async_provider.dart";
 import '../services/data/data_objects.dart';
 import "../utility/data_logic.dart";
 import "../utility/modals.dart";
@@ -13,7 +16,7 @@ import "product_dropdown.dart";
 import "slidable_list.dart";
 import "unit_dropdown.dart";
 
-// import "dart:developer" as devtools show log;
+import "dart:developer" as devtools show log;
 
 class FoodBox extends StatefulWidget {
   final Map<int, Product> productsMap;
@@ -338,10 +341,16 @@ class _FoodBoxState extends State<FoodBox> {
         ),
         minimumSize: WidgetStateProperty.all<Size>(const Size(0, 50)),
       ),
-      onPressed: () {
-        showProductDialog(
+      onPressed: () async {
+        Map<int, double>? relevancies;
+        try {
+          relevancies = await AsyncProvider.getRelevancies();
+        } finally {}
+        
+        if (context.mounted) showProductDialog(
           context: context,
           productsMap: widget.productsMap,
+          relevancies: relevancies,
           selectedProduct: null,
           autofocus: true,
           onSelected: (Product? product) {

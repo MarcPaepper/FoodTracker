@@ -36,7 +36,7 @@ class _SortFieldState extends State<SortField> {
     hintText: 'Search',
     fillColor: Colors.white,
     filled: true,
-    contentPadding: kIsWeb ? EdgeInsets.fromLTRB(13, 11, 8, 11) : EdgeInsets.fromLTRB(13, 110, 8, 9),
+    contentPadding: kIsWeb ? EdgeInsets.fromLTRB(13, 11, 8, 11) : EdgeInsets.fromLTRB(13, 11, 8, 9),
   );
   
   final _dropdownTextStyle = const TextStyle(

@@ -805,9 +805,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       }
       
       if (popAfter) {
-        future.then((newProduct) {
-          Navigator.of(context).pop(newProduct);
-        });
+        if (_isEdit) {
+          Navigator.of(context).pop(_interimProduct);
+        } else {
+          future.then((newProduct) {
+            Navigator.of(context).pop(newProduct);
+          });
+        }
       }
     }
   }

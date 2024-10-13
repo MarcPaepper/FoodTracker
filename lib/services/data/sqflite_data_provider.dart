@@ -18,6 +18,7 @@ import 'package:food_tracker/services/data/data_provider.dart';
 import "dart:developer" as devtools show log;
 
 import '../../utility/data_logic.dart';
+import 'async_provider.dart';
 import 'object_mapping.dart';
 
 const productTable          = "product";
@@ -31,6 +32,7 @@ const forceReset = false;
 
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
+  var _loaded = false;
   
   // cached data
   List<Product> _products = [];
@@ -47,7 +49,7 @@ class SqfliteDataProvider implements DataProvider {
   SqfliteDataProvider(String dbName);
   
   @override
-  bool isLoaded() => _db != null;
+  bool isLoaded() => _loaded;
   
   @override
   Future<String> open(String dbName, {bool addDefNutVals = true}) async {
@@ -120,12 +122,16 @@ class SqfliteDataProvider implements DataProvider {
           }
         }
       }
+      _loaded = true;
+		
       
-      await getAllProducts();
-      await getAllNutritionalValues();
-      await getAllMeals();
-      await getAllTargets();
+      await getAllProducts(cache: false);
+      await getAllNutritionalValues(cache: false);
+      await getAllMeals(cache: false);
+      await getAllTargets(cache: false);
       await cleanUp();
+      
+      Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.getRelevancies(useCached: false));
       
       return "data loaded";
     } on MissingPlatformDirectoryException {
@@ -188,8 +194,9 @@ class SqfliteDataProvider implements DataProvider {
   void reloadProductStream() => isLoaded() ? _productsStreamController.add(_products) : null;
   
   @override
-  Future<Iterable<Product>> getAllProducts() async {
+  Future<Iterable<Product>> getAllProducts({bool cache = true}) async {
     if (!isLoaded()) throw DataNotLoadedException();
+    if (cache && _products.isNotEmpty) return _products;
     
     var productRows = await _db!.query(productTable);
     _products = <Product>[];
@@ -253,6 +260,7 @@ class SqfliteDataProvider implements DataProvider {
     _products.add(newProduct);
     _productsMap[id] = newProduct;
     _productsStreamController.add(_products);
+    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([id]));
     
     return newProduct;
   }
@@ -289,6 +297,7 @@ class SqfliteDataProvider implements DataProvider {
     _products.add(product);
     _productsMap[product.id] = product;
     _productsStreamController.add(_products);
+    if(recalc) Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([product.id]));
     
     return product;
   }
@@ -306,6 +315,7 @@ class SqfliteDataProvider implements DataProvider {
     _products.removeWhere((p) => p.id == id);
     _productsMap.remove(id);
     _productsStreamController.add(_products);
+    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([id]));
   }
   
   @override
@@ -347,8 +357,9 @@ class SqfliteDataProvider implements DataProvider {
   void reloadNutritionalValueStream() => isLoaded() ? _nutritionalValuesStreamController.add(_nutritionalValues) : null;
   
   @override
-  Future<Iterable<NutritionalValue>> getAllNutritionalValues() async {
+  Future<Iterable<NutritionalValue>> getAllNutritionalValues({bool cache = true}) async {
     if (!isLoaded()) throw DataNotLoadedException();
+    if (cache && _nutritionalValues.isNotEmpty) return _nutritionalValues;
     
     var nutValRows = await _db!.query(nutritionalValueTable);
     _nutritionalValues = nutValRows.map((row) => mapToNutritionalValue(row)).toList();
@@ -514,8 +525,9 @@ class SqfliteDataProvider implements DataProvider {
   void reloadMealStream() => isLoaded() ? _mealsStreamController.add(_meals) : null;
   
   @override
-  Future<Iterable<Meal>> getAllMeals() async {
+  Future<Iterable<Meal>> getAllMeals({bool cache = true}) async {
     if (!isLoaded()) throw DataNotLoadedException();
+    if (cache && _meals.isNotEmpty) return _meals;
     
     var mealRows = await _db!.query(mealTable);
     _meals = mealRows.map((row) => mapToMeal(row)).toList();
@@ -558,6 +570,7 @@ class SqfliteDataProvider implements DataProvider {
     var newMeal = meal.copyWith(newId: id);
     _meals.insert(findInsertIndex(_meals, newMeal), newMeal);
     _mealsStreamController.add(_meals);
+    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([newMeal.productQuantity.productId!]));
     
     return newMeal;
   }
@@ -576,6 +589,7 @@ class SqfliteDataProvider implements DataProvider {
     _meals.removeWhere((m) => m.id == meal.id);
     _meals.insert(findInsertIndex(_meals, meal), meal);
     _mealsStreamController.add(_meals);
+    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([meal.productQuantity.productId!]));
     
     return meal;
   }
@@ -584,11 +598,14 @@ class SqfliteDataProvider implements DataProvider {
   Future<void> deleteMeal(int id) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
+    Meal meal = _meals.firstWhere((m) => m.id == id);
+    
     final deletedCount = await _db!.delete(mealTable, where: '$idColumn = ?', whereArgs: [id]);
     if (deletedCount != 1) throw InvalidDeletionException();
     
-    _meals.removeWhere((m) => m.id == id);
+    _meals.remove(meal);
     _mealsStreamController.add(_meals);
+    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([meal.productQuantity.productId!]));
   }
   
   // ----- Target -----
@@ -600,8 +617,9 @@ class SqfliteDataProvider implements DataProvider {
   void reloadTargetStream() => isLoaded() ? _targetsStreamController.add(_targets) : null;
   
   @override
-  Future<Iterable<Target>> getAllTargets() async {
+  Future<Iterable<Target>> getAllTargets({bool cache = true}) async {
     if (!isLoaded()) throw DataNotLoadedException();
+    if (cache && _targets.isNotEmpty) return _targets;
     
     var targetRows = await _db!.query(targetTable);
     _targets = targetRows.map((row) => mapToTarget(row)).toList();

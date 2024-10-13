@@ -355,7 +355,6 @@ Widget _buildChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(D
         duration = isUp ? const Duration(days: 1) : const Duration(days: -1);
         dateTime = dateTime.add(duration);
       }
-      onChanged(dateTime);
     },
     child: Padding(
       padding: const EdgeInsets.fromLTRB(7, 9, 9, 9),
