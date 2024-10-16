@@ -16,14 +16,14 @@ import "product_dropdown.dart";
 import "slidable_list.dart";
 import "unit_dropdown.dart";
 
-import "dart:developer" as devtools show log;
+// import "dart:developer" as devtools show log;
 
 class FoodBox extends StatefulWidget {
   final Map<int, Product> productsMap;
   final int? focusIndex;
   final DateTime? autofocusTime;
   
-  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier;
+  final ValueNotifier<List<(ProductQuantity, Color)>> ingredientsNotifier;
   final List<TextEditingController> ingredientAmountControllers;
   final List<FocusNode>? ingredientDropdownFocusNodes;
   
@@ -66,7 +66,7 @@ class _FoodBoxState extends State<FoodBox> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: widget.ingredientsNotifier,
-      builder: (context, List<ProductQuantity> ingredients, _) {
+      builder: (context, List<(ProductQuantity, Color)> ingredients, _) {
         return BorderBox(
           child: Container(
             clipBehavior: Clip.antiAlias,
@@ -89,13 +89,12 @@ class _FoodBoxState extends State<FoodBox> {
   
   Widget _buildIngredientsList(
     BuildContext context,
-    List<ProductQuantity> ingredients,
+    List<(ProductQuantity, Color)> ingredients,
     bool canDelete,
   ) {
     List<SlidableListEntry> entries;
     bool valid;
     (entries, valid) = _getIngredientEntries(context, widget.productsMap, ingredients);
-    
     
     return FormField(
       validator: (value) {
@@ -117,10 +116,11 @@ class _FoodBoxState extends State<FoodBox> {
   (List<SlidableListEntry>, bool) _getIngredientEntries(
     BuildContext context,
     Map<int, Product> productsMap,
-    List<ProductQuantity> ingredients,
+    List<(ProductQuantity, Color)> ingredients,
   ) {
     // remove all products from product list
-    var reducedProducts = reduceProducts(productsMap, ingredients, null);
+    var prodQuantities = ingredients.map((e) => e.$1).toList();
+    var reducedProducts = reduceProducts(productsMap, prodQuantities, null);
     
     var entries = <SlidableListEntry>[];
     
@@ -138,12 +138,13 @@ class _FoodBoxState extends State<FoodBox> {
     
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
+      var productQuantity = ingredient.$1;
       bool dark = index % 2 == 0;
       var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
       var focusNode1 = hasFocusNodes ? widget.ingredientDropdownFocusNodes![index] : null;
       
-      var product = ingredient.productId != null 
-        ? productsMap[ingredient.productId]
+      var product = productQuantity.productId != null 
+        ? productsMap[productQuantity.productId]
         : null;
       
       var availableProducts = <int, Product>{};
@@ -151,13 +152,16 @@ class _FoodBoxState extends State<FoodBox> {
       if (product != null) availableProducts[product.id] = product;
       
       // check whether selected unit is compatible with the product
-      var unit = ingredient.unit;
+      var unit = productQuantity.unit;
       if (product != null && !product.getAvailableUnits().contains(unit)) {
         unit = product.defaultUnit;
-        ingredients[index] = ProductQuantity(
-          productId: ingredient.productId,
-          amount: ingredient.amount,
-          unit: unit,
+        ingredients[index] = (
+          ProductQuantity(
+            productId: productQuantity.productId,
+            amount: productQuantity.amount,
+            unit: unit,
+          ),
+          ingredient.$2,
         );
         // update after build
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -216,10 +220,13 @@ class _FoodBoxState extends State<FoodBox> {
                             var currentUnit = unit;
                             newUnit = (newProduct.getAvailableUnits().contains(currentUnit)) ? currentUnit : newProduct.defaultUnit;
                             
-                            ingredients[index] = ProductQuantity(
-                              productId: newProduct.id,
-                              amount:    ingredient.amount,
-                              unit:      newUnit,
+                            ingredients[index] = (
+                              ProductQuantity(
+                                productId: newProduct.id,
+                                amount:    productQuantity.amount,
+                                unit:      newUnit,
+                              ),
+                              ingredient.$2,
                             );
                             // widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, index);
                             widget.ingredientsNotifier.value = List.from(ingredients);
@@ -238,10 +245,13 @@ class _FoodBoxState extends State<FoodBox> {
                               padding: 0,
                               onChangedAndParsed: (value) {
                                 var prev = ingredients[index];
-                                ingredients[index] = ProductQuantity(
-                                  productId: prev.productId,
-                                  amount: value,
-                                  unit: prev.unit,
+                                ingredients[index] = (
+                                  ProductQuantity(
+                                    productId: prev.$1.productId,
+                                    amount: value,
+                                    unit: prev.$1.unit,
+                                  ),
+                                  prev.$2,
                                 );
                                 widget.ingredientsNotifier.value = List.from(ingredients);
                               }
@@ -256,10 +266,13 @@ class _FoodBoxState extends State<FoodBox> {
                               onChanged: (Unit? unit) {
                                 if (unit != null) {
                                   var prev = ingredients[index];
-                                  ingredients[index] = ProductQuantity(
-                                    productId: prev.productId,
-                                    amount: prev.amount,
-                                    unit: unit,
+                                  ingredients[index] = (
+                                    ProductQuantity(
+                                      productId: prev.$1.productId,
+                                      amount: prev.$1.amount,
+                                      unit: unit,
+                                    ),
+                                    prev.$2,
                                   );
                                   widget.ingredientsNotifier.value = List.from(ingredients);
                                 }
@@ -326,7 +339,7 @@ class _FoodBoxState extends State<FoodBox> {
     return (entries, valid);
   }
   
-  Widget _buildAddButton(BuildContext context, bool roundedTop, List<ProductQuantity> ingredients) {
+  Widget _buildAddButton(BuildContext context, bool roundedTop, List<(ProductQuantity, Color)> ingredients) {
     return ElevatedButton.icon(
       style: addButtonStyle.copyWith(
         shape: WidgetStateProperty.all<RoundedRectangleBorder>(
@@ -362,10 +375,13 @@ class _FoodBoxState extends State<FoodBox> {
               } else {
                 amount = 100.0;
               }
-              ingredients.add(ProductQuantity(
-                productId: product.id,
-                amount: amount,
-                unit: defUnit,
+              ingredients.add((
+                ProductQuantity(
+                  productId: product.id,
+                  amount: amount,
+                  unit: defUnit,
+                ),
+                const Color.fromARGB(0, 0, 0, 0),
               ));
               var newController = TextEditingController();
               newController.text = truncateZeros(amount);

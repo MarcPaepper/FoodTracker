@@ -16,7 +16,7 @@ import '../widgets/product_dropdown.dart';
 import '../widgets/slidable_list.dart';
 import '../widgets/unit_dropdown.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 class IngredientsBox extends StatefulWidget {
   final int id;

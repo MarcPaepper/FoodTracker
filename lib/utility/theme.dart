@@ -181,3 +181,13 @@ var importantButtonStyle = ButtonStyle(
     borderRadius: BorderRadius.all(Radius.circular(14)),
   )),
 );
+  
+List<Color> productColors = [
+  Colors.red,      // red
+  Colors.orange,   // orange
+  Colors.yellow,   // yellow
+  Colors.green,    // green
+  Colors.blue, 		// blue
+  Colors.indigo,	  // indigo
+  Colors.purple,	  // purple
+];

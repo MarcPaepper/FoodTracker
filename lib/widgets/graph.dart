@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
-import '../utility/data_logic.dart';
+import '../utility/theme.dart';
 
 import 'dart:developer' as devtools show log;
 
@@ -12,16 +12,18 @@ class Graph extends StatefulWidget {
   final List<Target> targets;
   final List<Product> products;
   final List<NutritionalValue> nutritionalValues;
-  final List<Meal> oldMeals;
-  final List<Meal> newMeals;
+  // final List<Meal> oldMeals;
+  // final List<Meal> newMeals;
+  final Map<Target, Map<Product?, double>> targetProgress;
   
   const Graph(
     this.dateTime,
     this.targets,
     this.products,
     this.nutritionalValues,
-    this.oldMeals,
-    this.newMeals,
+    this.targetProgress,
+    // this.oldMeals,
+    // this.newMeals,
     {super.key}
   );
 
@@ -32,27 +34,12 @@ class Graph extends StatefulWidget {
 class _GraphState extends State<Graph> {
   @override
   Widget build(BuildContext context) {
-    // convert product list to map
-    Map<int, Product> productMap = widget.products.asMap().map((key, value) => MapEntry(value.id, value));
-    
-    Map<Target, Map<Product?, double>> targetProgress = getDailyTargetProgress(widget.dateTime, widget.targets, productMap, widget.nutritionalValues, widget.newMeals, widget.oldMeals);
-    // this is a map of all targets and how much of the target was fulfilled by every product
-    
-    List<Color> productColors = [
-      Colors.red,      // red
-      Colors.orange,   // orange
-      Colors.yellow,   // yellow
-      Colors.green,    // green
-      Colors.blue, 		// blue
-      Colors.indigo,	// indigo
-      Colors.purple,	// purple
-    ];
     
     return LimitedBox(
       maxHeight: 300,
       child: CustomPaint(
         size: Size.infinite,
-        painter: _GraphPainter(targetProgress, widget.products, widget.nutritionalValues, productColors),
+        painter: _GraphPainter(widget.targetProgress, widget.products, widget.nutritionalValues, productColors),
       ),
     );
   }
@@ -82,12 +69,12 @@ class _GraphPainter extends CustomPainter {
     double maximum = totalProgress.values.fold(0.0, (a, b) => a > b ? a : b);
     maximum = maximum < 1 ? 1 : maximum;
     
-    final double barWidth = 30;
-    final double margin = 15;
-    final double entryWidth = barWidth + 2 * margin;
-    final double spacing = barWidth / (targetProgress.length + 1);
-    final double maxBarHeight = size.height * 0.8;
-    final double baseline = size.height * 0.9;
+    double barWidth = 30;
+    double margin = 15;
+    double entryWidth = barWidth + 2 * margin;
+    double spacing = barWidth / (targetProgress.length + 1);
+    double maxBarHeight = size.height * 0.8;
+    double baseline = size.height * 0.9;
 
     var entryLeft = spacing;
 

@@ -816,7 +816,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
 // Returns a map of all targets and how much of the target was fulfilled by every product
 // If more than 7 products contributed to a target, the additional ones are combined into the null product
 // Products in the oldMeals list are also combined into the null product
-Map<Target, Map<Product?, double>> getDailyTargetProgress(
+(Map<Target, Map<Product?, double>>, List<Product>) getDailyTargetProgress(
   DateTime dT,
   List<Target> targets,
   Map<int, Product> productsMap,
@@ -824,7 +824,7 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
   List<Meal> meals,
   List<Meal>? oldMeals,
 ) {
-  if (targets.isEmpty) return {};
+  if (targets.isEmpty) return ({}, []);
   Map<Target, Map<Product?, double>> targetProgress = {}; // contains each target and how many units of the target were fulfilled by each product
   List<Product> contributingProducts = []; // contains all products that contributed to any target at all
   
@@ -899,14 +899,17 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
     }
   }
   
+  // shorten the contributingProducts list
+  contributingProducts = contributingProducts.sublist(0, min(7, contributingProducts.length));
+  
   // make all progress maps in targetProgress have the same order as contributingProducts
   for (var t in targets) {
     var progress = targetProgress[t]!;
     // sort the map entries by the relevancy of their product
     var sortedEntries = progress.entries.toList()..sort((a, b) {
-      // if a or b is null, it will be ranked last
-      if (a.key == null) return 1;
-      if (b.key == null) return -1;
+      // if a or b is null, it will be ranked top
+      if (a.key == null) return -1;
+      if (b.key == null) return 1;
       return relevancy[b.key]!.compareTo(relevancy[a.key]!);
     });
     var newProgress = <Product?, double>{};
@@ -917,5 +920,5 @@ Map<Target, Map<Product?, double>> getDailyTargetProgress(
     targetProgress[t] = newProgress;
   }
   
-  return targetProgress;
+  return (targetProgress, contributingProducts);
 }

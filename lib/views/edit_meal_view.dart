@@ -25,7 +25,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
   final DataService dataService = DataService.current();
   
   late final GlobalKey<FormState> _formKey;
-  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier = ValueNotifier([]);
+  final ValueNotifier<List<(ProductQuantity, Color)>> ingredientsNotifier = ValueNotifier([]);
   final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now().add(const Duration(hours: 1)));
   List<TextEditingController> ingredientAmountControllers = [];
   //final List<FocusNode> ingredientDropdownFocusNodes = [];
@@ -75,7 +75,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
                     
                     if (!loaded) {
                       dateTimeNotifier.value = meal.dateTime;
-                      ingredientsNotifier.value = [meal.productQuantity];
+                      ingredientsNotifier.value = [(meal.productQuantity, Colors.teal.shade400)];
                       ingredientAmountControllers = [TextEditingController(text: meal.productQuantity.amount.toString())];
                       loaded = true;
                     }
@@ -140,7 +140,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
       onPressed: () {
         var newMeal = meal.copyWith(
           newDateTime: dateTimeNotifier.value,
-          newProductQuantity: ingredientsNotifier.value[0],
+          newProductQuantity: ingredientsNotifier.value[0].$1,
         );
         dataService.updateMeal(newMeal);
         Navigator.of(context).pop();

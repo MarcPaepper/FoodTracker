@@ -33,7 +33,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   // late DateTime dateTime;
   late final FixedExtentScrollController _scrollController;
   
-  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier = ValueNotifier([]);
+  final ValueNotifier<List<(ProductQuantity, Color)>> ingredientsNotifier = ValueNotifier([]);
   late final ValueNotifier<DateTime> dateTimeNotifier;
   List<TextEditingController> ingredientAmountControllers = [];
   final List<FocusNode> ingredientDropdownFocusNodes = [];
@@ -89,7 +89,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             builder: (context, values, child) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: DailyTargetsBox(values[0], values[1]),
+                child: DailyTargetsBox(values[0], values[1], (ingredients) => ingredientsNotifier.value = ingredients),
               );
             },
           ),
@@ -150,41 +150,39 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     }
   }
   
-  
-
-Widget _buildAddMealButton(BuildContext context, bool enabled) {
-  var style = addButtonStyle.copyWith(
-    //minimumSize: WidgetStateProperty.all(const Size(double.infinity, 39)),
-    alignment: Alignment.center,
-  );
-  
-  if (enabled) {
-    style = style.copyWith(
-      backgroundColor: WidgetStateProperty.all(Colors.teal.shade300),
+  Widget _buildAddMealButton(BuildContext context, bool enabled) {
+    var style = addButtonStyle.copyWith(
+      //minimumSize: WidgetStateProperty.all(const Size(double.infinity, 39)),
+      alignment: Alignment.center,
+    );
+    
+    if (enabled) {
+      style = style.copyWith(
+        backgroundColor: WidgetStateProperty.all(Colors.teal.shade300),
+      );
+    }
+    
+    return ElevatedButton.icon(
+      style: style,
+      icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0),),
+      iconAlignment: IconAlignment.end,
+      onPressed: enabled ? () {
+        for (var ingredient in ingredientsNotifier.value) {
+          _dataService.createMeal(
+            Meal(
+              id: -1,
+              dateTime: dateTimeNotifier.value,
+              productQuantity: ingredient.$1,
+            ),
+          );
+        }
+        ingredientsNotifier.value = [];
+        ingredientAmountControllers.clear();
+      } : null,
+      label: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4),
+        child: Text("Add Meal"),
+      ),
     );
   }
-  
-  return ElevatedButton.icon(
-    style: style,
-    icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0),),
-    iconAlignment: IconAlignment.end,
-    onPressed: enabled ? () {
-      for (var ingredient in ingredientsNotifier.value) {
-        _dataService.createMeal(
-          Meal(
-            id: -1,
-            dateTime: dateTimeNotifier.value,
-            productQuantity: ingredient,
-          ),
-        );
-      }
-      ingredientsNotifier.value = [];
-      ingredientAmountControllers.clear();
-    } : null,
-    label: const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
-      child: Text("Add Meal"),
-    ),
-  );
-}
 }
