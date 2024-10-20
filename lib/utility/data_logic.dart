@@ -599,9 +599,13 @@ Future<void> importData(BuildContext context) async {
     // import the data
     var service = DataService.current();
     
-    try {
+    //try {
+      devtools.log("Data cleaning");
       await service.cleanUp();
+      devtools.log("Data cleaned up");
+      devtools.log("Data reset");
       await service.reset("test");
+      devtools.log("Data resetted");
       
       // map old ids to new ids
       var nutValIds = <int, int>{};
@@ -705,11 +709,11 @@ Future<void> importData(BuildContext context) async {
       }
       
       if(context.mounted) showSnackbar(context, "Data imported successfully");
-    } on Exception catch (e) {
-      // log
-      devtools.log("Error while importing the data: $e");
-      if(context.mounted) showSnackbar(context, "Error while importing the data: $e");
-    }
+    //} on Exception catch (e) {
+    //  // log
+    //  devtools.log("Error while importing the data: $e");
+    //  if(context.mounted) showSnackbar(context, "Error while importing the data: $e");
+    //}
   }
 }
 

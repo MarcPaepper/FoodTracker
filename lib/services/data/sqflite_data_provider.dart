@@ -98,7 +98,7 @@ class SqfliteDataProvider implements DataProvider {
           // If table is Nutritional Value, insert the default values
           if (entry.key == nutritionalValueTable && addDefNutVals) {
             for (var value in defaultNutritionalValues) {
-              await createNutritionalValue(value);
+              await createNutritionalValue(value, ignoreLoaded: true);
             }
           }
         } else {
@@ -123,7 +123,6 @@ class SqfliteDataProvider implements DataProvider {
         }
       }
       _loaded = true;
-		
       
       await getAllProducts(cache: false);
       await getAllNutritionalValues(cache: false);
@@ -149,14 +148,18 @@ class SqfliteDataProvider implements DataProvider {
     } catch (e) {
       devtools.log("Error deleting database: $e");
     }
+    devtools.log("Database reset");
     _db = null;
+    _loaded = false;
     await open(dbName, addDefNutVals: false);
   }
   
   @override
   Future<String> reload() async {
     await _db!.close();
+    devtools.log("reloading");
     _db = null;
+    _loaded = false;
     return await open("test");
   }
   
@@ -166,11 +169,14 @@ class SqfliteDataProvider implements DataProvider {
     _nutritionalValuesStreamController.close();
     _mealsStreamController.close();
     await _db!.close();
+    devtools.log("closing");
     _db = null;
+    _loaded = false;
   }
   
   @override
   Future<void> cleanUp() async {
+    if (!isLoaded()) throw DataNotLoadedException();
     // remove all meals with invalid product ids
     int invalidProductCount = 0;
     var mealRows = await _db!.query(mealTable);
@@ -385,8 +391,8 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
-  Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal) async {
-    if (!isLoaded()) throw DataNotLoadedException();
+  Future<NutritionalValue> createNutritionalValue(NutritionalValue nutVal, {bool ignoreLoaded = false}) async {
+    if (!isLoaded() && !ignoreLoaded) throw DataNotLoadedException();
     
     final results = await _db!.query(nutritionalValueTable, where: '$nameColumn = ?', whereArgs: [nutVal.name]);
     if (results.isNotEmpty) throw NotUniqueException();

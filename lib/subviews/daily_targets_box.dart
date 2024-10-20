@@ -84,9 +84,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                         newMealProducts.removeWhere((element) => element == null);
                         
                         // a map of all targets and how much of the target was fulfilled by every product
-                        var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, oldMeals, newMeals);
+                        var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, newMeals, oldMeals);
                         
-                        if (widget.ingredients != null) {
+                        if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {
                           var colorChanged = false;
                           DailyTargetsBox.colorsUsed = 0;
                           

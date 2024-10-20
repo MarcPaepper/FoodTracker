@@ -16,7 +16,7 @@ import "product_dropdown.dart";
 import "slidable_list.dart";
 import "unit_dropdown.dart";
 
-// import "dart:developer" as devtools show log;
+ import "dart:developer" as devtools show log;
 
 class FoodBox extends StatefulWidget {
   final Map<int, Product> productsMap;
@@ -136,6 +136,7 @@ class _FoodBoxState extends State<FoodBox> {
     
     bool valid = true;
     
+    // build the list of ingredients
     for (int index = 0; index < ingredients.length; index++) {
       var ingredient = ingredients[index];
       var productQuantity = ingredient.$1;
@@ -188,6 +189,8 @@ class _FoodBoxState extends State<FoodBox> {
           ),
         );
       
+      devtools.log("Ingredient $index: ${product?.name ?? "null"} has color ${ingredient.$2}");
+      
       entries.add(
         SlidableListEntry(
           key: Key("${product == null ? "unnamed " : ""}ingredient ${product?.name} at $index of ${ingredients.length}"),
@@ -238,6 +241,18 @@ class _FoodBoxState extends State<FoodBox> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // color indicator as rounded rectangle
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: ingredient.$2,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
                           // amount field
                           Expanded(
                             child: AmountField(
