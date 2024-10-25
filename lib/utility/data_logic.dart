@@ -827,8 +827,10 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   List<NutritionalValue> nutritionalValues,
   List<Meal> meals,
   List<Meal>? oldMeals,
+  bool sortByRelevancy,
 ) {
   if (targets.isEmpty) return ({}, []);
+  
   Map<Target, Map<Product?, double>> targetProgress = {}; // contains each target and how many units of the target were fulfilled by each product
   List<Product> contributingProducts = []; // contains all products that contributed to any target at all
   
@@ -888,6 +890,9 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     relevancy[p] = sqrt(contributions.fold(0.0, (prev, contribution) => prev + contribution * contribution) / contributions.length);
   }
   
+  // store the original sorting
+  Map<Product, int> originalSorting = contributingProducts.asMap().map((i, p) => MapEntry(p, i));
+  
   // sort the products by relevancy descending
   contributingProducts.sort((a, b) => relevancy[b]!.compareTo(relevancy[a]!));
   
@@ -906,22 +911,27 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   // shorten the contributingProducts list
   contributingProducts = contributingProducts.sublist(0, min(7, contributingProducts.length));
   
-  // make all progress maps in targetProgress have the same order as contributingProducts
-  for (var t in targets) {
-    var progress = targetProgress[t]!;
-    // sort the map entries by the relevancy of their product
-    var sortedEntries = progress.entries.toList()..sort((a, b) {
-      // if a or b is null, it will be ranked top
-      if (a.key == null) return -1;
-      if (b.key == null) return 1;
-      return relevancy[b.key]!.compareTo(relevancy[a.key]!);
-    });
-    var newProgress = <Product?, double>{};
-    for (var entry in sortedEntries) {
-      newProgress[entry.key] = entry.value;
+  if (sortByRelevancy) {
+    // make all progress maps in targetProgress have the same order as contributingProducts
+    for (var t in targets) {
+      var progress = targetProgress[t]!;
+      // sort the map entries by the relevancy of their product
+      var sortedEntries = progress.entries.toList()..sort((a, b) {
+        // if a or b is null, it will be ranked top
+        if (a.key == null) return -1;
+        if (b.key == null) return 1;
+        return relevancy[b.key]!.compareTo(relevancy[a.key]!);
+      });
+      var newProgress = <Product?, double>{};
+      for (var entry in sortedEntries) {
+        newProgress[entry.key] = entry.value;
+      }
+      
+      targetProgress[t] = newProgress;
     }
-    
-    targetProgress[t] = newProgress;
+  } else {
+    // apply original sorting to contributingProducts
+    contributingProducts.sort((a, b) => originalSorting[a]!.compareTo(originalSorting[b]!));
   }
   
   return (targetProgress, contributingProducts);

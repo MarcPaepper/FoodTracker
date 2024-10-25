@@ -62,8 +62,8 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                         
                         var products = snapshotP.data!;
                         var nutritionalValues = snapshotN.data!;
-                        List<Meal> newMeals;// = widget.ingredients == null ? snapshotM.data! : widget.ingredients!;
-                        List<Meal> oldMeals;// = widget.ingredients == null ? [] : snapshotM.data!;
+                        List<Meal> newMeals;
+                        List<Meal> oldMeals;
                         var targets = snapshotT.data!;
                         
                         if (widget.ingredients == null) {
@@ -79,12 +79,18 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                           oldMeals = snapshotM.data!;
                         }
                         
-                        Map<int, Product> productsMap= products.asMap().map((key, value) => MapEntry(value.id, value));
+                        Map<int, Product> productsMap = products.asMap().map((key, value) => MapEntry(value.id, value));
+                        Map<int, Color> colors = widget.ingredients?.asMap().map((key, value) => MapEntry(value.$1.productId ?? -1, value.$2)) ?? {};
                         List<Product?> newMealProducts = newMeals.map((meal) => productsMap[meal.productQuantity.productId]).toList();
                         newMealProducts.removeWhere((element) => element == null);
                         
+                        
                         // a map of all targets and how much of the target was fulfilled by every product
-                        var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, newMeals, oldMeals);
+                        var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, newMeals, oldMeals, false);
+                        
+                        // // sort contributing products by the index map
+                        // contributingProducts.sort((a, b) => (ingredientIndices[a.id] ?? 0) - (ingredientIndices[b.id] ?? 0));
+                        // sort target progress by the index map
                         
                         if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {
                           var colorChanged = false;
@@ -92,11 +98,13 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                           
                           devtools.log("contrlength: ${contributingProducts.length}, ingredientslength: ${widget.ingredients!.length}");
                           
+                          // make sure all contributing products have the right color
                           for (var i = 0; i < contributingProducts.length; i++) {
                             int index = widget.ingredients!.indexWhere((element) => element.$1.productId == contributingProducts[i].id);
                             var (productQuantity, color) = widget.ingredients![index];
                             var desiredColor = productColors[i % productColors.length];
                             if (color != desiredColor) {
+                              devtools.log("changing color of ${contributingProducts[i].name} from $color to $desiredColor");
                               widget.ingredients![index] = (productQuantity, desiredColor);
                               colorChanged = true;
                               DailyTargetsBox.colorsUsed++;
@@ -119,7 +127,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                           if (colorChanged) widget.onIngredientsChanged(widget.ingredients!);
                         }
                         
-                        return Graph(widget.dateTime, targets, products, nutritionalValues, targetProgress); //oldMeals, newMeals);
+                        return Graph(widget.dateTime, targets, products, colors, nutritionalValues, targetProgress); //oldMeals, newMeals);
                       },
                     );
                   }

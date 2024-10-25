@@ -23,6 +23,7 @@ class _SlidableListState extends State<SlidableList> {
   Widget build(BuildContext context) {
     return ListView(
       shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       children: List.generate(widget.entries.length, (index) {
         var entry = widget.entries[index];
         var menuItems = entry.menuItems;

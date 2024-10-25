@@ -337,7 +337,7 @@ Widget _buildChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(D
   InkWell(
     enableFeedback: !isTime,
     onTap: () {
-      Duration duration = isTime ? const Duration(hours: 1) : const Duration(days: 1);
+      Duration duration;
       if (isTime) {
         if ((isUp && dateTime.hour == 23) || (!isUp && dateTime.hour == 0)) {
           duration = const Duration(hours: -23);
@@ -354,6 +354,7 @@ Widget _buildChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(D
       } else {
         duration = isUp ? const Duration(days: 1) : const Duration(days: -1);
         dateTime = dateTime.add(duration);
+        onChanged(dateTime);
       }
     },
     child: Padding(

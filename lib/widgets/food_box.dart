@@ -375,9 +375,13 @@ class _FoodBoxState extends State<FoodBox> {
           relevancies = await AsyncProvider.getRelevancies();
         } finally {}
         
+        // remove ingredient products from products map
+        var prodQuantities = ingredients.map((e) => e.$1).toList();
+        var reducedProducts = reduceProducts(widget.productsMap, prodQuantities, null);
+        
         if (context.mounted) showProductDialog(
           context: context,
-          productsMap: widget.productsMap,
+          productsMap: reducedProducts,
           relevancies: relevancies,
           selectedProduct: null,
           autofocus: true,
@@ -390,13 +394,14 @@ class _FoodBoxState extends State<FoodBox> {
               } else {
                 amount = 100.0;
               }
+              devtools.log("adding ${product.name} with color ${productColors[ingredients.length % productColors.length]}");
               ingredients.add((
                 ProductQuantity(
                   productId: product.id,
                   amount: amount,
                   unit: defUnit,
                 ),
-                const Color.fromARGB(0, 0, 0, 0),
+                productColors[ingredients.length % productColors.length],
               ));
               var newController = TextEditingController();
               newController.text = truncateZeros(amount);

@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
-import '../utility/theme.dart';
 
 import 'dart:developer' as devtools show log;
 
@@ -11,6 +10,7 @@ class Graph extends StatefulWidget {
   final DateTime dateTime;
   final List<Target> targets;
   final List<Product> products;
+  final Map<int, Color> colorMap;
   final List<NutritionalValue> nutritionalValues;
   // final List<Meal> oldMeals;
   // final List<Meal> newMeals;
@@ -20,6 +20,7 @@ class Graph extends StatefulWidget {
     this.dateTime,
     this.targets,
     this.products,
+    this.colorMap,
     this.nutritionalValues,
     this.targetProgress,
     // this.oldMeals,
@@ -34,12 +35,16 @@ class Graph extends StatefulWidget {
 class _GraphState extends State<Graph> {
   @override
   Widget build(BuildContext context) {
+    // log colors
+    // for (var color in widget.colorMap) {
+    //   // devtools.log(color.toString());
+    // }
     
     return LimitedBox(
       maxHeight: 300,
       child: CustomPaint(
         size: Size.infinite,
-        painter: _GraphPainter(widget.targetProgress, widget.products, widget.nutritionalValues, productColors),
+        painter: _GraphPainter(widget.targetProgress, widget.products, widget.nutritionalValues, widget.colorMap),
       ),
     );
   }
@@ -49,13 +54,13 @@ class _GraphPainter extends CustomPainter {
   final Map<Target, Map<Product?, double>> targetProgress;
   final List<Product> products;
   final List<NutritionalValue> nutritionalValues;
-  final List<Color> productColors;
+  final Map<int, Color> colorMap;
 
   _GraphPainter(
     this.targetProgress,
     this.products,
     this.nutritionalValues,
-    this.productColors,
+    this.colorMap,
   );
 
   @override
@@ -77,12 +82,21 @@ class _GraphPainter extends CustomPainter {
     double baseline = size.height * 0.9;
 
     var entryLeft = spacing;
-
-    targetProgress.forEach((target, productContributions) {
+    
+    for (int i = 0; i < targetProgress.length; i++) {
+      Target target = targetProgress.keys.elementAt(i);
+      Map<Product?, double>? productContributions = targetProgress[target];
+      
       // Draw product contributions
       double currentHeight = 0;
-      productContributions.forEach((product, contribution) {
-        Color color = product == null ? const Color.fromARGB(255, 83, 83, 83) : productColors[product.id % productColors.length];
+      productContributions?.forEach((product, contribution) {
+        Color color;
+        if (product == null) {
+          color = const Color.fromARGB(255, 83, 83, 83);
+        } else {
+          color = colorMap[product.id] ?? Colors.white;
+        }
+        
         double contributionHeight = (contribution / target.amount) * maxBarHeight;
         
         canvas.drawRect(
@@ -116,7 +130,7 @@ class _GraphPainter extends CustomPainter {
         ..paint(canvas, Offset(entryLeft, baseline + 5));
 
       entryLeft += entryWidth + spacing;
-    });
+    }
   }
 
   @override
@@ -126,7 +140,7 @@ class _GraphPainter extends CustomPainter {
       if (!const DeepCollectionEquality().equals(targetProgress, oldDelegate.targetProgress)) shouldRepaint = true;
       if (!listEquals(products, oldDelegate.products)) shouldRepaint = true;
       if (!listEquals(nutritionalValues, oldDelegate.nutritionalValues)) shouldRepaint = true;
-      if (!listEquals(productColors, oldDelegate.productColors)) shouldRepaint = true;
+      if (!const DeepCollectionEquality().equals(colorMap, oldDelegate.colorMap)) shouldRepaint = true;
       return shouldRepaint;
     } else {
       return true;
