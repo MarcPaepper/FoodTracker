@@ -78,11 +78,11 @@ class _GraphPainter extends CustomPainter {
     double baseline = size.height * 0.9;
 
     var entryLeft = margin;
-    
+
     for (int i = 0; i < targetProgress.length; i++) {
       Target target = targetProgress.keys.elementAt(i);
       Map<Product?, double>? productContributions = targetProgress[target];
-      
+
       // Draw product contributions
       double currentHeight = 0;
       productContributions?.forEach((product, contribution) {
@@ -92,14 +92,13 @@ class _GraphPainter extends CustomPainter {
         } else {
           color = colorMap[product.id] ?? Colors.white;
         }
-        
+
         double contributionHeight = (contribution / target.amount) * maxBarHeight;
-        
         canvas.drawRect(
           Rect.fromLTWH(entryLeft + margin, baseline - currentHeight - contributionHeight, barWidth, contributionHeight),
           Paint()..color = color,
         );
-        
+
         currentHeight += contributionHeight;
       });
 
@@ -110,20 +109,47 @@ class _GraphPainter extends CustomPainter {
         Paint()..color = Colors.black..strokeWidth = 1..style = PaintingStyle.stroke,
       );
 
-      // Draw target name
+      // Draw target label with dynamic alignment
       String name = target.trackedType == Product ?
         products.firstWhere((product) => product.id == target.trackedId).name :
         nutritionalValues.firstWhere((nutVal) => nutVal.id == target.trackedId).name;
-      
-      TextPainter(
+
+      // Create TextPainter to measure the width of the text
+      TextPainter textPainter = TextPainter(
         text: TextSpan(
           text: name,
           style: const TextStyle(fontSize: 12, color: Colors.black),
         ),
         textDirection: TextDirection.ltr,
-      )
-        ..layout(minWidth: 0, maxWidth: entryWidth)
-        ..paint(canvas, Offset(entryLeft, baseline + 5));
+      );
+
+      // Layout text with infinite width to calculate its actual width
+      textPainter.layout(minWidth: 0, maxWidth: double.infinity);
+
+      // Check if the text width fits within entryWidth
+      bool fitsInOneLine = textPainter.width <= entryWidth;
+
+      // Re-create TextPainter with adjusted alignment based on width check
+      textPainter = TextPainter(
+        text: TextSpan(
+          text: name,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
+        ),
+        textAlign: fitsInOneLine ? TextAlign.center : TextAlign.left,
+        textDirection: TextDirection.ltr,
+      );
+
+      // Layout with the actual entryWidth constraint
+      textPainter.layout(minWidth: 0, maxWidth: entryWidth);
+
+      // Calculate the position to draw the text based on alignment
+      Offset textOffset = Offset(
+        entryLeft + (fitsInOneLine ? (entryWidth - textPainter.width) / 2 : 0),
+        baseline + 5, // Adjust vertically as needed
+      );
+
+      // Draw the text
+      textPainter.paint(canvas, textOffset);
 
       entryLeft += entryWidth;
     }
