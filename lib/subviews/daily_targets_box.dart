@@ -118,6 +118,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                             var index = widget.ingredients!.indexWhere((element) => element.$1.productId == p!.id);
                             var (productQuantity, color) = widget.ingredients![index];
                             if (color != grey) {
+                              devtools.log("changing color of ${p?.name} from $color to $grey because of non-contribution");
                               widget.ingredients![index] = (productQuantity, grey);
                               colorChanged = true;
                               DailyTargetsBox.colorsUsed++;

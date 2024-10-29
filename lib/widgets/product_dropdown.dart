@@ -22,7 +22,7 @@ class ProductDropdown extends StatefulWidget {
   final void Function(Product?) onChanged;
   final FocusNode? focusNode;
   final bool skipTraversal;
-  final DateTime? autofocus;
+  // final DateTime? autofocus;
   final bool autofocusSearch;
   final bool allowNew;
   
@@ -37,7 +37,7 @@ class ProductDropdown extends StatefulWidget {
     this.beforeTap,
     this.focusNode,
     this.skipTraversal = !kIsWeb,
-    this.autofocus,
+    // this.autofocus,
     this.autofocusSearch = false,
     this.allowNew = true,
     Key? key,

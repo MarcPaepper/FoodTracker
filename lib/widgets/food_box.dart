@@ -67,6 +67,7 @@ class _FoodBoxState extends State<FoodBox> {
     return ValueListenableBuilder(
       valueListenable: widget.ingredientsNotifier,
       builder: (context, List<(ProductQuantity, Color)> ingredients, _) {
+        devtools.log("ingredients change detected");
         return BorderBox(
           child: Container(
             clipBehavior: Clip.antiAlias,
@@ -213,7 +214,7 @@ class _FoodBoxState extends State<FoodBox> {
                         selectedProduct: product,
                         // index: index,
                         focusNode: focusNode1,
-                        autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
+                        // autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
                         autofocusSearch: true,
                         beforeTap: () => {},//widget.intermediateSave(),
                         onChanged: (Product? newProduct) {
@@ -394,14 +395,18 @@ class _FoodBoxState extends State<FoodBox> {
               } else {
                 amount = 100.0;
               }
-              devtools.log("adding ${product.name} with color ${productColors[ingredients.length % productColors.length]}");
+              // list of all colors used in the ingredients
+              var colorsUsed = ingredients.map((e) => e.$2).toSet();
+              var color = productColors.firstWhere((c) => !colorsUsed.contains(c), orElse: () => productColors[colorsUsed.length % productColors.length]);
+              devtools.log("adding ${product.name} with color $color");
+              
               ingredients.add((
                 ProductQuantity(
                   productId: product.id,
                   amount: amount,
                   unit: defUnit,
                 ),
-                productColors[ingredients.length % productColors.length],
+                color,
               ));
               var newController = TextEditingController();
               newController.text = truncateZeros(amount);

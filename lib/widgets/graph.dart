@@ -35,11 +35,6 @@ class Graph extends StatefulWidget {
 class _GraphState extends State<Graph> {
   @override
   Widget build(BuildContext context) {
-    // log colors
-    // for (var color in widget.colorMap) {
-    //   // devtools.log(color.toString());
-    // }
-    
     return LimitedBox(
       maxHeight: 300,
       child: CustomPaint(
@@ -73,15 +68,16 @@ class _GraphPainter extends CustomPainter {
     });
     double maximum = totalProgress.values.fold(0.0, (a, b) => a > b ? a : b);
     maximum = maximum < 1 ? 1 : maximum;
+    devtools.log("maximum: $maximum");
     
     double barWidth = 30;
     double margin = 15;
     double entryWidth = barWidth + 2 * margin;
-    double spacing = barWidth / (targetProgress.length + 1);
-    double maxBarHeight = size.height * 0.8;
+    // double spacing = barWidth / (targetProgress.length + 1);
+    double maxBarHeight = size.height * 0.8 / maximum;
     double baseline = size.height * 0.9;
 
-    var entryLeft = spacing;
+    var entryLeft = margin;
     
     for (int i = 0; i < targetProgress.length; i++) {
       Target target = targetProgress.keys.elementAt(i);
@@ -110,7 +106,7 @@ class _GraphPainter extends CustomPainter {
       // Draw target line
       canvas.drawLine(
         Offset(entryLeft, baseline - maxBarHeight),
-        Offset(entryLeft + barWidth, baseline - maxBarHeight),
+        Offset(entryLeft + entryWidth, baseline - maxBarHeight),
         Paint()..color = Colors.black..strokeWidth = 1..style = PaintingStyle.stroke,
       );
 
@@ -129,7 +125,7 @@ class _GraphPainter extends CustomPainter {
         ..layout(minWidth: 0, maxWidth: entryWidth)
         ..paint(canvas, Offset(entryLeft, baseline + 5));
 
-      entryLeft += entryWidth + spacing;
+      entryLeft += entryWidth;
     }
   }
 

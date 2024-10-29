@@ -399,7 +399,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                           selectedProduct: product,
                           // index: index,
                           focusNode: focusNode1,
-                          autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
+                          // autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
                           autofocusSearch: true,
                           beforeTap: () => widget.intermediateSave(),
                           onChanged: (Product? newProduct) {

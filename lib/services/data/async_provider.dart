@@ -7,7 +7,7 @@ import 'package:rxdart/rxdart.dart';
 
 import 'data_service.dart';
 
-import 'dart:developer' as devtools;
+// import 'dart:developer' as devtools;
 
 class AsyncProvider {
   static final DataService _dataService = DataService.current();
@@ -58,7 +58,7 @@ class AsyncProvider {
     restartFuture = false;
     var complete = false;
     var firstTry = true;
-    devtools.log("!!! starting:");
+    // devtools.log("!!! starting:");
     while (!complete) {
       if (!firstTry) ids = null;
       firstTry = false;
@@ -108,7 +108,6 @@ class AsyncProvider {
   }
   
   static void changeCompDT(DateTime newCompDT) {
-    devtools.log("Changing compDT to $newCompDT");
     _compDT = newCompDT;
     // check if future is currently running and cancel it
     if (currentFuture == null) {
