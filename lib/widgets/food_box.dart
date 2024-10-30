@@ -64,6 +64,7 @@ class _FoodBoxState extends State<FoodBox> {
   
   @override
   Widget build(BuildContext context) {
+    devtools.log("building food box");
     return ValueListenableBuilder(
       valueListenable: widget.ingredientsNotifier,
       builder: (context, List<(ProductQuantity, Color)> ingredients, _) {
