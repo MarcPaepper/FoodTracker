@@ -185,7 +185,7 @@ var importantButtonStyle = ButtonStyle(
 List<Color> productColors = [
   Colors.red,      // red
   Colors.orange,   // orange
-  Colors.yellow,   // yellow
+  const Color.fromARGB(255, 255, 230, 0),   // yellow
   Colors.green,    // green
   Colors.blue, 		// blue
   Colors.indigo,	  // indigo

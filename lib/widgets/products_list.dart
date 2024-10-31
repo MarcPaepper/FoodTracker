@@ -5,7 +5,7 @@ import 'package:food_tracker/widgets/sort_field.dart';
 
 import '../utility/text_logic.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 List<Widget> getProductTiles({
   required BuildContext context,
@@ -32,7 +32,7 @@ List<Widget> getProductTiles({
           break;
         case SortType.relevancy:
           if (relevancies != null) {
-            devtools.log("!!! sorting by relevancy");
+            // devtools.log("!!! sorting by relevancy");
             products.sort((a, b) {
               var relevancyA = relevancies[a.id] ?? 0;
               var relevancyB = relevancies[b.id] ?? 0;

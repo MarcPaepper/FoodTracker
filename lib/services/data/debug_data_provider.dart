@@ -36,7 +36,7 @@ class DebugDataProvider implements DataProvider {
         nutValues = defaultNutritionalValues;
         
         // product nutritient values
-        List<double> targetValues = [2000, 50, 360, 90, 70, 20, 6];
+        List<double> targetValues = [2000, 50, 260, 90, 70, 20, 6];
         for (var i = 0; i < targetValues.length; i++) {
           targets.add(
             Target(
@@ -215,6 +215,94 @@ class DebugDataProvider implements DataProvider {
               quickNutri(3, 6, 0), // salt
             ],
           ));
+
+        // Milch
+        products.add(
+          Product(
+            id: 4,
+            name: "Milch",
+            creationDate: DateTime.now().subtract(const Duration(days: 10)),
+            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+            isTemporary: false,
+            defaultUnit: Unit.ml,
+            densityConversion: const Conversion(
+              amount1: 100,
+              unit1: Unit.ml,
+              amount2: 103,
+              unit2: Unit.g,
+              enabled: true,
+            ),
+            quantityConversion: const Conversion(
+              amount1: 1,
+              unit1: Unit.quantity,
+              amount2: 100,
+              unit2: Unit.ml,
+              enabled: false,
+            ),
+            quantityName: "x",
+            autoCalc: false,
+            amountForIngredients: 100,
+            ingredientsUnit: Unit.ml,
+            amountForNutrients: 100,
+            nutrientsUnit: Unit.ml,
+            ingredients: [],
+            nutrients: [
+              quickNutri(4, 0, 64), // kcal
+              quickNutri(4, 1, 3.5), // fat
+              quickNutri(4, 2, 2.3), // saturated fat
+              quickNutri(4, 3, 5), // carbohydrates
+              quickNutri(4, 4, 5), // sugar
+              quickNutri(4, 5, 3.5), // protein
+              quickNutri(4, 6, 0.1), // salt
+            ],
+          ));
+
+        // Käse
+        products.add(
+          Product(
+            id: 5,
+            name: "Käse",
+            creationDate: DateTime.now().subtract(const Duration(days: 10)),
+            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+            isTemporary: false,
+            defaultUnit: Unit.g,
+            densityConversion: const Conversion(
+              amount1: 100,
+              unit1: Unit.ml,
+              amount2: 100,
+              unit2: Unit.g,
+              enabled: false,
+            ),
+            quantityConversion: const Conversion(
+              amount1: 1,
+              unit1: Unit.quantity,
+              amount2: 100,
+              unit2: Unit.g,
+              enabled: true,
+            ),
+            quantityName: "x",
+            autoCalc: false,
+            amountForIngredients: 1,
+            ingredientsUnit: Unit.kg,
+            amountForNutrients: 100,
+            nutrientsUnit: Unit.g,
+            ingredients: [
+              ProductQuantity(
+                productId: 4,
+                amount: 14.285,
+                unit: Unit.ml,
+              )
+            ],
+            nutrients: [
+              quickNutri(4, 0, 330), // kcal
+              quickNutri(4, 1, 25), // fat
+              quickNutri(4, 2, 17.3), // saturated fat
+              quickNutri(4, 3, 0.0001), // carbohydrates
+              quickNutri(4, 4, 0.0001), // sugar
+              quickNutri(4, 5, 25), // protein
+              quickNutri(4, 6, 1.8), // salt
+            ],
+          ));
         
         // update map
         for (var product in products) {
@@ -227,9 +315,9 @@ class DebugDataProvider implements DataProvider {
           Meal(
             id: 0,
             productQuantity: ProductQuantity(
-              productId: 0,
+              productId: 5,
               amount: 200,
-              unit: Unit.ml,
+              unit: Unit.g,
             ),
             dateTime: DateTime.now().subtract(const Duration(days: 1)),
           ),
@@ -265,6 +353,7 @@ class DebugDataProvider implements DataProvider {
         _mealsStreamController.add(meals);
         _productsStreamController.add(products);
         _nutritionalValuesStreamController.add(nutValues);
+        _targetsStreamController.add(targets);
         
         loaded = true;
         return "data loaded";
@@ -274,7 +363,7 @@ class DebugDataProvider implements DataProvider {
   ProductNutrient quickNutri(int prodId, int nutId, double value) => ProductNutrient(
     productId: prodId,
     autoCalc: value == 0,
-    value: value,
+    value: value < 0.001 ? 0 : value,
     nutritionalValueId: nutId
   );
   
@@ -330,7 +419,6 @@ class DebugDataProvider implements DataProvider {
   
   @override
   Stream<List<Product>> streamProducts() {
-    if (loaded) _productsStreamController.add(products);
     return _productsStreamController.stream;
   }
   
@@ -415,7 +503,6 @@ class DebugDataProvider implements DataProvider {
   
   @override
   Stream<List<NutritionalValue>> streamNutritionalValues() {
-    if (loaded) _nutritionalValuesStreamController.add(nutValues);
     return _nutritionalValuesStreamController.stream;
   }
   
@@ -513,7 +600,6 @@ class DebugDataProvider implements DataProvider {
   
   @override
   Stream<List<Meal>> streamMeals() {
-    if (loaded) _mealsStreamController.add(meals);
     return _mealsStreamController.stream;
   }
   
@@ -572,7 +658,6 @@ class DebugDataProvider implements DataProvider {
   
   @override
   Stream<List<Target>> streamTargets() {
-    if (loaded) _targetsStreamController.add(targets);
     return _targetsStreamController.stream;
   }
   

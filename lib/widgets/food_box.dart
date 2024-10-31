@@ -64,11 +64,9 @@ class _FoodBoxState extends State<FoodBox> {
   
   @override
   Widget build(BuildContext context) {
-    devtools.log("building food box");
     return ValueListenableBuilder(
       valueListenable: widget.ingredientsNotifier,
       builder: (context, List<(ProductQuantity, Color)> ingredients, _) {
-        devtools.log("ingredients change detected");
         return BorderBox(
           child: Container(
             clipBehavior: Clip.antiAlias,
@@ -190,8 +188,6 @@ class _FoodBoxState extends State<FoodBox> {
             fontSize: 16,
           ),
         );
-      
-      devtools.log("Ingredient $index: ${product?.name ?? "null"} has color ${ingredient.$2}");
       
       entries.add(
         SlidableListEntry(

@@ -839,6 +839,14 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     oldMeals = oldMeals.where((m) => m.dateTime.year == dT.year && m.dateTime.month == dT.month && m.dateTime.day == dT.day).toList();
   }
   
+  Map<Product, int> mealSorting = {};
+  for (int i = 0; i < meals.length; i++) {
+    int? id = meals[i].productQuantity.productId;
+    if (id != null && productsMap.containsKey(id)) {
+      mealSorting[productsMap[id]!] = i;
+    }
+  }
+  
   for (var t in targets) {
     var isProduct = t.trackedType == Product;
     dynamic trackedObject = isProduct ? productsMap[t.trackedId] : nutritionalValues.firstWhere((nv) => nv.id == t.trackedId);
@@ -890,9 +898,6 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     relevancy[p] = sqrt(contributions.fold(0.0, (prev, contribution) => prev + contribution * contribution) / contributions.length);
   }
   
-  // store the original sorting
-  Map<Product, int> originalSorting = contributingProducts.asMap().map((i, p) => MapEntry(p, i));
-  
   // sort the products by relevancy descending
   contributingProducts.sort((a, b) => relevancy[b]!.compareTo(relevancy[a]!));
   
@@ -931,7 +936,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     }
   } else {
     // apply original sorting to contributingProducts
-    contributingProducts.sort((a, b) => originalSorting[a]!.compareTo(originalSorting[b]!));
+    contributingProducts.sort((a, b) => mealSorting[a]!.compareTo(mealSorting[b]!));
   }
   
   return (targetProgress, contributingProducts);

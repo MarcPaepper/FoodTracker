@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +8,12 @@ import '../services/data/data_objects.dart';
 
 import 'dart:developer' as devtools show log;
 
+const double barWidth = 30;
+const double targetMargin = 25;
+const double minMargin = 15;
+
 class Graph extends StatefulWidget {
+  final double maxWidth;
   final DateTime dateTime;
   final List<Target> targets;
   final List<Product> products;
@@ -17,6 +24,7 @@ class Graph extends StatefulWidget {
   final Map<Target, Map<Product?, double>> targetProgress;
   
   const Graph(
+    this.maxWidth,
     this.dateTime,
     this.targets,
     this.products,
@@ -33,10 +41,15 @@ class Graph extends StatefulWidget {
 }
 
 class _GraphState extends State<Graph> {
+  
   @override
   Widget build(BuildContext context) {
-    return LimitedBox(
-      maxHeight: 300,
+    return SizedBox(
+      height: 300,
+      width: max(
+        widget.maxWidth,
+        minMargin * 2 + widget.targets.length * (2 * minMargin + barWidth) + targetMargin,
+      ),
       child: CustomPaint(
         size: Size.infinite,
         painter: _GraphPainter(widget.targetProgress, widget.products, widget.nutritionalValues, widget.colorMap),
@@ -60,6 +73,7 @@ class _GraphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    devtools.log("size ${size.width.toStringAsFixed(1)}");
     // sum up all products' contributions to each target
     
     Map<Target, double> totalProgress = {};
@@ -68,17 +82,104 @@ class _GraphPainter extends CustomPainter {
     });
     double maximum = totalProgress.values.fold(0.0, (a, b) => a > b ? a : b);
     maximum = maximum < 1 ? 1 : maximum;
-    devtools.log("maximum: $maximum");
     
-    double barWidth = 30;
-    double margin = 15;
+    double margin = minMargin;
     double entryWidth = barWidth + 2 * margin;
-    // double spacing = barWidth / (targetProgress.length + 1);
-    double maxBarHeight = size.height * 0.8 / maximum;
-    double baseline = size.height * 0.9;
+    double extraMargin = (size.width - entryWidth * targetProgress.length - margin * 2 - targetMargin) / (2 * targetProgress.length + 2);
+    if (extraMargin > 0) margin += extraMargin;
+           entryWidth = barWidth + 2 * margin;
 
     var entryLeft = margin;
+    
+    // --- testing text dimensions ---
+    
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    
+    // Find out which texts fit in one or two lines and which need to have a word cut off
+    List<String> names = [];
+    List<double> maxLengths = [];
+    bool allOneLiners = true;
+    
+    for (int i = 0; i < targetProgress.length; i++) {
+      Target target = targetProgress.keys.elementAt(i);
+      String name = target.trackedType == Product ?
+        products.firstWhere((product) => product.id == target.trackedId).name :
+        nutritionalValues.firstWhere((nutVal) => nutVal.id == target.trackedId).name;
+      names.add(name);
 
+      // Create TextPainter to measure the width of the text
+      TextPainter textPainter = TextPainter(
+        text: TextSpan(
+          text: name,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      
+      // Measure the width of the text
+      textPainter.layout(minWidth: 0, maxWidth: double.infinity);
+      if (textPainter.width > entryWidth - 10) allOneLiners = false;
+
+      var nameFragments = name.split(' ');
+      var maxLength = 0.0;
+      for (var fragment in nameFragments) {
+        textPainter.text = TextSpan(
+          text: fragment,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
+        );
+        textPainter.layout(minWidth: 0, maxWidth: double.infinity);
+        if (textPainter.width > maxLength) maxLength = textPainter.width;
+      }
+      maxLengths.add(maxLength);
+    }
+    
+    var baseShift = allOneLiners ? 20 : 34;
+    double maxBarHeight = (size.height - baseShift - 20) / maximum;
+    double baseline = size.height - baseShift;
+    
+    // --- drawing texts ---
+
+    for (int i = 0; i < targetProgress.length; i++) {
+      String name = names[i];
+      
+      TextPainter textPainter = TextPainter(
+        text: TextSpan(
+          text: name,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+
+      // Layout text with infinite width to calculate its actual width
+      textPainter.layout(minWidth: 0, maxWidth: entryWidth - 10);
+      bool overflows = maxLengths[i] > entryWidth - 10;
+      
+      textPainter = TextPainter(
+        text: TextSpan(
+          text: name,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
+        ),
+        textAlign: overflows ? TextAlign.left : TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+
+      textPainter.layout(minWidth: 0, maxWidth: entryWidth - 10);
+      
+      Offset offset;
+      if (overflows) {
+        offset = Offset(entryLeft + (entryWidth - textPainter.width) / 2, baseline + 5);
+      } else {
+        offset = Offset(entryLeft + (entryWidth - textPainter.width) / 2, baseline + 5);
+      }
+      
+      textPainter.paint(canvas, offset);
+
+      entryLeft += entryWidth;
+    }
+    
+    // --- drawing bars ---
+    
+    entryLeft = margin;
     for (int i = 0; i < targetProgress.length; i++) {
       Target target = targetProgress.keys.elementAt(i);
       Map<Product?, double>? productContributions = targetProgress[target];
@@ -108,51 +209,32 @@ class _GraphPainter extends CustomPainter {
         Offset(entryLeft + entryWidth, baseline - maxBarHeight),
         Paint()..color = Colors.black..strokeWidth = 1..style = PaintingStyle.stroke,
       );
-
-      // Draw target label with dynamic alignment
-      String name = target.trackedType == Product ?
-        products.firstWhere((product) => product.id == target.trackedId).name :
-        nutritionalValues.firstWhere((nutVal) => nutVal.id == target.trackedId).name;
-
-      // Create TextPainter to measure the width of the text
-      TextPainter textPainter = TextPainter(
-        text: TextSpan(
-          text: name,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-
-      // Layout text with infinite width to calculate its actual width
-      textPainter.layout(minWidth: 0, maxWidth: double.infinity);
-
-      // Check if the text width fits within entryWidth
-      bool fitsInOneLine = textPainter.width <= entryWidth;
-
-      // Re-create TextPainter with adjusted alignment based on width check
-      textPainter = TextPainter(
-        text: TextSpan(
-          text: name,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
-        ),
-        textAlign: fitsInOneLine ? TextAlign.center : TextAlign.left,
-        textDirection: TextDirection.ltr,
-      );
-
-      // Layout with the actual entryWidth constraint
-      textPainter.layout(minWidth: 0, maxWidth: entryWidth);
-
-      // Calculate the position to draw the text based on alignment
-      Offset textOffset = Offset(
-        entryLeft + (fitsInOneLine ? (entryWidth - textPainter.width) / 2 : 0),
-        baseline + 5, // Adjust vertically as needed
-      );
-
-      // Draw the text
-      textPainter.paint(canvas, textOffset);
-
+      
       entryLeft += entryWidth;
     }
+    
+    // --- drawing target text ---
+    
+    TextPainter textPainter = TextPainter(
+      text: const TextSpan(
+        text: '🏁',
+        style: TextStyle(fontSize: 19, color: Colors.black),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout(minWidth: 0, maxWidth: targetMargin);
+    
+    // draw normally
+    textPainter.paint(canvas, Offset(entryLeft + 10, baseline - maxBarHeight - 12));
+    
+    // // draw rotated
+    // var x = entryLeft + 20, y = baseline - maxBarHeight + 0;
+    // canvas.drawRotatedText(
+    //   pivot: Offset(x, y),
+    //   textPainter: textPainter,
+    //   angle: - pi / 2,
+    // );
   }
 
   @override
@@ -169,3 +251,47 @@ class _GraphPainter extends CustomPainter {
     }
   }
 }
+
+// extension RotatedTextExt on Canvas {
+//   /// [angle] is in radians. Set `isInDegrees = true` if it is in degrees.
+//   void drawRotatedText({
+//     required Offset pivot,
+//     required TextPainter textPainter,
+//     TextPainter? superTextPainter,
+//     TextPainter? subTextPainter,
+//     required double angle,
+//     bool isInDegrees = false,
+//     Alignment alignment = Alignment.center,
+//   }) {
+//     //
+//     // Convert angle from degrees to radians
+//     angle = isInDegrees ? angle * pi / 180 : angle;
+
+//     textPainter.layout();
+//     superTextPainter?.layout();
+//     subTextPainter?.layout();
+
+//     // Calculate delta. Delta is the top left offset with reference
+//     // to which the main text will paint. The centre of the text will be
+//     // at the given pivot unless [alignment] is set.
+//     final w = textPainter.width;
+//     final h = textPainter.height;
+//     final delta = pivot.translate(
+//         -w / 2 + w / 2 * alignment.x, -h / 2 + h / 2 * alignment.y);
+//     //
+//     final supDelta =
+//         delta.translate(w, h - h * 0.6 - (superTextPainter?.size.height ?? 0));
+//     //
+//     final subDelta = delta.translate(w, h - (subTextPainter?.size.height ?? 0));
+
+//     // Rotate the text about pivot
+//     save();
+//     translate(pivot.dx, pivot.dy);
+//     rotate(angle);
+//     translate(-pivot.dx, -pivot.dy);
+//     textPainter.paint(this, delta);
+//     superTextPainter?.paint(this, supDelta);
+//     subTextPainter?.paint(this, subDelta);
+//     restore();
+//   }
+// }
