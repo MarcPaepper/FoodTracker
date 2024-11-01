@@ -36,7 +36,7 @@ class DebugDataProvider implements DataProvider {
         nutValues = defaultNutritionalValues;
         
         // product nutritient values
-        List<double> targetValues = [2000, 50, 260, 90, 70, 20, 6];
+        List<double> targetValues = [2000, 50, 20, 260, 90, 50, 6];
         for (var i = 0; i < targetValues.length; i++) {
           targets.add(
             Target(

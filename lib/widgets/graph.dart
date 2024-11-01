@@ -8,6 +8,8 @@ import '../services/data/data_objects.dart';
 
 import 'dart:developer' as devtools show log;
 
+import '../utility/text_logic.dart';
+
 const double barWidth = 30;
 const double targetMargin = 25;
 const double minMargin = 15;
@@ -22,6 +24,8 @@ class Graph extends StatefulWidget {
   // final List<Meal> oldMeals;
   // final List<Meal> newMeals;
   final Map<Target, Map<Product?, double>> targetProgress;
+  
+  static bool hasRebuild = false;
   
   const Graph(
     this.maxWidth,
@@ -41,17 +45,26 @@ class Graph extends StatefulWidget {
 }
 
 class _GraphState extends State<Graph> {
+  bool hasRebuild = false;
   
   @override
   Widget build(BuildContext context) {
+    if (!hasRebuild) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        setState(() {
+          hasRebuild = true;
+        });
+      });
+    }
+    
     return SizedBox(
-      height: 300,
+      height: hasRebuild ? 300 : 300,
       width: max(
         widget.maxWidth,
         minMargin * 2 + widget.targets.length * (2 * minMargin + barWidth) + targetMargin,
       ),
       child: CustomPaint(
-        size: Size.infinite,
+        size: hasRebuild ? Size.infinite : Size.zero,
         painter: _GraphPainter(widget.targetProgress, widget.products, widget.nutritionalValues, widget.colorMap),
       ),
     );
@@ -73,7 +86,6 @@ class _GraphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    devtools.log("size ${size.width.toStringAsFixed(1)}");
     // sum up all products' contributions to each target
     
     Map<Target, double> totalProgress = {};
@@ -202,7 +214,64 @@ class _GraphPainter extends CustomPainter {
 
         currentHeight += contributionHeight;
       });
-
+      // the number of decimal places for the full target.amount precision
+      int targetPrecision;
+      String targetText = truncateZeros(target.amount);
+      if (targetText.contains('.')) {
+        targetPrecision = targetText.length - targetText.indexOf('.') - 1;
+      } else {
+        // the number of digits after which only zeros follow
+        String truncatedText = targetText;
+        while (truncatedText.endsWith('0')) {
+          truncatedText = truncatedText.substring(0, truncatedText.length - 1);
+        }
+        targetPrecision = - (targetText.length - truncatedText.length);
+      }
+      if (target.trackedType == NutritionalValue) {
+        devtools.log("target ${nutritionalValues.firstWhere((nutVal) => nutVal.id == target.trackedId).name} has precision $targetPrecision $targetText");
+      }
+      
+      // Draw current progress
+      
+      // determine a good precision for the current amount
+      int precision;
+      int order = (log(target.amount) / ln10).floor() + 1;
+      if (target.amount < 10) {
+        precision = order;
+      } else if (target.amount < 17) {
+        precision = 1;
+      } else {
+        precision = 3 - order;
+        if (precision > 0) precision = 0;
+      }
+      if (precision < targetPrecision) precision = targetPrecision;
+      
+      // apply precision
+      double amount = (totalProgress[target]! * target.amount);
+      String text;
+      if (precision > 0) {
+        text = amount.toStringAsFixed(precision);
+      } else {
+        amount = toDouble((amount * pow(10, precision)).round() * pow(10, -precision));
+        text = amount.toString();
+      }
+      text = truncateZeros(text);
+      
+      // paint the text
+      TextPainter textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
+        ),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout(minWidth: 0, maxWidth: 100);
+      textPainter.paint(canvas, Offset(
+        entryLeft + margin + barWidth / 2 - textPainter.width / 2,
+        baseline - currentHeight - textPainter.height - 2
+      ));
+      
       // Draw target line
       canvas.drawLine(
         Offset(entryLeft, baseline - maxBarHeight),
@@ -210,10 +279,27 @@ class _GraphPainter extends CustomPainter {
         Paint()..color = Colors.black..strokeWidth = 1..style = PaintingStyle.stroke,
       );
       
+      // Draw target amount
+      text = target.amount.toString();
+      text = truncateZeros(text);
+      textPainter = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
+        ),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout(minWidth: 0, maxWidth: 100);
+      textPainter.paint(canvas, Offset(
+        entryLeft + margin + barWidth / 2 - textPainter.width / 2,
+        baseline - maxBarHeight - textPainter.height - 2
+      ));
+      
       entryLeft += entryWidth;
     }
     
-    // --- drawing target text ---
+    // --- drawing target emoji ---
     
     TextPainter textPainter = TextPainter(
       text: const TextSpan(

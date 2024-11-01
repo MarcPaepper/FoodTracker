@@ -7,7 +7,7 @@ import 'package:rxdart/rxdart.dart';
 
 import 'data_service.dart';
 
-// import 'dart:developer' as devtools;
+import 'dart:developer' as devtools;
 
 class AsyncProvider {
   static final DataService _dataService = DataService.current();
@@ -58,7 +58,6 @@ class AsyncProvider {
     restartFuture = false;
     var complete = false;
     var firstTry = true;
-    // devtools.log("!!! starting:");
     while (!complete) {
       if (!firstTry) ids = null;
       firstTry = false;

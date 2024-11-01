@@ -13,6 +13,8 @@ import '../widgets/loading_page.dart';
 
 import 'dart:developer' as devtools show log;
 
+import '../widgets/multi_stream_builder.dart';
+
 class DailyTargetsBox extends StatefulWidget {
   final DateTime dateTime;
   final List<(ProductQuantity, Color)>? ingredients;
@@ -39,27 +41,40 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       title: "Daily Targets",
       child: Padding(
         padding: const EdgeInsets.fromLTRB(0, 4, 0, 6),
-        child: StreamBuilder(
-          stream: ZipStream([
+        child: MultiStreamBuilder(
+          streams: [
             _dataService.streamProducts(),
             _dataService.streamNutritionalValues(),
             _dataService.streamTargets(),
             _dataService.streamMeals(),
-          ], (values) => values),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) return Text("Error loading data ${snapshot.error}");
-            if (!snapshot.hasData) return const LoadingPage();
+          ],
+          builder: (context, snapshots) {
+            var snapshotP = snapshots[0] as AsyncSnapshot<Object?>;
+            var snapshotN = snapshots[1] as AsyncSnapshot<Object?>;
+            var snapshotT = snapshots[2] as AsyncSnapshot<Object?>;
+            var snapshotM = snapshots[3] as AsyncSnapshot<Object?>;
             
-            var products = snapshot.data![0] as List<Product>;
-            var nutritionalValues = snapshot.data![1] as List<NutritionalValue>;
-            var targets = snapshot.data![2] as List<Target>;
+            String? errorMsg;
+            if (snapshotP.hasError) errorMsg = "Error loading products ${snapshotP.error}";
+            if (snapshotN.hasError) errorMsg = "Error loading nutritional values ${snapshotN.error}";
+            if (snapshotT.hasError) errorMsg = "Error loading targets ${snapshotT.error}";
+            if (snapshotM.hasError) errorMsg = "Error loading meals ${snapshotM.error}";
+            if (errorMsg != null) return Text(errorMsg);
+            
+            if (!snapshots.any((s) => s.hasData)) return const LoadingPage();
+            
+            devtools.log("new data for DailyTargetsBox ${DateTime.now()}");
+            
+            var products          = snapshotP.data as List<Product>;
+            var nutritionalValues = snapshotN.data as List<NutritionalValue>;
+            var targets           = snapshotT.data as List<Target>;
             List<Meal> newMeals;
             List<Meal> oldMeals;
             // sort targets by order id
             targets.sort((a, b) => a.orderId.compareTo(b.orderId));
             
             if (widget.ingredients == null) {
-              newMeals = snapshot.data![3] as List<Meal>;
+              newMeals = snapshotM.data as List<Meal>;
               oldMeals = [];
             } else {
               // convert ProductQuantity to Meal
@@ -68,7 +83,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 dateTime: widget.dateTime,
                 productQuantity: ingr.$1,
               )).toList();
-              oldMeals = snapshot.data![3] as List<Meal>;
+              oldMeals = snapshotM.data as List<Meal>;
             }
             
             Map<int, Product> productsMap = products.asMap().map((key, value) => MapEntry(value.id, value));

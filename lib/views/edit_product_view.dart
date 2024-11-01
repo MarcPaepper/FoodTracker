@@ -262,6 +262,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     }
                     _copyName = "$name)";
                     _productNameController.text = _copyName!;
+                    
                   }
                 }
                 

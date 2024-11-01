@@ -83,12 +83,15 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
                 children: [
                   const SizedBox(height: 2.5),
                   Text(productName, style: const TextStyle(fontSize: 16.5)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(amountText, style: const TextStyle(fontSize: 14)),
-                      Text(hourText, style: const TextStyle(fontSize: 14)),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.only(left: 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(amountText, style: const TextStyle(fontSize: 14, color: Color.fromARGB(255, 0, 85, 255))),
+                        Text(hourText, style: const TextStyle(fontSize: 14)),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 2),
                 ],

@@ -783,35 +783,37 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   var mealRelevancy = 1 + mealTimeDeltas.fold(0.0, (prev, delta) => prev + 1 / (delta + 1));
   
   // make the product more relevant if it was created or edited more recently
-  var productRelevancy = 0.0;
+  double productRelevancy;
   var creationDelta = product.creationDate != null ? now.difference(product.creationDate!).inMinutes / 60 : 0;
   if (creationDelta < 0) creationDelta = 0;
   productRelevancy = max(7 * pow(1/7, creationDelta / 48) as double, 1);
   
-  var editDelta = product.lastEditDate != null ? now.difference(product.lastEditDate!).inMinutes / 60 : 0;
-  if (editDelta < 0) editDelta = 0;
-  productRelevancy = max(4 * pow(1/4, editDelta / 24) as double, productRelevancy);
+  // var editDelta = product.lastEditDate != null ? now.difference(product.lastEditDate!).inMinutes / 60 : 0;
+  // if (editDelta < 0) editDelta = 0;
+  // productRelevancy = max(4 * pow(1/4, editDelta / 24) as double, productRelevancy);
   
   // triple the relevancy if the product is temporary and compDT is inside the temporary interval
-  var temporaryRelevancy = 1;
+  var temporaryRelevancy = 1.0;
   if (product.isTemporary) {
     if (product.temporaryBeginning != null && product.temporaryEnd != null) {
       if (compDT.isAfter(product.temporaryBeginning!) && compDT.isBefore(product.temporaryEnd!)) {
-        productRelevancy = 3;
+        temporaryRelevancy = 2;
+      } else {
+        temporaryRelevancy = 0.25;
       }
     }
   }
   
-  // String name = product.name;
-  // // make name 20 characters long
-  // if (name.length > 20) name = name.substring(0, 20);
-  // if (name.length < 20) name = name.padRight(20);
+  String name = product.name;
+  // make name 20 characters long
+  if (name.length > 20) name = name.substring(0, 20);
+  if (name.length < 20) name = name.padRight(20);
   
-  // String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
-  // String productRelevancyStr = productRelevancy.toStringAsFixed(3);
-  // String temporaryRelevancyStr = temporaryRelevancy.toStringAsFixed(3);
+  String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
+  String productRelevancyStr = productRelevancy.toStringAsFixed(3);
+  String temporaryRelevancyStr = temporaryRelevancy.toStringAsFixed(3);
   
-  // devtools.log("::: $name : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
+  devtools.log("::: $name : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
   
   return mealRelevancy * productRelevancy * temporaryRelevancy;
 }

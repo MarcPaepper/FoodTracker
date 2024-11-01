@@ -84,7 +84,7 @@ String _truncateZeros(String text) {
   return text;
 }
 
-String truncateZeros(double number) => _truncateZeros(number.toString());
+String truncateZeros(dynamic number) => _truncateZeros(number.toString());
 
 // text should be yesterday / today / tomorrow / x days ago / in x days
 String relativeDaysNatural(DateTime date) {

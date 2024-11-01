@@ -30,6 +30,8 @@ const targetTable           = "target";
 
 const forceReset = false;
 
+const relevancyUpdateDelay = 10;
+
 class SqfliteDataProvider implements DataProvider {
   Database? _db;
   var _loaded = false;
@@ -130,7 +132,7 @@ class SqfliteDataProvider implements DataProvider {
       await getAllTargets(cache: false);
       await cleanUp();
       
-      Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.getRelevancies(useCached: false));
+      Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.getRelevancies(useCached: false));
       
       return "data loaded";
     } on MissingPlatformDirectoryException {
@@ -262,13 +264,15 @@ class SqfliteDataProvider implements DataProvider {
     _addIngredients(product: product, containedInId: id);
     _addProductNutrientsForProduct(product: product, productId: id);
     
-    var newProduct = product.copyWith(newId: id, newCreationDate: now, newLastEditDate: now);
-    _products.add(newProduct);
-    _productsMap[id] = newProduct;
-    _productsStreamController.add(_products);
-    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([id]));
+    product.lastEditDate ??= now;
+    product.creationDate ??= now;
     
-    return newProduct;
+    _products.add(product);
+    _productsMap[id] = product;
+    _productsStreamController.add(_products);
+    Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([id]));
+    
+    return product;
   }
   
   @override
@@ -303,7 +307,7 @@ class SqfliteDataProvider implements DataProvider {
     _products.add(product);
     _productsMap[product.id] = product;
     _productsStreamController.add(_products);
-    if(recalc) Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([product.id]));
+    if(recalc) Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([product.id]));
     
     return product;
   }
@@ -321,7 +325,7 @@ class SqfliteDataProvider implements DataProvider {
     _products.removeWhere((p) => p.id == id);
     _productsMap.remove(id);
     _productsStreamController.add(_products);
-    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([id]));
+    Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([id]));
   }
   
   @override
@@ -576,7 +580,7 @@ class SqfliteDataProvider implements DataProvider {
     var newMeal = meal.copyWith(newId: id);
     _meals.insert(findInsertIndex(_meals, newMeal), newMeal);
     _mealsStreamController.add(_meals);
-    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([newMeal.productQuantity.productId!]));
+    Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([newMeal.productQuantity.productId!]));
     
     return newMeal;
   }
@@ -595,7 +599,7 @@ class SqfliteDataProvider implements DataProvider {
     _meals.removeWhere((m) => m.id == meal.id);
     _meals.insert(findInsertIndex(_meals, meal), meal);
     _mealsStreamController.add(_meals);
-    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([meal.productQuantity.productId!]));
+    Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([meal.productQuantity.productId!]));
     
     return meal;
   }
@@ -611,7 +615,7 @@ class SqfliteDataProvider implements DataProvider {
     
     _meals.remove(meal);
     _mealsStreamController.add(_meals);
-    Future.delayed(const Duration(milliseconds: 200), () => AsyncProvider.updateRelevancyFor([meal.productQuantity.productId!]));
+    Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([meal.productQuantity.productId!]));
   }
   
   // ----- Target -----
