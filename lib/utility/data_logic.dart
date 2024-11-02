@@ -849,7 +849,11 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   
   for (var t in targets) {
     var isProduct = t.trackedType == Product;
-    dynamic trackedObject = isProduct ? productsMap[t.trackedId] : nutritionalValues.firstWhere((nv) => nv.id == t.trackedId);
+    dynamic trackedObject = isProduct ? productsMap[t.trackedId] : nutritionalValues.firstWhereOrNull((nv) => nv.id == t.trackedId);
+    if (trackedObject == null) {
+      devtools.log("Error: Tracked ${isProduct ? "product" : "nutritional value"} #${t.trackedId} not found");
+      continue;
+    }
     Map<Product?, double> progress = {null: 0.0};
     
     for (int i = 0; i < meals.length + (oldMeals?.length ?? 0); i++) {

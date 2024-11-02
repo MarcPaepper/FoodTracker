@@ -7,7 +7,7 @@ import 'package:rxdart/rxdart.dart';
 
 import 'data_service.dart';
 
-import 'dart:developer' as devtools;
+// import 'dart:developer' as devtools;
 
 class AsyncProvider {
   static final DataService _dataService = DataService.current();

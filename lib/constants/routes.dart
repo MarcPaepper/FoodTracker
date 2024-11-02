@@ -3,6 +3,7 @@ import '../views/edit_meal_view.dart';
 import '../views/edit_nutvalue_view.dart';
 import '../views/edit_product_view.dart';
 import '../views/edit_target_view.dart';
+import '../views/import_export_view.dart';
 import '../views/main_view.dart';
 import '../views/meals_view.dart';
 import '../views/nutvalues_view.dart';
@@ -27,6 +28,7 @@ String editTargetRoute           = "/targets/edit/";
 String statsRoute                = "/stats/";
 String testRoute                 = "/test/";
 String optionsRoute              = "/options/";
+String importExportRoute         = "/port/";
 
 var routes = {
   mainRoute:			(context)   => const MainView(),
@@ -72,4 +74,5 @@ var routes = {
   statsRoute:		  	(context) => const StatsView(),
   testRoute:	  		(context) => const TestView(),
   optionsRoute:		  (context) => const OptionsView(),
+  importExportRoute:(context) => const ImportExportView(),
 };
