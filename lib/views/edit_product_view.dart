@@ -263,6 +263,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     _copyName = "$name)";
                     _productNameController.text = _copyName!;
                     
+                    copyProduct = products.firstWhere((prod) => prod.name == widget.productName, orElse: () => copyProduct);
                   }
                 }
                 

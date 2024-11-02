@@ -100,8 +100,11 @@ class AsyncProvider {
       //   devtools.log("${product?.name}: ${roundDouble(newRelevancies[key] ?? 0)}");
       // }
       
-      
-      _relevancies = newRelevancies;
+      if (ids == null || _relevancies == null) {
+        _relevancies = newRelevancies;
+      } else {
+        _relevancies?.addAll(newRelevancies);
+      }
       _relevancyStreamController.add(_relevancies!);
     }
   }

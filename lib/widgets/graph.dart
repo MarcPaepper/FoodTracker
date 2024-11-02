@@ -227,9 +227,6 @@ class _GraphPainter extends CustomPainter {
         }
         targetPrecision = - (targetText.length - truncatedText.length);
       }
-      if (target.trackedType == NutritionalValue) {
-        devtools.log("target ${nutritionalValues.firstWhere((nutVal) => nutVal.id == target.trackedId).name} has precision $targetPrecision $targetText");
-      }
       
       // Draw current progress
       

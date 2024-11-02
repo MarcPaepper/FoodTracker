@@ -805,9 +805,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   }
   
   String name = product.name;
-  // make name 20 characters long
-  if (name.length > 20) name = name.substring(0, 20);
-  if (name.length < 20) name = name.padRight(20);
+  name = name.padRight(30).substring(0, 30);
   
   String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
   String productRelevancyStr = productRelevancy.toStringAsFixed(3);

@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/utility/modals.dart';
@@ -5,7 +7,7 @@ import 'package:food_tracker/widgets/sort_field.dart';
 
 import '../utility/text_logic.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 List<Widget> getProductTiles({
   required BuildContext context,
@@ -32,12 +34,16 @@ List<Widget> getProductTiles({
           break;
         case SortType.relevancy:
           if (relevancies != null) {
-            // devtools.log("!!! sorting by relevancy");
+            devtools.log("!!! sorting by relevancy");
             products.sort((a, b) {
               var relevancyA = relevancies[a.id] ?? 0;
               var relevancyB = relevancies[b.id] ?? 0;
               return relevancyA.compareTo(relevancyB);
             });
+            for (var product in products) {
+              String name = product.name.padRight(30).substring(0, 30);
+              devtools.log("!!! $name: ${relevancies[product.id]?.toStringAsFixed(2)}");
+            }
             break;
           }
         case SortType.creationDate:
