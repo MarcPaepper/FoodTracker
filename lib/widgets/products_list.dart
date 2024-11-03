@@ -7,7 +7,7 @@ import 'package:food_tracker/widgets/sort_field.dart';
 
 import '../utility/text_logic.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 List<Widget> getProductTiles({
   required BuildContext context,

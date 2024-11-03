@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:food_tracker/utility/theme.dart';
-import 'package:rxdart/rxdart.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';

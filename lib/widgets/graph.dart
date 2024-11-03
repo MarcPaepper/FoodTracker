@@ -258,6 +258,10 @@ class _GraphPainter extends CustomPainter {
       }
       text = truncateZeros(text);
       
+      // if the text is too close to the top, move it below the bar
+      if (currentHeight < maxBarHeight) currentHeight = min(currentHeight, maxBarHeight - 20);
+      if (i==2) devtools.log("i $i currentHeight: $currentHeight maxBarHeight: $maxBarHeight");
+      
       // paint the text
       TextPainter textPainter = TextPainter(
         text: TextSpan(
@@ -268,15 +272,15 @@ class _GraphPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       );
       textPainter.layout(minWidth: 0, maxWidth: 100);
-      textPainter.paint(canvas, Offset(
-        entryLeft + margin + barWidth / 2 - textPainter.width / 2,
-        baseline - currentHeight - textPainter.height - 2
-      ));
+      double x = entryLeft + margin + barWidth / 2 - textPainter.width / 2;
+      double y = baseline - currentHeight - textPainter.height - 2;
+      textPainter.paint(canvas, Offset(x, y));
       
       // Draw target line
+      double targetY = baseline - maxBarHeight;
       canvas.drawLine(
-        Offset(entryLeft, baseline - maxBarHeight),
-        Offset(entryLeft + entryWidth, baseline - maxBarHeight),
+        Offset(entryLeft, targetY),
+        Offset(entryLeft + entryWidth, targetY),
         Paint()..color = Colors.black..strokeWidth = 1..style = PaintingStyle.stroke,
       );
       
