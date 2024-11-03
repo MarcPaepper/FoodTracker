@@ -63,8 +63,6 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
             
             if (!snapshots.any((s) => s.hasData)) return const LoadingPage();
             
-            devtools.log("new data for DailyTargetsBox ${DateTime.now()}");
-            
             var products          = snapshotP.data as List<Product>;
             var nutritionalValues = snapshotN.data as List<NutritionalValue>;
             var targets           = snapshotT.data as List<Target>;

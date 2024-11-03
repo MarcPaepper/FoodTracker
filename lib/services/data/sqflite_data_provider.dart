@@ -249,8 +249,10 @@ class SqfliteDataProvider implements DataProvider {
     final results = await _db!.query(productTable, where: '$nameColumn = ?', whereArgs: [product.name]);
     if (results.isNotEmpty) throw NotUniqueException();
     
-    var map = productToMap(product);
     var now = DateTime.now();
+    product.lastEditDate ??= now;
+    product.creationDate ??= now;
+    var map = productToMap(product);
     // remove id, ingredients, nutrients
     map.remove(idColumn);
     map.remove("ingredients");
@@ -261,11 +263,10 @@ class SqfliteDataProvider implements DataProvider {
     
     final id = await _db!.insert(productTable, map);
     
+    product = product.copyWith(newId: id);
+    
     _addIngredients(product: product, containedInId: id);
     _addProductNutrientsForProduct(product: product, productId: id);
-    
-    product.lastEditDate ??= now;
-    product.creationDate ??= now;
     
     _products.add(product);
     _productsMap[id] = product;
