@@ -1,7 +1,6 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
 import 'package:collection/collection.dart';
-import 'package:food_tracker/services/data/data_exceptions.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -22,12 +21,8 @@ class AsyncProvider {
   
   static Future<Map<int, double>> getRelevancies({bool useCached = true}) async {
     if (!_dataService.isLoaded()) return {};
-    if (useCached) {
-      if (_relevancies != null) {
-        return _relevancies!;
-      } else {
-        throw DataNotLoadedException();
-      }
+    if (useCached && _relevancies != null) {
+      return _relevancies!;
     }
     
     // if there is already a future running wait for it

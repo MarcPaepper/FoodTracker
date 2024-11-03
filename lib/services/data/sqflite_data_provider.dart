@@ -661,6 +661,28 @@ class SqfliteDataProvider implements DataProvider {
     final results = await _db!.query(targetTable, where: '$typeColumn = ? AND $trackedIdColumn = ?', whereArgs: [target.trackedType.toString(), target.trackedId]);
     if (results.isNotEmpty) throw NotUniqueException();
     
+    target = target.copyWith(newOrderId: await _findInsertIndex(target, orderId: orderId));
+    var map = targetToMap(target);
+    map.remove(idColumn);
+    
+    await _db!.insert(targetTable, map);
+    
+    _targets.add(target);
+    _targetsStreamController.add(_targets);
+    
+    return target;
+  }
+  
+  @override
+  Future<Target> updateTarget(Type origType, int origTrackedId, Target target) async {
+    var origTarget = _targets.firstWhere((t) => t.trackedType == origType && t.trackedId == origTrackedId);
+    // If the target switched from primary to secondary or vice versa, find the new order id
+    var orderId = (origTarget.isPrimary != target.isPrimary) ? await _findInsertIndex(target) : origTarget.orderId;
+    await deleteTarget(origType, origTrackedId);
+    return createTarget(target, orderId: orderId);
+  }
+  
+  Future<int> _findInsertIndex(Target target, {int? orderId}) async {
     // find highest order id for primary or secondary
     if (orderId == null) {
       orderId = 0;
@@ -678,24 +700,7 @@ class SqfliteDataProvider implements DataProvider {
         }
       }
     }
-    
-    target = target.copyWith(newOrderId: orderId);
-    var map = targetToMap(target);
-    map.remove(idColumn);
-    
-    await _db!.insert(targetTable, map);
-    
-    _targets.add(target);
-    _targetsStreamController.add(_targets);
-    
-    return target;
-  }
-  
-  @override
-  Future<Target> updateTarget(Type origType, int origTrackedId, Target target) async {
-    var oldOrderId = _targets.firstWhere((t) => t.trackedType == origType && t.trackedId == origTrackedId).orderId;
-    await deleteTarget(origType, origTrackedId);
-    return createTarget(target, orderId: oldOrderId);
+    return orderId!;
   }
   
   @override

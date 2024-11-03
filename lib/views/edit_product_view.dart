@@ -490,7 +490,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       return;
     }
     
-    bool willPop = await showContinueWithoutSavingDialog(context, save: () => saveProduct(popAfter: false), prodName: product.name) == true;
+    bool willPop = await showContinueWithoutSavingDialog(context, save: () => saveProduct(), prodName: product.name) == true;
     
     if (willPop) {
       Future(() => navigator.pop(product));

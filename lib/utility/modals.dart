@@ -59,12 +59,7 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
                 style: actionButtonStyle,
                 onPressed: () {
                   save();
-                  
-                  // Navigator.of(context).pop(true);
-                  // after 10 ms
-                  // Future.delayed(const Duration(milliseconds: 10), () {
-                    Navigator.of(context).pop(true);
-                  // });
+                  Navigator.of(context).pop(false);
                 },
                 icon: const Icon(Icons.save, color: Colors.white),
                 label: const Padding(

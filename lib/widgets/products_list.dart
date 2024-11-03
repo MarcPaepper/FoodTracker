@@ -34,16 +34,16 @@ List<Widget> getProductTiles({
           break;
         case SortType.relevancy:
           if (relevancies != null) {
-            devtools.log("!!! sorting by relevancy");
+            // devtools.log("!!! sorting by relevancy");
             products.sort((a, b) {
               var relevancyA = relevancies[a.id] ?? 0;
               var relevancyB = relevancies[b.id] ?? 0;
               return relevancyA.compareTo(relevancyB);
             });
-            for (var product in products) {
-              String name = product.name.padRight(30).substring(0, 30);
-              devtools.log("!!! $name: ${relevancies[product.id]?.toStringAsFixed(2)}");
-            }
+            // for (var product in products) {
+            //   String name = product.name.padRight(30).substring(0, 30);
+            //   devtools.log("!!! $name: ${relevancies[product.id]?.toStringAsFixed(2)}");
+            // }
             break;
           }
         case SortType.creationDate:

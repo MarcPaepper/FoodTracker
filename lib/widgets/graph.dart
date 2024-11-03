@@ -207,10 +207,12 @@ class _GraphPainter extends CustomPainter {
         }
 
         double contributionHeight = (contribution / target.amount) * maxBarHeight;
-        canvas.drawRect(
-          Rect.fromLTWH(entryLeft + margin, baseline - currentHeight - contributionHeight, barWidth, contributionHeight),
-          Paint()..color = color,
-        );
+        if (contributionHeight > 0) {
+          canvas.drawRect(
+            Rect.fromLTWH(entryLeft + margin, baseline - currentHeight - contributionHeight, barWidth, contributionHeight),
+            Paint()..color = color,
+          );
+        }
 
         currentHeight += contributionHeight;
       });
@@ -246,7 +248,9 @@ class _GraphPainter extends CustomPainter {
       // apply precision
       double amount = (totalProgress[target]! * target.amount);
       String text;
-      if (precision > 0) {
+      if (amount == 0 || amount.isNaN) {
+        text = '0';
+      } else if (precision > 0) {
         text = amount.toStringAsFixed(precision);
       } else {
         amount = toDouble((amount * pow(10, precision)).round() * pow(10, -precision));
