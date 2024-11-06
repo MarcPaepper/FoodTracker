@@ -53,7 +53,7 @@ class _UnitDropdownState extends State<UnitDropdown> {
           value: entry.key,
           child: entry.value,
         )).toList(),
-        // onTap: () {devtools.log("unit tap"); widget.intermediateSave;},
+        onTap: () => widget.intermediateSave?.call(),
         onChanged: enabled ? widget.onChanged : null,
       ),
     );

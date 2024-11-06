@@ -176,6 +176,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                 visualDensity: VisualDensity.compact,
                 onChanged: (bool value) {
                   widget.autoCalcAmountNotifier.value = value;
+                  widget.intermediateSave();
                 },
                 title: const Padding(
                   padding: EdgeInsets.only(top: 2),

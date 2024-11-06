@@ -260,7 +260,7 @@ class _GraphPainter extends CustomPainter {
       
       // if the text is too close to the top, move it below the bar
       if (currentHeight < maxBarHeight) currentHeight = min(currentHeight, maxBarHeight - 20);
-      if (i==2) devtools.log("i $i currentHeight: $currentHeight maxBarHeight: $maxBarHeight");
+      // if (i==2) devtools.log("i $i currentHeight: $currentHeight maxBarHeight: $maxBarHeight");
       
       // paint the text
       TextPainter textPainter = TextPainter(

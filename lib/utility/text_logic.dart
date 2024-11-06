@@ -39,7 +39,8 @@ double toDouble(dynamic value) {
   } else if (value is double) {
     return value;
   } else {
-    throw ArgumentError("Value is not a number, type is ${value.runtimeType}");
+    // throw ArgumentError("Value is not a number, type is ${value.runtimeType}");
+    return double.nan;
   }
 }
 

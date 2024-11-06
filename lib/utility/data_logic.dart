@@ -360,7 +360,7 @@ Product updateProductNutrients(Product product, Map<int, Product> productsMap) {
       }
     }
     // convert from the ingredients amount to nutrients amount
-    if (value != 0.0) value = convertToUnit(ingredientsUnit, nutrientsUnit, value, densityConversion, quantityConversion) * amountForNutrients;
+    if (value != 0.0) value = convertToUnit(ingredientsUnit, nutrientsUnit, value, densityConversion, quantityConversion, enableTargetQuantity: true) * amountForNutrients;
     nutrient.value = value;
   }
   

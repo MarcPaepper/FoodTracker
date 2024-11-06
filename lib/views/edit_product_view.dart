@@ -221,6 +221,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 
                 var copyProduct = _interimProduct ?? _prevProduct;
                 
+                if (widget.isCopy) {
+                  copyProduct = products.firstWhere((prod) => prod.name == widget.productName, orElse: () => copyProduct);
+                  _interimProduct = copyProduct;
+                }
+                
                 // check whether nutValues and copyProduct nutrients match
                 
                 var copyNutrients = checkNutrients(copyProduct.id, copyProduct.nutrients, nutValues);
@@ -262,8 +267,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     }
                     _copyName = "$name)";
                     _productNameController.text = _copyName!;
-                    
-                    copyProduct = products.firstWhere((prod) => prod.name == widget.productName, orElse: () => copyProduct);
                   }
                 }
                 
@@ -764,7 +767,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                             newNutrientsUnit: nutrientsUnit,
                           );
                         }
-                      }
+                      },
+                      intermediateSave: () => _interimProduct = getProductFromForm().$1,
                     )
                   ),
                 ]
