@@ -123,7 +123,12 @@ class Product {
   }
   
   @override
-  bool operator ==(covariant Product other) => id == other.id;
+  bool operator ==(Object other) {
+    if (other is Product) {
+      return id == other.id;
+    }
+    return false;
+  }
   
   bool equals(Product other) {
     // order other nutrients by id

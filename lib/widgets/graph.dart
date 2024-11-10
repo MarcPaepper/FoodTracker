@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 import '../utility/text_logic.dart';
 
@@ -201,7 +201,8 @@ class _GraphPainter extends CustomPainter {
       productContributions?.forEach((product, contribution) {
         Color color;
         if (product == null) {
-          color = const Color.fromARGB(255, 83, 83, 83);
+          const light = 90;
+          color = const Color.fromARGB(255, light, light, light);
         } else {
           color = colorMap[product.id] ?? Colors.white;
         }
@@ -232,6 +233,9 @@ class _GraphPainter extends CustomPainter {
       
       // Draw current progress
       
+      var tooClose = (currentHeight - maxBarHeight).abs() < 20;
+      var below = currentHeight > maxBarHeight && !tooClose;
+      
       // determine a good precision for the current amount
       int precision;
       int order = (log(target.amount) / ln10).floor() + 1;
@@ -258,9 +262,12 @@ class _GraphPainter extends CustomPainter {
       }
       text = truncateZeros(text);
       
+      if (tooClose) {
+        text += ' / ${truncateZeros(target.amount.toString())}';
+      }
+      
       // if the text is too close to the top, move it below the bar
-      if (currentHeight < maxBarHeight) currentHeight = min(currentHeight, maxBarHeight - 20);
-      // if (i==2) devtools.log("i $i currentHeight: $currentHeight maxBarHeight: $maxBarHeight");
+      // if (currentHeight < maxBarHeight) currentHeight = min(currentHeight, maxBarHeight - 20);
       
       // paint the text
       TextPainter textPainter = TextPainter(
@@ -274,6 +281,7 @@ class _GraphPainter extends CustomPainter {
       textPainter.layout(minWidth: 0, maxWidth: 100);
       double x = entryLeft + margin + barWidth / 2 - textPainter.width / 2;
       double y = baseline - currentHeight - textPainter.height - 2;
+      if (tooClose) y = min(y, baseline - maxBarHeight - textPainter.height - 4);
       textPainter.paint(canvas, Offset(x, y));
       
       // Draw target line
@@ -285,21 +293,81 @@ class _GraphPainter extends CustomPainter {
       );
       
       // Draw target amount
-      text = target.amount.toString();
-      text = truncateZeros(text);
       textPainter = TextPainter(
         text: TextSpan(
-          text: text,
+          text: tooClose ? "" : targetText,
           style: const TextStyle(fontSize: 12, color: Colors.black),
         ),
         textAlign: TextAlign.center,
         textDirection: TextDirection.ltr,
       );
       textPainter.layout(minWidth: 0, maxWidth: 100);
-      textPainter.paint(canvas, Offset(
-        entryLeft + margin + barWidth / 2 - textPainter.width / 2,
-        baseline - maxBarHeight - textPainter.height - 2
-      ));
+      x = entryLeft + margin + barWidth / 2 - textPainter.width / 2;
+      // If the bar is above the target, draw the text below the bar
+      // if (currentHeight < maxBarHeight || currentHeight - maxBarHeight > 20) {
+      y = baseline - maxBarHeight - textPainter.height - 4;
+      //   // // paint a triangle pointing to the target line
+      //   // var triangleHeight = 4.0;
+      //   // var triangleWidth = 8.0;
+      //   // var triangleX = entryLeft + margin + barWidth / 2 - triangleWidth / 2;
+      //   // var triangleY = baseline - maxBarHeight - triangleHeight;
+      //   // Paint paint = Paint()..color = Colors.black.withAlpha(180);
+      //   // Path path = Path()
+      //   //   ..moveTo(triangleX, triangleY)
+      //   //   ..lineTo(triangleX + triangleWidth, triangleY)
+      //   //   ..lineTo(triangleX + triangleWidth / 2, triangleY + triangleHeight)
+      //   //   ..lineTo(triangleX, triangleY);
+      //   // mirrored
+      //   // Path path = Path()
+      //   //   ..moveTo(triangleX, triangleY + triangleHeight)
+      //   //   ..lineTo(triangleX + triangleWidth, triangleY + triangleHeight)
+      //   //   ..lineTo(triangleX + triangleWidth / 2, triangleY)
+      //   //   ..lineTo(triangleX, triangleY + triangleHeight);
+      //   // canvas.drawPath(path, paint);
+      // } else {
+        // y = baseline - maxBarHeight + 4;
+      // }
+      
+      // if (currentHeight > maxBarHeight) {
+        // // paint a white (alpha = 0.5) box behind the text
+        // // It has a minimum width and scales with the text width
+        // var boxWidth = toDouble(max(textPainter.width + 4, 20));
+        // var boxHeight = textPainter.height + 4;
+        // var boxX = x + textPainter.width / 2 - boxWidth / 2;
+        // var boxY = y - 2;
+        // canvas.drawRect(
+        //   Rect.fromLTWH(boxX, boxY, boxWidth, boxHeight),
+        //   Paint()..color = Colors.white.withAlpha(127),
+        // );
+        // canvas.drawRect(
+        // Rect.fromLTWH(boxX, boxY, boxWidth, boxHeight),
+        //   Paint()
+        //     ..style = PaintingStyle.stroke
+        //     ..color = Colors.black.withAlpha(127)
+        //     ..strokeWidth = 1,
+        // );
+      // }
+      
+      if (below) {
+        // paint a white outline around the text
+        var outlinePainter = TextPainter(
+          text: TextSpan(
+            text: tooClose ? "" : targetText,
+            style: TextStyle(
+              fontSize: 12,
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 3
+                ..color = Colors.white.withAlpha(160),
+            ),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        );
+        outlinePainter.layout(minWidth: 0, maxWidth: 100);
+        outlinePainter.paint(canvas, Offset(x, y));
+      }
+      textPainter.paint(canvas, Offset(x, y));
       
       entryLeft += entryWidth;
     }

@@ -208,6 +208,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     _error = true;
                     return const Scaffold(body: LoadingPage());
                   }
+                } else if (widget.isCopy) {
+                  _prevProduct = products.firstWhere((prod) => prod.name == widget.productName, orElse: () => _prevProduct);
                 } else {
                   _prevProduct = Product.defaultValues();
                   // create one nutrient per nutritional value
@@ -220,11 +222,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 }
                 
                 var copyProduct = _interimProduct ?? _prevProduct;
-                
-                if (widget.isCopy) {
-                  copyProduct = products.firstWhere((prod) => prod.name == widget.productName, orElse: () => copyProduct);
-                  _interimProduct = copyProduct;
-                }
                 
                 // check whether nutValues and copyProduct nutrients match
                 
@@ -267,6 +264,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     }
                     _copyName = "$name)";
                     _productNameController.text = _copyName!;
+                    copyProduct = copyProduct.copyWith(newName: _copyName!);
+                    _prevProduct = copyProduct.copyWith();
                   }
                 }
                 

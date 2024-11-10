@@ -17,7 +17,7 @@ import '../widgets/multi_stream_builder.dart';
 class DailyTargetsBox extends StatefulWidget {
   final DateTime dateTime;
   final List<(ProductQuantity, Color)>? ingredients;
-  final void Function(List<(ProductQuantity, Color)>) onIngredientsChanged;
+  final void Function(List<(ProductQuantity, Color)>, bool) onIngredientsChanged;
   static int colorsUsed = 0;
   
   const DailyTargetsBox(
@@ -122,7 +122,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 }
               }
               
-              if (colorChanged) widget.onIngredientsChanged(widget.ingredients!);
+              if (colorChanged) {
+                widget.onIngredientsChanged(widget.ingredients!, true);
+              }
             }
             
             return LayoutBuilder(
