@@ -21,8 +21,6 @@ class Graph extends StatefulWidget {
   final List<Product> products;
   final Map<int, Color> colorMap;
   final List<NutritionalValue> nutritionalValues;
-  // final List<Meal> oldMeals;
-  // final List<Meal> newMeals;
   final Map<Target, Map<Product?, double>> targetProgress;
   
   static bool hasRebuild = false;
@@ -35,8 +33,6 @@ class Graph extends StatefulWidget {
     this.colorMap,
     this.nutritionalValues,
     this.targetProgress,
-    // this.oldMeals,
-    // this.newMeals,
     {super.key}
   );
 
@@ -266,9 +262,6 @@ class _GraphPainter extends CustomPainter {
         text += ' / ${truncateZeros(target.amount.toString())}';
       }
       
-      // if the text is too close to the top, move it below the bar
-      // if (currentHeight < maxBarHeight) currentHeight = min(currentHeight, maxBarHeight - 20);
-      
       // paint the text
       TextPainter textPainter = TextPainter(
         text: TextSpan(
@@ -304,49 +297,7 @@ class _GraphPainter extends CustomPainter {
       textPainter.layout(minWidth: 0, maxWidth: 100);
       x = entryLeft + margin + barWidth / 2 - textPainter.width / 2;
       // If the bar is above the target, draw the text below the bar
-      // if (currentHeight < maxBarHeight || currentHeight - maxBarHeight > 20) {
       y = baseline - maxBarHeight - textPainter.height - 4;
-      //   // // paint a triangle pointing to the target line
-      //   // var triangleHeight = 4.0;
-      //   // var triangleWidth = 8.0;
-      //   // var triangleX = entryLeft + margin + barWidth / 2 - triangleWidth / 2;
-      //   // var triangleY = baseline - maxBarHeight - triangleHeight;
-      //   // Paint paint = Paint()..color = Colors.black.withAlpha(180);
-      //   // Path path = Path()
-      //   //   ..moveTo(triangleX, triangleY)
-      //   //   ..lineTo(triangleX + triangleWidth, triangleY)
-      //   //   ..lineTo(triangleX + triangleWidth / 2, triangleY + triangleHeight)
-      //   //   ..lineTo(triangleX, triangleY);
-      //   // mirrored
-      //   // Path path = Path()
-      //   //   ..moveTo(triangleX, triangleY + triangleHeight)
-      //   //   ..lineTo(triangleX + triangleWidth, triangleY + triangleHeight)
-      //   //   ..lineTo(triangleX + triangleWidth / 2, triangleY)
-      //   //   ..lineTo(triangleX, triangleY + triangleHeight);
-      //   // canvas.drawPath(path, paint);
-      // } else {
-        // y = baseline - maxBarHeight + 4;
-      // }
-      
-      // if (currentHeight > maxBarHeight) {
-        // // paint a white (alpha = 0.5) box behind the text
-        // // It has a minimum width and scales with the text width
-        // var boxWidth = toDouble(max(textPainter.width + 4, 20));
-        // var boxHeight = textPainter.height + 4;
-        // var boxX = x + textPainter.width / 2 - boxWidth / 2;
-        // var boxY = y - 2;
-        // canvas.drawRect(
-        //   Rect.fromLTWH(boxX, boxY, boxWidth, boxHeight),
-        //   Paint()..color = Colors.white.withAlpha(127),
-        // );
-        // canvas.drawRect(
-        // Rect.fromLTWH(boxX, boxY, boxWidth, boxHeight),
-        //   Paint()
-        //     ..style = PaintingStyle.stroke
-        //     ..color = Colors.black.withAlpha(127)
-        //     ..strokeWidth = 1,
-        // );
-      // }
       
       if (below) {
         // paint a white outline around the text
@@ -386,14 +337,6 @@ class _GraphPainter extends CustomPainter {
     
     // draw normally
     textPainter.paint(canvas, Offset(entryLeft + 10, baseline - maxBarHeight - 12));
-    
-    // // draw rotated
-    // var x = entryLeft + 20, y = baseline - maxBarHeight + 0;
-    // canvas.drawRotatedText(
-    //   pivot: Offset(x, y),
-    //   textPainter: textPainter,
-    //   angle: - pi / 2,
-    // );
   }
 
   @override
@@ -410,47 +353,3 @@ class _GraphPainter extends CustomPainter {
     }
   }
 }
-
-// extension RotatedTextExt on Canvas {
-//   /// [angle] is in radians. Set `isInDegrees = true` if it is in degrees.
-//   void drawRotatedText({
-//     required Offset pivot,
-//     required TextPainter textPainter,
-//     TextPainter? superTextPainter,
-//     TextPainter? subTextPainter,
-//     required double angle,
-//     bool isInDegrees = false,
-//     Alignment alignment = Alignment.center,
-//   }) {
-//     //
-//     // Convert angle from degrees to radians
-//     angle = isInDegrees ? angle * pi / 180 : angle;
-
-//     textPainter.layout();
-//     superTextPainter?.layout();
-//     subTextPainter?.layout();
-
-//     // Calculate delta. Delta is the top left offset with reference
-//     // to which the main text will paint. The centre of the text will be
-//     // at the given pivot unless [alignment] is set.
-//     final w = textPainter.width;
-//     final h = textPainter.height;
-//     final delta = pivot.translate(
-//         -w / 2 + w / 2 * alignment.x, -h / 2 + h / 2 * alignment.y);
-//     //
-//     final supDelta =
-//         delta.translate(w, h - h * 0.6 - (superTextPainter?.size.height ?? 0));
-//     //
-//     final subDelta = delta.translate(w, h - (subTextPainter?.size.height ?? 0));
-
-//     // Rotate the text about pivot
-//     save();
-//     translate(pivot.dx, pivot.dy);
-//     rotate(angle);
-//     translate(-pivot.dx, -pivot.dy);
-//     textPainter.paint(this, delta);
-//     superTextPainter?.paint(this, supDelta);
-//     subTextPainter?.paint(this, subDelta);
-//     restore();
-//   }
-// }
