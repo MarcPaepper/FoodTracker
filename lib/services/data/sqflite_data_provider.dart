@@ -689,7 +689,8 @@ class SqfliteDataProvider implements DataProvider {
       orderId = 0;
       // if the target is primary, find the highest primary order id. If not, find the highest order id overall
       for (var t in _targets) {
-        if ((t.isPrimary && target.isPrimary) && t.orderId > orderId!) orderId = t.orderId + 1;
+        if ((t.isPrimary && target.isPrimary) && t.orderId >= orderId!) orderId = t.orderId + 1;
+        if (!t.isPrimary && t.orderId >= orderId!) orderId = t.orderId + 1;
       }
     }
     if (target.isPrimary) {
@@ -701,6 +702,8 @@ class SqfliteDataProvider implements DataProvider {
         }
       }
     }
+    devtools.log("Order:${_targets.map((t) => " ${t.isPrimary ? "P" : "S"}${t.orderId}").join()}");
+    devtools.log("New order id: $orderId");
     return orderId!;
   }
   

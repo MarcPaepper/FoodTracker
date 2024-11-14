@@ -156,6 +156,7 @@ double convertToUnit(
   
   if (typeTarg == UnitType.quantity) {
     if (!enableTargetQuantity) return double.nan;
+    if (typePrev == UnitType.quantity) return amount;
     // convert using quantity conversion
     if (quantityConversion.enabled) {
       targetUnit = quantityConversion.unit2;
@@ -604,7 +605,7 @@ Future<void> importData(BuildContext context) async {
     // import the data
     var service = DataService.current();
     
-    //try {
+    try {
       devtools.log("Data cleaning");
       await service.cleanUp();
       devtools.log("Data cleaned up");
@@ -714,11 +715,11 @@ Future<void> importData(BuildContext context) async {
       }
       
       if(context.mounted) showSnackbar(context, "Data imported successfully");
-    //} on Exception catch (e) {
-    //  // log
-    //  devtools.log("Error while importing the data: $e");
-    //  if(context.mounted) showSnackbar(context, "Error while importing the data: $e");
-    //}
+    } on Exception catch (e) {
+     // log
+     devtools.log("Error while importing the data: $e");
+     if(context.mounted) showSnackbar(context, "Error while importing the data: $e");
+    }
   }
 }
 
@@ -793,9 +794,9 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   if (creationDelta < 0) creationDelta = 0;
   productRelevancy = max(7 * pow(1/7, creationDelta / 48) as double, 1);
   
-  // var editDelta = product.lastEditDate != null ? now.difference(product.lastEditDate!).inMinutes / 60 : 0;
-  // if (editDelta < 0) editDelta = 0;
-  // productRelevancy = max(4 * pow(1/4, editDelta / 24) as double, productRelevancy);
+  var editDelta = product.lastEditDate != null ? now.difference(product.lastEditDate!).inMinutes / 60 : 0;
+  if (editDelta < 0) editDelta = 0;
+  productRelevancy = max(4 * pow(1/4, editDelta / 24) as double, productRelevancy);
   
   // triple the relevancy if the product is temporary and compDT is inside the temporary interval
   var temporaryRelevancy = 1.0;

@@ -8,6 +8,7 @@ enum TitlePosition {
 class BorderBox extends StatefulWidget {
   final Color? borderColor;
   final Widget? child;
+  final Widget? titleWidget;
   final String? title;
   final TitlePosition titlePosition;
   final Color titleBgColor;
@@ -16,6 +17,7 @@ class BorderBox extends StatefulWidget {
     super.key,
     this.borderColor,
     this.child,
+    this.titleWidget,
     this.title,
     // this.titleBgColor = const Color(0xFFFAFDFB),
     this.titleBgColor = Colors.white,
@@ -33,13 +35,13 @@ class _BorderBoxState extends State<BorderBox> {
   Widget build(BuildContext context) {
     var borderColor = widget.borderColor ?? const Color.fromARGB(200, 25, 82, 77);
     
-    var titleWidget = widget.title != null
+    Widget titleWidget = widget.titleWidget ?? (widget.title != null
       ? Text(
         widget.title!,
         style: const TextStyle(
           fontSize: 16,
         ),
-      ) : const SizedBox.shrink();
+      ) : const SizedBox.shrink());
     
     return Stack(
       alignment: widget.titlePosition == TitlePosition.left

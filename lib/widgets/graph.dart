@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/theme.dart';
 
 import '../services/data/data_objects.dart';
 
@@ -12,6 +13,7 @@ import '../utility/text_logic.dart';
 
 const double barWidth = 30;
 const double targetMargin = 25;
+const double buttonMargin = 60;
 const double minMargin = 15;
 
 class Graph extends StatefulWidget {
@@ -42,6 +44,7 @@ class Graph extends StatefulWidget {
 
 class _GraphState extends State<Graph> {
   bool hasRebuild = false;
+  bool showAll = false;
   
   @override
   Widget build(BuildContext context) {
@@ -52,17 +55,52 @@ class _GraphState extends State<Graph> {
         });
       });
     }
+    // create copy
+    var activeProgress = Map<Target, Map<Product?, double>>.from(widget.targetProgress);
+    var hasSecondary = activeProgress.keys.any((t) => !t.isPrimary);
+    var btnMargin = hasSecondary ? buttonMargin : 0;
+    if (!showAll && hasSecondary) {
+      activeProgress.removeWhere((t, _) => !t.isPrimary);
+    }
     
-    return SizedBox(
-      height: hasRebuild ? 300 : 300,
-      width: max(
-        widget.maxWidth,
-        minMargin * 2 + widget.targets.length * (2 * minMargin + barWidth) + targetMargin,
-      ),
-      child: CustomPaint(
-        size: hasRebuild ? Size.infinite : Size.zero,
-        painter: _GraphPainter(widget.targetProgress, widget.products, widget.nutritionalValues, widget.colorMap),
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          height: hasRebuild ? 300 : 300,
+          width: max(
+            widget.maxWidth - btnMargin,
+            minMargin * 2 + activeProgress.length * (2 * minMargin + barWidth) + targetMargin,
+          ),
+          child: CustomPaint(
+            size: hasRebuild ? Size.infinite : Size.zero,
+            painter: _GraphPainter(activeProgress, widget.products, widget.nutritionalValues, widget.colorMap),
+          ),
+        ),
+        hasSecondary ? SizedBox(
+          width: buttonMargin,
+          height: 295,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 12, 13),
+            child: ElevatedButton(
+              style: importantButtonStyle.copyWith(
+                backgroundColor: WidgetStateProperty.all(Colors.grey.shade400),
+                visualDensity: VisualDensity.compact,
+                padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                shape: WidgetStateProperty.all(const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                )),
+              ),
+              onPressed: () {
+                setState(() {
+                  showAll = !showAll;
+                });
+              },
+              child: Icon(showAll ? Icons.chevron_left : Icons.chevron_right),
+            ),
+          ),
+        ) : const SizedBox(width: 0),
+      ],
     );
   }
 }
@@ -93,7 +131,7 @@ class _GraphPainter extends CustomPainter {
     
     double margin = minMargin;
     double entryWidth = barWidth + 2 * margin;
-    double extraMargin = (size.width - entryWidth * targetProgress.length - margin * 2 - targetMargin) / (2 * targetProgress.length + 2);
+    double extraMargin = (size.width - (minMargin * 2 + targetProgress.length * (2 * minMargin + barWidth) + targetMargin)) / (2 * targetProgress.length + 2);
     if (extraMargin > 0) margin += extraMargin;
            entryWidth = barWidth + 2 * margin;
 
@@ -301,6 +339,7 @@ class _GraphPainter extends CustomPainter {
       
       if (below) {
         // paint a white outline around the text
+        var whiteness = 230;
         var outlinePainter = TextPainter(
           text: TextSpan(
             text: tooClose ? "" : targetText,
@@ -308,8 +347,8 @@ class _GraphPainter extends CustomPainter {
               fontSize: 12,
               foreground: Paint()
                 ..style = PaintingStyle.stroke
-                ..strokeWidth = 3
-                ..color = Colors.white.withAlpha(160),
+                ..strokeWidth = 2.5
+                ..color = Color.fromARGB(200, whiteness, whiteness, whiteness),
             ),
           ),
           textAlign: TextAlign.center,
@@ -334,8 +373,6 @@ class _GraphPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     );
     textPainter.layout(minWidth: 0, maxWidth: targetMargin);
-    
-    // draw normally
     textPainter.paint(canvas, Offset(entryLeft + 10, baseline - maxBarHeight - 12));
   }
 
