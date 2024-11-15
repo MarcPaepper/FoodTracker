@@ -118,7 +118,26 @@ class _ProductsViewState extends State<ProductsView> {
               arguments: (name, true),
             );
           },
-        ),
+        ) + [
+          // A text widget saying how many products are displayed
+          products.length > 10 ? Container(
+            color: products.length % 2 == 0 ? Colors.grey[100] : Colors.white,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Text(
+                  "${products.length} Products",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    // italic
+                    fontStyle: FontStyle.italic,
+                    fontSize: 16.0,
+                  ),
+                ),
+              ),
+            ),
+          ) : Container(),
+        ],
       );
     }
     return const LoadingPage();

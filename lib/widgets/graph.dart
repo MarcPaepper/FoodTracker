@@ -13,7 +13,7 @@ import '../utility/text_logic.dart';
 
 const double barWidth = 30;
 const double targetMargin = 25;
-const double buttonMargin = 60;
+const double buttonMargin = 45;
 const double minMargin = 15;
 
 class Graph extends StatefulWidget {
@@ -79,16 +79,16 @@ class _GraphState extends State<Graph> {
         ),
         hasSecondary ? SizedBox(
           width: buttonMargin,
-          height: 295,
+          height: 300,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 12, 13),
+            padding: const EdgeInsets.fromLTRB(6, 0, 10, 12),
             child: ElevatedButton(
               style: importantButtonStyle.copyWith(
                 backgroundColor: WidgetStateProperty.all(Colors.grey.shade400),
                 visualDensity: VisualDensity.compact,
                 padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
                 shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                  borderRadius: BorderRadius.all(Radius.circular(6)),
                 )),
               ),
               onPressed: () {

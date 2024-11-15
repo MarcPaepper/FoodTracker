@@ -236,63 +236,64 @@ class _FoodBoxState extends State<FoodBox> {
                         },
                       ),
                       const SizedBox(height: 14),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // color indicator as rounded rectangle
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: ingredient.$2,
-                                borderRadius: BorderRadius.circular(2),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch, // Ensure the Row stretches to its full height
+                          children: [
+                            // Color indicator as rounded rectangle
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                              child: Container(
+                                width: 14,
+                                decoration: BoxDecoration(
+                                  color: ingredient.$2,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
                               ),
                             ),
-                          ),
-                          // amount field
-                          Expanded(
-                            child: AmountField(
-                              controller: widget.ingredientAmountControllers[index],
-                              padding: 0,
-                              onChangedAndParsed: (value) {
-                                var prev = ingredients[index];
-                                ingredients[index] = (
-                                  ProductQuantity(
-                                    productId: prev.$1.productId,
-                                    amount: value,
-                                    unit: prev.$1.unit,
-                                  ),
-                                  prev.$2,
-                                );
-                                widget.ingredientsNotifier.value = List.from(ingredients);
-                              }
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // unit dropdown
-                          Expanded(
-                            child: UnitDropdown(
-                              items: buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values, quantityName: product?.quantityName ?? "x"),
-                              current: unit,
-                              onChanged: (Unit? unit) {
-                                if (unit != null) {
+                            // amount field
+                            Expanded(
+                              child: AmountField(
+                                controller: widget.ingredientAmountControllers[index],
+                                padding: 0,
+                                onChangedAndParsed: (value) {
                                   var prev = ingredients[index];
                                   ingredients[index] = (
                                     ProductQuantity(
                                       productId: prev.$1.productId,
-                                      amount: prev.$1.amount,
-                                      unit: unit,
+                                      amount: value,
+                                      unit: prev.$1.unit,
                                     ),
                                     prev.$2,
                                   );
                                   widget.ingredientsNotifier.value = List.from(ingredients);
                                 }
-                              }
+                              ),
                             ),
-                          ),
-                        ]
+                            const SizedBox(width: 12),
+                            // unit dropdown
+                            Expanded(
+                              child: UnitDropdown(
+                                items: buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values, quantityName: product?.quantityName ?? "x"),
+                                current: unit,
+                                onChanged: (Unit? unit) {
+                                  if (unit != null) {
+                                    var prev = ingredients[index];
+                                    ingredients[index] = (
+                                      ProductQuantity(
+                                        productId: prev.$1.productId,
+                                        amount: prev.$1.amount,
+                                        unit: unit,
+                                      ),
+                                      prev.$2,
+                                    );
+                                    widget.ingredientsNotifier.value = List.from(ingredients);
+                                  }
+                                }
+                              ),
+                            ),
+                          ]
+                        ),
                       ),
                       SizedBox(height: errorType == ErrorType.none ? 0 : 10),
                       errorBox,
