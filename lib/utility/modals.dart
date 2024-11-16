@@ -356,6 +356,19 @@ class _MainListState extends State<_MainList> {
   
   @override
   Widget build(BuildContext context) {
+    if (widget.productsMap.isEmpty) {
+      return const Center(
+        child: Text(
+          'No products found',
+          style: TextStyle(
+            color: Colors.grey,
+            fontStyle: FontStyle.italic,
+            fontSize: 16.0,
+          ),
+        ),
+      );
+    }
+    
     return Column(
       children: [
         widget.showSearch ? Container(

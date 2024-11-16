@@ -50,9 +50,11 @@ class _GraphState extends State<Graph> {
   Widget build(BuildContext context) {
     if (!hasRebuild) {
       Future.delayed(const Duration(milliseconds: 200), () {
-        setState(() {
-          hasRebuild = true;
-        });
+        if (mounted) {
+          setState(() {
+            hasRebuild = true;
+          });
+        }
       });
     }
     // create copy

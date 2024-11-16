@@ -33,9 +33,12 @@ class DailyTargetsBox extends StatefulWidget {
 
 class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   final _dataService = DataService.current();
+  bool hidden = false;
   
   @override
   Widget build(BuildContext context) {
+    if (hidden) return Container();
+    
     return BorderBox(
       title: "Daily Targets",
       child: Padding(
@@ -69,6 +72,18 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
             List<Meal> oldMeals;
             // sort targets by order id
             targets.sort((a, b) => a.orderId.compareTo(b.orderId));
+            
+            // Check if there are any targets at all
+            bool noTargets = targets.isEmpty;
+            if (noTargets != hidden) {
+              Future(() {
+                if (mounted) {
+                  setState(() {
+                    hidden = noTargets;
+                  });
+                }
+              });
+            }
             
             if (widget.ingredients == null) {
               newMeals = snapshotM.data as List<Meal>;

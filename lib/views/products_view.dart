@@ -97,6 +97,22 @@ class _ProductsViewState extends State<ProductsView> {
     if (snapshotP.hasData) {
       var products = snapshotP.data as List<Product>;
       var relevancies = snapshotR.hasData ? snapshotR.data as Map<int, double> : null;
+      
+      if (products.isEmpty) {
+        return SizedBox(
+          width: double.infinity,
+          child: Text(
+            "\n No products found",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
+              fontSize: 16.0,
+            ),
+          ),
+        );
+      }
+      
       return ListView(
         physics: const ClampingScrollPhysics(),
         children: getProductTiles(
