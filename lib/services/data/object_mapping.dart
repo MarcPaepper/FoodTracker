@@ -50,52 +50,52 @@ const primaryColumn                = "is_primary";
 
 // ----- Maps to objects -----
 
-Product mapToProduct(Map<String, dynamic> row) {
+Product mapToProduct(Map<String, dynamic> map) {
   List<ProductQuantity> ingredients = [];
   List<ProductNutrient> nutrients = [];
-  if (row["ingredients"] != null) {
-    ingredients = (row["ingredients"] as List).map((ingr) => mapToProductQuantity(ingr)).toList();
+  if (map["ingredients"] != null) {
+    ingredients = (map["ingredients"] as List).map((ingr) => mapToProductQuantity(ingr)).toList();
   }
-  if (row["nutrients"] != null) {
-    nutrients = (row["nutrients"] as List).map((nut) => mapToProductNutrient(nut)).toList();
+  if (map["nutrients"] != null) {
+    nutrients = (map["nutrients"] as List).map((nut) => mapToProductNutrient(nut)).toList();
   }
   
   return Product(
-    id:                    row[idColumn] as int,
-    name:                  row[nameColumn] as String,
-    creationDate:          DateTime.parse(row[creationDateColumn] as String),
-    lastEditDate:          DateTime.parse(row[lastEditDateColumn] as String),
-    temporaryBeginning:    condParse(row[temporaryBeginningColumn] as String?),
-    temporaryEnd:          condParse(row[temporaryEndColumn] as String?),
-    isTemporary:           row[isTemporaryColumn] == 1,
-    defaultUnit:           unitFromString(row[defaultUnitColumn] as String),
-    densityConversion:     Conversion.fromString(row[densityConversionColumn] as String),
-    quantityConversion:    Conversion.fromString(row[quantityConversionColumn] as String),
-    quantityName:          row[quantityNameColumn] as String,
-    autoCalc:              row[autoCalcAmountColumn] == 1,
-    amountForIngredients:  toDouble(row[amountForIngredientsColumn] ?? 100),
-    ingredientsUnit:       unitFromString((row[ingredientsUnitColumn] ?? row[defaultUnitColumn]) as String),
-    amountForNutrients:    toDouble(row[amountForNutrientsColumn] ?? 100),
-    nutrientsUnit:         unitFromString((row[nutrientsUnitColumn] ?? row[defaultUnitColumn]) as String),
+    id:                    map[idColumn] as int,
+    name:                  map[nameColumn] as String,
+    creationDate:          DateTime.parse(map[creationDateColumn] as String),
+    lastEditDate:          DateTime.parse(map[lastEditDateColumn] as String),
+    temporaryBeginning:    condParse(map[temporaryBeginningColumn] as String?),
+    temporaryEnd:          condParse(map[temporaryEndColumn] as String?),
+    isTemporary:           map[isTemporaryColumn] == 1,
+    defaultUnit:           unitFromString(map[defaultUnitColumn] as String),
+    densityConversion:     Conversion.fromString(map[densityConversionColumn] as String),
+    quantityConversion:    Conversion.fromString(map[quantityConversionColumn] as String),
+    quantityName:          map[quantityNameColumn] as String,
+    autoCalc:              map[autoCalcAmountColumn] == 1,
+    amountForIngredients:  toDouble(map[amountForIngredientsColumn] ?? 100),
+    ingredientsUnit:       unitFromString((map[ingredientsUnitColumn] ?? map[defaultUnitColumn]) as String),
+    amountForNutrients:    toDouble(map[amountForNutrientsColumn] ?? 100),
+    nutrientsUnit:         unitFromString((map[nutrientsUnitColumn] ?? map[defaultUnitColumn]) as String),
     ingredients:           ingredients,
     nutrients:             nutrients,
   );
 }
   
-ProductQuantity mapToProductQuantity(Map<String, Object?> row) =>
+ProductQuantity mapToProductQuantity(Map<String, Object?> map) =>
  ProductQuantity(
-    productId: row[productIdColumn] as int,
-    amount:    toDouble(row[amountColumn]),
-    unit:      unitFromString(row[unitColumn] as String),
+    productId: map[productIdColumn] as int,
+    amount:    toDouble(map[amountColumn]),
+    unit:      unitFromString(map[unitColumn] as String),
   );
 
-NutritionalValue mapToNutritionalValue(Map<String, Object?> row) =>
+NutritionalValue mapToNutritionalValue(Map<String, Object?> map) =>
   NutritionalValue(
-    row[idColumn] as int,
-    (row[orderIdColumn] ?? row[idColumn]) as int,
-    row[nameColumn] as String,
-    row[unitNameColumn] as String,
-    row[showFullNameColumn] == 1,
+    map[idColumn] as int,
+    (map[orderIdColumn] ?? map[idColumn]) as int,
+    map[nameColumn] as String,
+    map[unitNameColumn] as String,
+    map[showFullNameColumn] == 1,
   );
 
 ProductNutrient mapToProductNutrient(Map<String, Object?> row) =>
@@ -106,16 +106,16 @@ ProductNutrient mapToProductNutrient(Map<String, Object?> row) =>
     value:              toDouble(row[valueColumn]),
   );
 
-Meal mapToMeal(Map<String, Object?> row) =>
+Meal mapToMeal(Map<String, Object?> map) =>
  Meal(
-    id:               row[idColumn] as int,
-    dateTime:         DateTime.parse(row[dateTimeColumn] as String),
-    creationDate:     DateTime.parse(row[creationDateColumn] as String),
-    lastEditDate:     DateTime.parse(row[lastEditDateColumn] as String),
+    id:               map[idColumn] as int,
+    dateTime:         DateTime.parse(map[dateTimeColumn] as String),
+    creationDate:     DateTime.parse(map[creationDateColumn] as String),
+    lastEditDate:     DateTime.parse(map[lastEditDateColumn] as String),
     productQuantity:  ProductQuantity(
-      productId:        row[productIdColumn] as int,
-      amount:           toDouble(row[amountColumn]),
-      unit:             unitFromString(row[unitColumn] as String),
+      productId:        map[productIdColumn] as int,
+      amount:           toDouble(map[amountColumn]),
+      unit:             unitFromString(map[unitColumn] as String),
     ),
   );
 
@@ -210,7 +210,7 @@ Map<String, dynamic> targetToMap(Target target) {
     trackedIdColumn: target.trackedId,
     amountColumn:    target.amount,
     unitColumn:      target.unit == null ? "" : unitToString(target.unit!),
-    primaryColumn:   target.isPrimary,
+    primaryColumn:   target.isPrimary ? 1 : 0,
     orderIdColumn:   target.orderId,
   };
 }

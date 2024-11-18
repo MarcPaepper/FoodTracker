@@ -37,7 +37,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   
   @override
   Widget build(BuildContext context) {
-    if (hidden) return Container();
+    //if (hidden) return Container();
     
     return BorderBox(
       title: "Daily Targets",
@@ -80,6 +80,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 if (mounted) {
                   setState(() {
                     hidden = noTargets;
+                    devtools.log("DailyTargetsBox hidden: $hidden");
                   });
                 }
               });

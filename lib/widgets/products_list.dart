@@ -7,7 +7,7 @@ import 'package:food_tracker/widgets/sort_field.dart';
 
 import '../utility/text_logic.dart';
 
-// import 'dart:developer' as devtools show log;
+ import 'dart:developer' as devtools show log;
 
 List<Widget> getProductTiles({
   required BuildContext context,
@@ -40,10 +40,11 @@ List<Widget> getProductTiles({
               var relevancyB = relevancies[b.id] ?? 0;
               return relevancyA.compareTo(relevancyB);
             });
-            // for (var product in products) {
-            //   String name = product.name.padRight(30).substring(0, 30);
-            //   devtools.log("!!! $name: ${relevancies[product.id]?.toStringAsFixed(2)}");
-            // }
+            //for (int i = 0; i < products.length && i < 20; i++) {
+            //  var product = products[i];
+            //  String name = product.name.padRight(30).substring(0, 30);
+            //  devtools.log("!!! $name: ${relevancies[product.id]?.toStringAsFixed(2)}");
+            //}
             break;
           }
         case SortType.creationDate:

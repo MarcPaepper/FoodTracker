@@ -30,7 +30,6 @@ class AsyncProvider {
       await currentFuture;
       return _relevancies ?? {};
     }
-    
     currentFuture = _updateRelevancies(null);
     await currentFuture;
     currentFuture = null;
@@ -61,7 +60,6 @@ class AsyncProvider {
       var products = await _dataService.getAllProducts();
       var meals = await _dataService.getAllMeals();
       if (restartFuture) continue;
-      
       if (ids == null) {
         for (var product in products) {
           newRelevancies[product.id] = calcProductRelevancy(meals.toList(), product, _compDT);

@@ -810,14 +810,21 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     }
   }
   
-  // String name = product.name;
-  // name = name.padRight(30).substring(0, 30);
+  bool debugLog = true;
   
-  // String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
-  // String productRelevancyStr = productRelevancy.toStringAsFixed(3);
-  // String temporaryRelevancyStr = temporaryRelevancy.toStringAsFixed(3);
-  
-  // devtools.log("::: $name : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
+  if (debugLog) {
+    var total = mealRelevancy * productRelevancy * temporaryRelevancy;
+    
+    String name = product.name;
+    name = name.padRight(30).substring(0, 30);
+    
+    String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
+    String productRelevancyStr = productRelevancy.toStringAsFixed(3);
+    String temporaryRelevancyStr = temporaryRelevancy.toStringAsFixed(3);
+    String totalStr = total.toStringAsFixed(3);
+    
+    devtools.log("::: $name : $totalStr : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
+  }
   
   return mealRelevancy * productRelevancy * temporaryRelevancy;
 }
