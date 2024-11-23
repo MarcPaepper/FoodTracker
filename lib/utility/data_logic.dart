@@ -1,4 +1,4 @@
-// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: non_constant_identifier_names, dead_code
 
 import 'dart:convert';
 import 'dart:io';
@@ -810,10 +810,10 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     }
   }
   
-  bool debugLog = true;
+  bool debugLog = false;
   
   if (debugLog) {
-    var total = mealRelevancy * productRelevancy * temporaryRelevancy;
+    // var total = mealRelevancy * productRelevancy * temporaryRelevancy;
     
     String name = product.name;
     name = name.padRight(30).substring(0, 30);
@@ -821,9 +821,9 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
     String productRelevancyStr = productRelevancy.toStringAsFixed(3);
     String temporaryRelevancyStr = temporaryRelevancy.toStringAsFixed(3);
-    String totalStr = total.toStringAsFixed(3);
+    // String totalStr = total.toStringAsFixed(3);
     
-    devtools.log("::: $name : $totalStr : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
+    devtools.log("::: $name : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
   }
   
   return mealRelevancy * productRelevancy * temporaryRelevancy;

@@ -134,6 +134,7 @@ class _ProductsViewState extends State<ProductsView> {
               arguments: (name, true),
             );
           },
+          refDate: DateTime.now(),
         ) + [
           // A text widget saying how many products are displayed
           products.length > 10 ? Container(

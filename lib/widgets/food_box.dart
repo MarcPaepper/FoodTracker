@@ -22,12 +22,13 @@ class FoodBox extends StatefulWidget {
   final Map<int, Product> productsMap;
   final int? focusIndex;
   final DateTime? autofocusTime;
+  final bool? canChangeProducts;
+  final DateTime refDate;
   
   final ValueNotifier<List<(ProductQuantity, Color)>> ingredientsNotifier;
   final List<TextEditingController> ingredientAmountControllers;
   final List<FocusNode>? ingredientDropdownFocusNodes;
   
-  final bool? canChangeProducts;
   
   // final Function() intermediateSave;
   // final Function(List<ProductQuantity>) onChanged;
@@ -37,10 +38,11 @@ class FoodBox extends StatefulWidget {
     required this.productsMap,
              this.focusIndex,
              this.autofocusTime,
+             this.canChangeProducts,
     required this.ingredientsNotifier,
     required this.ingredientAmountControllers,
              this.ingredientDropdownFocusNodes,
-             this.canChangeProducts,
+    required this.refDate,
     // required this.intermediateSave,
     // required this.onChanged,
     required this.requestIngredientFocus,
@@ -189,6 +191,8 @@ class _FoodBoxState extends State<FoodBox> {
           ),
         );
       
+      const double extra = 0.25;
+      
       entries.add(
         SlidableListEntry(
           key: Key("${product == null ? "unnamed " : ""}ingredient ${product?.name} at $index of ${ingredients.length}"),
@@ -201,101 +205,124 @@ class _FoodBoxState extends State<FoodBox> {
               visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
               title: Container(
                 color: color,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: kIsWeb ? 16: 18), // TODO: Should mobile also have 16 padding?
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: IntrinsicHeight(
+                  child: Row(
                     children: [
-                      ProductDropdown(
-                        productsMap: availableProducts,
-                        selectedProduct: product,
-                        // index: index,
-                        focusNode: focusNode1,
-                        // autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
-                        autofocusSearch: true,
-                        beforeTap: () => {},//widget.intermediateSave(),
-                        onChanged: (Product? newProduct) {
-                          if (newProduct != null) {
-                            // Check whether the new product supports the current unit
-                            late Unit newUnit;
-                            var currentUnit = unit;
-                            newUnit = (newProduct.getAvailableUnits().contains(currentUnit)) ? currentUnit : newProduct.defaultUnit;
-                            
-                            ingredients[index] = (
-                              ProductQuantity(
-                                productId: newProduct.id,
-                                amount:    productQuantity.amount,
-                                unit:      newUnit,
-                              ),
-                              ingredient.$2,
-                            );
-                            // widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, index);
-                            widget.ingredientsNotifier.value = List.from(ingredients);
-                            widget.requestIngredientFocus(index, 0);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch, // Ensure the Row stretches to its full height
-                          children: [
-                            // Color indicator as rounded rectangle
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-                              child: Container(
-                                width: 14,
-                                decoration: BoxDecoration(
-                                  color: ingredient.$2,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                              ),
-                            ),
-                            // amount field
-                            Expanded(
-                              child: AmountField(
-                                controller: widget.ingredientAmountControllers[index],
-                                padding: 0,
-                                onChangedAndParsed: (value) {
-                                  var prev = ingredients[index];
-                                  ingredients[index] = (
-                                    ProductQuantity(
-                                      productId: prev.$1.productId,
-                                      amount: value,
-                                      unit: prev.$1.unit,
-                                    ),
-                                    prev.$2,
-                                  );
-                                  widget.ingredientsNotifier.value = List.from(ingredients);
-                                }
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // unit dropdown
-                            Expanded(
-                              child: UnitDropdown(
-                                items: buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values, quantityName: product?.quantityName ?? "x"),
-                                current: unit,
-                                onChanged: (Unit? unit) {
-                                  if (unit != null) {
-                                    var prev = ingredients[index];
-                                    ingredients[index] = (
-                                      ProductQuantity(
-                                        productId: prev.$1.productId,
-                                        amount: prev.$1.amount,
-                                        unit: unit,
-                                      ),
-                                      prev.$2,
-                                    );
-                                    widget.ingredientsNotifier.value = List.from(ingredients);
-                                  }
-                                }
-                              ),
-                            ),
-                          ]
+                      // vertical color indicator strip
+                      Container(
+                        width: 13, // Adjust the total width (6px red + 6px fade)
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              ingredient.$2.withOpacity(1.0),
+                              ingredient.$2.withOpacity(1.0),
+                              ingredient.$2.withOpacity(0.9),
+                              ingredient.$2.withOpacity(0.5),
+                              ingredient.$2.withOpacity(0.25),
+                              ingredient.$2.withOpacity(0.1),
+                              ingredient.$2.withOpacity(0.0),
+                            ],
+                            stops: [
+                              extra + (1 - extra) * 0.0,
+                              extra + (1 - extra) * 0.2,
+                              extra + (1 - extra) * 0.2666,
+                              extra + (1 - extra) * 0.3333,
+                              extra + (1 - extra) * 0.4666,
+                              extra + (1 - extra) * 0.6666,
+                              extra + (1 - extra) * 0.95,
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
                         ),
                       ),
-                      SizedBox(height: errorType == ErrorType.none ? 0 : 10),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: kIsWeb ? 16: 18), // TODO: Should mobile also have 16 padding?
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ProductDropdown(
+                                productsMap: availableProducts,
+                                selectedProduct: product,
+                                // index: index,
+                                focusNode: focusNode1,
+                                // autofocus: index == widget.focusIndex ? widget.autofocusTime : null,
+                                autofocusSearch: true,
+                                beforeTap: () => {},//widget.intermediateSave(),
+                                onChanged: (Product? newProduct) {
+                                  if (newProduct != null) {
+                                    // Check whether the new product supports the current unit
+                                    late Unit newUnit;
+                                    var currentUnit = unit;
+                                    newUnit = (newProduct.getAvailableUnits().contains(currentUnit)) ? currentUnit : newProduct.defaultUnit;
+                                    
+                                    ingredients[index] = (
+                                      ProductQuantity(
+                                        productId: newProduct.id,
+                                        amount:    productQuantity.amount,
+                                        unit:      newUnit,
+                                      ),
+                                      ingredient.$2,
+                                    );
+                                    // widget.onChanged(widget.ingredientsUnitNotifier.value, ingredients, index);
+                                    widget.ingredientsNotifier.value = List.from(ingredients);
+                                    widget.requestIngredientFocus(index, 0);
+                                  }
+                                },
+                                refDate: widget.refDate,
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: AmountField(
+                                      controller: widget.ingredientAmountControllers[index],
+                                      padding: 0,
+                                      onChangedAndParsed: (value) {
+                                        var prev = ingredients[index];
+                                        ingredients[index] = (
+                                          ProductQuantity(
+                                            productId: prev.$1.productId,
+                                            amount: value,
+                                            unit: prev.$1.unit,
+                                          ),
+                                          prev.$2,
+                                        );
+                                        widget.ingredientsNotifier.value = List.from(ingredients);
+                                      }
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // unit dropdown
+                                  Expanded(
+                                    child: UnitDropdown(
+                                      items: buildUnitItems(units: product?.getAvailableUnits() ?? Unit.values, quantityName: product?.quantityName ?? "x"),
+                                      current: unit,
+                                      onChanged: (Unit? unit) {
+                                        if (unit != null) {
+                                          var prev = ingredients[index];
+                                          ingredients[index] = (
+                                            ProductQuantity(
+                                              productId: prev.$1.productId,
+                                              amount: prev.$1.amount,
+                                              unit: unit,
+                                            ),
+                                            prev.$2,
+                                          );
+                                          widget.ingredientsNotifier.value = List.from(ingredients);
+                                        }
+                                      }
+                                    ),
+                                  ),
+                                ]
+                              ),
+                            ]
+                          )
+                        ),
+                      ),
+                      const SizedBox(width: 16),
                       errorBox,
                     ],
                   ),
@@ -415,6 +442,7 @@ class _FoodBoxState extends State<FoodBox> {
             }
           },
           beforeAdd: () => {},//widget.intermediateSave(),
+          refDate: widget.refDate,
         );
       },
       label: const Text("Add Ingredient"),

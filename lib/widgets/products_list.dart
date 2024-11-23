@@ -7,7 +7,7 @@ import 'package:food_tracker/widgets/sort_field.dart';
 
 import '../utility/text_logic.dart';
 
- import 'dart:developer' as devtools show log;
+//  import 'dart:developer' as devtools show log;
 
 List<Widget> getProductTiles({
   required BuildContext context,
@@ -16,7 +16,8 @@ List<Widget> getProductTiles({
            (SortType sortType, SortOrder sortOrder)? sorting,
            Map<int, double>? relevancies,
   required Function(String, int) onSelected,
-  Function(String, int)? onLongPress,
+           Function(String, int)? onLongPress,
+           DateTime? refDate,
   bool colorFromTop = false,
 }) {
   var searchWords = search.split(" ");
@@ -34,7 +35,6 @@ List<Widget> getProductTiles({
           break;
         case SortType.relevancy:
           if (relevancies != null) {
-            // devtools.log("!!! sorting by relevancy");
             products.sort((a, b) {
               var relevancyA = relevancies[a.id] ?? 0;
               var relevancyB = relevancies[b.id] ?? 0;
@@ -74,6 +74,7 @@ List<Widget> getProductTiles({
       color: color,
       onSelected: onSelected,
       onLongPress: onLongPress,
+      refDate: refDate,
       key: ValueKey(product.id),
     );
   });
@@ -85,13 +86,15 @@ class ProductTile extends StatefulWidget {
   final Color color;
   final Function(String, int) onSelected;
   final Function(String, int)? onLongPress;
+  final DateTime? refDate;
   
   const ProductTile({
     required this.product,
     required this.searchWords,
     required this.color,
     required this.onSelected,
-    this.onLongPress,
+             this.onLongPress,
+             this.refDate,
     super.key,
   });
 
@@ -136,14 +139,23 @@ class _ProductTileState extends State<ProductTile> {
         },
         child: ListTile(
           dense: true,
-          title: RichText(
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style.copyWith(
-                color: Colors.black,
-                fontSize: 16.5,
+          title: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  color: Colors.blue,
+                  child: RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style.copyWith(
+                        color: Colors.black,
+                        fontSize: 16.5,
+                      ),
+                      children: highlightOccurrences(widget.product.name, widget.searchWords),
+                    ),
+                  ),
+                ),
               ),
-              children: highlightOccurrences(widget.product.name, widget.searchWords),
-            ),
+            ],
           ),
         ),
       ),

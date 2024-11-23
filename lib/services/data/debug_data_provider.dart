@@ -462,8 +462,6 @@ class DebugDataProvider implements DataProvider {
       }
     }
     
-    product.lastEditDate = DateTime.now();
-    
     int lenPrev = products.length;
     products.removeWhere((element) => element.id == product.id);
     products.add(product);

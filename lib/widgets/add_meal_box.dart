@@ -110,15 +110,21 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             )
           ),
           const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: FoodBox(
-              productsMap: widget.productsMap,
-              ingredientsNotifier: ingredientsNotifier,
-              ingredientAmountControllers: ingredientAmountControllers,
-              ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
-              requestIngredientFocus: _requestIngredientFocus,
-            ),
+          ValueListenableBuilder(
+            valueListenable: dateTimeNotifier,
+            builder: (context, dateTime, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: FoodBox(
+                  productsMap: widget.productsMap,
+                  ingredientsNotifier: ingredientsNotifier,
+                  ingredientAmountControllers: ingredientAmountControllers,
+                  ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
+                  requestIngredientFocus: _requestIngredientFocus,
+                  refDate: dateTime,
+                ),
+              );
+            }
           ),
           const SizedBox(height: 12),
           ValueListenableBuilder(

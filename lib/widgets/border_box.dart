@@ -35,13 +35,16 @@ class _BorderBoxState extends State<BorderBox> {
   Widget build(BuildContext context) {
     var borderColor = widget.borderColor ?? const Color.fromARGB(200, 25, 82, 77);
     
-    Widget titleWidget = widget.titleWidget ?? (widget.title != null
-      ? Text(
-        widget.title!,
-        style: const TextStyle(
-          fontSize: 16,
+    Widget? titleWidget = widget.titleWidget ?? (widget.title != null
+      ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9.0),
+        child: Text(
+          widget.title!,
+          style: const TextStyle(
+            fontSize: 16,
+          ),
         ),
-      ) : const SizedBox.shrink());
+      ) : null);
     
     return Stack(
       alignment: widget.titlePosition == TitlePosition.left
@@ -49,7 +52,7 @@ class _BorderBoxState extends State<BorderBox> {
         : Alignment.topCenter,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(8, widget.title == null ? 8 : 11, 8, 0),
+          padding: EdgeInsets.fromLTRB(8, titleWidget == null ? 8 : 11, 8, 0),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
@@ -59,19 +62,16 @@ class _BorderBoxState extends State<BorderBox> {
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.only(top: widget.title == null ? 0 : 15),
+              padding: EdgeInsets.only(top: titleWidget == null ? 0 : 15),
               child: widget.child,
             ),
           ),
         ),
-        widget.title == null ? const SizedBox.shrink() :
+        titleWidget == null ? const SizedBox.shrink() :
           Container(
             transform: Matrix4.translationValues(widget.titlePosition == TitlePosition.left ? 18 : 0, 0, 0),
             color: widget.titleBgColor,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 9.0),
-              child: titleWidget,
-            )
+            child: titleWidget,
           ),
       ],
     );

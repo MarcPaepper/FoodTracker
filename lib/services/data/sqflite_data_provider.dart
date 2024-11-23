@@ -257,9 +257,6 @@ class SqfliteDataProvider implements DataProvider {
     map.remove(idColumn);
     map.remove("ingredients");
     map.remove("nutrients");
-    // set creation and last edit date
-    map[creationDateColumn] = now.toIso8601String();
-    map[lastEditDateColumn] = now.toIso8601String();
     
     final id = await _db!.insert(productTable, map);
     
@@ -286,8 +283,6 @@ class SqfliteDataProvider implements DataProvider {
         await updateProduct(updatedProduct, recalc: false);
       }
     }
-    
-    product.lastEditDate = DateTime.now();
     
     var map = productToMap(product);
     // remove id, ingredients, nutrients

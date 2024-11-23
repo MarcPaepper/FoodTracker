@@ -741,30 +741,42 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       onChanged: (Unit? unit) {
                         if (unit != null) {
                           // if ingredient and nutrient values are default, change them to the new unit
+                          var defValue = _defaultUnitNotifier.value == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
+                          var newDefValue = unit == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
                           Unit ingredientsUnit = _ingredientsUnitNotifier.value;
                           Unit nutrientsUnit = _nutrientsUnitNotifier.value;
+                          double resultingAmount = _resultingAmountNotifier.value;
+                          double amountForNutrients = _nutrientAmountNotifier.value;
                           if (
                             _ingredientsNotifier.value.isEmpty
                             && ingredientsUnit == _defaultUnitNotifier.value
-                            && _resultingAmountNotifier.value == Product.defaultValues().amountForIngredients
+                            && _resultingAmountNotifier.value == defValue
                           ) {
                             ingredientsUnit = unit;
-                            _ingredientsUnitNotifier.value = unit;
+                            resultingAmount = newDefValue;
                           }
                           if (
                             _nutrientsNotifier.value.every((nutrient) => nutrient.autoCalc)
                             && nutrientsUnit == _defaultUnitNotifier.value
-                            && _resultingAmountNotifier.value == Product.defaultValues().amountForIngredients
+                            && _resultingAmountNotifier.value == defValue
                           ) {
                             nutrientsUnit = unit;
-                            _nutrientsUnitNotifier.value = unit;
+                            amountForNutrients = newDefValue;
                           }
-                          _defaultUnitNotifier.value = unit;
                           _interimProduct = getProductFromForm().$1.copyWith(
                             newDefaultUnit: unit,
                             newIngredientsUnit: ingredientsUnit,
                             newNutrientsUnit: nutrientsUnit,
+                            newAmountForIngredients: resultingAmount,
+                            newAmountForNutrients: amountForNutrients,
                           );
+                          _defaultUnitNotifier.value = unit;
+                          _ingredientsUnitNotifier.value = ingredientsUnit;
+                          _nutrientsUnitNotifier.value = nutrientsUnit;
+                          _resultingAmountNotifier.value = resultingAmount;
+                          _nutrientAmountNotifier.value = amountForNutrients;
+                          _nutrientAmountController.text = truncateZeros(amountForNutrients);
+                          _resultingAmountController.text = truncateZeros(resultingAmount);
                         }
                       },
                       intermediateSave: () => _interimProduct = getProductFromForm().$1,
@@ -799,6 +811,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   void saveProduct({bool popAfter = true}) {
     var (product, isValid) = getProductFromForm();
+    product.lastEditDate = DateTime.now();
     
     if (isValid) {
       Future<Product> future;

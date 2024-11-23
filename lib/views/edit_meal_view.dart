@@ -99,27 +99,33 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
   Widget _buildView(List<Product> products, Meal meal) {
     Map<int, Product> productsMap = { for (var e in products) e.id : e };
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Product Selector
-        FoodBox(
-          productsMap: productsMap,
-          ingredientsNotifier: ingredientsNotifier,
-          ingredientAmountControllers: ingredientAmountControllers,
-          requestIngredientFocus: (i, j) => null,
-          canChangeProducts: false,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: DateAndTimeTable(
-            dateTimeNotifier: dateTimeNotifier,
-            updateDateTime:   _updateDateTime,
-          ),
-        ),
-        Expanded(child: Container()),
-        _buildUpdateButton(meal),
-      ],
+    return ValueListenableBuilder(
+      valueListenable: dateTimeNotifier,
+      builder: (context, dateTime, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Selector
+            FoodBox(
+              productsMap: productsMap,
+              ingredientsNotifier: ingredientsNotifier,
+              ingredientAmountControllers: ingredientAmountControllers,
+              requestIngredientFocus: (i, j) => null,
+              canChangeProducts: false,
+              refDate: dateTime,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: DateAndTimeTable(
+                dateTimeNotifier: dateTimeNotifier,
+                updateDateTime:   _updateDateTime,
+              ),
+            ),
+            Expanded(child: Container()),
+            _buildUpdateButton(meal),
+          ],
+        );
+      }
     );
   }
   

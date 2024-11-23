@@ -167,6 +167,7 @@ void showUsedAsIngredientDialog({
             productsMap: usedAsIngredientIn,
             showSearch: false,
             colorFromTop: true,
+            refDate: DateTime.now(),
           )
         ),
         Row(
@@ -205,6 +206,7 @@ void showProductDialog({
   void Function()? beforeAdd,
   bool autofocus = false,
   bool allowNew = true,
+  DateTime? refDate,
 }) => showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -226,6 +228,7 @@ void showProductDialog({
                 },
                 searchController: searchController,
                 autofocus: autofocus,
+                refDate: refDate,
               ),
             ),
             Padding(
@@ -329,6 +332,7 @@ class _MainList extends StatefulWidget {
   final bool colorFromTop;
   final TextEditingController? searchController;
   final bool autofocus;
+  final DateTime? refDate;
   
   const _MainList({
     required this.productsMap,
@@ -339,6 +343,7 @@ class _MainList extends StatefulWidget {
     this.colorFromTop = false,
     this.searchController,
     this.autofocus = false,
+    this.refDate,
   });
 
   @override
@@ -412,7 +417,8 @@ class _MainListState extends State<_MainList> {
                 } else {
                   widget.onSelected(product);
                 }
-              }
+              },
+              refDate: widget.refDate,
             ),
           ),
         ),

@@ -25,6 +25,7 @@ class ProductDropdown extends StatefulWidget {
   // final DateTime? autofocus;
   final bool autofocusSearch;
   final bool allowNew;
+  final DateTime? refDate;
   
   final Color _fillColor = fillColor;
   final Color _underlineColor = underlineColorEnabled;
@@ -40,6 +41,7 @@ class ProductDropdown extends StatefulWidget {
     // this.autofocus,
     this.autofocusSearch = false,
     this.allowNew = true,
+    this.refDate,
     Key? key,
   }) : super(key: key);
   
@@ -109,6 +111,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
             onSelected:  (newProduct) => widget.onChanged(newProduct),
             autofocus: widget.autofocusSearch,
             allowNew: widget.allowNew,
+            refDate: widget.refDate,
           );
         },
         child: Container(
