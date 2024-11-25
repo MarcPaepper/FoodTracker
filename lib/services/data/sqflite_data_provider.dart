@@ -317,6 +317,7 @@ class SqfliteDataProvider implements DataProvider {
     
     _deleteIngredients(containedInId: id);
     _deleteProductNutrientsForProduct(productId: id);
+    _deleteMeals(productId: id);
     
     _products.removeWhere((p) => p.id == id);
     _productsMap.remove(id);
@@ -520,6 +521,12 @@ class SqfliteDataProvider implements DataProvider {
   
   Future<void> _deleteProductNutrientsForNutritionalValue({required int nutritionalValueId}) async {
     await _db!.delete(productNutrientTable, where: '$nutritionalValueIdColumn = ?', whereArgs: [nutritionalValueId]);
+  }
+  
+  Future<void> _deleteMeals({required int productId}) async {
+    await _db!.delete(mealTable, where: '$productIdColumn = ?', whereArgs: [productId]);
+    _meals.removeWhere((m) => m.productQuantity.productId == productId);
+    _mealsStreamController.add(_meals);
   }
   
   // ----- Meals -----

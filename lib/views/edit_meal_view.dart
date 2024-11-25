@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
 import '../services/data/data_objects.dart';
@@ -122,7 +123,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
               ),
             ),
             Expanded(child: Container()),
-            _buildUpdateButton(meal),
+            _buildUpdateButton(meal, products),
           ],
         );
       }
@@ -131,7 +132,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
   
   void _updateDateTime(DateTime newDateTime) => dateTimeNotifier.value = newDateTime;
   
-  Widget _buildUpdateButton(Meal meal) => Padding(
+  Widget _buildUpdateButton(Meal meal, List<Product> products) => Padding(
     padding: const EdgeInsets.all(8.0),
     child: ElevatedButton(
       style: ButtonStyle(
@@ -144,6 +145,44 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
         )),
       ),
       onPressed: () {
+        var valid = _formKey.currentState?.validate() ?? false;
+        if (!valid) return;
+        
+        // check if the product is temporary and if the datetime is inside the products temporary interval
+        var id = ingredientsNotifier.value[0].$1.productId;
+        var product = products.firstWhereOrNull((element) => element.id == id);
+        if (product == null) {
+          showErrorbar(context, "Error: Product not found");
+          return;
+        } else {
+          if (product.isTemporary) {
+            // If product.temporaryBeginning is eg 2020-01-10:08:00:00 and then start should be 2020-01-09:23:59:59
+            var start = product.temporaryBeginning!.subtract(const Duration(days: 1));
+            var end = product.temporaryEnd!.add(const Duration(days: 1));
+            
+            start = DateTime(start.year, start.month, start.day, 23, 59, 59);
+            end = DateTime(end.year, end.month, end.day, 0, 0, 0);
+            if (dateTimeNotifier.value.isBefore(start) || dateTimeNotifier.value.isAfter(end) || dateTimeNotifier.value.isAtSameMomentAs(end)) {
+              // show dialog
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Error"),
+                  content: const Text("The selected product is temporary and the selected date is outside the temporary interval."),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
+              );
+              return;
+            }
+          }
+        }
+        
+        
         var newMeal = meal.copyWith(
           newDateTime: dateTimeNotifier.value,
           newProductQuantity: ingredientsNotifier.value[0].$1,

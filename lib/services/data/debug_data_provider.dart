@@ -478,23 +478,19 @@ class DebugDataProvider implements DataProvider {
     int lenPrev = products.length;
     products.removeWhere((element) => element.id == id);
     productsMap.remove(id);
+    meals.removeWhere((element) => element.productQuantity.productId == id);
     if (lenPrev - products.length != 1) {
       throw InvalidDeletionException();
     }
+    _mealsStreamController.add(meals);
     _productsStreamController.add(products);
     return Future.value();
   }
   
   @override
   Future<void> deleteProductWithName(String name) {
-    int lenPrev = products.length;
-    products.removeWhere((element) => element.name == name);
-    productsMap.removeWhere((key, value) => value.name == name);
-    if (lenPrev - products.length != 1) {
-      throw InvalidDeletionException();
-    }
-    _productsStreamController.add(products);
-    return Future.value();
+    int id = products.firstWhere((element) => element.name == name).id;
+    return deleteProduct(id);
   }
   
   // ----- Nutritional Values -----
