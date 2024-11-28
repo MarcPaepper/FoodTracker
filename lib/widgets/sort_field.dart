@@ -47,9 +47,6 @@ class _SortFieldState extends State<SortField> {
 
   @override
   Widget build(BuildContext context) {
-    // The widget consists of a button saysing "Sorting"
-    // If the button is pressed, two dropdowns appear below
-    
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.teal.shade50.withAlpha(230),
@@ -72,7 +69,7 @@ class _SortFieldState extends State<SortField> {
               const Icon(Icons.sort),
               const SizedBox(width: 26, height: 32),
               const Text(
-                'Sorting',
+                "Sorting",
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: 16,

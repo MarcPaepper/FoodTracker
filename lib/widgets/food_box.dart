@@ -183,11 +183,14 @@ class _FoodBoxState extends State<FoodBox> {
       
       var errorBox = errorType == ErrorType.none
         ? const SizedBox()
-        : Text(
-          " ⚠ $errorMsg",
-          style: TextStyle(
-            color: errorType == ErrorType.error ? Colors.red : warningColor,
-            fontSize: 16,
+        : Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            " ⚠ $errorMsg",
+            style: TextStyle(
+              color: errorType == ErrorType.error ? Colors.red : warningColor,
+              fontSize: 16,
+            ),
           ),
         );
       
@@ -222,7 +225,7 @@ class _FoodBoxState extends State<FoodBox> {
                               ingredient.$2.withOpacity(0.1),
                               ingredient.$2.withOpacity(0.0),
                             ],
-                            stops: [
+                            stops: const [
                               extra + (1 - extra) * 0.0,
                               extra + (1 - extra) * 0.2,
                               extra + (1 - extra) * 0.2666,
@@ -318,12 +321,12 @@ class _FoodBoxState extends State<FoodBox> {
                                   ),
                                 ]
                               ),
+                              Center(child: errorBox),
                             ]
                           )
                         ),
                       ),
                       const SizedBox(width: 16),
-                      errorBox,
                     ],
                   ),
                 ),

@@ -223,7 +223,9 @@ class DebugDataProvider implements DataProvider {
             name: "Milch",
             creationDate: DateTime.now().subtract(const Duration(days: 10)),
             lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: false,
+            isTemporary: true,
+            temporaryBeginning: DateTime.now().subtract(const Duration(days: 1)),
+            temporaryEnd: DateTime.now().subtract(const Duration(days: 5)),
             defaultUnit: Unit.ml,
             densityConversion: const Conversion(
               amount1: 100,
@@ -264,7 +266,9 @@ class DebugDataProvider implements DataProvider {
             name: "Käse",
             creationDate: DateTime.now().subtract(const Duration(days: 10)),
             lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: false,
+            isTemporary: true,
+            temporaryBeginning: DateTime.now().subtract(const Duration(days: 1)),
+            temporaryEnd: DateTime.now().add(const Duration(days: 5)),
             defaultUnit: Unit.g,
             densityConversion: const Conversion(
               amount1: 100,

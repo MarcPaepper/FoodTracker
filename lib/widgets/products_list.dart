@@ -119,42 +119,79 @@ class _ProductTileState extends State<ProductTile> {
   
   @override
   Widget build(BuildContext context) {
+    var refDate = widget.refDate;
+    bool isValid = true;
+    bool isTemp = widget.product.isTemporary;
+    Widget temporaryIndicator = Container();
+    
+    if (refDate != null && isTemp) {
+      // check whether the refDate is inside the temporary range
+      var start = widget.product.temporaryBeginning!.subtract(const Duration(days: 1));
+      var end = widget.product.temporaryEnd!.add(const Duration(days: 1));
+      
+      start = DateTime(start.year, start.month, start.day, 23, 59, 59);
+      end = DateTime(end.year, end.month, end.day, 0, 0, 0);
+      
+      isValid = refDate.isAfter(start) && refDate.isBefore(end);
+      temporaryIndicator = Tooltip(
+        message: "Temporary product. Date is ${isValid ? "inside" : "outside"} the range.",
+        triggerMode: TooltipTriggerMode.longPress,
+        child: Icon(
+          isValid ? Icons.event_available : Icons.event_busy,
+          color: (isValid ? Colors.blue : Colors.orange).withOpacity(.7),
+          size: 20,
+        ),
+      );
+    }
+    
+    List<TextSpan> children = highlightOccurrences(widget.product.name, widget.searchWords);
+    List<TextSpan> childrenColored = children.map((child) {
+      var style = child.style ?? const TextStyle();
+      
+      return TextSpan(
+        text: child.text,
+        style: style.copyWith(
+          color: isValid ? style.color : Colors.black.withOpacity(.65)
+        ),
+      );
+    }).toList();
+    
     return Material(
       color: widget.color,
       child: InkWell(
         focusNode: _focusNode,
-        onTap: () {
-          setState(() {
-            FocusScope.of(context).requestFocus(_focusNode);
-          });
-          widget.onSelected(widget.product.name, widget.product.id);
-        },
-        onLongPress: () {
-          setState(() {
-            FocusScope.of(context).requestFocus(_focusNode);
-          });
-          if (widget.onLongPress != null) {
-            widget.onLongPress!(widget.product.name, widget.product.id);
-          }
-        },
+        // onTap: () {
+        //   setState(() {
+        //     FocusScope.of(context).requestFocus(_focusNode);
+        //   });
+        //   widget.onSelected(widget.product.name, widget.product.id);
+        // },
+        // onLongPress: () {
+        //   setState(() {
+        //     FocusScope.of(context).requestFocus(_focusNode);
+        //   });
+        //   if (widget.onLongPress != null) {
+        //     widget.onLongPress!(widget.product.name, widget.product.id);
+        //   }
+        // },
         child: ListTile(
           dense: true,
+          contentPadding: const EdgeInsets.fromLTRB(16, 0, 9, 0),
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Expanded(
-                child: Container(
-                  color: Colors.blue,
-                  child: RichText(
-                    text: TextSpan(
-                      style: DefaultTextStyle.of(context).style.copyWith(
-                        color: Colors.black,
-                        fontSize: 16.5,
-                      ),
-                      children: highlightOccurrences(widget.product.name, widget.searchWords),
+                child: RichText(
+                  text: TextSpan(
+                    style: DefaultTextStyle.of(context).style.copyWith(
+                      color: Colors.black,
+                      fontSize: 16.5,
                     ),
+                    children: childrenColored,
                   ),
                 ),
               ),
+              temporaryIndicator,
             ],
           ),
         ),
