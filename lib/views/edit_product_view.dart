@@ -93,7 +93,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   final _nutrientsNotifier = ValueNotifier<List<ProductNutrient>>([]);
   
   final _isDuplicateNotifier = ValueNotifier<bool>(false);
-  final _circRefNotifier = ValueNotifier<bool>(false);
+  final _ingredientsValidNotifier = ValueNotifier<bool>(true);
   
   @override
   void initState() {
@@ -152,7 +152,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _ingredientsUnitNotifier.dispose();
     _ingredientsNotifier.dispose();
     _isDuplicateNotifier.dispose();
-    _circRefNotifier.dispose();
+    _ingredientsValidNotifier.dispose();
     _nutrientAmountNotifier.dispose();
     _nutrientsUnitNotifier.dispose();
     _nutrientsNotifier.dispose();
@@ -403,7 +403,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 densityConversionNotifier: _densityConversionNotifier,
                                 quantityConversionNotifier: _quantityConversionNotifier,
                                 resultingAmountNotifier: _resultingAmountNotifier,
-                                circRefNotifier: _circRefNotifier,
+                                validNotifier: _ingredientsValidNotifier,
                                 productNameController: _productNameController,
                                 resultingAmountController: _resultingAmountController,
                                 ingredientAmountControllers: _ingredientAmountControllers,
@@ -875,7 +875,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     nutrients.sort((a, b) => a.nutritionalValueId - b.nutritionalValueId);
     
     final isValid = _formKey.currentState!.validate()
-      && !_circRefNotifier.value
+      && _ingredientsValidNotifier.value
       && (!isTemporary || validateTemporaryInterval(temporaryBeginning, temporaryEnd) == null)
       && validateConversionBox(0, defUnit, densityConversion, quantityConversion, quantityName) == null
       && validateConversionBox(1, defUnit, densityConversion, quantityConversion, quantityName) == null

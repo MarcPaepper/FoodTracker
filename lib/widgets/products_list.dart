@@ -5,6 +5,7 @@ import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:food_tracker/widgets/sort_field.dart';
 
+import '../utility/data_logic.dart';
 import '../utility/text_logic.dart';
 
 //  import 'dart:developer' as devtools show log;
@@ -125,14 +126,7 @@ class _ProductTileState extends State<ProductTile> {
     Widget temporaryIndicator = Container();
     
     if (refDate != null && isTemp) {
-      // check whether the refDate is inside the temporary range
-      var start = widget.product.temporaryBeginning!.subtract(const Duration(days: 1));
-      var end = widget.product.temporaryEnd!.add(const Duration(days: 1));
-      
-      start = DateTime(start.year, start.month, start.day, 23, 59, 59);
-      end = DateTime(end.year, end.month, end.day, 0, 0, 0);
-      
-      isValid = refDate.isAfter(start) && refDate.isBefore(end);
+      isValid = isDateInsideInterval(refDate, widget.product.temporaryBeginning!, widget.product.temporaryEnd!) == 0;
       temporaryIndicator = Tooltip(
         message: "Temporary product. Date is ${isValid ? "inside" : "outside"} the range.",
         triggerMode: TooltipTriggerMode.longPress,
@@ -160,20 +154,20 @@ class _ProductTileState extends State<ProductTile> {
       color: widget.color,
       child: InkWell(
         focusNode: _focusNode,
-        // onTap: () {
-        //   setState(() {
-        //     FocusScope.of(context).requestFocus(_focusNode);
-        //   });
-        //   widget.onSelected(widget.product.name, widget.product.id);
-        // },
-        // onLongPress: () {
-        //   setState(() {
-        //     FocusScope.of(context).requestFocus(_focusNode);
-        //   });
-        //   if (widget.onLongPress != null) {
-        //     widget.onLongPress!(widget.product.name, widget.product.id);
-        //   }
-        // },
+         onTap: () {
+           setState(() {
+             FocusScope.of(context).requestFocus(_focusNode);
+           });
+           widget.onSelected(widget.product.name, widget.product.id);
+         },
+         onLongPress: () {
+           setState(() {
+             FocusScope.of(context).requestFocus(_focusNode);
+           });
+           if (widget.onLongPress != null) {
+             widget.onLongPress!(widget.product.name, widget.product.id);
+           }
+         },
         child: ListTile(
           dense: true,
           contentPadding: const EdgeInsets.fromLTRB(16, 0, 9, 0),

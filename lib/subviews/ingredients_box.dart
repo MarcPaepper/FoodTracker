@@ -33,7 +33,7 @@ class IngredientsBox extends StatefulWidget {
   final ValueNotifier<Conversion>            densityConversionNotifier;
   final ValueNotifier<Conversion>            quantityConversionNotifier;
   final ValueNotifier<double>                resultingAmountNotifier;
-  final ValueNotifier<bool>                  circRefNotifier;
+  final ValueNotifier<bool>                  validNotifier;
   final TextEditingController                productNameController;
   final TextEditingController                resultingAmountController;
   final List<TextEditingController>          ingredientAmountControllers;
@@ -57,7 +57,7 @@ class IngredientsBox extends StatefulWidget {
     required this.densityConversionNotifier,
     required this.quantityConversionNotifier,
     required this.resultingAmountNotifier,
-    required this.circRefNotifier,
+    required this.validNotifier,
     required this.productNameController,
     required this.resultingAmountController,
     required this.ingredientAmountControllers,
@@ -149,18 +149,22 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         
         // same as above but using ingredientsWithProducts
         
-        var circRefs = ingredientsWithProducts.map((pair) => validateIngredient(
+        List<List<String>> errors = ingredientsWithProducts.map((pair) => validateIngredient(
           products: widget.productsMap,
           ingrProd: pair.$2,
           product:  widget.prevProduct,
-        ) != null).toList();
+        )).toList();
         
-        var anyCircRef = circRefs.any((element) => element);
-        if (anyCircRef != widget.circRefNotifier.value) {
-          widget.circRefNotifier.value = anyCircRef;
+        var circRefs = errors.map((list) => list.contains("Circular Reference")).toList();
+        var outsideTempRange = errors.map((list) => list.contains("Outside temporary range")).toList();
+        
+        var hasError = circRefs.any((element) => element) || outsideTempRange.any((element) => element);
+        
+        if (hasError == widget.validNotifier.value) {
+          widget.validNotifier.value = !hasError;
         }
         
-        if (anyCircRef) {
+        if (hasError) {
           errorType = ErrorType.error;
         }
         
@@ -243,7 +247,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               ),
               errorText,
               const SizedBox(height: 8),
-              _buildIngredientsList(context, widget.productsMap, valueIngredients, amounts, circRefs, valueUnit, widget.quantityNameController.text),
+              _buildIngredientsList(context, widget.productsMap, valueIngredients, amounts, errors, valueUnit, widget.quantityNameController.text),
               _buildAddIngredientButton(context, widget.productsMap, valueIngredients, widget.id),
             ],
           ),
@@ -257,7 +261,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
     Map<int, Product> productsMap,
     List<ProductQuantity> ingredients,
     List<double>? amounts,
-    List<bool> circRefs,
+    List<List<String>> errors,
     Unit targetUnit,
     String quantityName,
   ) {
@@ -288,7 +292,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         key: Key("slidable reorderable list of ingredients of length ${ingredients.length}"),
         buildDefaultDragHandles: false,
         
-        entries: _getIngredientEntries(context, productsMap, ingredients, amounts, circRefs, targetUnit, widget.id),
+        entries: _getIngredientEntries(context, productsMap, ingredients, amounts, errors, targetUnit, widget.id),
         menuWidth: 90,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
@@ -310,7 +314,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
     Map<int, Product> productsMap,
     List<ProductQuantity> ingredients,
     List<double>? amounts,
-    List<bool> circRefs,
+    List<List<String>> errors,
     Unit targetUnit,
     int id,
   ) {
@@ -356,8 +360,17 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         });
       }
       
-      var errorType = circRefs[index] ? ErrorType.error : ErrorType.none;
-      String? errorMsg = errorType == ErrorType.error ? "Circular Reference" : null;
+      var errorType = ErrorType.none;
+      var errorMsg = "";
+      if (errors[index].contains("Circular Reference")) {
+        errorType = ErrorType.error;
+        errorMsg += "Circular Reference";
+      }
+      if (errors[index].contains("Outside temporary range")) {
+        errorType = ErrorType.error;
+        if (errorMsg != "") errorMsg += ",\n";
+        errorMsg += "Outside temporary range";
+      }
       
       if (product == null) {
         errorType = ErrorType.error;

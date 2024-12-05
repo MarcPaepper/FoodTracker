@@ -199,12 +199,14 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
     
     final NavigatorState navigator = Navigator.of(context);
     
-    var valid = _formKey.currentState?.validate() ?? false;
+    //var valid = _formKey.currentState?.validate() ?? false;
     
-    if (valid) {
-      dataService.cleanUp();
-      Future(() => navigator.pop());
-    }
+    //if (valid) {
+    //  dataService.cleanUp();
+    //  Future(() => navigator.pop());
+    //}
+    //devtools.log("Pop invoked");
+    Future(() => navigator.pop());
   }
   
   @override

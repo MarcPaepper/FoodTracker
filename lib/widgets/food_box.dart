@@ -178,7 +178,21 @@ class _FoodBoxState extends State<FoodBox> {
       if (product == null) {
         errorType = ErrorType.error;
         errorMsg = "Must select a product";
+        
         valid = false;
+      }
+      // check if datetime is inside temporary interval
+      else if (product.isTemporary) {
+        var chronology = isDateInsideInterval(widget.refDate, product.temporaryBeginning!, product.temporaryEnd!);
+        if (chronology != 0) {
+          errorType = ErrorType.error;
+          //errorMsg = "The selected date (${widget.refDate.toIso8601String().split("T")[0]}) is ";
+          //errorMsg += (chronology == -1) ?
+          //    "before the beginning of the temporary interval (${product.temporaryBeginning!.toIso8601String().split("T")[0]})" :
+          //    "after the end of the temporary interval (${product.temporaryEnd!.toIso8601String().split("T")[0]})";
+          errorMsg = "Date ${chronology == -1 ? "before" : "after"} temporary product ${chronology == -1 ? "begins" : "ended"}";
+          valid = false;
+        }
       }
       
       var errorBox = errorType == ErrorType.none

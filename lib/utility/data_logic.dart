@@ -1,4 +1,4 @@
-// ignore_for_file: non_constant_identifier_names, dead_code
+// ignore_for_file: non_constant_identifier_names, dead_code, curly_braces_in_flow_control_structures
 
 import 'dart:convert';
 import 'dart:io';
@@ -28,15 +28,18 @@ enum ErrorType {
   error,
 }
 
-String? validateIngredient({
+List<String> validateIngredient({
   required Map<int, Product> products,
   required Product? product,
   required Product? ingrProd,
 }) {
-  if (product == null || ingrProd == null) return null;
-  return getIngredientsRecursively(products, product, ingrProd, [ingrProd]) == null
-    ? "Circular reference"
-    : null;
+  List<String> errors = [];
+  if (product == null || ingrProd == null)
+    return ["Product not found"];
+  if (getIngredientsRecursively(products, product, ingrProd, [ingrProd]) == null)
+    errors.add("Circular reference");
+  
+  return errors;
 }
 
 List<Product>? getIngredientsRecursively(Map<int, Product> products, Product checkProd, Product product, List<Product> alreadyVisited) {
@@ -954,4 +957,18 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   }
   
   return (targetProgress, contributingProducts);
+}
+
+// returns -1 if the date is before the interval, 0 if it is inside the interval, 1 if it is after the interval
+int isDateInsideInterval(DateTime refDate, DateTime start, DateTime end) {
+  // check whether the refDate is inside the temporary range
+  start = start.subtract(const Duration(days: 1));
+  end = end.add(const Duration(days: 1));
+  
+  start = DateTime(start.year, start.month, start.day, 23, 59, 59);
+  end = DateTime(end.year, end.month, end.day, 0, 0, 0);
+  
+  if (refDate.isBefore(start)) return -1;
+  if (refDate.isAfter(end)) return 1;
+  return 0;
 }
