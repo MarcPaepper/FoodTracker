@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:food_tracker/utility/theme.dart';
+import 'package:food_tracker/widgets/multi_stream_builder.dart';
 
 import '../subviews/conversion_boxes.dart';
 import '../subviews/nutrients_box.dart';
@@ -178,293 +179,297 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return PopScope(
       canPop: false,
       onPopInvoked: _onPopInvoked,
-      child: StreamBuilder(
-        stream: _dataService.streamNutritionalValues(),
-        builder: (contextN, snapshotN) {
-          return StreamBuilder(
-            stream: _dataService.streamProducts(),
-            builder: (contextP, snapshotP) {
-              
-              List<NutritionalValue>? nutValues;
-              List<Product>? products;
-              
-              Map<int, Product>? productsMap;
-              
-              // if data has loaded
-              if (snapshotN.hasData && snapshotP.hasData) {
-                _loaded = true;
-                _forceReload = false;
-                _numberOfLoads++;
-                
-                nutValues = snapshotN.data as List<NutritionalValue>;
-                products = snapshotP.data as List<Product>;
-                productsMap = Map.fromEntries(products.map((prod) => MapEntry(prod.id, prod)));
-                
-                if (_isEdit) {
-                  try {
-                    _prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
-                    _id = _prevProduct.id;
-                  } catch (e) {
-                    _error = true;
-                    return const Scaffold(body: LoadingPage());
-                  }
-                } else if (widget.isCopy) {
-                  _prevProduct = products.firstWhere((prod) => prod.name == widget.productName, orElse: () => _prevProduct);
-                } else {
-                  _prevProduct = Product.defaultValues();
-                  // create one nutrient per nutritional value
-                  _prevProduct.nutrients = nutValues.map((nutVal) => ProductNutrient(
-                    productId: -1,
-                    nutritionalValueId: nutVal.id,
-                    value: 0,
-                    autoCalc: true,
-                  )).toList();
-                }
-                
-                var copyProduct = _interimProduct ?? _prevProduct;
-                
-                // check whether nutValues and copyProduct nutrients match
-                
-                var copyNutrients = checkNutrients(copyProduct.id, copyProduct.nutrients, nutValues);
-                
-                if (_forceReload || _numberOfLoads <= 1) {
-                  // set initial values
-                  _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
-                  
-                  if (widget.isCopy && _interimProduct == null && widget.productName != null) {
-                    var name = widget.productName!;
-                    // Remove the copy date and number from the name
-                    var regex = RegExp(r"\((\d{4}-\d{1,2}-\d{1,2})( #\d+)?\)$");
-                    var match = regex.firstMatch(_productNameController.text);
-                    if (match != null) {
-                      name = name.substring(0, match.start).trim();
-                    }
-                    // add the current date in the format YYYY-MM-DD
-                    name += " (${DateTime.now().toIso8601String().split("T")[0]}";
-                    
-                    // check all products for the highest copy number
-                    // For example if there is a product "Product (2024-01-01)" the highest copy number is 0, if there is a product "Product (2024-01-01 #1)" the highest copy number is 1
-                    var copyNumber = -1;
-                    for (var product in products) {
-                      if (product.name.startsWith(name)) {
-                        var copy = product.name.substring(name.length).trim().replaceAll(RegExp(r"[\)#]"), "");
-                        if (copy.isEmpty) {
-                          copyNumber = 0;
-                        } else {
-                          try {
-                            var copyInt = int.parse(copy);
-                            if (copyInt > copyNumber) copyNumber = copyInt;
-                          } catch (e) {}
-                        }
-                      }
-                    }
-                    if (copyNumber >= 0) {
-                      copyNumber = max(1, copyNumber);
-                      name += " #${copyNumber + 1}";
-                    }
-                    _copyName = "$name)";
-                    _productNameController.text = _copyName!;
-                    copyProduct = copyProduct.copyWith(newName: _copyName!);
-                    _prevProduct = copyProduct.copyWith();
-                  }
-                }
-                
-                _densityAmount1Controller.text = truncateZeros(copyProduct.densityConversion.amount1);
-                _densityAmount2Controller.text = truncateZeros(copyProduct.densityConversion.amount2);
-                _quantityAmount1Controller.text = truncateZeros(copyProduct.quantityConversion.amount1);
-                _quantityAmount2Controller.text = truncateZeros(copyProduct.quantityConversion.amount2);
-                _quantityNameController.text = copyProduct.quantityName;
-                _nutrientAmountController.text = truncateZeros(copyProduct.amountForNutrients);
-                
-                _defaultUnitNotifier.value = copyProduct.defaultUnit;
-                _isTemporaryNotifier.value = copyProduct.isTemporary;
-                _temporaryBeginningNotifier.value = copyProduct.temporaryBeginning;
-                _temporaryEndNotifier.value = copyProduct.temporaryEnd;
-                _densityConversionNotifier.value = copyProduct.densityConversion;
-                _quantityConversionNotifier.value = copyProduct.quantityConversion;
-                _autoCalcAmountNotifier.value = copyProduct.autoCalc;
-                _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
-                _ingredientsNotifier.value = List.from(copyProduct.ingredients);
-                _nutrientsUnitNotifier.value = copyProduct.nutrientsUnit;
-                _nutrientAmountNotifier.value = copyProduct.amountForNutrients;
-                
-                _resultingAmountController.text = truncateZeros(copyProduct.amountForIngredients);
-                _resultingAmountNotifier.value = copyProduct.amountForIngredients;
-                
-                // populate ingredient amount controllers
-                _ingredientAmountControllers.clear();
-                for (var ingredient in copyProduct.ingredients) {
-                  var controller = TextEditingController();
-                  controller.text = truncateZeros(ingredient.amount);
-                  _ingredientAmountControllers.add(controller);
-                }
-                
-                // calculate nutrients
-                
-                _nutrientsNotifier.value = calcNutrients(
-                  nutrients: copyNutrients,
-                  ingredients: copyProduct.ingredients,
-                  productsMap: productsMap,
-                  ingredientsUnit: copyProduct.ingredientsUnit,
-                  nutrientsUnit: copyProduct.nutrientsUnit,
-                  densityConversion: copyProduct.densityConversion,
-                  quantityConversion: copyProduct.quantityConversion,
-                  amountForIngredients: copyProduct.amountForIngredients,
-                  amountForNutrients: copyProduct.amountForNutrients,
-                ).$1;
-                
-                // populate nutrient amount controllers
-                _nutrientAmountControllers.clear();
-                for (var nutrient in copyNutrients) {
-                  var controller = TextEditingController();
-                  if (!nutrient.autoCalc) controller.text = truncateZeros(nutrient.value);
-                  _nutrientAmountControllers.add(controller);
-                }
+      child: MultiStreamBuilder(
+        streams: [
+          _dataService.streamProducts(),
+          _dataService.streamNutritionalValues(),
+          _dataService.streamMeals(),
+        ],
+        builder: (context, snapshots) {
+          var snapshotP = snapshots[0];
+          var snapshotN = snapshots[1];
+          var snapshotM = snapshots[2];
+          
+          List<NutritionalValue>? nutValues;
+          List<Product>? products;
+          List<Meal>? meals;
+          
+          Map<int, Product>? productsMap;
+          
+          // if data has loaded
+          if (snapshotN.hasData && snapshotP.hasData && snapshotM.hasData) {
+            _loaded = true;
+            _forceReload = false;
+            _numberOfLoads++;
+            
+            nutValues = snapshotN.data as List<NutritionalValue>;
+            products = snapshotP.data as List<Product>;
+            meals = snapshotM.data as List<Meal>;
+            productsMap = Map.fromEntries(products.map((prod) => MapEntry(prod.id, prod)));
+            
+            if (_isEdit) {
+              try {
+                _prevProduct = products.firstWhere((prod) => prod.name == widget.productName);
+                _id = _prevProduct.id;
+              } catch (e) {
+                _error = true;
+                return const Scaffold(body: LoadingPage());
               }
-              
-              String title;
-              if (widget.isEdit == true) {
-                title = "Edit Product";
-              } else if (widget.isCopy) {
-                title = "Add Product (Copy)";
-              } else {
-                title = "Add Product";
-              }
-              
-              int? focusIndex;
-              if (_ingredientsToFocus.isNotEmpty && _ingredientsToFocus[1] == 0) {
-                focusIndex = _ingredientsToFocus[0];
-              }
-              
-              return Scaffold(
-                appBar: AppBar(
-                  title: Text(title),
-                  actions: _isEdit && _loaded && widget.canDelete ? [
-                    _buildInfoButton(),
-                    ValueListenableBuilder(
-                      valueListenable: _productNameController,
-                      builder: (context, value, child) {
-                        return _buildDeleteButton(productsMap!);
-                      }
-                    )
-                  ] : null
-                ),
-                body: ScrollConfiguration(
-                  // clamping scroll physics to avoid overscroll
-                  behavior: const ScrollBehavior().copyWith(overscroll: false),
-                  child: 
-                    _loaded ? SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            children: [
-                              _buildNameField(products!),
-                              const SizedBox(height: 5),
-                              _buildDefaultUnitDropdown(),
-                              TemporaryBox(
-                                isTemporaryNotifier: _isTemporaryNotifier,
-                                beginningNotifier: _temporaryBeginningNotifier,
-                                endNotifier: _temporaryEndNotifier,
-                                intermediateSave: () => _interimProduct = getProductFromForm().$1,
-                              ),
-                              const SizedBox(height: 8),
-                              ConversionBoxes(
-                                densityAmount1Controller: _densityAmount1Controller,
-                                densityAmount2Controller: _densityAmount2Controller,
-                                quantityAmount1Controller: _quantityAmount1Controller,
-                                quantityAmount2Controller: _quantityAmount2Controller,
-                                quantityNameController: _quantityNameController,
-                                densityConversionNotifier: _densityConversionNotifier,
-                                quantityConversionNotifier: _quantityConversionNotifier,
-                                defaultUnitNotifier: _defaultUnitNotifier,
-                                onValidate: () => _formKey.currentState!.validate(),
-                                intermediateSave: () => _interimProduct = getProductFromForm().$1,
-                                onConversionChanged: (newDensityConversion, newQuantityConversion) {
-                                  _interimProduct = getProductFromForm().$1.copyWith(
-                                    newDensityConversion: newDensityConversion,
-                                    newQuantityConversion: newQuantityConversion,
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 14),
-                              IngredientsBox(
-                                id: _id,
-                                prevProduct: _prevProduct,
-                                productsMap: productsMap!,
-                                focusIndex: focusIndex,
-                                autofocusTime: _autofocusTime,
-                                defaultUnitNotifier: _defaultUnitNotifier,
-                                quantityNameController: _quantityNameController,
-                                autoCalcAmountNotifier: _autoCalcAmountNotifier,
-                                ingredientsNotifier: _ingredientsNotifier,
-                                ingredientsUnitNotifier: _ingredientsUnitNotifier,
-                                densityConversionNotifier: _densityConversionNotifier,
-                                quantityConversionNotifier: _quantityConversionNotifier,
-                                resultingAmountNotifier: _resultingAmountNotifier,
-                                validNotifier: _ingredientsValidNotifier,
-                                productNameController: _productNameController,
-                                resultingAmountController: _resultingAmountController,
-                                ingredientAmountControllers: _ingredientAmountControllers,
-                                ingredientDropdownFocusNodes: _ingredientDropdownFocusNodes,
-                                intermediateSave: () => _interimProduct = getProductFromForm().$1,
-                                onChanged: (newIngredientsUnit, newIngredients, index) {
-                                  var oldP = getProductFromForm().$1;
-                                  _ingredientsToFocus = index == null ? [] : [index, 0];
-                                  _autofocusTime = DateTime.now();
-                                  _interimProduct = oldP.copyWith(
-                                    newIngredientsUnit: newIngredientsUnit,
-                                    newIngredients: newIngredients,
-                                  );
-                                  if (index != null) {
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      _ingredientsNotifier.value = newIngredients;
-                                      // focus the ingredient dropdown
-                                      _requestIngredientFocus(index, 0);
-                                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                                        _requestIngredientFocus(index, 0);
-                                      });
-                                      // after 200ms
-                                      Future.delayed(const Duration(milliseconds: 200), () {
-                                        _requestIngredientFocus(index, 0);
-                                      });
-                                    });
-                                  }
-                                },
-                                requestIngredientFocus: _requestIngredientFocus,
-                              ),
-                              const SizedBox(height: 14),
-                              NutrientsBox(
-                                nutValues: nutValues!,
-                                productsMap: productsMap,
-                                nutrientAmountNotifier: _nutrientAmountNotifier,
-                                nutrientsUnitNotifier: _nutrientsUnitNotifier,
-                                nutrientsNotifier: _nutrientsNotifier,
-                                defaultUnitNotifier: _defaultUnitNotifier,
-                                densityConversionNotifier: _densityConversionNotifier,
-                                quantityConversionNotifier: _quantityConversionNotifier,
-                                ingredientsNotifier: _ingredientsNotifier,
-                                ingredientsUnitNotifier: _ingredientsUnitNotifier,
-                                resultingAmountNotifier: _resultingAmountNotifier,
-                                quantityNameController: _quantityNameController,
-                                nutrientAmountController: _nutrientAmountController,
-                                nutrientAmountControllers: _nutrientAmountControllers,
-                                onUnitChanged: (unit) {
-                                  _interimProduct = getProductFromForm().$1.copyWith(newNutrientsUnit: unit);
-                                },
-                                intermediateSave: () => _interimProduct = getProductFromForm().$1,
-                              ),
-                              const SizedBox(height: 8),
-                              _buildAddButton(),
-                            ]
-                          ),
-                        ),
-                      ),
-                    ) : const LoadingPage()
-                )
-              );
+            } else if (widget.isCopy) {
+              _prevProduct = products.firstWhere((prod) => prod.name == widget.productName, orElse: () => _prevProduct);
+            } else {
+              _prevProduct = Product.defaultValues();
+              // create one nutrient per nutritional value
+              _prevProduct.nutrients = nutValues.map((nutVal) => ProductNutrient(
+                productId: -1,
+                nutritionalValueId: nutVal.id,
+                value: 0,
+                autoCalc: true,
+              )).toList();
             }
+            
+            var copyProduct = _interimProduct ?? _prevProduct;
+            
+            // check whether nutValues and copyProduct nutrients match
+            
+            var copyNutrients = checkNutrients(copyProduct.id, copyProduct.nutrients, nutValues);
+            
+            if (_forceReload || _numberOfLoads <= 1) {
+              // set initial values
+              _productNameController.text = _interimProduct?.name ?? widget.productName ?? copyProduct.name;
+              
+              if (widget.isCopy && _interimProduct == null && widget.productName != null) {
+                var name = widget.productName!;
+                // Remove the copy date and number from the name
+                var regex = RegExp(r"\((\d{4}-\d{1,2}-\d{1,2})( #\d+)?\)$");
+                var match = regex.firstMatch(_productNameController.text);
+                if (match != null) {
+                  name = name.substring(0, match.start).trim();
+                }
+                // add the current date in the format YYYY-MM-DD
+                name += " (${DateTime.now().toIso8601String().split("T")[0]}";
+                
+                // check all products for the highest copy number
+                // For example if there is a product "Product (2024-01-01)" the highest copy number is 0, if there is a product "Product (2024-01-01 #1)" the highest copy number is 1
+                var copyNumber = -1;
+                for (var product in products) {
+                  if (product.name.startsWith(name)) {
+                    var copy = product.name.substring(name.length).trim().replaceAll(RegExp(r"[\)#]"), "");
+                    if (copy.isEmpty) {
+                      copyNumber = 0;
+                    } else {
+                      try {
+                        var copyInt = int.parse(copy);
+                        if (copyInt > copyNumber) copyNumber = copyInt;
+                      } catch (e) {}
+                    }
+                  }
+                }
+                if (copyNumber >= 0) {
+                  copyNumber = max(1, copyNumber);
+                  name += " #${copyNumber + 1}";
+                }
+                _copyName = "$name)";
+                _productNameController.text = _copyName!;
+                copyProduct = copyProduct.copyWith(newName: _copyName!);
+                _prevProduct = copyProduct.copyWith();
+              }
+            }
+            
+            _densityAmount1Controller.text = truncateZeros(copyProduct.densityConversion.amount1);
+            _densityAmount2Controller.text = truncateZeros(copyProduct.densityConversion.amount2);
+            _quantityAmount1Controller.text = truncateZeros(copyProduct.quantityConversion.amount1);
+            _quantityAmount2Controller.text = truncateZeros(copyProduct.quantityConversion.amount2);
+            _quantityNameController.text = copyProduct.quantityName;
+            _nutrientAmountController.text = truncateZeros(copyProduct.amountForNutrients);
+            
+            _defaultUnitNotifier.value = copyProduct.defaultUnit;
+            _isTemporaryNotifier.value = copyProduct.isTemporary;
+            _temporaryBeginningNotifier.value = copyProduct.temporaryBeginning;
+            _temporaryEndNotifier.value = copyProduct.temporaryEnd;
+            _densityConversionNotifier.value = copyProduct.densityConversion;
+            _quantityConversionNotifier.value = copyProduct.quantityConversion;
+            _autoCalcAmountNotifier.value = copyProduct.autoCalc;
+            _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
+            _ingredientsNotifier.value = List.from(copyProduct.ingredients);
+            _nutrientsUnitNotifier.value = copyProduct.nutrientsUnit;
+            _nutrientAmountNotifier.value = copyProduct.amountForNutrients;
+            
+            _resultingAmountController.text = truncateZeros(copyProduct.amountForIngredients);
+            _resultingAmountNotifier.value = copyProduct.amountForIngredients;
+            
+            // populate ingredient amount controllers
+            _ingredientAmountControllers.clear();
+            for (var ingredient in copyProduct.ingredients) {
+              var controller = TextEditingController();
+              controller.text = truncateZeros(ingredient.amount);
+              _ingredientAmountControllers.add(controller);
+            }
+            
+            // calculate nutrients
+            
+            _nutrientsNotifier.value = calcNutrients(
+              nutrients: copyNutrients,
+              ingredients: copyProduct.ingredients,
+              productsMap: productsMap,
+              ingredientsUnit: copyProduct.ingredientsUnit,
+              nutrientsUnit: copyProduct.nutrientsUnit,
+              densityConversion: copyProduct.densityConversion,
+              quantityConversion: copyProduct.quantityConversion,
+              amountForIngredients: copyProduct.amountForIngredients,
+              amountForNutrients: copyProduct.amountForNutrients,
+            ).$1;
+            
+            // populate nutrient amount controllers
+            _nutrientAmountControllers.clear();
+            for (var nutrient in copyNutrients) {
+              var controller = TextEditingController();
+              if (!nutrient.autoCalc) controller.text = truncateZeros(nutrient.value);
+              _nutrientAmountControllers.add(controller);
+            }
+          }
+          
+          String title;
+          if (widget.isEdit == true) {
+            title = "Edit Product";
+          } else if (widget.isCopy) {
+            title = "Add Product (Copy)";
+          } else {
+            title = "Add Product";
+          }
+          
+          int? focusIndex;
+          if (_ingredientsToFocus.isNotEmpty && _ingredientsToFocus[1] == 0) {
+            focusIndex = _ingredientsToFocus[0];
+          }
+          
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(title),
+              actions: _isEdit && _loaded && widget.canDelete ? [
+                _buildInfoButton(),
+                ValueListenableBuilder(
+                  valueListenable: _productNameController,
+                  builder: (context, value, child) {
+                    return _buildDeleteButton(productsMap!);
+                  }
+                )
+              ] : null
+            ),
+            body: ScrollConfiguration(
+              // clamping scroll physics to avoid overscroll
+              behavior: const ScrollBehavior().copyWith(overscroll: false),
+              child: 
+                _loaded ? SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          _buildNameField(products!),
+                          const SizedBox(height: 5),
+                          _buildDefaultUnitDropdown(),
+                          TemporaryBox(
+                            isTemporaryNotifier: _isTemporaryNotifier,
+                            beginningNotifier: _temporaryBeginningNotifier,
+                            endNotifier: _temporaryEndNotifier,
+                            intermediateSave: () => _interimProduct = getProductFromForm().$1,
+                          ),
+                          const SizedBox(height: 8),
+                          ConversionBoxes(
+                            densityAmount1Controller: _densityAmount1Controller,
+                            densityAmount2Controller: _densityAmount2Controller,
+                            quantityAmount1Controller: _quantityAmount1Controller,
+                            quantityAmount2Controller: _quantityAmount2Controller,
+                            quantityNameController: _quantityNameController,
+                            densityConversionNotifier: _densityConversionNotifier,
+                            quantityConversionNotifier: _quantityConversionNotifier,
+                            defaultUnitNotifier: _defaultUnitNotifier,
+                            onValidate: () => _formKey.currentState!.validate(),
+                            intermediateSave: () => _interimProduct = getProductFromForm().$1,
+                            onConversionChanged: (newDensityConversion, newQuantityConversion) {
+                              _interimProduct = getProductFromForm().$1.copyWith(
+                                newDensityConversion: newDensityConversion,
+                                newQuantityConversion: newQuantityConversion,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          IngredientsBox(
+                            id: _id,
+                            prevProduct: _prevProduct,
+                            productsMap: productsMap!,
+                            focusIndex: focusIndex,
+                            autofocusTime: _autofocusTime,
+                            defaultUnitNotifier: _defaultUnitNotifier,
+                            quantityNameController: _quantityNameController,
+                            autoCalcAmountNotifier: _autoCalcAmountNotifier,
+                            ingredientsNotifier: _ingredientsNotifier,
+                            ingredientsUnitNotifier: _ingredientsUnitNotifier,
+                            densityConversionNotifier: _densityConversionNotifier,
+                            quantityConversionNotifier: _quantityConversionNotifier,
+                            resultingAmountNotifier: _resultingAmountNotifier,
+                            validNotifier: _ingredientsValidNotifier,
+                            productNameController: _productNameController,
+                            resultingAmountController: _resultingAmountController,
+                            ingredientAmountControllers: _ingredientAmountControllers,
+                            ingredientDropdownFocusNodes: _ingredientDropdownFocusNodes,
+                            intermediateSave: () => _interimProduct = getProductFromForm().$1,
+                            onChanged: (newIngredientsUnit, newIngredients, index) {
+                              var oldP = getProductFromForm().$1;
+                              _ingredientsToFocus = index == null ? [] : [index, 0];
+                              _autofocusTime = DateTime.now();
+                              _interimProduct = oldP.copyWith(
+                                newIngredientsUnit: newIngredientsUnit,
+                                newIngredients: newIngredients,
+                              );
+                              if (index != null) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _ingredientsNotifier.value = newIngredients;
+                                  // focus the ingredient dropdown
+                                  _requestIngredientFocus(index, 0);
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    _requestIngredientFocus(index, 0);
+                                  });
+                                  // after 200ms
+                                  Future.delayed(const Duration(milliseconds: 200), () {
+                                    _requestIngredientFocus(index, 0);
+                                  });
+                                });
+                              }
+                            },
+                            requestIngredientFocus: _requestIngredientFocus,
+                          ),
+                          const SizedBox(height: 14),
+                          NutrientsBox(
+                            nutValues: nutValues!,
+                            productsMap: productsMap,
+                            nutrientAmountNotifier: _nutrientAmountNotifier,
+                            nutrientsUnitNotifier: _nutrientsUnitNotifier,
+                            nutrientsNotifier: _nutrientsNotifier,
+                            defaultUnitNotifier: _defaultUnitNotifier,
+                            densityConversionNotifier: _densityConversionNotifier,
+                            quantityConversionNotifier: _quantityConversionNotifier,
+                            ingredientsNotifier: _ingredientsNotifier,
+                            ingredientsUnitNotifier: _ingredientsUnitNotifier,
+                            resultingAmountNotifier: _resultingAmountNotifier,
+                            quantityNameController: _quantityNameController,
+                            nutrientAmountController: _nutrientAmountController,
+                            nutrientAmountControllers: _nutrientAmountControllers,
+                            onUnitChanged: (unit) {
+                              _interimProduct = getProductFromForm().$1.copyWith(newNutrientsUnit: unit);
+                            },
+                            intermediateSave: () => _interimProduct = getProductFromForm().$1,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildAddButton(meals!),
+                        ]
+                      ),
+                    ),
+                  ),
+                ) : const LoadingPage()
+            )
           );
         }
       ),
@@ -492,7 +497,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       return;
     }
     
-    bool willPop = await showContinueWithoutSavingDialog(context, save: () => saveProduct(), prodName: product.name) == true;
+    bool willPop = await showContinueWithoutSavingDialog(context, save: () => saveProduct(null), prodName: product.name) == true;
     
     if (willPop) {
       Future(() => navigator.pop(product));
@@ -791,7 +796,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     );
   }
   
-  Widget _buildAddButton() => Padding(
+  Widget _buildAddButton(List<Meal> meals) => Padding(
     padding: const EdgeInsets.all(8.0),
     child: ElevatedButton(
       style: ButtonStyle(
@@ -804,14 +809,41 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         )),
         padding: WidgetStateProperty.all(const EdgeInsets.all(12)),
       ),
-      onPressed: () => saveProduct(),
+      onPressed: () => saveProduct(meals),
       child: Text(_isEdit ? "Update Product" : "Add Product"),
     ),
   );
   
-  void saveProduct({bool popAfter = true}) {
+  void saveProduct(Iterable<Meal>? meals, {bool popAfter = true}) async {
     var (product, isValid) = getProductFromForm();
     product.lastEditDate = DateTime.now();
+    
+    if (product.isTemporary && _isEdit && isValid) {
+      // get all meals with the product
+      meals ??= await _dataService.getAllMeals();
+      meals = meals.where((meal) => meal.productQuantity.productId == _id);
+      for (var meal in meals) {
+        if (isDateInsideInterval(meal.dateTime, product.temporaryBeginning!, product.temporaryEnd!) != 0) {
+          isValid = false;
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Error"),
+                content: const Text("The product is used in a meal that is outside the temporary interval."),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text("OK"),
+                  ),
+                ],
+              ),
+            );
+          }
+          break;
+        }
+      }
+    }
     
     if (isValid) {
       Future<Product> future;
