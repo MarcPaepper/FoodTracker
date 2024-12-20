@@ -267,16 +267,20 @@ List<Product> recalcProductNutrients(Product product, List<Product> products, Ma
   do {
     // find all products that contain one of the products in the last level
     var nextLevel = <Product>[];
-    for (var product in lastLevel) {
-      var containingProducts = products.where((p) => p.ingredients.any((i) => i.productId == product.id));
-      // if there are products in containingProduct which are also in previous levels, remove them from the previous levels
-      for (var level in dependenceLevels) {
-        level.removeWhere((p) => containingProducts.contains(p));
+    try {
+      for (var product in lastLevel) {
+        var containingProducts = products.where((p) => p.ingredients.any((i) => i.productId == product.id)).toList();
+        // if there are products in containingProduct which are also in previous levels, remove them from the previous levels
+        for (var level in dependenceLevels) {
+          level.removeWhere((p) => containingProducts.contains(p));
+        }
+        nextLevel.addAll(containingProducts);
       }
-      nextLevel.addAll(containingProducts);
+    } catch (e) {
+      devtools.log("Error while calculating dependence levels: $e");
     }
-    if (nextLevel.isNotEmpty) dependenceLevels.add(nextLevel);
-    lastLevel = nextLevel;
+    if (nextLevel.isNotEmpty) dependenceLevels.add(List.from(nextLevel));
+    lastLevel = List.from(nextLevel);
     safetyCounter++;
   } while (lastLevel.isNotEmpty && safetyCounter < 128);
   if (safetyCounter >= 128) throw InfiniteLoopException();
@@ -837,7 +841,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
 // If more than 7 products contributed to a target, the additional ones are combined into the null product
 // Products in the oldMeals list are also combined into the null product
 (Map<Target, Map<Product?, double>>, List<Product>) getDailyTargetProgress(
-  DateTime dT,
+  DateTime? dT,
   List<Target> targets,
   Map<int, Product> productsMap,
   List<NutritionalValue> nutritionalValues,
@@ -852,7 +856,11 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   
   // filter oldMeals for the current date
   if (oldMeals != null) {
-    oldMeals = oldMeals.where((m) => m.dateTime.year == dT.year && m.dateTime.month == dT.month && m.dateTime.day == dT.day).toList();
+    if (dT != null) {
+      oldMeals = oldMeals.where((m) => m.dateTime.year == dT.year && m.dateTime.month == dT.month && m.dateTime.day == dT.day).toList();
+    } else {
+      oldMeals = [];
+    }
   }
   
   Map<Product, int> mealSorting = {};

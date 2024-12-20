@@ -8,11 +8,13 @@ import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/multi_stream_builder.dart';
 
 import '../subviews/conversion_boxes.dart';
+import '../subviews/daily_targets_box.dart';
 import '../subviews/nutrients_box.dart';
 import '../subviews/temporary_box.dart';
 import '../utility/data_logic.dart';
 import '../subviews/ingredients_box.dart';
 import '../utility/text_logic.dart';
+import '../widgets/multi_value_listenable_builder.dart';
 import '../widgets/unit_dropdown.dart';
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
@@ -87,7 +89,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   final _autoCalcAmountNotifier = ValueNotifier<bool>(false);
   final _resultingAmountNotifier = ValueNotifier<double>(0);
   final _ingredientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
-  final _ingredientsNotifier = ValueNotifier<List<ProductQuantity>>([]);
+  // final _ingredientsNotifier = ValueNotifier<List<ProductQuantity>>([]);
+  final _ingredientsNotifier = ValueNotifier<List<(ProductQuantity, Color)>>([]);
   
   final _nutrientAmountNotifier = ValueNotifier<double>(0);
   final _nutrientsUnitNotifier = ValueNotifier<Unit>(Unit.g);
@@ -291,7 +294,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             _quantityConversionNotifier.value = copyProduct.quantityConversion;
             _autoCalcAmountNotifier.value = copyProduct.autoCalc;
             _ingredientsUnitNotifier.value = copyProduct.ingredientsUnit;
-            _ingredientsNotifier.value = List.from(copyProduct.ingredients);
             _nutrientsUnitNotifier.value = copyProduct.nutrientsUnit;
             _nutrientAmountNotifier.value = copyProduct.amountForNutrients;
             
@@ -305,6 +307,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               controller.text = truncateZeros(ingredient.amount);
               _ingredientAmountControllers.add(controller);
             }
+            // add colors to copy ingredients
+            List<(ProductQuantity, Color)> copyIngredients = [];
+            for (var i = 0; i < copyProduct.ingredients.length; i++) {
+              var color = productColors[i % productColors.length];
+              copyIngredients.add((copyProduct.ingredients[i], color));
+            }
+            _ingredientsNotifier.value = copyIngredients;
             
             // calculate nutrients
             
@@ -422,7 +431,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               _autofocusTime = DateTime.now();
                               _interimProduct = oldP.copyWith(
                                 newIngredientsUnit: newIngredientsUnit,
-                                newIngredients: newIngredients,
+                                newIngredients: newIngredients.map((e) => e.$1).toList(),
                               );
                               if (index != null) {
                                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -462,7 +471,37 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                             },
                             intermediateSave: () => _interimProduct = getProductFromForm().$1,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 14),
+                          MultiValueListenableBuilder(
+                            listenables: [
+                              _ingredientsNotifier,
+                              _nutrientsNotifier,
+                              _productNameController,
+                            ],
+                            builder: (context, values, child) {
+                              var ingredients = values[0] as List<(ProductQuantity, Color)>;
+                              var nutrients = values[1] as List<ProductNutrient>;
+                              nutrients = nutrients.where((n) => !n.autoCalc).toList();
+                              var name = values[2] as String;
+                              
+                              return DailyTargetsBox(
+                                null,
+                                ingredients,
+                                (newIngredients) => _ingredientsNotifier.value = List.from(newIngredients),
+                                true,
+                                true,
+                                _defaultUnitNotifier,
+                                _nutrientAmountNotifier,
+                                _nutrientsUnitNotifier,
+                                _resultingAmountNotifier,
+                                _ingredientsUnitNotifier,
+                                _densityConversionNotifier,
+                                _quantityConversionNotifier,
+                                _quantityNameController,
+                              );
+                            }
+                          ),
+                          const SizedBox(height: 11),
                           _buildAddButton(meals!),
                         ]
                       ),
@@ -897,7 +936,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     final autoCalc = _autoCalcAmountNotifier.value;
     final resultingAmount = _resultingAmountNotifier.value;
     final ingredientsUnit = _ingredientsUnitNotifier.value;
-    final ingredients = _ingredientsNotifier.value;
+    final ingredients = _ingredientsNotifier.value.map((pair) => pair.$1).toList();
     final amountForNutrients = _nutrientAmountNotifier.value;
     final nutrientsUnit = _nutrientsUnitNotifier.value;
     final nutrients = _nutrientsNotifier.value;

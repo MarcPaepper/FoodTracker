@@ -63,7 +63,10 @@ class _BorderBoxState extends State<BorderBox> {
             ),
             child: Padding(
               padding: EdgeInsets.only(top: titleWidget == null ? 0 : 15),
-              child: widget.child,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(13),
+                child: widget.child,
+              ),
             ),
           ),
         ),

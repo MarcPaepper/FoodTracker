@@ -12,6 +12,7 @@ import "../utility/modals.dart";
 import "../utility/text_logic.dart";
 import "amount_field.dart";
 import "border_box.dart";
+import "color_indicator_strip.dart";
 import "product_dropdown.dart";
 import "slidable_list.dart";
 import "unit_dropdown.dart";
@@ -221,34 +222,7 @@ class _FoodBoxState extends State<FoodBox> {
                 child: IntrinsicHeight(
                   child: Row(
                     children: [
-                      // vertical color indicator strip
-                      Container(
-                        width: 13, // Adjust the total width (6px red + 6px fade)
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              ingredient.$2.withOpacity(1.0),
-                              ingredient.$2.withOpacity(1.0),
-                              ingredient.$2.withOpacity(0.9),
-                              ingredient.$2.withOpacity(0.5),
-                              ingredient.$2.withOpacity(0.25),
-                              ingredient.$2.withOpacity(0.1),
-                              ingredient.$2.withOpacity(0.0),
-                            ],
-                            stops: const [
-                              extra + (1 - extra) * 0.0,
-                              extra + (1 - extra) * 0.2,
-                              extra + (1 - extra) * 0.2666,
-                              extra + (1 - extra) * 0.3333,
-                              extra + (1 - extra) * 0.4666,
-                              extra + (1 - extra) * 0.6666,
-                              extra + (1 - extra) * 0.95,
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                        ),
-                      ),
+                      ColorIndicatorStrip(ingredient.$2, 13, extra),
                       const SizedBox(width: 5),
                       Expanded(
                         child: Padding(

@@ -18,7 +18,6 @@ const double minMargin = 15;
 
 class Graph extends StatefulWidget {
   final double maxWidth;
-  final DateTime dateTime;
   final List<Target> targets;
   final List<Product> products;
   final Map<int, Color> colorMap;
@@ -29,7 +28,6 @@ class Graph extends StatefulWidget {
   
   const Graph(
     this.maxWidth,
-    this.dateTime,
     this.targets,
     this.products,
     this.colorMap,
@@ -48,6 +46,7 @@ class _GraphState extends State<Graph> {
   
   @override
   Widget build(BuildContext context) {
+    // rebuild for emoji loading
     if (!hasRebuild) {
       Future.delayed(const Duration(milliseconds: 200), () {
         if (mounted) {
@@ -57,7 +56,8 @@ class _GraphState extends State<Graph> {
         }
       });
     }
-    // create copy
+    
+    // remove secondary targets if they are not shown
     var activeProgress = Map<Target, Map<Product?, double>>.from(widget.targetProgress);
     var hasSecondary = activeProgress.keys.any((t) => !t.isPrimary);
     var btnMargin = hasSecondary ? buttonMargin : 0;
@@ -122,15 +122,17 @@ class _GraphPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // sum up all products' contributions to each target
-    
+    // sum up all products' relative contributions to each target
     Map<Target, double> totalProgress = {};
     targetProgress.forEach((target, productContributions) {
       totalProgress[target] = productContributions.values.fold(0.0, (a, b) => a + b) / target.amount;
     });
+    
+    // find the highest relative progress for any target
     double maximum = totalProgress.values.fold(0.0, (a, b) => a > b ? a : b);
     maximum = maximum < 1 ? 1 : maximum;
     
+    // --- calculating dimensions ---
     double margin = minMargin;
     double entryWidth = barWidth + 2 * margin;
     double extraMargin = (size.width - (minMargin * 2 + targetProgress.length * (2 * minMargin + barWidth) + targetMargin)) / (2 * targetProgress.length + 2);

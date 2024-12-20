@@ -21,7 +21,7 @@ class NutrientsBox extends StatelessWidget {
   final ValueNotifier<Unit> defaultUnitNotifier;
   final ValueNotifier<Conversion> densityConversionNotifier;
   final ValueNotifier<Conversion> quantityConversionNotifier;
-  final ValueNotifier<List<ProductQuantity>> ingredientsNotifier;
+  final ValueNotifier<List<(ProductQuantity, Color)>> ingredientsNotifier;
   final ValueNotifier<Unit> ingredientsUnitNotifier;
   final ValueNotifier<double> resultingAmountNotifier;
   
@@ -74,7 +74,7 @@ class NutrientsBox extends StatelessWidget {
         var valueDefUnit            = values[3] as Unit;
         var valueDensityConversion  = values[4] as Conversion;
         var valueQuantityConversion = values[5] as Conversion;
-        var valueIngredients        = values[6] as List<ProductQuantity>;
+        var valueIngredients        = values[6] as List<(ProductQuantity, Color)>;
         var valueIngredientsUnit    = values[7] as Unit;
         var valueResultingAmount    = values[8] as double;
         
@@ -84,7 +84,7 @@ class NutrientsBox extends StatelessWidget {
         // calculate the nutrient values
         var updatedNutrients = calcNutrients(
           nutrients: valueNutrients,
-          ingredients: valueIngredients,
+          ingredients: valueIngredients.map((pair) => pair.$1).toList(),
           productsMap: productsMap,
           ingredientsUnit: valueIngredientsUnit,
           nutrientsUnit: valueNutrientsUnit,

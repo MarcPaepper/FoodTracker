@@ -89,14 +89,16 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             builder: (context, values, child) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: DailyTargetsBox(values[0], values[1], (ingredients, update) {
-                  ingredientsNotifier.value = ingredients;
-                  if (update) {
+                child: DailyTargetsBox(
+                  values[0],
+                  values[1],
+                  (ingredients) {
+                    ingredientsNotifier.value = ingredients;
                     Future(() {
                       setState(() {});
                     });
-                  }
-                }),
+                  },
+                  false, false, null, null, null, null, null, null, null, null),
               );
             },
           ),
