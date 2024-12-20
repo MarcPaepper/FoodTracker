@@ -482,7 +482,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               var ingredients = values[0] as List<(ProductQuantity, Color)>;
                               var nutrients = values[1] as List<ProductNutrient>;
                               nutrients = nutrients.where((n) => !n.autoCalc).toList();
-                              var name = values[2] as String;
+                              var name = _productNameController.text;
                               
                               return DailyTargetsBox(
                                 null,
