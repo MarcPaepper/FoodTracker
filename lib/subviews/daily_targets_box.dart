@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
@@ -25,7 +26,9 @@ class DailyTargetsBox extends StatefulWidget {
   final bool startFolded;
   
   final bool internalList;
+  final String? name;
   final ValueNotifier<Unit>? defaultUnitNotifier;
+  final ValueNotifier<List<ProductNutrient>>? nutrientsNotifier;
   final ValueNotifier<double>? nutrientAmountNotifier;
   final ValueNotifier<Unit>? nutrientUnitNotifier;
   final ValueNotifier<double>? ingredientAmountNotifier;
@@ -34,23 +37,31 @@ class DailyTargetsBox extends StatefulWidget {
   final ValueNotifier<Conversion>? quantityConversionNotifier;
   final TextEditingController? quantityNameController;
   
+  static final Color pseudoColor = const Color.fromARGB(255, 31, 31, 31);
+  
+  // ignore: use_key_in_widget_constructors
   DailyTargetsBox(
     this.dateTime,
     this.ingredients,
     this.onIngredientsChanged,
     this.startFolded,
     this.internalList,
-    this.defaultUnitNotifier,
-    this.nutrientAmountNotifier,
-    this.nutrientUnitNotifier,
-    this.ingredientAmountNotifier,
-    this.ingredientUnitNotifier,
-    this.densityConversionNotifier,
-    this.quantityConversionNotifier,
-    this.quantityNameController,
-    {super.key}
+    [
+      this.name,
+      this.defaultUnitNotifier,
+      this.nutrientsNotifier,
+      this.nutrientAmountNotifier,
+      this.nutrientUnitNotifier,
+      this.ingredientAmountNotifier,
+      this.ingredientUnitNotifier,
+      this.densityConversionNotifier,
+      this.quantityConversionNotifier,
+      this.quantityNameController,
+    ]
   ) {
+    assert(internalList == false || name != null);
     assert(internalList == false || defaultUnitNotifier != null);
+    assert(internalList == false || nutrientsNotifier != null);
     assert(internalList == false || nutrientAmountNotifier != null);
     assert(internalList == false || nutrientUnitNotifier != null);
     assert(internalList == false || quantityNameController != null);
@@ -148,6 +159,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
           listenables: widget.internalList ? [
             previewAmountNotifier,
             previewUnitNotifier,
+            widget.nutrientsNotifier!,
+            widget.nutrientAmountNotifier!,
+            widget.nutrientUnitNotifier!,
             widget.ingredientAmountNotifier!,
             widget.ingredientUnitNotifier!,
             widget.densityConversionNotifier!,
@@ -217,21 +231,70 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   oldMeals = widget.dateTime == null ? [] : snapshotM.data as List<Meal>;
                 }
                 
+                
+                Meal? overrideMeal;
+                Product? pseudoProduct;
                 if (widget.internalList) {
-                  // convert from amount given by the ingredients to previewAmountNotifier
-                  var amountIngredientList = widget.ingredientAmountNotifier!.value;
-                  var unitIngredientList = widget.ingredientUnitNotifier!.value;
+                  var ingredientAmount = widget.ingredientAmountNotifier!.value;
+                  var ingredientUnit = widget.ingredientUnitNotifier!.value;
                   var previewAmount = previewAmountNotifier.value;
                   var previewUnit = previewUnitNotifier.value;
                   
                   var densityConversion = widget.densityConversionNotifier!.value;
                   var quantityConversion = widget.quantityConversionNotifier!.value;
                   
-                  if (amountIngredientList == 0 || previewAmount == 0) {
+                  var productNutrients = widget.nutrientsNotifier!.value;
+                  
+                  // set all auto calc nutrients to 0
+                  for (var prodN in productNutrients) {
+                    if (prodN.autoCalc) prodN.value = 0;
+                  }
+                  
+                  // convert the ingredients from amount given by the ingredients to previewAmountNotifier
+                  
+                  if (ingredientAmount == 0 || previewAmount == 0) {
                     conversionFailed = true;
                   } else {
-                    factor = convertToUnit(unitIngredientList, previewUnit, previewAmount / amountIngredientList, densityConversion, quantityConversion);
+                    factor = convertToUnit(ingredientUnit, previewUnit, previewAmount / ingredientAmount, densityConversion, quantityConversion);
                     if (!factor.isFinite) conversionFailed = true;
+                  }
+                  
+                  // check if any auto calculated values are overriden
+                  if (!conversionFailed && productNutrients.any((prodN) => prodN.value > 0)) {
+                    // create a pseudo product with the overriden nutrient values
+                    pseudoProduct = Product(
+                      id: -1,
+                      // name: widget.name!,
+                      name: "Manually set nutrients",
+                      isTemporary: false,
+                      defaultUnit: widget.nutrientUnitNotifier!.value,
+                      densityConversion: densityConversion,
+                      quantityConversion: quantityConversion,
+                      quantityName: "",
+                      autoCalc: false,
+                      amountForIngredients: ingredientAmount,
+                      ingredientsUnit: ingredientUnit,
+                      amountForNutrients: widget.nutrientAmountNotifier!.value,
+                      nutrientsUnit: widget.nutrientUnitNotifier!.value,
+                      ingredients: widget.ingredients!.map((ingr) => ingr.$1).toList(),
+                      nutrients: productNutrients,
+                    );
+                    
+                    // convert from amount given by the nutrients to previewAmountNotifier
+                    var pseudoFactor = convertToUnit(pseudoProduct.nutrientsUnit, previewUnit, previewAmount / pseudoProduct.amountForNutrients, densityConversion, quantityConversion, enableTargetQuantity: true);
+                    if (!pseudoFactor.isFinite) conversionFailed = true;
+                    
+                    // create the override meal
+                    overrideMeal = Meal(
+                      id: -1,
+                      dateTime: widget.dateTime ?? DateTime.now(),
+                      productQuantity: ProductQuantity(
+                        productId: -1,
+                        amount: pseudoFactor * pseudoProduct.amountForNutrients,
+                        // unit: previewUnit,
+                        unit: pseudoProduct.nutrientsUnit,
+                      ),
+                    );
                   }
                 }
                 
@@ -261,9 +324,16 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 Map<int, Color> colors = widget.ingredients?.asMap().map((key, value) => MapEntry(value.$1.productId ?? -1, value.$2)) ?? {};
                 List<Product?> newMealProducts = convertedMeals.map((meal) => productsMap[meal.productQuantity.productId]).toList();
                 newMealProducts.removeWhere((element) => element == null);
+                if (widget.internalList && pseudoProduct != null) {
+                  newMealProducts.insert(0, pseudoProduct);
+                  productsMap[-1] = pseudoProduct;
+                  convertedMeals.insert(0, overrideMeal!);
+                }
                 
                 // a map of all targets and how much of the target was fulfilled by every product
-                var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, convertedMeals, oldMeals, false);
+                var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, convertedMeals, oldMeals, true);
+                List<Product> contributingColored = List.from(contributingProducts);
+                contributingColored.remove(pseudoProduct);
                 
                 // color verfication
                 if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {
@@ -271,19 +341,19 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   colorsUsed = 0;
                   
                   // make sure all contributing products have the right color
-                  for (var i = 0; i < contributingProducts.length; i++) {
-                    int index = widget.ingredients!.indexWhere((element) => element.$1.productId == contributingProducts[i].id);
+                  for (var i = 0; i < contributingColored.length; i++) {
+                    int index = widget.ingredients!.indexWhere((element) => element.$1.productId == contributingColored[i].id);
                     var (productQuantity, color) = widget.ingredients![index];
                     var desiredColor = productColors[i % productColors.length];
                     if (color != desiredColor) {
-                      // devtools.log("changing color of ${contributingProducts[i].name} from $color to $desiredColor");
+                      // devtools.log("changing color of ${contributingColored[i].name} from $color to $desiredColor");
                       widget.ingredients![index] = (productQuantity, desiredColor);
                       colorChanged = true;
                       colorsUsed++;
                     }
                   }
                   // list of all newMealProducts that did not contribute to any target
-                  var nonContributingProducts = newMealProducts.where((p) => !contributingProducts.contains(p)).toList();
+                  var nonContributingProducts = newMealProducts.where((p) => !contributingColored.contains(p) && (p?.id ?? 0) > -1).toList();
                   // make sure those are grey
                   const grey = Color.fromARGB(255, 99, 99, 99);
                   for (var p in nonContributingProducts) {
@@ -302,6 +372,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                       widget.onIngredientsChanged(widget.ingredients!);
                     });
                   }
+                }
+                if (widget.internalList && pseudoProduct != null) {
+                  colors[-1] = DailyTargetsBox.pseudoColor;
                 }
                 
                 bool productOverflow = widget.internalList && targetProgress.entries.any((entry) => entry.value.containsKey(null) && entry.value[null]! > 0);
@@ -336,7 +409,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                           behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
-                            child: Graph(constraints.maxWidth, targets, products, colors, nutritionalValues, targetProgress)
+                            child: Graph(constraints.maxWidth, targets, products, colors, nutritionalValues, targetProgress, widget.internalList)
                           ),
                         );
                       }
@@ -450,7 +523,12 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   ) {
     if (ingredients == null) return Container();
     
-    var contributingIngredients = ingredients.where((ingr) => contributingProducts.contains(productsMap[ingr.$1.productId])).toList();
+    var contributingIngredients = contributingProducts.where((p) => p.id != -1).map((p) {
+      return ingredients.firstWhereOrNull((ingr) => ingr.$1.productId == p.id);
+    }).toList();
+    if (contributingProducts.any((p) => p.id == -1)) {
+      contributingIngredients.insert(0, (ProductQuantity(productId: -1, amount: 0, unit: Unit.g), DailyTargetsBox.pseudoColor));
+    }
     
     List<Widget> children = [];
     
@@ -468,8 +546,6 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       r = (r * scaleFactor).round();
       g = (g * scaleFactor).round();
       b = (b * scaleFactor).round();
-      // devtools.log("r: ${colorBar.red} > $r, g: ${colorBar.green} > $g, b: ${colorBar.blue} > $b   ingr: ${productsMap[productQuantity.productId]?.name}");
-      // devtools.log("minRGB ${(0.7 - math.pow(1 - avgRGB, 2) * 0.3).toStringAsFixed(4)} / ${avgRGB.toStringAsFixed(4)} = ${scaleFactor.toStringAsFixed(4)} ingr: ${productsMap[productQuantity.productId]?.name}");
       var colorText = Color.fromARGB(255, r, g, b);
       var colorBg = i % 2 == 0 ? const Color.fromARGB(14, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
       

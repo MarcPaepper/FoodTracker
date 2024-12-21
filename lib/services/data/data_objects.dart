@@ -87,11 +87,11 @@ class Product {
     double? newAmountForNutrients,
     Unit? newNutrientsUnit,
     List<ProductQuantity>? newIngredients,
+    List<ProductNutrient>? newNutrients,
   }) {
     // change nutrients product id
-    List<ProductNutrient>? newNutrients;
     
-    if (newId != null) {
+    if (newId != null && newNutrients == null) {
       newNutrients = nutrients.map((n) => ProductNutrient(
         productId: newId,
         nutritionalValueId: n.nutritionalValueId,

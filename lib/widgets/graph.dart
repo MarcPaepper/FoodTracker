@@ -23,6 +23,7 @@ class Graph extends StatefulWidget {
   final Map<int, Color> colorMap;
   final List<NutritionalValue> nutritionalValues;
   final Map<Target, Map<Product?, double>> targetProgress;
+  final bool othersOnTop;
   
   static bool hasRebuild = false;
   
@@ -33,6 +34,7 @@ class Graph extends StatefulWidget {
     this.colorMap,
     this.nutritionalValues,
     this.targetProgress,
+    this.othersOnTop,
     {super.key}
   );
 
@@ -76,7 +78,7 @@ class _GraphState extends State<Graph> {
           ),
           child: CustomPaint(
             size: hasRebuild ? Size.infinite : Size.zero,
-            painter: _GraphPainter(activeProgress, widget.products, widget.nutritionalValues, widget.colorMap),
+            painter: _GraphPainter(activeProgress, widget.products, widget.nutritionalValues, widget.colorMap, widget.othersOnTop),
           ),
         ),
         hasSecondary ? SizedBox(
@@ -112,12 +114,14 @@ class _GraphPainter extends CustomPainter {
   final List<Product> products;
   final List<NutritionalValue> nutritionalValues;
   final Map<int, Color> colorMap;
+  final bool othersOnTop;
 
   _GraphPainter(
     this.targetProgress,
     this.products,
     this.nutritionalValues,
     this.colorMap,
+    this.othersOnTop,
   );
 
   @override
@@ -233,6 +237,12 @@ class _GraphPainter extends CustomPainter {
     for (int i = 0; i < targetProgress.length; i++) {
       Target target = targetProgress.keys.elementAt(i);
       Map<Product?, double>? productContributions = targetProgress[target];
+      if (othersOnTop && productContributions != null && productContributions.containsKey(null) == true) {
+        // move the null product to the back
+        var nullEntry = productContributions[null];
+        productContributions.remove(null);
+        productContributions[null] = nullEntry!;
+      }
 
       // Draw product contributions
       double currentHeight = 0;

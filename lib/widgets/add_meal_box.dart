@@ -98,7 +98,9 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                       setState(() {});
                     });
                   },
-                  false, false, null, null, null, null, null, null, null, null),
+                  false,
+                  false,
+                ),
               );
             },
           ),

@@ -863,6 +863,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     }
   }
   
+  // sort the products by their order in the meals
   Map<Product, int> mealSorting = {};
   for (int i = 0; i < meals.length; i++) {
     int? id = meals[i].productQuantity.productId;
@@ -871,6 +872,8 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     }
   }
   
+  // calculate the progress for each target
+  targetLoop:
   for (var t in targets) {
     var isProduct = t.trackedType == Product;
     dynamic trackedObject = isProduct ? productsMap[t.trackedId] : nutritionalValues.firstWhereOrNull((nv) => nv.id == t.trackedId);
@@ -880,6 +883,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     }
     Map<Product?, double> progress = {null: 0.0};
     
+    // calculate the progress for each product
     for (int i = 0; i < meals.length + (oldMeals?.length ?? 0); i++) {
       var old = i >= meals.length;
       var meal = old ? oldMeals![i - meals.length] : meals[i];
@@ -889,7 +893,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
       if (p == null) continue;
       
       if (isProduct) {
-        // check how much of the target product is in the meal
+        // TODO: check how much of the target product is in the meal
         
       } else {
         // check how much of the target nutritional value is in the meal
@@ -897,7 +901,14 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
         // convert from the productQuantity unit to the unit used for the nutritional values
         var amount = convertToUnit(p.nutrientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion, enableTargetQuantity: true); // in nutrient units
         var nutrient = p.nutrients.firstWhere((n) => n.nutritionalValueId == nutVal.id);
-        if (amount * nutrient.value == 0) continue;
+        if (amount * nutrient.value <= 0) continue;
+        if (p.id == -1 && !old) {
+          // override
+          progress = {p: amount * nutrient.value / p.amountForNutrients};
+          targetProgress[t] = progress;
+          if (!contributingProducts.contains(p)) contributingProducts.add(p);
+          continue targetLoop;
+        }
         if (!old && !contributingProducts.contains(p)) contributingProducts.add(p);
         progress[old ? null : p] = (progress[old ? null : p] ?? 0.0) + amount * nutrient.value / p.amountForNutrients;
       }
@@ -911,6 +922,10 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   
   Map<Product, double> relevancy = {};
   for (var p in contributingProducts) {
+    if (p.id == -1) {
+      relevancy[p] = double.infinity;
+      continue;
+    }
     List<double> contributions = [];
     for (var entry in targetProgress.entries) {
       var progress = entry.value;
