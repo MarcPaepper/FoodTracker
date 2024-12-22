@@ -26,22 +26,35 @@ class MealList extends StatefulWidget {
 
 class _MealListState extends State<MealList> {
   final DataService dataService = DataService.current();
+  final ScrollController _scrollController = ScrollController();
+  
+  bool hasScrolled = false;
   
   @override
   Widget build(BuildContext context) {
+    if (!hasScrolled) {
+      hasScrolled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
+    }
+    
     return LayoutBuilder(
       builder: (context, constraints) {
+        var underHeight = constraints.maxHeight - 605 - widget.meals.length * 55;
+        if (underHeight < 0) underHeight = 0;
+        
         return CustomScrollView(
-          reverse: true,
+          controller: _scrollController,
           physics: const ClampingScrollPhysics(),
-          // physics: const BouncingScrollPhysics(),
-          // physics: const AlwaysScrollableScrollPhysics(),
-          // physics: const NeverScrollableScrollPhysics(),
-          // physics: const ScrollPhysics(),
-          // clipBehavior: Clip.none,
-          // shrinkWrap: false,
-          // padding: const EdgeInsets.all(0.0),
           slivers: [
+             SliverToBoxAdapter(
+              child: SizedBox(height: underHeight)
+            ),
+            ...getMealTiles(context, dataService, widget.productsMap, widget.meals),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 5)
+            ),
             SliverToBoxAdapter(
               child: AddMealBox(
                 copyDateTime: DateTime.now(),
@@ -49,10 +62,6 @@ class _MealListState extends State<MealList> {
                 productsMap: widget.productsMap ?? {},
               ),
             ),
-            const SliverToBoxAdapter(
-              child:  SizedBox(height: 5)
-            ),
-            ...getMealTiles(context, dataService, widget.productsMap, widget.meals),
             // SliverFillRemaining(
             //   hasScrollBody: false,
             //   fillOverscroll: true,
@@ -111,8 +120,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
     } else if (lastHeader.isAfter(mealDate)) {
       children.add(
         SliverStickyHeader(
-          
-          header: getDateStrip(context, mealDate),
+          header: getDateStrip(context, lastHeader),
           sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren))),
         ),
       );
@@ -193,7 +201,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
   }
   
   return children.reversed.toList();
-  return children;
+  // return children;
 }
 
 Widget _buildHorizontalLine() =>
