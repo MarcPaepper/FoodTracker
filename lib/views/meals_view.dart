@@ -3,6 +3,7 @@ import 'package:food_tracker/widgets/meal_list.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
+import '../widgets/multi_stream_builder.dart';
 
 class MealsView extends StatefulWidget {
   const MealsView({super.key});
@@ -22,25 +23,27 @@ class _MealsViewState extends State<MealsView> {
   
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: _dataService.streamMeals(),
-      builder: (contextM, snapshotM) {
-        return StreamBuilder<List<Product>>(
-          stream: _dataService.streamProducts(),
-          builder: (contextP, snapshotP) {
-            Map<int, Product>? productsMap;
-            if (snapshotP.hasData) {
-              final List<Product> products = snapshotP.data as List<Product>;
-              productsMap = Map.fromEntries(products.map((prod) => MapEntry(prod.id, prod)));
-            }
-            
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildListView(snapshotM, productsMap),
-              ]
-            );
-          }
+    return MultiStreamBuilder(
+      streams: [
+        _dataService.streamMeals(),
+        _dataService.streamProducts(),
+      ],
+      builder: (context, snapshots) {
+        Map<int, Product>? productsMap;
+        if (snapshots[1].hasData) {
+          final List<Product> products = snapshots[1].data as List<Product>;
+          productsMap = Map.fromEntries(products.map((prod) => MapEntry(prod.id, prod)));
+        }
+        
+        return Container(
+          // color: Colors.green,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            verticalDirection: VerticalDirection.down,
+            children: [
+              _buildListView(snapshots[0], productsMap),
+            ]
+          ),
         );
       }
     );
@@ -60,9 +63,12 @@ class _MealsViewState extends State<MealsView> {
       }
       
       return Expanded(
-        child: MealList(
-          productsMap: productsMap,
-          meals: meals,
+        child: Container(
+          // color: Colors.blue,
+          child: MealList(
+            productsMap: productsMap,
+            meals: meals,
+          ),
         )
       );
     } else {

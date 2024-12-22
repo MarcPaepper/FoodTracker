@@ -353,6 +353,20 @@ class DebugDataProvider implements DataProvider {
             dateTime: DateTime.now().subtract(const Duration(days: 4)),
           ),
         ].reversed.toList();
+        // duplicate meals with rising datetime differences
+        List<Meal> origMeals = List.from(meals);
+        for (int i = 0; i < 5; i++) {
+          for (var meal in origMeals) {
+            meals.add(
+              meal.copyWith(
+                newId: meals.length,
+                newDateTime: meal.dateTime.subtract(Duration(days: i * 4)),
+              )
+            );
+          }
+        }
+        // sort by date
+        meals.sort((a, b) => a.dateTime.compareTo(b.dateTime));
         
         _mealsStreamController.add(meals);
         _productsStreamController.add(products);

@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:flutter_sticky_header/flutter_sticky_header.dart";
 import "package:food_tracker/services/data/async_provider.dart";
 
 import "../constants/routes.dart";
@@ -28,25 +29,72 @@ class _MealListState extends State<MealList> {
   
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      reverse: true,
-      physics: const ClampingScrollPhysics(),
-      padding: const EdgeInsets.all(0.0),
-      children: [
-        AddMealBox(
-          copyDateTime: DateTime.now(),
-          onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-          productsMap: widget.productsMap ?? {},
-        ),
-        const SizedBox(height: 5),
-        ...getMealTiles(context, dataService, widget.productsMap, widget.meals),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return CustomScrollView(
+          reverse: true,
+          physics: const ClampingScrollPhysics(),
+          // physics: const BouncingScrollPhysics(),
+          // physics: const AlwaysScrollableScrollPhysics(),
+          // physics: const NeverScrollableScrollPhysics(),
+          // physics: const ScrollPhysics(),
+          // clipBehavior: Clip.none,
+          // shrinkWrap: false,
+          // padding: const EdgeInsets.all(0.0),
+          slivers: [
+            SliverToBoxAdapter(
+              child: AddMealBox(
+                copyDateTime: DateTime.now(),
+                onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+                productsMap: widget.productsMap ?? {},
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child:  SizedBox(height: 5)
+            ),
+            ...getMealTiles(context, dataService, widget.productsMap, widget.meals),
+            // SliverFillRemaining(
+            //   hasScrollBody: false,
+            //   fillOverscroll: true,
+            //   child: Column(
+            //     children: [
+            //       // Flexible(
+            //         // child: Placeholder(),
+            //         // child: AddMealBox(
+            //         //   copyDateTime: DateTime.now(),
+            //         //   onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+            //         //   productsMap: widget.productsMap ?? {},
+            //         // ),
+            //       // ),
+            //       Expanded(
+            //         child: Align(
+            //           alignment: Alignment.bottomCenter,
+            //           child: AddMealBox(
+            //             copyDateTime: DateTime.now(),
+            //             onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+            //             productsMap: widget.productsMap ?? {},
+            //           ),
+            //         )
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // SliverPadding(
+            //   padding: const EdgeInsets.only(top: 50),
+            // ),
+            // SliverToBoxAdapter(
+            //   child: 
+            // ),
+          ],
+        );
+      }
     );
   }
 }
 
 List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int, Product>? productsMap, List<Meal> meals) {
-  List<Widget> children = [];                                                                                                         
+  List<Widget> children = [];
+  List<Widget> currentSliverChildren = [];                                                                                                       
   DateTime lastHeader = DateTime(0);
   if (meals.isNotEmpty) {
     var lastMeal = meals[meals.length - 1];
@@ -61,10 +109,17 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
     if (lastHeader.isBefore(mealDate)) {
       devtools.log('MealList: meals are not sorted by date');
     } else if (lastHeader.isAfter(mealDate)) {
-      children.add(getDateStrip(context, lastHeader));
+      children.add(
+        SliverStickyHeader(
+          
+          header: getDateStrip(context, mealDate),
+          sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren))),
+        ),
+      );
+      currentSliverChildren = [];
       lastHeader = mealDate;
     } else if (i < meals.length - 1) {
-      children.add(_buildHorizontalLine());
+      currentSliverChildren.add(_buildHorizontalLine());
     }
     
     var unitName = unitToString(meal.productQuantity.unit);
@@ -72,7 +127,7 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
     var amountText = '${truncateZeros(meal.productQuantity.amount)}\u2009$unitName';
     var hourText = '${meal.dateTime.hour}h';
     
-    children.add(
+    currentSliverChildren.add(
       ListTile(
         title: Row(
           children: [
@@ -129,9 +184,15 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
   }
   
   if (meals.isNotEmpty) {
-    children.add(getDateStrip(context, lastHeader));
+    children.add(
+      SliverStickyHeader(
+        header: getDateStrip(context, lastHeader),
+        sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren))),
+      ),
+    );
   }
   
+  return children.reversed.toList();
   return children;
 }
 
