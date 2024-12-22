@@ -118,10 +118,11 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
     if (lastHeader.isBefore(mealDate)) {
       devtools.log('MealList: meals are not sorted by date');
     } else if (lastHeader.isAfter(mealDate)) {
+      var copyDate = lastHeader.copyWith();
       children.add(
-        SliverStickyHeader(
-          header: getDateStrip(context, lastHeader),
-          sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren))),
+        SliverStickyHeader.builder(
+          builder: (context, SliverStickyHeaderState state) => getDateStrip(context, copyDate, state),
+          sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren.reversed))),
         ),
       );
       currentSliverChildren = [];
@@ -193,8 +194,8 @@ List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int
   
   if (meals.isNotEmpty) {
     children.add(
-      SliverStickyHeader(
-        header: getDateStrip(context, lastHeader),
+      SliverStickyHeader.builder(
+        builder: (context, SliverStickyHeaderState state) => getDateStrip(context, lastHeader, state),
         sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren))),
       ),
     );
@@ -211,30 +212,38 @@ Widget _buildHorizontalLine() =>
     height: 1,
   );
 
-Widget getDateStrip(BuildContext context, DateTime dateTime) {
+Widget getDateStrip(BuildContext context, DateTime dateTime, SliverStickyHeaderState state) {
   // Convert date to natural string
-      String text;
-      int relativeDays = dateTime.difference(DateTime.now()).inDays.abs();
-      if (relativeDays <= 7) {
-        text = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear(context, [dateTime], showWeekDay: true)[0]})";
-      } else {
-        text = conditionallyRemoveYear(context, [dateTime], showWeekDay: true)[0];
-      }
+  String text;
+  int relativeDays = dateTime.difference(DateTime.now()).inDays.abs();
+  if (relativeDays <= 7) {
+    text = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear(context, [dateTime], showWeekDay: true)[0]})";
+  } else {
+    text = conditionallyRemoveYear(context, [dateTime], showWeekDay: true)[0];
+  }
   
-  return Column(
-    children: [
-      //const SizedBox(height: 5),
-      Container(
-        decoration: const BoxDecoration(
-          color: Color.fromARGB(255, 200, 200, 200),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: Text(text, style: const TextStyle(fontSize: 15.5)),
+  return Padding(
+    padding: const EdgeInsets.only(top: 4, bottom: 2),
+    
+    child: Row(
+      children: [
+        SizedBox(width: state.isPinned ? 20 : 0),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 200, 200, 200),
+              borderRadius: BorderRadius.circular(state.isPinned ? 7 : 0),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+                child: Text(text, style: const TextStyle(fontSize: 15.5)),
+              ),
+            ),
           ),
         ),
-      ),
-    ],
+        SizedBox(width: state.isPinned ? 20 : 0),
+      ],
+    ),
   );
 }
