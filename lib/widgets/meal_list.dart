@@ -62,38 +62,6 @@ class _MealListState extends State<MealList> {
                 productsMap: widget.productsMap ?? {},
               ),
             ),
-            // SliverFillRemaining(
-            //   hasScrollBody: false,
-            //   fillOverscroll: true,
-            //   child: Column(
-            //     children: [
-            //       // Flexible(
-            //         // child: Placeholder(),
-            //         // child: AddMealBox(
-            //         //   copyDateTime: DateTime.now(),
-            //         //   onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-            //         //   productsMap: widget.productsMap ?? {},
-            //         // ),
-            //       // ),
-            //       Expanded(
-            //         child: Align(
-            //           alignment: Alignment.bottomCenter,
-            //           child: AddMealBox(
-            //             copyDateTime: DateTime.now(),
-            //             onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-            //             productsMap: widget.productsMap ?? {},
-            //           ),
-            //         )
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            // SliverPadding(
-            //   padding: const EdgeInsets.only(top: 50),
-            // ),
-            // SliverToBoxAdapter(
-            //   child: 
-            // ),
           ],
         );
       }

@@ -107,10 +107,21 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: DateAndTimeTable(
-              dateTimeNotifier: dateTimeNotifier,
-              updateDateTime:   updateDateTime,
-              scrollController: _scrollController,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // _buildScrollButton(
+                //   dateTimeNotifier,
+                // )
+                // const SizedBox(width: 4),
+                Expanded(
+                  child: DateAndTimeTable(
+                    dateTimeNotifier: dateTimeNotifier,
+                    updateDateTime:   updateDateTime,
+                    scrollController: _scrollController,
+                  ),
+                ),
+              ],
             )
           ),
           const SizedBox(height: 6),
