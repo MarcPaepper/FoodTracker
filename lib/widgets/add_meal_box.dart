@@ -62,7 +62,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    
+    // devtools.log("Building AddMealBox");
     return ListTile(
       //tileColor: Colors.green,
       minVerticalPadding: 0,

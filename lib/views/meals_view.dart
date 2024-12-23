@@ -35,48 +35,49 @@ class _MealsViewState extends State<MealsView> {
           productsMap = Map.fromEntries(products.map((prod) => MapEntry(prod.id, prod)));
         }
         
-        return Container(
-          // color: Colors.green,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            verticalDirection: VerticalDirection.down,
-            children: [
-              _buildListView(snapshots[0], productsMap),
-            ]
-          ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          verticalDirection: VerticalDirection.down,
+          children: [
+            _buildListView(snapshots[0], productsMap),
+          ]
         );
       }
     );
   }
   
   Widget _buildListView(AsyncSnapshot snapshot, Map<int, Product>? productsMap) {
-    if (snapshot.hasData) {
-      final List<Meal> meals = snapshot.data;
-      var now = DateTime.now();
-      now = DateTime(now.year, now.month, now.day, now.hour);
+    List<Meal> meals = [];
+    
+    if (snapshot.hasData) meals = snapshot.data;
+      // var now = DateTime.now();
+      // now = DateTime(now.year, now.month, now.day, now.hour);
       // find last recorded meal (except those in the future)
-      DateTime? lastMeal;
-      for (final meal in meals) {
-        if (lastMeal == null || meal.dateTime.isBefore(lastMeal)) {
-          lastMeal = meal.dateTime;
-        }
-      }
+      // DateTime? lastMeal;
+      // for (final meal in meals) {
+      //   if (lastMeal == null || meal.dateTime.isBefore(lastMeal)) {
+      //     lastMeal = meal.dateTime;
+      //   }
+      // }
       
-      return Expanded(
-        child: Container(
-          // color: Colors.blue,
-          child: MealList(
-            productsMap: productsMap,
-            meals: meals,
-          ),
-        )
-      );
-    } else {
-      return const Expanded(
-        child: Center(
-          child: CircularProgressIndicator(),
-        )
-      );
-    }
+      // // only keep last 1000 meals
+      if (meals.length > 1000) {
+        meals.removeRange(0, meals.length - 1000);
+      }
+    // } else {
+    //   return const Expanded(
+    //     child: Center(
+    //       child: CircularProgressIndicator(),
+    //     )
+    //   );
+    // }
+    
+    return Expanded(
+      child: MealList(
+        productsMap: productsMap,
+        meals: meals,
+        loaded: snapshot.hasData,
+      )
+    );
   }
 }

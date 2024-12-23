@@ -191,7 +191,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 if (errorMsg != null) return Text(errorMsg);
                 
                 // loading page
-                if (!snapshots.any((s) => s.hasData)) {
+                if (!snapshots.any((s) => s.hasData) || snapshots.any((s) => s.data == null)) {
                   return const SizedBox(
                     height: 300,
                     child: LoadingPage(),
@@ -255,7 +255,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   if (ingredientAmount == 0 || previewAmount == 0) {
                     conversionFailed = true;
                   } else {
-                    factor = convertToUnit(ingredientUnit, previewUnit, previewAmount / ingredientAmount, densityConversion, quantityConversion);
+                    factor = convertToUnit(ingredientUnit, previewUnit, previewAmount / ingredientAmount, densityConversion, quantityConversion, enableTargetQuantity: true);
                     if (!factor.isFinite) conversionFailed = true;
                   }
                   

@@ -14,6 +14,7 @@ import '../subviews/temporary_box.dart';
 import '../utility/data_logic.dart';
 import '../subviews/ingredients_box.dart';
 import '../utility/text_logic.dart';
+import '../widgets/datetime_selectors.dart';
 import '../widgets/multi_value_listenable_builder.dart';
 import '../widgets/unit_dropdown.dart';
 import '../constants/routes.dart';
@@ -366,8 +367,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               ] : null
             ),
             body: ScrollConfiguration(
-              // clamping scroll physics to avoid overscroll
-              behavior: const ScrollBehavior().copyWith(overscroll: false),
+              behavior: MouseDragScrollBehavior().copyWith(scrollbars: false, overscroll: false),
               child: 
                 _loaded ? SingleChildScrollView(
                   child: Padding(
