@@ -34,11 +34,11 @@ class MealList extends StatefulWidget {
 
 class _MealListState extends State<MealList> {
   final DataService dataService = DataService.current();
-  final ScrollController _scrollController = ScrollController();
+  // final ScrollController _scrollController = ScrollController();
   // Timer? _stickyHeaderTimer;
   // bool _showStickyHeader = false;
   
-  bool hasScrolled = false;
+  // bool hasScrolled = false;
   
   // @override
   // void initState() {
@@ -46,13 +46,13 @@ class _MealListState extends State<MealList> {
   //   _scrollController.addListener(_onScroll);
   // }
   
-  @override
-  void dispose() {
-    // _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    // _stickyHeaderTimer?.cancel();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   // _scrollController.removeListener(_onScroll);
+  //   _scrollController.dispose();
+  //   // _stickyHeaderTimer?.cancel();
+  //   super.dispose();
+  // }
   
   // void _onScroll() {
   //   if (_scrollController.position.userScrollDirection != ScrollDirection.forward) return;
@@ -70,51 +70,36 @@ class _MealListState extends State<MealList> {
   
   @override
   Widget build(BuildContext context) {
-    if (!hasScrolled) {
-      hasScrolled = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Future.delayed(const Duration(milliseconds: 0), () {
-          // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-          _scrollController.jumpTo(100000);
-          devtools.log("Jumped to max scroll extent ${_scrollController.position.maxScrollExtent}");
-          Future.delayed(const Duration(milliseconds: 10000), () {
-            devtools.log("Current scroll position: ${_scrollController.position.pixels}");
-          });
-        });
-      });
-    }
+    // if (!hasScrolled) {
+    //   hasScrolled = true;
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     Future.delayed(const Duration(milliseconds: 0), () {
+    //       // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    //       _scrollController.jumpTo(100000);
+    //       devtools.log("Jumped to max scroll extent ${_scrollController.position.maxScrollExtent}");
+    //       Future.delayed(const Duration(milliseconds: 10000), () {
+    //         devtools.log("Current scroll position: ${_scrollController.position.pixels}");
+    //       });
+    //     });
+    //   });
+    // }
     
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        var underHeight = constraints.maxHeight - 605 - widget.meals.length * 55;
-        if (underHeight < 0) underHeight = 0;
-        
-        return CustomScrollView(
-          controller: _scrollController,
-          // physics: const ClampingScrollPhysics(),
-          // physics: const BouncingScrollPhysics(),
-          // physics: const AlwaysScrollableScrollPhysics(),
-          // physics: const
-          scrollBehavior: MouseDragScrollBehavior().copyWith(scrollbars: false),
-          cacheExtent: 999999999999999,
-          slivers: [
-             SliverToBoxAdapter(
-              child: SizedBox(height: underHeight)
-            ),
-            ...getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 5)
-            ),
-            SliverToBoxAdapter(
-              child: AddMealBox(
-                copyDateTime: DateTime.now(),
-                onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-                productsMap: widget.productsMap ?? {},
-              ),
-            ),
-          ],
-        );
-      }
+    return ListView(
+      scrollBehavior: MouseDragScrollBehavior().copyWith(scrollbars: false),
+      cacheExtent: 999999999999999,
+      slivers: [
+        ...getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded),
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 5)
+        ),
+        SliverToBoxAdapter(
+          child: AddMealBox(
+            copyDateTime: DateTime.now(),
+            onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+            productsMap: widget.productsMap ?? {},
+          ),
+        ),
+      ],
     );
   }
 
