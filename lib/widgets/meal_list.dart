@@ -85,29 +85,26 @@ class _MealListState extends State<MealList> {
     // }
     
     return ListView(
-      scrollBehavior: MouseDragScrollBehavior().copyWith(scrollbars: false),
-      cacheExtent: 999999999999999,
-      slivers: [
+      reverse: true,
+      physics: const ClampingScrollPhysics(),
+      padding: EdgeInsets.zero,
+      children: [
+        AddMealBox(
+          copyDateTime: DateTime.now(),
+          onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+          productsMap: widget.productsMap ?? {},
+        ),
+        const SizedBox(height: 5),
         ...getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded),
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 5)
-        ),
-        SliverToBoxAdapter(
-          child: AddMealBox(
-            copyDateTime: DateTime.now(),
-            onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-            productsMap: widget.productsMap ?? {},
-          ),
-        ),
       ],
     );
   }
 
   List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int, Product>? productsMap, List<Meal> meals, bool loaded) {
-    if (!loaded) return const [SliverToBoxAdapter(child: LoadingPage())];
+    if (!loaded) return const [LoadingPage()];
     
     List<Widget> children = [];
-    List<Widget> currentSliverChildren = [];                                                                                                       
+    // List<Widget> currentDayChildren = [];                                                                                                       
     DateTime lastHeader = DateTime(0);
     if (meals.isNotEmpty) {
       var lastMeal = meals[meals.length - 1];
@@ -122,17 +119,10 @@ class _MealListState extends State<MealList> {
       if (lastHeader.isBefore(mealDate)) {
         devtools.log('MealList: meals are not sorted by date');
       } else if (lastHeader.isAfter(mealDate)) {
-        var copyDate = lastHeader.copyWith();
-        children.add(
-          SliverStickyHeader.builder(
-            builder: (context, SliverStickyHeaderState state) => getDateStrip(context, copyDate, state),
-            sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren.reversed))),
-          ),
-        );
-        currentSliverChildren = [];
+        children.add(getDateStrip(context, lastHeader));
         lastHeader = mealDate;
       } else if (i < meals.length - 1) {
-        currentSliverChildren.add(_buildHorizontalLine());
+        children.add(_buildHorizontalLine());
       }
       
       var unitName = unitToString(meal.productQuantity.unit);
@@ -140,7 +130,7 @@ class _MealListState extends State<MealList> {
       var amountText = '${truncateZeros(meal.productQuantity.amount)}\u2009$unitName';
       var hourText = '${meal.dateTime.hour}h';
       
-      currentSliverChildren.add(
+      children.add(
         ListTile(
           title: Row(
             children: [
@@ -197,16 +187,10 @@ class _MealListState extends State<MealList> {
     }
     
     if (meals.isNotEmpty) {
-      children.add(
-        SliverStickyHeader.builder(
-          builder: (context, SliverStickyHeaderState state) => getDateStrip(context, lastHeader, state),
-          sliver: SliverList(delegate: SliverChildListDelegate(List.from(currentSliverChildren))),
-        ),
-      );
+      children.add(getDateStrip(context, lastHeader));
     }
     
-    return children.reversed.toList();
-    // return children;
+    return children;
   }
 
   Widget _buildHorizontalLine() =>
@@ -216,7 +200,7 @@ class _MealListState extends State<MealList> {
       height: 1,
     );
 
-  Widget getDateStrip(BuildContext context, DateTime dateTime, SliverStickyHeaderState state) {
+  Widget getDateStrip(BuildContext context, DateTime dateTime) {
     // Convert date to natural string
     String text;
     int relativeDays = dateTime.difference(DateTime.now()).inDays.abs();
@@ -230,15 +214,10 @@ class _MealListState extends State<MealList> {
       padding: const EdgeInsets.only(top: 4, bottom: 2),
       child: Row(
         children: [
-          // SizedBox(width: state.isPinned ? 20 : 0),
-          state.isPinned ? Spacer() : SizedBox(width: 0),
           Expanded(
             flex: 5,
             child: Container(
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 200, 200, 200),
-                borderRadius: BorderRadius.circular(state.isPinned ? 7 : 0),
-              ),
+              color: const Color.fromARGB(255, 200, 200, 200),
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
@@ -247,19 +226,9 @@ class _MealListState extends State<MealList> {
               ),
             ),
           ),
-          // SizedBox(width: state.isPinned ? 20 : 0),
-          state.isPinned ? Spacer() : SizedBox(width: 0),
         ],
       ),
     );
-    
-    // if (!state.isPinned) return widget;
-    
-    // return AnimatedOpacity(
-    //   opacity: _showStickyHeader ? 1 : 0.2,
-    //   duration: const Duration(milliseconds: 3000),
-    //   child: widget,
-    // );
     return widget;
   }
 }
