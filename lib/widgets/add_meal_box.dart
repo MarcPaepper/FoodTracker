@@ -109,11 +109,12 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // _buildScrollButton(
-                //   dateTimeNotifier,
-                // )
-                // const SizedBox(width: 4),
+                _buildScrollButton(
+                  dateTimeNotifier,
+                ),
+                const SizedBox(width: 14),
                 Expanded(
                   child: DateAndTimeTable(
                     dateTimeNotifier: dateTimeNotifier,
@@ -176,6 +177,22 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     } catch (e) {
       devtools.log("Error focusing ingredient $index: $e");
     }
+  }
+  
+  Widget _buildScrollButton(ValueNotifier<DateTime> dateTimeNotifier) {
+    return SizedBox(
+      height: 93,
+      width: 39,
+      child: ElevatedButton(
+        style: lightButtonStyle.copyWith(
+          padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+          backgroundColor: WidgetStateProperty.all(Color.fromARGB(230, 180, 185, 255)),
+          foregroundColor: WidgetStateProperty.all(Color.fromARGB(255, 79, 33, 243)),
+        ),
+        child: const Icon(Icons.keyboard_double_arrow_up),
+        onPressed: () {},
+      ),
+    );
   }
   
   Widget _buildAddMealButton(BuildContext context, bool enabled) {
