@@ -114,7 +114,6 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                 _buildScrollButton(
                   dateTimeNotifier,
                 ),
-                const SizedBox(width: 14),
                 Expanded(
                   child: DateAndTimeTable(
                     dateTimeNotifier: dateTimeNotifier,
@@ -179,21 +178,87 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     }
   }
   
-  Widget _buildScrollButton(ValueNotifier<DateTime> dateTimeNotifier) {
-    return SizedBox(
-      height: 93,
-      width: 39,
-      child: ElevatedButton(
-        style: lightButtonStyle.copyWith(
-          padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-          backgroundColor: WidgetStateProperty.all(Color.fromARGB(230, 180, 185, 255)),
-          foregroundColor: WidgetStateProperty.all(Color.fromARGB(255, 79, 33, 243)),
-        ),
-        child: const Icon(Icons.keyboard_double_arrow_up),
-        onPressed: () {},
-      ),
+  Widget _buildScrollButton2(ValueNotifier<DateTime> dateTimeNotifier) {
+    return ValueListenableBuilder(
+      valueListenable: dateTimeNotifier,
+      builder: (context, dateTime, child) {
+        var now = DateTime.now();
+        if (dateTime.isAfter(DateTime(now.year, now.month, now.day - 5))) {
+          return const SizedBox(width: 4);
+        }
+        
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 93,
+              width: 39,
+              child: ElevatedButton(
+                style: lightButtonStyle.copyWith(
+                  padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                  backgroundColor: WidgetStateProperty.all(const Color.fromARGB(230, 180, 185, 255)),
+                  foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
+                ),
+                child: const Icon(Icons.keyboard_double_arrow_up),
+                onPressed: () {},
+              ),
+            ),
+            const SizedBox(width: 14),
+          ],
+        );
+      }
     );
   }
+  
+  Widget _buildScrollButton(ValueNotifier<DateTime> dateTimeNotifier) {
+  return ValueListenableBuilder(
+    valueListenable: dateTimeNotifier,
+    builder: (context, dateTime, child) {
+      var now = DateTime.now();
+      bool isVisible = dateTime.isBefore(DateTime(now.year, now.month, now.day - 5));
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: isVisible ? 39 : 0,
+            height: 93,
+            child: AnimatedOpacity(
+              opacity: isVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: AnimatedOpacity(
+                opacity: isVisible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: ElevatedButton(
+                  style: lightButtonStyle.copyWith(
+                    padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                    backgroundColor: WidgetStateProperty.all(const Color.fromARGB(230, 180, 185, 255)),
+                    foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
+                  ),
+                  onPressed: isVisible ? () {} : null,
+                  child: AnimatedOpacity(
+                    opacity: isVisible ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: AnimatedOpacity(
+                      opacity: isVisible ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: const Icon(Icons.keyboard_double_arrow_up)
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: isVisible ? 14 : 4,
+          ),
+        ],
+      );
+    },
+  );
+}
   
   Widget _buildAddMealButton(BuildContext context, bool enabled) {
     var style = addButtonStyle.copyWith(
