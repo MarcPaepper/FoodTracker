@@ -1,5 +1,4 @@
 import 'package:collection/collection.dart';
-import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
@@ -38,7 +37,7 @@ class DailyTargetsBox extends StatefulWidget {
   final ValueNotifier<Conversion>? quantityConversionNotifier;
   final TextEditingController? quantityNameController;
   
-  static final Color pseudoColor = const Color.fromARGB(255, 31, 31, 31);
+  static const Color pseudoColor = Color.fromARGB(255, 31, 31, 31);
   
   // ignore: use_key_in_widget_constructors
   DailyTargetsBox(

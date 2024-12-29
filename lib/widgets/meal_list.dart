@@ -1,8 +1,6 @@
 import "dart:async";
 
 import "package:flutter/material.dart";
-import "package:flutter/rendering.dart";
-import "package:flutter_sticky_header/flutter_sticky_header.dart";
 import "package:food_tracker/services/data/async_provider.dart";
 
 import "../constants/routes.dart";
@@ -13,7 +11,6 @@ import "add_meal_box.dart";
 
 import "dart:developer" as devtools show log;
 
-import "datetime_selectors.dart";
 import "loading_page.dart";
 
 class MealList extends StatefulWidget {
