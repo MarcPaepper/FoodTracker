@@ -355,7 +355,7 @@ class DebugDataProvider implements DataProvider {
         ].reversed.toList();
         // duplicate meals with rising datetime differences
         List<Meal> origMeals = List.from(meals);
-        for (int i = 1; i < 1; i++) {
+        for (int i = 1; i < 5; i++) {
           for (var meal in origMeals) {
             meals.add(
               meal.copyWith(

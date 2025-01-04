@@ -331,7 +331,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 }
                 
                 // a map of all targets and how much of the target was fulfilled by every product
-                var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, convertedMeals, oldMeals, true);
+                var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, convertedMeals, oldMeals, widget.internalList);
                 List<Product> contributingColored = List.from(contributingProducts);
                 contributingColored.remove(pseudoProduct);
                 

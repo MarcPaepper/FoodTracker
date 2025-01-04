@@ -1,7 +1,9 @@
 import "dart:async";
 
+import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:food_tracker/services/data/async_provider.dart";
+import "package:scrollable_positioned_list/scrollable_positioned_list.dart";
 
 import "../constants/routes.dart";
 import "../services/data/data_objects.dart";
@@ -31,69 +33,49 @@ class MealList extends StatefulWidget {
 
 class _MealListState extends State<MealList> {
   final DataService dataService = DataService.current();
-  // final ScrollController _scrollController = ScrollController();
-  // Timer? _stickyHeaderTimer;
-  // bool _showStickyHeader = false;
+  final ItemScrollController _scrollController = ItemScrollController();
+  final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now());
   
-  // bool hasScrolled = false;
-  
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _scrollController.addListener(_onScroll);
-  // }
-  
-  // @override
-  // void dispose() {
-  //   // _scrollController.removeListener(_onScroll);
-  //   _scrollController.dispose();
-  //   // _stickyHeaderTimer?.cancel();
-  //   super.dispose();
-  // }
-  
-  // void _onScroll() {
-  //   if (_scrollController.position.userScrollDirection != ScrollDirection.forward) return;
-  //   if (!_showStickyHeader) {
-  //     _showStickyHeader = true;
-  //     _stickyHeaderTimer = Timer(const Duration(milliseconds: 2000), () {
-  //       if (_showStickyHeader) {
-  //         setState(() {
-  //           _showStickyHeader = false;
-  //         });
-  //       }
-  //     });
-  //   }
-  // }
+  // Key: days since 1970, Value: index of the strip in the list
+  Map<int, int> stripKeys = {};
   
   @override
   Widget build(BuildContext context) {
-    // if (!hasScrolled) {
-    //   hasScrolled = true;
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     Future.delayed(const Duration(milliseconds: 0), () {
-    //       // _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    //       _scrollController.jumpTo(100000);
-    //       devtools.log("Jumped to max scroll extent ${_scrollController.position.maxScrollExtent}");
-    //       Future.delayed(const Duration(milliseconds: 10000), () {
-    //         devtools.log("Current scroll position: ${_scrollController.position.pixels}");
-    //       });
-    //     });
-    //   });
-    // }
-    
-    return ListView(
+    // return ListView(
+    //   reverse: true,
+    //   physics: const ClampingScrollPhysics(),
+    //   padding: EdgeInsets.zero,
+    //   children: [
+    //     AddMealBox(
+    //       // copyDateTime: DateTime.now(),
+    //       dateTimeNotifier: dateTimeNotifier,
+    //       onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+    //       productsMap: widget.productsMap ?? {},
+    //       onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
+    //     ),
+    //     const SizedBox(height: 5),
+    //     ...getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded),
+    //   ],
+    // );
+    List<Widget> children = [
+      AddMealBox(
+        // copyDateTime: DateTime.now(),
+        dateTimeNotifier: dateTimeNotifier,
+        onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+        productsMap: widget.productsMap ?? {},
+        onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
+      ),
+      const SizedBox(height: 5),
+    ];
+    List<Widget> mealTiles = getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded);
+    children.addAll(mealTiles);
+    return ScrollablePositionedList.builder(
+      itemCount: children.length,
+      itemBuilder: (context, index) => children[index],
+      itemScrollController: _scrollController,
       reverse: true,
       physics: const ClampingScrollPhysics(),
       padding: EdgeInsets.zero,
-      children: [
-        AddMealBox(
-          copyDateTime: DateTime.now(),
-          onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-          productsMap: widget.productsMap ?? {},
-        ),
-        const SizedBox(height: 5),
-        ...getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded),
-      ],
     );
   }
 
@@ -101,6 +83,7 @@ class _MealListState extends State<MealList> {
     if (!loaded) return const [LoadingPage()];
     
     List<Widget> children = [];
+    Map<int, int> newKeys = {};
     // List<Widget> currentDayChildren = [];                                                                                                       
     DateTime lastHeader = DateTime(0);
     if (meals.isNotEmpty) {
@@ -108,6 +91,7 @@ class _MealListState extends State<MealList> {
       var lastDate = lastMeal.dateTime;
       lastHeader = DateTime(lastDate.year, lastDate.month, lastDate.day);
     }
+    
     for (int i = meals.length - 1; i >= 0; i--) {
       final meal = meals[i];
       final product = productsMap?[meal.productQuantity.productId];
@@ -116,6 +100,9 @@ class _MealListState extends State<MealList> {
       if (lastHeader.isBefore(mealDate)) {
         devtools.log('MealList: meals are not sorted by date');
       } else if (lastHeader.isAfter(mealDate)) {
+        // use days of lastHeader since 1970 as the key
+        int daysSince1970 = lastHeader.difference(DateTime(1970)).inDays;
+        newKeys[daysSince1970] = children.length + 2;
         children.add(getDateStrip(context, lastHeader));
         lastHeader = mealDate;
       } else if (i < meals.length - 1) {
@@ -184,7 +171,13 @@ class _MealListState extends State<MealList> {
     }
     
     if (meals.isNotEmpty) {
+      int daysSince1970 = lastHeader.difference(DateTime(1970)).inDays;
+      newKeys[daysSince1970] = children.length + 2;
       children.add(getDateStrip(context, lastHeader));
+    }
+    
+    if (!mapEquals(stripKeys, newKeys)) {
+      stripKeys = newKeys;
     }
     
     return children;
@@ -209,6 +202,7 @@ class _MealListState extends State<MealList> {
     
     var widget = Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 2),
+      // key: key,
       child: Row(
         children: [
           Expanded(
@@ -227,5 +221,52 @@ class _MealListState extends State<MealList> {
       ),
     );
     return widget;
+  }
+  
+  void _scrollToSelectedDateStrip(DateTime targetDate) {
+    // convert date to days since 1970
+    int daysSince1970 = targetDate.difference(DateTime(1970)).inDays;
+    devtools.log("Trying to scroll to $daysSince1970");
+    // find the nearest date in the stripKeys after the target date
+    int closestDate = 0;
+    for (int date in stripKeys.keys) {
+      if (date >= daysSince1970 && date < closestDate) {
+        closestDate = date;
+        break;
+      }
+    }
+    // if none was found, find the nearest date before the target date
+    if (closestDate == 0) {
+      for (int date in stripKeys.keys) {
+        if (date <= daysSince1970 && date > closestDate) {
+          closestDate = date;
+          break;
+        }
+      }
+    }
+    if (closestDate == 0) return;
+    
+    // Find the first date after the closest date
+    int nextDate = closestDate;
+    // for (int date in stripKeys.keys) {
+    // reverse order
+    for (int i = stripKeys.keys.length - 1; i >= 0; i--) {
+      int date = stripKeys.keys.elementAt(i);
+      if (date > closestDate) {
+        nextDate = date;
+        break;
+      }
+    }
+    
+    int scrollToIndex = stripKeys[closestDate]!;
+    if (nextDate != closestDate) {
+      scrollToIndex = stripKeys[nextDate]! + 1;
+    }
+    
+    _scrollController.scrollTo(
+      index: scrollToIndex,
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.easeOut,
+    );
   }
 }

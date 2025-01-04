@@ -14,14 +14,18 @@ import 'food_box.dart';
 import 'dart:developer' as devtools show log;
 
 class AddMealBox extends StatefulWidget {
-  final DateTime copyDateTime;
+  // final DateTime copyDateTime;
+  final ValueNotifier<DateTime> dateTimeNotifier;
   final Function(DateTime) onDateTimeChanged;
   final Map<int, Product> productsMap;
+  final Function() onScrollButtonClicked;
   
   const AddMealBox({
-    required this.copyDateTime,
+    // required this.copyDateTime,
+    required this.dateTimeNotifier,
     required this.onDateTimeChanged,
     required this.productsMap,
+    required this.onScrollButtonClicked,
     super.key,
   });
 
@@ -34,7 +38,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   late final FixedExtentScrollController _scrollController;
   
   final ValueNotifier<List<(ProductQuantity, Color)>> ingredientsNotifier = ValueNotifier([]);
-  late final ValueNotifier<DateTime> dateTimeNotifier;
+  // late final ValueNotifier<DateTime> dateTimeNotifier;
   List<TextEditingController> ingredientAmountControllers = [];
   final List<FocusNode> ingredientDropdownFocusNodes = [];
   
@@ -47,13 +51,13 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   void initState() {
     var now = DateTime.now();
     now = DateTime(now.year, now.month, now.day, now.hour);
-    dateTimeNotifier = ValueNotifier<DateTime>(now);
+    // dateTimeNotifier = ValueNotifier<DateTime>(now);
     // dateTime = widget.copyDateTime;
     // dateTime = DateTime.now();
     
     _scrollController = FixedExtentScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(dateTimeNotifier.value.hour * 38.0);
+      _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0);
     });
     
     super.initState();
@@ -85,7 +89,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           ),
           const SizedBox(height: 14),
           MultiValueListenableBuilder(
-            listenables: [dateTimeNotifier, ingredientsNotifier],
+            listenables: [widget.dateTimeNotifier, ingredientsNotifier],
             builder: (context, values, child) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -112,11 +116,11 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _buildScrollButton(
-                  dateTimeNotifier,
+                  widget.dateTimeNotifier,
                 ),
                 Expanded(
                   child: DateAndTimeTable(
-                    dateTimeNotifier: dateTimeNotifier,
+                    dateTimeNotifier: widget.dateTimeNotifier,
                     updateDateTime:   updateDateTime,
                     scrollController: _scrollController,
                   ),
@@ -126,7 +130,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           ),
           const SizedBox(height: 6),
           ValueListenableBuilder(
-            valueListenable: dateTimeNotifier,
+            valueListenable: widget.dateTimeNotifier,
             builder: (context, dateTime, child) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -155,7 +159,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   
   void updateDateTime(DateTime newDateTime) {
     // setState(() => dateTime = newDateTime);
-    dateTimeNotifier.value = newDateTime;
+    widget.dateTimeNotifier.value = newDateTime;
     widget.onDateTimeChanged(newDateTime);
   }
   
@@ -176,38 +180,6 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     } catch (e) {
       devtools.log("Error focusing ingredient $index: $e");
     }
-  }
-  
-  Widget _buildScrollButton2(ValueNotifier<DateTime> dateTimeNotifier) {
-    return ValueListenableBuilder(
-      valueListenable: dateTimeNotifier,
-      builder: (context, dateTime, child) {
-        var now = DateTime.now();
-        if (dateTime.isAfter(DateTime(now.year, now.month, now.day - 5))) {
-          return const SizedBox(width: 4);
-        }
-        
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              height: 93,
-              width: 39,
-              child: ElevatedButton(
-                style: lightButtonStyle.copyWith(
-                  padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                  backgroundColor: WidgetStateProperty.all(const Color.fromARGB(230, 180, 185, 255)),
-                  foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
-                ),
-                child: const Icon(Icons.keyboard_double_arrow_up),
-                onPressed: () {},
-              ),
-            ),
-            const SizedBox(width: 14),
-          ],
-        );
-      }
-    );
   }
   
   Widget _buildScrollButton(ValueNotifier<DateTime> dateTimeNotifier) {
@@ -236,7 +208,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                       backgroundColor: WidgetStateProperty.all(const Color.fromARGB(230, 180, 185, 255)),
                       foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
                     ),
-                    onPressed: isVisible ? () {} : null,
+                    onPressed: isVisible ? widget.onScrollButtonClicked : null,
                     child: AnimatedOpacity(
                       opacity: isVisible ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 300),
@@ -280,7 +252,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           _dataService.createMeal(
             Meal(
               id: -1,
-              dateTime: dateTimeNotifier.value,
+              dateTime: widget.dateTimeNotifier.value,
               productQuantity: ingredient.$1,
             ),
           );
