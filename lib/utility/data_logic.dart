@@ -927,15 +927,33 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
       continue;
     }
     List<double> contributions = [];
+    String msg = "Rel prog for ";
+    msg += p.name.padRight(20).substring(0, 20);
+    msg += " : ";
     for (var entry in targetProgress.entries) {
       var progress = entry.value;
       var target = entry.key;
       
       var absoluteContribution = progress[p] ?? 0.0;
+      if (!target.isPrimary) absoluteContribution *= 0.5;
       contributions.add(absoluteContribution / target.amount);
+      // logging
+      var relativeContribution = absoluteContribution / target.amount;
+      // target name
+      if (target.trackedType == NutritionalValue) {
+        msg += nutritionalValues.firstWhere((nv) => nv.id == target.trackedId).name;
+      } else {
+        msg += "???";
+      }
+      msg += " : ${relativeContribution.toStringAsFixed(3)} | ";
     }
+    
     // rms
     relevancy[p] = sqrt(contributions.fold(0.0, (prev, contribution) => prev + contribution * contribution) / contributions.length);
+    
+    msg = msg.substring(0, msg.length - 3);
+    msg += " = ${relevancy[p]?.toStringAsFixed(3)}";
+    devtools.log(msg);
   }
   
   // sort the products by relevancy descending
