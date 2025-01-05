@@ -57,7 +57,7 @@ class _MealListState extends State<MealList> {
 
   void _updateButtonVisibility() {
     // Check the scroll position to determine visibility
-    bool shouldBeVisible = _itemPositionsListener.itemPositions.value.any((position) => position.index > 25);
+    bool shouldBeVisible = _itemPositionsListener.itemPositions.value.any((position) => position.index > 45);
     if (shouldBeVisible != _isButtonVisible.value) {
       _isButtonVisible.value = shouldBeVisible;
     }
@@ -120,13 +120,10 @@ class _MealListState extends State<MealList> {
                         ),
                         child: ElevatedButton(
                           style: lightButtonStyle.copyWith(
-                            // elevation: WidgetStateProperty.all(4.0),
                             shadowColor: WidgetStateProperty.all(Colors.black),
                             padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                            // backgroundColor: WidgetStateProperty.all(Color.fromARGB(255, 71, 78, 201)),
-                            // foregroundColor: WidgetStateProperty.all(Color.fromARGB(255, 233, 226, 255)),
-                            backgroundColor: WidgetStateProperty.all(Color.fromARGB(255, 193, 189, 255)),
-                            foregroundColor: WidgetStateProperty.all(Color.fromARGB(255, 29, 0, 134)),
+                            backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 182, 188, 255)),
+                            foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 41, 1, 185)),
                           ),
                           onPressed: () {
                             _scrollController.scrollTo(
