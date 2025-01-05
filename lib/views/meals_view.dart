@@ -61,9 +61,9 @@ class _MealsViewState extends State<MealsView> {
       // }
       
       // // only keep last 1000 meals
-      if (meals.length > 1000) {
-        meals.removeRange(0, meals.length - 1000);
-      }
+      // if (meals.length > 1000) {
+      //   meals.removeRange(0, meals.length - 1000);
+      // }
     // } else {
     //   return const Expanded(
     //     child: Center(

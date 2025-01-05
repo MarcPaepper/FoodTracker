@@ -205,7 +205,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                   child: ElevatedButton(
                     style: lightButtonStyle.copyWith(
                       padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                      backgroundColor: WidgetStateProperty.all(const Color.fromARGB(230, 180, 185, 255)),
+                      backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 187, 192, 255)),
                       foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
                     ),
                     onPressed: isVisible ? widget.onScrollButtonClicked : null,

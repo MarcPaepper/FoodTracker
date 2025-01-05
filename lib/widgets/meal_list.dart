@@ -9,6 +9,7 @@ import "../constants/routes.dart";
 import "../services/data/data_objects.dart";
 import "../services/data/data_service.dart";
 import "../utility/text_logic.dart";
+import "../utility/theme.dart";
 import "add_meal_box.dart";
 
 import "dart:developer" as devtools show log;
@@ -34,32 +35,38 @@ class MealList extends StatefulWidget {
 class _MealListState extends State<MealList> {
   final DataService dataService = DataService.current();
   final ItemScrollController _scrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
+  final ValueNotifier<bool> _isButtonVisible = ValueNotifier(false);
   final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now());
   
-  // Key: days since 1970, Value: index of the strip in the list
-  Map<int, int> stripKeys = {};
+  Map<int, int> stripKeys = {}; // Key: days since 1970, Value: index of the strip in the list
+  
+  @override
+  void initState() {
+    super.initState();
+    // _visibilityController.addListener(_updateButtonVisibility);
+    _itemPositionsListener.itemPositions.addListener(_updateButtonVisibility);
+  }
+  
+  @override
+  void dispose() {
+    _itemPositionsListener.itemPositions.removeListener(_updateButtonVisibility);
+    _isButtonVisible.dispose();
+    super.dispose();
+  }
+
+  void _updateButtonVisibility() {
+    // Check the scroll position to determine visibility
+    bool shouldBeVisible = _itemPositionsListener.itemPositions.value.any((position) => position.index > 25);
+    if (shouldBeVisible != _isButtonVisible.value) {
+      _isButtonVisible.value = shouldBeVisible;
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
-    // return ListView(
-    //   reverse: true,
-    //   physics: const ClampingScrollPhysics(),
-    //   padding: EdgeInsets.zero,
-    //   children: [
-    //     AddMealBox(
-    //       // copyDateTime: DateTime.now(),
-    //       dateTimeNotifier: dateTimeNotifier,
-    //       onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-    //       productsMap: widget.productsMap ?? {},
-    //       onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
-    //     ),
-    //     const SizedBox(height: 5),
-    //     ...getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded),
-    //   ],
-    // );
     List<Widget> children = [
       AddMealBox(
-        // copyDateTime: DateTime.now(),
         dateTimeNotifier: dateTimeNotifier,
         onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
         productsMap: widget.productsMap ?? {},
@@ -67,15 +74,90 @@ class _MealListState extends State<MealList> {
       ),
       const SizedBox(height: 5),
     ];
+    
     List<Widget> mealTiles = getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded);
     children.addAll(mealTiles);
-    return ScrollablePositionedList.builder(
-      itemCount: children.length,
-      itemBuilder: (context, index) => children[index],
-      itemScrollController: _scrollController,
-      reverse: true,
-      physics: const ClampingScrollPhysics(),
-      padding: EdgeInsets.zero,
+    
+    return Stack(
+      children: [
+        ScrollablePositionedList.builder(
+          itemCount: children.length,
+          itemBuilder: (context, index) => children[index],
+          itemScrollController: _scrollController,
+          itemPositionsListener: _itemPositionsListener,
+          reverse: true,
+          physics: const ClampingScrollPhysics(),
+          padding: EdgeInsets.zero,
+        ),
+        Positioned(
+          bottom: 16.0,
+          left: 16.0,
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _isButtonVisible,
+            builder: (context, isVisible, child) {
+              return SizedBox(
+                width: 45,
+                height: 45,
+                child: Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: isVisible ? 45 : 0,
+                    height: isVisible ? 45 : 0,
+                    child: AnimatedOpacity(
+                      opacity: isVisible ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.8),
+                              blurRadius: 4.0,
+                              spreadRadius: 0.0,
+                              offset: const Offset(-0.3, 0.2),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          style: lightButtonStyle.copyWith(
+                            // elevation: WidgetStateProperty.all(4.0),
+                            shadowColor: WidgetStateProperty.all(Colors.black),
+                            padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                            // backgroundColor: WidgetStateProperty.all(Color.fromARGB(255, 71, 78, 201)),
+                            // foregroundColor: WidgetStateProperty.all(Color.fromARGB(255, 233, 226, 255)),
+                            backgroundColor: WidgetStateProperty.all(Color.fromARGB(255, 193, 189, 255)),
+                            foregroundColor: WidgetStateProperty.all(Color.fromARGB(255, 29, 0, 134)),
+                          ),
+                          onPressed: () {
+                            _scrollController.scrollTo(
+                              index: 0,
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: AnimatedOpacity(
+                            opacity: isVisible ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 300),
+                            child: AnimatedOpacity(
+                              opacity: isVisible ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: AnimatedOpacity(
+                                opacity: isVisible ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: const Icon(Icons.keyboard_double_arrow_down)
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
