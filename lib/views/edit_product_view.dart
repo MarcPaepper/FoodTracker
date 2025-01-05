@@ -200,7 +200,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           
           Map<int, Product>? productsMap;
           
-          // if data has loaded
           if (snapshotN.hasData && snapshotP.hasData && snapshotM.hasData) {
             _loaded = true;
             _forceReload = false;

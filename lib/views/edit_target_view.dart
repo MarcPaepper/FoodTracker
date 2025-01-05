@@ -13,7 +13,9 @@ import '../services/data/data_service.dart';
 import '../utility/modals.dart';
 import '../utility/text_logic.dart';
 import '../widgets/amount_field.dart';
+import '../widgets/datetime_selectors.dart';
 import '../widgets/loading_page.dart';
+import '../widgets/multi_stream_builder.dart';
 import '../widgets/product_dropdown.dart';
 
 // import 'dart:developer' as devtools show log;
@@ -67,131 +69,139 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? "Edit Target" : "Add Target"),
-        // show the delete button if editing
-        actions: [
-          if (isEdit)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              // onPressed: () {}
-              onPressed: () async {
-                if (widget.trackedId == null || widget.type == null) {
-                  showErrorbar(context, "Error: Target not found");
-                  Navigator.of(context).pop();
-                }
-                await _dataService.deleteTarget(widget.type!, widget.trackedId!);
-                if (context.mounted) Navigator.of(context).pop();
-              },
-            ),
-        ],
-      ),
-      body: StreamBuilder(
-        stream: _dataService.streamProducts(),
-        builder: (contextP, snapshotP) {
-          return StreamBuilder(
-            stream: _dataService.streamNutritionalValues(),
-            builder: (contextN, snapshotN) {
-              return StreamBuilder(
-                stream: _dataService.streamTargets(),
-                builder: (contextT, snapshotT) {
-                  if (snapshotP.connectionState == ConnectionState.waiting || snapshotN.connectionState == ConnectionState.waiting || snapshotT.connectionState == ConnectionState.waiting) {
-                    return const LoadingPage();
-                  }
-                  
-                  if (snapshotP.hasError || snapshotN.hasError || snapshotT.hasError) {
-                    return Text("Error: ${snapshotP.error ?? snapshotN.error ?? snapshotT.error}");
-                  }
-                  
-                  final products = snapshotP.data as List<Product>;
-                  final productsMap = Map<int, Product>.fromEntries(products.map((product) => MapEntry(product.id, product)));
-                  final nutvalues = snapshotN.data as List<NutritionalValue>;
-                  final targets = snapshotT.data as List<Target>;
-                  
-                  if (isEdit) {
-                    if (_interimTarget == null) {
-                      try {
-                        _interimTarget = targets.firstWhere((target) => target.trackedType == widget.type && target.trackedId == widget.trackedId);
-                      } catch (e) {
-                        Future(() {
-                          showErrorbar(context, "Error: Target not found");
-                          Navigator.of(context).pop(null);
-                        });
-                      }
-                    }
-                  } else {
-                    _interimTarget = Target(
-                      orderId: -1,
-                      isPrimary: true,
-                      trackedType: NutritionalValue,
-                      trackedId: -1,
-                      unit: null,
-                      amount: 0,
-                    );
-                  }
-                  
-                  if (_interimTarget != null) {
-                    _isPrimaryNotifier.value = _interimTarget!.isPrimary;
-                    _typeNotifier.value      = _interimTarget!.trackedType;
-                    _trackedIdNotifier.value = _interimTarget!.trackedId == -1 ? null : _interimTarget!.trackedId;
-                    _amountNotifier.value    = _interimTarget!.amount;
-                    _amountController.text   = truncateZeros(_interimTarget!.amount);
-                    _unitNotifier.value      = _interimTarget!.unit;
-                    _orderId                 = _interimTarget!.orderId;
-                  }
-                  
-                  return Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildPrimaryToggle(),
-                          const Padding(
-                            padding: EdgeInsets.fromLTRB(6, 2, 0, 8),
-                            child: Text("Type of target:", style: TextStyle(fontSize: 16)),
-                          ),
-                          _buildTypeDropdown(),
-                          const SizedBox(height: 10),
-                          _buildSelectorDropdown(nutvalues, productsMap),
-                          ValueListenableBuilder(
-                            valueListenable: _trackedIdNotifier,
-                            builder: (context, trackedId, child) {
-                              if (trackedId == null) {
-                                return const SizedBox.shrink();
-                              }
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.fromLTRB(6, 12, 0, 8),
-                                    child: Text("Daily Target:", style: TextStyle(fontSize: 16)),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Expanded(child: _buildAmountField()),
-                                      const SizedBox(width: 10),
-                                      _buildUnitDropdown(nutvalues, products),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _buildAddButton(nutvalues, products),
-                                ],
-                              );
-                            },
-                          ),
-                        ]
-                      ),
-                    ),
-                  );
-                }
-              );
-            }
+    return MultiStreamBuilder(
+      streams: [
+        _dataService.streamProducts(),
+        _dataService.streamNutritionalValues(),
+        _dataService.streamTargets(),
+      ],
+      builder: (context, snapshots) {
+        Widget? msg;
+        
+        if (snapshots.any((snap) => snap.connectionState == ConnectionState.waiting)) {
+          msg = const LoadingPage();
+        }
+        
+        if (snapshots.any((snap) => snap.hasError)) {
+          msg = Text("Error: ${snapshots.firstWhere((snap) => snap.hasError).error}");
+        }
+        
+        if (msg != null) {
+          return Scaffold(
+            appBar: AppBar(title: Text(isEdit ? "Edit Target" : "Add Target")),
+            body: msg,
           );
         }
-      )
+        
+        final products = snapshots[0].data as List<Product>;
+        final productsMap = Map<int, Product>.fromEntries(products.map((product) => MapEntry(product.id, product)));
+        final nutvalues = snapshots[1].data as List<NutritionalValue>;
+        final targets = snapshots[2].data as List<Target>;
+        
+        if (isEdit) {
+          if (_interimTarget == null) {
+            try {
+              _interimTarget = targets.firstWhere((target) => target.trackedType == widget.type && target.trackedId == widget.trackedId);
+            } catch (e) {
+              Future(() {
+                showErrorbar(context, "Error: Target not found");
+                Navigator.of(context).pop(null);
+              });
+            }
+          }
+        } else {
+          _interimTarget = Target(
+            orderId: -1,
+            isPrimary: true,
+            trackedType: NutritionalValue,
+            trackedId: -1,
+            unit: null,
+            amount: 0,
+          );
+        }
+        
+        if (_interimTarget != null) {
+          _isPrimaryNotifier.value = _interimTarget!.isPrimary;
+          _typeNotifier.value      = _interimTarget!.trackedType;
+          _trackedIdNotifier.value = _interimTarget!.trackedId == -1 ? null : _interimTarget!.trackedId;
+          _amountNotifier.value    = _interimTarget!.amount;
+          _amountController.text   = truncateZeros(_interimTarget!.amount);
+          _unitNotifier.value      = _interimTarget!.unit;
+          _orderId                 = _interimTarget!.orderId;
+        }
+        
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(isEdit ? "Edit Target" : "Add Target"),
+            // show the delete button if editing
+            actions: [
+              if (isEdit)
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  // onPressed: () {}
+                  onPressed: () async {
+                    if (widget.trackedId == null || widget.type == null) {
+                      showErrorbar(context, "Error: Target not found");
+                      Navigator.of(context).pop();
+                    }
+                    await _dataService.deleteTarget(widget.type!, widget.trackedId!);
+                    if (context.mounted) Navigator.of(context).pop();
+                  },
+                ),
+            ],
+          ),
+          body: ScrollConfiguration(
+            behavior: MouseDragScrollBehavior().copyWith(scrollbars: false, overscroll: false),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPrimaryToggle(),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(6, 2, 0, 8),
+                        child: Text("Type of target:", style: TextStyle(fontSize: 16)),
+                      ),
+                      _buildTypeDropdown(),
+                      const SizedBox(height: 10),
+                      _buildSelectorDropdown(nutvalues, productsMap),
+                      ValueListenableBuilder(
+                        valueListenable: _trackedIdNotifier,
+                        builder: (context, trackedId, child) {
+                          if (trackedId == null) {
+                            return const SizedBox.shrink();
+                          }
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.fromLTRB(6, 12, 0, 8),
+                                child: Text("Daily Target:", style: TextStyle(fontSize: 16)),
+                              ),
+                              Row(
+                                children: [
+                                  Expanded(child: _buildAmountField()),
+                                  const SizedBox(width: 10),
+                                  _buildUnitDropdown(nutvalues, products),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              _buildAddButton(nutvalues, products),
+                            ],
+                          );
+                        },
+                      ),
+                    ]
+                  ),
+                ),
+              ),
+            ),
+          )
+        );
+      }
     );
   }
   

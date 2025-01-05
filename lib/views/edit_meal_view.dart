@@ -81,9 +81,17 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
                       loaded = true;
                     }
                     
-                    return Form(
-                      key: _formKey,
-                      child: _buildView(products, meal),
+                    return ScrollConfiguration(
+                      behavior: MouseDragScrollBehavior().copyWith(scrollbars: false, overscroll: false),
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: Form(
+                            key: _formKey,
+                            child: _buildView(products, meal),
+                          ),
+                        ),
+                      ),
                     );
                   }
                   return const LoadingPage();
@@ -122,7 +130,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
                 updateDateTime:   _updateDateTime,
               ),
             ),
-            Expanded(child: Container()),
+            // Expanded(child: Container()),
             _buildUpdateButton(meal, products),
           ],
         );

@@ -122,7 +122,7 @@ class _ProductsViewState extends State<ProductsView> {
           sorting: (_sortType, _sortOrder),
           relevancies: relevancies,
           colorFromTop: true,
-          onSelected: (name, id) => Navigator.pushNamed (
+          onSelected: (name, id) => Navigator.pushNamed(
             context,
             editProductRoute,
             arguments: (name, false),
