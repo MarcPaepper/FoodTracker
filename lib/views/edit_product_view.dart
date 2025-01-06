@@ -317,7 +317,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             
             // calculate nutrients
             
-            _nutrientsNotifier.value = calcNutrients(
+            var nutrients = calcNutrients(
               nutrients: copyNutrients,
               ingredients: copyProduct.ingredients,
               productsMap: productsMap,
@@ -329,9 +329,16 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
               amountForNutrients: copyProduct.amountForNutrients,
             ).$1;
             
+            _nutrientsNotifier.value = nutrients;
+            
             // populate nutrient amount controllers
             _nutrientAmountControllers.clear();
-            for (var nutrient in copyNutrients) {
+            // for (var nutrient in copyNutrients) {
+            //   var controller = TextEditingController();
+            //   if (!nutrient.autoCalc) controller.text = truncateZeros(nutrient.value);
+            //   _nutrientAmountControllers.add(controller);
+            // }
+            for (var nutrient in nutrients) {
               var controller = TextEditingController();
               if (!nutrient.autoCalc) controller.text = truncateZeros(nutrient.value);
               _nutrientAmountControllers.add(controller);
@@ -896,7 +903,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       
       if (popAfter) {
         if (_isEdit) {
-          Navigator.of(context).pop(_interimProduct);
+          if (mounted) Navigator.of(context).pop(_interimProduct);
         } else {
           future.then((newProduct) {
             Navigator.of(context).pop(newProduct);

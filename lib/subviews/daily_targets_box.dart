@@ -243,7 +243,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   var densityConversion = widget.densityConversionNotifier!.value;
                   var quantityConversion = widget.quantityConversionNotifier!.value;
                   
-                  var productNutrients = widget.nutrientsNotifier!.value;
+                  var productNutrients = widget.nutrientsNotifier!.value.map((n) => n.copy()).toList();
                   
                   // set all auto calc nutrients to 0
                   for (var prodN in productNutrients) {

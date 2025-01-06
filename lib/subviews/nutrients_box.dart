@@ -9,7 +9,7 @@ import '../widgets/border_box.dart';
 import '../widgets/multi_value_listenable_builder.dart';
 import '../widgets/unit_dropdown.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 class NutrientsBox extends StatelessWidget {
   final List<NutritionalValue> nutValues;
@@ -97,6 +97,7 @@ class NutrientsBox extends StatelessWidget {
         // if any value differs, update the nutrient values
         for (var i = 0; i < valueNutrients.length; i++) {
           if (valueNutrients[i].value != updatedNutrients[i].value) {
+            devtools.log("updating nutrient ${valueNutrients[i].nutritionalValueId} from ${valueNutrients[i].value} to ${updatedNutrients[i].value}");
             nutrientsNotifier.value = updatedNutrients;
             break;
           }
@@ -235,11 +236,13 @@ class NutrientsBox extends StatelessWidget {
                     onChangedAndParsed: (value) {
                       nutrient.value = value;
                       nutrient.autoCalc = false;
+                      devtools.log("updating nutrient ${nutrient.nutritionalValueId} to $value");
                       nutrientsNotifier.value = List.from(nutrients);
                       intermediateSave();
                     },
                     onEmptied: () {
                       nutrient.autoCalc = true;
+                      devtools.log("updating nutrient ${nutrient.nutritionalValueId} to auto");
                       nutrientsNotifier.value = List.from(nutrients);
                       intermediateSave();
                     },

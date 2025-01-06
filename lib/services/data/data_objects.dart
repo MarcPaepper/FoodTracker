@@ -1,6 +1,6 @@
 import 'package:collection/collection.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 class Product {
 	int id = -1; // unique identifier
@@ -130,27 +130,67 @@ class Product {
     return false;
   }
   
-  bool equals(Product other) {
-    // order other nutrients by id
-    var otherNutrients = other.nutrients.toList();
-    otherNutrients.sort((a, b) => a.nutritionalValueId - b.nutritionalValueId);
+  // bool equals(Product other) {
+  //   // order other nutrients by id
+  //   var otherNutrients = other.nutrients.toList();
+  //   otherNutrients.sort((a, b) => a.nutritionalValueId - b.nutritionalValueId);
     
-    return id == other.id &&
-           name == other.name &&
-           temporaryBeginning == other.temporaryBeginning &&
-           temporaryEnd == other.temporaryEnd &&
-           isTemporary == other.isTemporary &&
-           defaultUnit == other.defaultUnit &&
-           densityConversion == other.densityConversion &&
-           quantityConversion == other.quantityConversion &&
-           quantityName == other.quantityName &&
-           autoCalc == other.autoCalc &&
-           amountForIngredients == other.amountForIngredients &&
-           ingredientsUnit == other.ingredientsUnit &&
-           amountForNutrients == other.amountForNutrients &&
-           nutrientsUnit == other.nutrientsUnit &&
-           const ListEquality().equals(ingredients, other.ingredients) &&
-           const ListEquality().equals(nutrients, otherNutrients);
+  //   return id == other.id &&
+  //          name == other.name &&
+  //          temporaryBeginning == other.temporaryBeginning &&
+  //          temporaryEnd == other.temporaryEnd &&
+  //          isTemporary == other.isTemporary &&
+  //          defaultUnit == other.defaultUnit &&
+  //          densityConversion == other.densityConversion &&
+  //          quantityConversion == other.quantityConversion &&
+  //          quantityName == other.quantityName &&
+  //          autoCalc == other.autoCalc &&
+  //          amountForIngredients == other.amountForIngredients &&
+  //          ingredientsUnit == other.ingredientsUnit &&
+  //          amountForNutrients == other.amountForNutrients &&
+  //          nutrientsUnit == other.nutrientsUnit &&
+  //          const ListEquality().equals(ingredients, other.ingredients) &&
+  //          const ListEquality().equals(nutrients, otherNutrients);
+  // }
+  
+  bool equals(Product other) {
+    List<bool> equalities = [
+      id == other.id,
+      name == other.name,
+      temporaryBeginning == other.temporaryBeginning,
+      temporaryEnd == other.temporaryEnd,
+      isTemporary == other.isTemporary,
+      defaultUnit == other.defaultUnit,
+      densityConversion == other.densityConversion,
+      quantityConversion == other.quantityConversion,
+      quantityName == other.quantityName,
+      autoCalc == other.autoCalc,
+      amountForIngredients == other.amountForIngredients,
+      ingredientsUnit == other.ingredientsUnit,
+      amountForNutrients == other.amountForNutrients,
+      nutrientsUnit == other.nutrientsUnit,
+      const ListEquality().equals(ingredients, other.ingredients),
+      const ListEquality().equals(nutrients, other.nutrients),
+    ];
+    // log if any of the equalities is false
+    if (equalities.contains(false)) {
+      for (int i = 0; i < equalities.length; i++) {
+        if (!equalities[i]) {
+          devtools.log("Equality $i of ${equalities.length} is false: ${equalities[i]}");
+          if (i == 15) {
+            devtools.log("nutrients: $nutrients[0]");
+            devtools.log("other nutrients: ${other.nutrients[1]}");
+            for (int j = 0; j < nutrients.length; j++) {
+              if (nutrients[j] != other.nutrients[j]) {
+                devtools.log("nutrient $j: ${nutrients[j]} != ${other.nutrients[j]}");
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+    return equalities.every((e) => e);
   }
   
   @override
@@ -510,6 +550,13 @@ class ProductNutrient {
     required this.autoCalc,
     required this.value,
   });
+  
+  ProductNutrient copy() => ProductNutrient(
+    productId: productId,
+    nutritionalValueId: nutritionalValueId,
+    autoCalc: autoCalc,
+    value: value,
+  );
   
   @override
   bool operator ==(covariant ProductNutrient other) =>

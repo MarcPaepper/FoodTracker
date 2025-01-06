@@ -187,7 +187,7 @@ List<Color> productColors = [
   Colors.orange,   // orange
   const Color.fromARGB(255, 255, 230, 0),   // yellow
   Colors.green,    // green
-  Colors.blue, 		// blue
+  const Color.fromARGB(255, 33, 212, 243), 		// cyan
   Colors.indigo,	  // indigo
   Colors.purple,	  // purple
 ];
