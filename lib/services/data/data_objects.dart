@@ -305,7 +305,7 @@ class Meal {
   }
 }
 
-enum Unit { // measurement units which products can be given in
+enum  Unit { // measurement units which products can be given in
 	quantity, // the number of objects, e.g. "3 bananas"
 	kg,
 	g,

@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/data_logic.dart';
+import 'package:food_tracker/utility/text_logic.dart';
 import 'package:intl/intl.dart';
 
+import '../services/data/data_service.dart';
 import '../widgets/search_field.dart';
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
@@ -280,24 +283,74 @@ void showProductDialog({
 // show a dialog which lets you see the creation date and the last edit date of a product
 void showProductInfoDialog(BuildContext context, Product product) => showDialog(
   context: context,
-  builder: (context) => AlertDialog(
-    title: const Text('Product Info'),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Created on: ${DateFormat.yMd(Platform.localeName).format(product.creationDate!)}"),
-        Text("Last Edit: ${DateFormat.yMd(Platform.localeName).format(product.lastEditDate!)}"),
-      ],
-    ),
-    actions: [
-      ElevatedButton(
-        style: actionButtonStyle,
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Close'),
+  builder: (context) {
+    var dates = [product.creationDate!, product.lastEditDate!];
+    var datesStr = conditionallyRemoveYear(context, dates, showWeekDay: false, removeYear: false);
+    
+    return AlertDialog(
+      title: const Text('Product Info'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Created on: ${datesStr[0]}"),
+          Text("Last Edit: ${datesStr[1]}"),
+          FutureBuilder(
+            future: DataService.current().getAllMeals(),
+            builder: (context, snapshot) {
+              String numberOfMeals = "???";
+              String amount = "???";
+              
+              if (!snapshot.hasError && snapshot.connectionState == ConnectionState.done) {
+                Unit defUnit = product.defaultUnit;
+                List<Meal> meals = snapshot.data as List<Meal>;
+                int count = 0;
+                double amountSum = 0;
+                for (var meal in meals) {
+                  var pQ = meal.productQuantity;
+                  if (product.id != pQ.productId) continue;
+                  count++;
+                  // convert from meal unit to default unit
+                  amountSum += convertToUnit(defUnit, pQ.unit, pQ.amount, product.densityConversion, product.quantityConversion);
+                }
+                numberOfMeals = count.toString();
+                amount = "${truncateZeros(roundDouble(amountSum))} ${defUnit.name}";
+                List<UnitType> unitTypesUsed = [unitTypes[defUnit]!];
+                // if the product has conversions, give the amount in those units as well
+                // if (defUnit == Unit.quantity) {
+                //   if (product.quantityConversion.enabled) {
+                //     // convert to the other unit
+                //     var newAmount = convertToUnit(product.quantityConversion.unit2, defUnit, amountSum, product.densityConversion, product.quantityConversion);
+                //     amount += "= ${truncateZeros(roundDouble(newAmount))} ${product.quantityConversion.unit2.name}";
+                //   }
+                // }
+                if (product.quantityConversion.enabled) {
+                  bool forwards = unitTypesUsed.contains(Unit.quantity);
+                  Unit targetUnit = forwards ? product.quantityConversion.unit2 : product.quantityConversion.unit1;
+                  var newAmount = convertToUnit(targetUnit, defUnit, amountSum, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
+                  amount += " = ${truncateZeros(roundDouble(newAmount))} ${forwards ? targetUnit.name : product.quantityName}";
+                }
+                if (product.densityConversion.enabled) {
+                  bool forwards = unitTypesUsed.contains(UnitType.volumetric);
+                  Unit targetUnit = forwards ? product.densityConversion.unit2 : product.densityConversion.unit1;
+                  var newAmount = convertToUnit(targetUnit, defUnit, amountSum, product.densityConversion, product.quantityConversion);
+                  amount += " = ${truncateZeros(roundDouble(newAmount))} ${targetUnit.name}";
+                }
+              }
+              return Text("\nYou've used ${product.name} in $numberOfMeals meals, amounting to $amount.");
+            },
+          ),
+        ],
       ),
-    ],
-  ),
+      actions: [
+        ElevatedButton(
+          style: actionButtonStyle,
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
 );
 
 void onAddProduct(
