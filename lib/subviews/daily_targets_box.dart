@@ -234,6 +234,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 
                 Meal? overrideMeal;
                 Product? pseudoProduct;
+                List<ProductNutrient>? productNutrients;
                 if (widget.internalList) {
                   var ingredientAmount = widget.ingredientAmountNotifier!.value;
                   var ingredientUnit = widget.ingredientUnitNotifier!.value;
@@ -243,7 +244,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   var densityConversion = widget.densityConversionNotifier!.value;
                   var quantityConversion = widget.quantityConversionNotifier!.value;
                   
-                  var productNutrients = widget.nutrientsNotifier!.value.map((n) => n.copy()).toList();
+                  productNutrients = widget.nutrientsNotifier!.value.map((n) => n.copy()).toList();
                   
                   // set all auto calc nutrients to 0
                   for (var prodN in productNutrients) {
@@ -260,7 +261,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   }
                   
                   // check if any auto calculated values are overriden
-                  if (!conversionFailed && productNutrients.any((prodN) => prodN.value > 0)) {
+                  if (!conversionFailed && productNutrients.any((prodN) => prodN.autoCalc)) {
                     // create a pseudo product with the overriden nutrient values
                     pseudoProduct = Product(
                       id: -1,
@@ -298,6 +299,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   }
                 }
                 
+                // convert meals to the same unit as the previewAmountNotifier
                 List<Meal> convertedMeals = [];
                 
                 if (conversionFailed || !widget.internalList) {
@@ -334,6 +336,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 var (targetProgress, contributingProducts) = getDailyTargetProgress(widget.dateTime, targets, productsMap, nutritionalValues, convertedMeals, oldMeals, widget.internalList);
                 List<Product> contributingColored = List.from(contributingProducts);
                 contributingColored.remove(pseudoProduct);
+                if (widget.internalList && productNutrients!.every((n) => n.value == 0)) {
+                  contributingProducts.remove(pseudoProduct);
+                }
                 
                 // color verfication
                 if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {

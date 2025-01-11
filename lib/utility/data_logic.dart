@@ -901,14 +901,14 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
         // convert from the productQuantity unit to the unit used for the nutritional values
         var amount = convertToUnit(p.nutrientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion, enableTargetQuantity: true); // in nutrient units
         var nutrient = p.nutrients.firstWhere((n) => n.nutritionalValueId == nutVal.id);
-        if (amount * nutrient.value <= 0) continue;
-        if (p.id == -1 && !old) {
+        if (p.id == -1 && !old && !nutrient.autoCalc) {
           // override
           progress = {p: amount * nutrient.value / p.amountForNutrients};
           targetProgress[t] = progress;
           if (!contributingProducts.contains(p)) contributingProducts.add(p);
           continue targetLoop;
         }
+        if (amount * nutrient.value <= 0) continue;
         if (!old && !contributingProducts.contains(p)) contributingProducts.add(p);
         progress[old ? null : p] = (progress[old ? null : p] ?? 0.0) + amount * nutrient.value / p.amountForNutrients;
       }
