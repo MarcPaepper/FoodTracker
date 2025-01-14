@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 import 'package:food_tracker/utility/text_logic.dart';
-import 'package:intl/intl.dart';
 
 import '../services/data/data_service.dart';
 import '../widgets/search_field.dart';
@@ -311,10 +308,10 @@ void showProductInfoDialog(BuildContext context, Product product) => showDialog(
                   if (product.id != pQ.productId) continue;
                   count++;
                   // convert from meal unit to default unit
-                  amountSum += convertToUnit(defUnit, pQ.unit, pQ.amount, product.densityConversion, product.quantityConversion);
+                  amountSum += convertToUnit(defUnit, pQ.unit, pQ.amount, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
                 }
                 numberOfMeals = count.toString();
-                amount = "${truncateZeros(roundDouble(amountSum))} ${defUnit.name}";
+                amount = "${truncateZeros(roundDouble(amountSum))} ${defUnit == Unit.quantity ? product.quantityName : defUnit.name}";
                 List<UnitType> unitTypesUsed = [unitTypes[defUnit]!];
                 // if the product has conversions, give the amount in those units as well
                 // if (defUnit == Unit.quantity) {
@@ -325,7 +322,7 @@ void showProductInfoDialog(BuildContext context, Product product) => showDialog(
                 //   }
                 // }
                 if (product.quantityConversion.enabled) {
-                  bool forwards = unitTypesUsed.contains(Unit.quantity);
+                  bool forwards = unitTypesUsed.contains(UnitType.quantity);
                   Unit targetUnit = forwards ? product.quantityConversion.unit2 : product.quantityConversion.unit1;
                   var newAmount = convertToUnit(targetUnit, defUnit, amountSum, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
                   amount += " = ${truncateZeros(roundDouble(newAmount))} ${forwards ? targetUnit.name : product.quantityName}";
@@ -337,7 +334,7 @@ void showProductInfoDialog(BuildContext context, Product product) => showDialog(
                   amount += " = ${truncateZeros(roundDouble(newAmount))} ${targetUnit.name}";
                 }
               }
-              return Text("\nYou've used ${product.name} in $numberOfMeals meals, amounting to $amount.");
+              return Text("\nYou've used ${product.name} directly in $numberOfMeals meals, amounting to $amount. (This does not include products which contain ${product.name} as an ingredient)");
             },
           ),
         ],

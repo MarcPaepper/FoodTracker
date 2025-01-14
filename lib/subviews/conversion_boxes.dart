@@ -18,6 +18,7 @@ class ConversionBoxes extends StatelessWidget {
   final TextEditingController quantityNameController;
   final Function() onValidate;
   final Function(Conversion, Conversion) onConversionChanged;
+  final Function(String) onNameChanged;
   final Function() intermediateSave;
   
   const ConversionBoxes({
@@ -31,6 +32,7 @@ class ConversionBoxes extends StatelessWidget {
     required this.quantityNameController,
     required this.onValidate,
     required this.onConversionChanged,
+    required this.onNameChanged,
     required this.intermediateSave,
     Key? key
   }) : super(key: key);
@@ -125,7 +127,7 @@ class ConversionBoxes extends StatelessWidget {
               return null;
             },
             autovalidateMode: AutovalidateMode.onUserInteraction,
-            onChanged: (_) => intermediateSave,
+            onChanged: (String value) => onNameChanged(value),
           );
         }
         var dropdown2 = UnitDropdown(

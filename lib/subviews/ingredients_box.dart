@@ -98,7 +98,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         var valueQuantityConversion = values[7] as Conversion;
         var valueResultingAmount    = values[8] as double;
         
-        var productName = valueName.text != "" ? "'${valueName.text}'" : " the product";
+        var productName = valueName.text.trim() != "" ? "'${valueName.text.trim()}'" : " the product";
         List<(ProductQuantity, Product?)> ingredientsWithProducts = [];
         for (var ingredient in valueIngredients) {
           ingredientsWithProducts.add((ingredient.$1, widget.productsMap[ingredient.$1.productId]));

@@ -409,6 +409,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 newQuantityConversion: newQuantityConversion,
                               );
                             },
+                            onNameChanged: (newName) => _interimProduct = getProductFromForm().$1.copyWith(newQuantityName: newName),
                           ),
                           const SizedBox(height: 14),
                           IngredientsBox(
@@ -488,7 +489,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               var ingredients = values[0] as List<(ProductQuantity, Color)>;
                               var nutrients = values[1] as List<ProductNutrient>;
                               nutrients = nutrients.where((n) => !n.autoCalc).toList();
-                              var name = _productNameController.text;
+                              var name = _productNameController.text.trim();
                               
                               return DailyTargetsBox(
                                 null,
@@ -567,7 +568,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     ValueListenableBuilder(
       valueListenable: _productNameController,
       builder: (context, value, child) {
-        var name = _productNameController.text;
+        var name = _productNameController.text.trim();
         return IconButton(
           padding: const EdgeInsets.fromLTRB(kIsWeb ? 5 : 0, 0, kIsWeb ? 10 : 0, 0),
           constraints: const BoxConstraints(),
@@ -685,6 +686,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           contentPadding: EdgeInsets.fromLTRB(12, 6, 12, 2),
         ),
         validator: (String? value) {
+          value = value?.trim();
           for (var prod in products) {
             if (prod.name == value && !(prod.name == widget.productName && (widget.isEdit ?? false))) {
               // change notifier after build complete
@@ -739,6 +741,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           String name;
           if (isNameDuplicate) {
             name = _productNameController.text;
+            name = name.trim();
           } else {
             name = widget.productName!;
           }
@@ -933,7 +936,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   }
   
   (Product, bool) getProductFromForm() {
-    final name = _productNameController.text;
+    final name = _productNameController.text.trim();
     final defUnit = _defaultUnitNotifier.value;
     final densityConversion = _densityConversionNotifier.value;
     final quantityConversion = _quantityConversionNotifier.value;

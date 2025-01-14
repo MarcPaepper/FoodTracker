@@ -189,6 +189,7 @@ class _MealListState extends State<MealList> {
       }
       
       var unitName = unitToString(meal.productQuantity.unit);
+      if (meal.productQuantity.unit == Unit.quantity) unitName = product?.quantityName ?? "x";
       var productName = product?.name ?? 'Unknown';
       var amountText = '${truncateZeros(meal.productQuantity.amount)}\u2009$unitName';
       var hourText = '${meal.dateTime.hour}h';
