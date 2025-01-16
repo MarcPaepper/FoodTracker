@@ -2,6 +2,7 @@
 
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:food_tracker/utility/theme.dart';
@@ -868,6 +869,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     var (product, isValid) = getProductFromForm();
     product.lastEditDate = DateTime.now();
     
+    // check if the product is used in a meal that is outside the new temporary interval
     if (product.isTemporary && _isEdit && isValid) {
       // get all meals with the product
       meals ??= await _dataService.getAllMeals();
@@ -891,6 +893,37 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             );
           }
           break;
+        }
+      }
+    }
+    
+    // check if the product has a daily target and the target unit is incompatible with the new default unit
+    if (_isEdit && isValid) {
+      var targets = await _dataService.getAllTargets();
+      var target = targets.firstWhereOrNull((target) => target.trackedType == Product && target.trackedId == _id);
+      if (target != null) {
+        var targetUnit = target.unit;
+        // get all units that this can be converted to
+        var densityConversion = product.densityConversion;
+        var quantityConversion = product.quantityConversion;
+        var units = getConvertibleUnits(product.defaultUnit, densityConversion, quantityConversion);
+        if (!units.contains(targetUnit)) {
+          isValid = false;
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text("Error"),
+                content: Text("The product is used in a daily target with the unit \"${targetUnit == null ? "???" : unitToLongString(targetUnit)}\" which cannot be converted to the default unit."),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text("OK"),
+                  ),
+                ],
+              ),
+            );
+          }
         }
       }
     }
