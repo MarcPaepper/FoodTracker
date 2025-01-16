@@ -892,14 +892,21 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
       
       if (p == null) continue;
       
+      double amount = 0.0;
       if (isProduct) {
-        // TODO: check how much of the target product is in the meal
-        
+        // check how much of the target product is in the meal
+        // this also includes cases if it is as an ingredient
+        // A recursive search is used to find out if any ingredient downstream is the targetProduct
+        var targetProduct = trackedObject as Product;
+        var targetUnit = t.unit!;
+        if (p.id == -1) continue;
+        var safetyCounter = 0;
+        amount = calcProductTargetRecursively(productsMap, targetUnit, pQ, targetProduct, safetyCounter);
       } else {
         // check how much of the target nutritional value is in the meal
         var nutVal = trackedObject as NutritionalValue;
         // convert from the productQuantity unit to the unit used for the nutritional values
-        var amount = convertToUnit(p.nutrientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion, enableTargetQuantity: true); // in nutrient units
+        amount = convertToUnit(p.nutrientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion, enableTargetQuantity: true); // in nutrient units
         var nutrient = p.nutrients.firstWhere((n) => n.nutritionalValueId == nutVal.id);
         if (p.id == -1 && !old && !nutrient.autoCalc) {
           // override
@@ -908,10 +915,11 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
           if (!contributingProducts.contains(p)) contributingProducts.add(p);
           continue targetLoop;
         }
-        if (amount * nutrient.value <= 0) continue;
-        if (!old && !contributingProducts.contains(p)) contributingProducts.add(p);
-        progress[old ? null : p] = (progress[old ? null : p] ?? 0.0) + amount * nutrient.value / p.amountForNutrients;
+        amount *= nutrient.value / p.amountForNutrients;
       }
+      if (amount <= 0) continue;
+      if (!old && !contributingProducts.contains(p)) contributingProducts.add(p);
+      progress[old ? null : p] = (progress[old ? null : p] ?? 0.0) + amount;
     }
     
     targetProgress[t] = progress;
@@ -980,8 +988,46 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     // apply original sorting to contributingProducts
     contributingProducts.sort((a, b) => mealSorting[a]!.compareTo(mealSorting[b]!));
   }
-  
+  // devtools.log("Progress: ");
+  // for (var entry in targetProgress.entries) {
+  //   var t = entry.key;
+  //   var progress = entry.value;
+  //   devtools.log("${t.toString()}: $progress");
+  // }
   return (targetProgress, contributingProducts);
+}
+
+// calculate the amount of the target product in the meal
+double calcProductTargetRecursively(Map<int, Product> productsMap, Unit targetUnit, ProductQuantity pQ, Product targetProduct, int safetyCounter) {
+  if (safetyCounter >= 128) throw InfiniteLoopException();
+  
+  var p = productsMap[pQ.productId];
+  
+  if (p == null) return 0;
+  if (p.id == targetProduct.id) {
+    // Convert from pQ.unit to specified
+    return convertToUnit(targetUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion, enableTargetQuantity: true);
+  }
+  if (p.ingredients.isEmpty) return 0;
+  
+  // We know pQ.amount pQ.unit of p is used
+  // Now we need to convert that to p.ingredientsUnit to know how much of each ingredient is used
+  var ingredientsAmount = convertToUnit(p.ingredientsUnit, pQ.unit, pQ.amount, p.densityConversion, p.quantityConversion, enableTargetQuantity: true);
+  var ingredientsFactor = ingredientsAmount / p.amountForIngredients;
+  // check the ingredients
+  var amount = 0.0;
+  for (var ingr in p.ingredients) {
+    double ingredientAmount = ingredientsFactor * ingr.amount;
+    ProductQuantity ingrPQ = ProductQuantity(
+      productId: ingr.productId,
+      amount: ingredientAmount,
+      unit: ingr.unit,
+    );
+    var ingrAmount = calcProductTargetRecursively(productsMap, targetUnit, ingrPQ, targetProduct, safetyCounter + 1);
+    amount += ingrAmount;
+  }
+  
+  return amount;
 }
 
 // returns -1 if the date is before the interval, 0 if it is inside the interval, 1 if it is after the interval

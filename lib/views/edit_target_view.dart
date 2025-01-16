@@ -343,7 +343,7 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
               onChanged: (value) {
                 if (value != null) {
                   _unitNotifier.value = value;
-                  _interimTarget = _interimTarget?.copyWith(newUnit: value);
+                  _interimTarget = _interimTarget?.copyWith(newUnit: value, changeUnit: true);
                 }
               },
               enabled: product != null,

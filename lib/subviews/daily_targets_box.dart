@@ -38,6 +38,7 @@ class DailyTargetsBox extends StatefulWidget {
   final TextEditingController? quantityNameController;
   
   static const Color pseudoColor = Color.fromARGB(255, 31, 31, 31);
+  static const Color selfColor = Color.fromARGB(255, 157, 175, 255);
   
   // ignore: use_key_in_widget_constructors
   DailyTargetsBox(
@@ -234,6 +235,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 
                 Meal? overrideMeal;
                 Product? pseudoProduct;
+                Product? selfProduct;
                 List<ProductNutrient>? productNutrients;
                 if (widget.internalList) {
                   var ingredientAmount = widget.ingredientAmountNotifier!.value;
@@ -340,6 +342,33 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                   contributingProducts.remove(pseudoProduct);
                 }
                 
+                // Add the product itself, if it is targeted
+                if (targets.any((t) => t.trackedType == Product && productsMap[t.trackedId]?.name == widget.name) && widget.internalList) {
+                  selfProduct = Product(
+                    id: -2,
+                    name: widget.name!,
+                    isTemporary: false,
+                    defaultUnit: widget.nutrientUnitNotifier!.value,
+                    densityConversion: widget.densityConversionNotifier!.value,
+                    quantityConversion: widget.quantityConversionNotifier!.value,
+                    quantityName: "",
+                    autoCalc: false,
+                    amountForIngredients: widget.ingredientAmountNotifier!.value,
+                    ingredientsUnit: widget.ingredientUnitNotifier!.value,
+                    amountForNutrients: widget.nutrientAmountNotifier!.value,
+                    nutrientsUnit: widget.nutrientUnitNotifier!.value,
+                    ingredients: widget.ingredients!.map((ingr) => ingr.$1).toList(),
+                    nutrients: []
+                  );
+                  // convert from preview amount to amount set in the target
+                  var target = targets.firstWhere((t) => t.trackedType == Product && productsMap[t.trackedId]?.name == widget.name);
+                  var targetUnit = target.unit;
+                  var targetFactor = convertToUnit(targetUnit!, previewUnitNotifier.value, previewAmountNotifier.value, widget.densityConversionNotifier!.value, widget.quantityConversionNotifier!.value, enableTargetQuantity: true);
+                  targetProgress[target] = {selfProduct: targetFactor};
+                  productsMap[-2] = selfProduct;
+                  contributingProducts.add(selfProduct);
+                }
+                
                 // color verfication
                 if (widget.ingredients != null && widget.ingredients!.isNotEmpty) {
                   var colorChanged = false;
@@ -380,6 +409,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 }
                 if (widget.internalList && pseudoProduct != null) {
                   colors[-1] = DailyTargetsBox.pseudoColor;
+                }
+                if (widget.internalList && selfProduct != null) {
+                  colors[-2] = DailyTargetsBox.selfColor;
                 }
                 
                 bool productOverflow = widget.internalList && targetProgress.entries.any((entry) => entry.value.containsKey(null) && entry.value[null]! > 0);
@@ -528,11 +560,14 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   ) {
     if (ingredients == null) return Container();
     
-    var contributingIngredients = contributingProducts.where((p) => p.id != -1).map((p) {
+    var contributingIngredients = contributingProducts.where((p) => p.id >= 0).map((p) {
       return ingredients.firstWhereOrNull((ingr) => ingr.$1.productId == p.id);
     }).toList();
     if (contributingProducts.any((p) => p.id == -1)) {
       contributingIngredients.insert(0, (ProductQuantity(productId: -1, amount: 0, unit: Unit.g), DailyTargetsBox.pseudoColor));
+    }
+    if (contributingProducts.any((p) => p.id == -2)) {
+      contributingIngredients.insert(0, (ProductQuantity(productId: -2, amount: 0, unit: Unit.g), DailyTargetsBox.selfColor));
     }
     
     List<Widget> children = [];
