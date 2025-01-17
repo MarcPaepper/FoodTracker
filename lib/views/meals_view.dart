@@ -6,7 +6,12 @@ import '../services/data/data_service.dart';
 import '../widgets/multi_stream_builder.dart';
 
 class MealsView extends StatefulWidget {
-  const MealsView({super.key});
+  final ValueNotifier<DateTime> dateTimeNotifier;
+  
+  const MealsView(
+    this.dateTimeNotifier,
+    {Key? key}
+  ) : super(key: key);
 
   @override
   State<MealsView> createState() => _MealsViewState();
@@ -39,14 +44,14 @@ class _MealsViewState extends State<MealsView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           verticalDirection: VerticalDirection.down,
           children: [
-            _buildListView(snapshots[0], productsMap),
+            _buildListView(snapshots[0], productsMap, widget.dateTimeNotifier),
           ]
         );
       }
     );
   }
   
-  Widget _buildListView(AsyncSnapshot snapshot, Map<int, Product>? productsMap) {
+  Widget _buildListView(AsyncSnapshot snapshot, Map<int, Product>? productsMap, ValueNotifier<DateTime> dateTimeNotifier) {
     List<Meal> meals = [];
     
     if (snapshot.hasData) meals = snapshot.data;
@@ -76,6 +81,7 @@ class _MealsViewState extends State<MealsView> {
       child: MealList(
         productsMap: productsMap,
         meals: meals,
+        dateTimeNotifier: dateTimeNotifier,
         loaded: snapshot.hasData,
       )
     );

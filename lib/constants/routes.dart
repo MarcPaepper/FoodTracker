@@ -32,7 +32,7 @@ String importExportRoute         = "/port/";
 
 var routes = {
   mainRoute:			(context)   => const MainView(),
-  mealsRoute:		(context)     => const MealsView(),
+  mealsRoute:		  (context)   => MealsView(ValueNotifier(DateTime.now())),
   editMealRoute:	(context) {
     var result = ModalRoute.of(context)!.settings.arguments as int?;
     return EditMealView(

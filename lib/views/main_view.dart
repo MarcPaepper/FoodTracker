@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:food_tracker/views/meals_view.dart';
+import 'package:food_tracker/views/stats_view.dart';
 import '../constants/data.dart';
 import '../services/data/data_service.dart';
 import 'products_view.dart';
@@ -20,6 +21,7 @@ class MainView extends StatefulWidget {
 
 class _MainViewState extends State<MainView> {
   late final DataService _dataService;
+  final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now());
   
   @override
   void initState() {
@@ -40,7 +42,7 @@ class _MainViewState extends State<MainView> {
       // clamping scroll physics to avoid overscroll
       behavior: const ScrollBehavior().copyWith(overscroll: false),
       child: DefaultTabController(
-        length: 5,
+        length: 6,
         child: Scaffold(
           appBar: PreferredSize(
             preferredSize: _tabBar.preferredSize,
@@ -49,10 +51,11 @@ class _MainViewState extends State<MainView> {
               child: SafeArea(child: _tabBar),
             )
           ),
-          body: const TabBarView(
+          body: TabBarView(
             physics: AlwaysScrollableScrollPhysics(),
             children: [
-              MealsView(),
+              MealsView(dateTimeNotifier),
+              StatsView(),
               ProductsView(),
               NutritionalValueView(),
               TargetsView(),
@@ -70,6 +73,7 @@ class _MainViewState extends State<MainView> {
     tabAlignment: TabAlignment.center,
     tabs: [
       Tab(text: "Meals"),
+      Tab(text: "Stats"),
       Tab(text: "Products"),
       Tab(text: "Nutrition"),
       Tab(text: "Targets"),

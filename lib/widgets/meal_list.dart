@@ -19,11 +19,13 @@ import "loading_page.dart";
 class MealList extends StatefulWidget {
   final Map<int, Product>? productsMap;
   final List<Meal> meals;
+  final ValueNotifier<DateTime> dateTimeNotifier;
   final bool loaded;
   
   const MealList({
     required this.productsMap,
     required this.meals,
+    required this.dateTimeNotifier,
     required this.loaded,
     super.key,
   });
@@ -37,13 +39,14 @@ class _MealListState extends State<MealList> {
   final ItemScrollController _scrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
   final ValueNotifier<bool> _isButtonVisible = ValueNotifier(false);
-  final ValueNotifier<DateTime> dateTimeNotifier = ValueNotifier(DateTime.now());
+  late ValueNotifier<DateTime> dateTimeNotifier;
   
   Map<int, int> stripKeys = {}; // Key: days since 1970, Value: index of the strip in the list
   
   @override
   void initState() {
     super.initState();
+    dateTimeNotifier = widget.dateTimeNotifier;
     // _visibilityController.addListener(_updateButtonVisibility);
     _itemPositionsListener.itemPositions.addListener(_updateButtonVisibility);
   }
@@ -223,19 +226,26 @@ class _MealListState extends State<MealList> {
                 itemBuilder: (context) => const [
                   PopupMenuItem(
                     value: 0,
-                    child: Text('Edit'),
+                    child: Text("Edit meal"),
                   ),
                   PopupMenuItem(
                     value: 1,
-                    child: Text('Delete'),
+                    child: Text("Edit product"),
+                  ),
+                  PopupMenuItem(
+                    value: 2,
+                    child: Text("Delete meal"),
                   ),
                 ],
                 onSelected: (int value) {
                   if (value == 0) {
-                    // edit
-                    // navigate to edit meal view
+                    // edit meal
                     Navigator.pushNamed(context, editMealRoute, arguments: meal.id);
                   } else if (value == 1) {
+                    // edit product
+                    var prodName = product?.name;
+                    if (prodName != null) Navigator.pushNamed(context, editProductRoute, arguments: (prodName, false));
+                  } else if (value == 2) {
                     // delete
                     dataService.deleteMeal(meal.id);
                   }
