@@ -106,6 +106,25 @@ String relativeDaysNatural(DateTime date) {
   }
 }
 
+String relativeWeeksNatural(DateTime date) {
+  date = date.getDateOnly();
+  // Select beginning of current day
+  var now = DateTime.now().getDateOnly();
+  var diff = date.difference(now).inDays;
+  var weeks = (diff / 7).round();
+  if (weeks == 0) {
+    return "This week";
+  } else if (weeks == 1) {
+    return "Next week";
+  } else if (weeks == -1) {
+    return "Last week";
+  } else if (weeks > 0) {
+    return "in $weeks weeks";
+  } else {
+    return "${-weeks} weeks ago";
+  }
+}
+
 extension MyDateExtension on DateTime {
   DateTime getDateOnly(){
     return DateTime(year, month, day);

@@ -3,8 +3,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
+import '../services/data/data_objects.dart';
 import '../utility/text_logic.dart';
+import 'spacer_row.dart';
 
 // import 'dart:developer' as devtools show log;
 
@@ -52,100 +55,133 @@ class _DateAndTimeTableState extends State<DateAndTimeTable> {
         2: FlexColumnWidth(1),
       },
       children: [
-        getDateTimeField(context, null, false, widget.dateTimeNotifier, widget.updateDateTime),
-        const TableRow( // spacer
-          children: [
-            SizedBox(height: 10),
-            SizedBox(height: 10),
-            SizedBox(height: 10),
-          ],
-        ),
-        getDateTimeField(context, _scrollController, true, widget.dateTimeNotifier, widget.updateDateTime),
+        getDateTimeRow(context, true, null, TimeFrame.day, widget.dateTimeNotifier, widget.updateDateTime),
+        getSpacerRow(elements: 3, height: 10),
+        getDateTimeRow(context, true, _scrollController, TimeFrame.hour, widget.dateTimeNotifier, widget.updateDateTime),
       ]
     );
   }
 }
   
-TableRow getDateTimeField(
+dynamic getDateTimeRow(
   BuildContext context,
+  bool inTable,
   FixedExtentScrollController? controller,
-  bool isTime,
+  TimeFrame timeFrame,
   ValueNotifier<DateTime> dateTimeNotifier,
   Function(DateTime) onChanged,
 ) {
-  assert(controller != null || !isTime);
+  assert(controller != null || timeFrame != TimeFrame.hour);
   
-  return TableRow(
+  String label;
+  switch (timeFrame) {
+    case TimeFrame.hour:
+      label = "Hour:";
+      break;
+    case TimeFrame.day:
+      label = "Date:";
+      break;
+    case TimeFrame.week:
+      label = "Week:";
+      break;
+    case TimeFrame.month:
+      label = "Month:";
+      break;
+  }
+  
+  Widget stack = Stack(
+    alignment: Alignment.topCenter,
     children: [
-      isTime
-        ? const Text(
-          "Hour:",
-          style: TextStyle(
+      Padding(
+        padding: EdgeInsets.only(top: timeFrame == TimeFrame.hour ? 2 : 0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.teal.shade100.withAlpha(200),
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
           ),
-        )
-        : const Text(
-          "Date:",
-          style: TextStyle(
+          child: ValueListenableBuilder(
+            valueListenable: dateTimeNotifier,
+            builder: (context, dateTime, child) {
+              
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(
+                      width: 0,
+                      height: 25,
+                    ),
+                    _buildChevronButton(false, timeFrame, dateTime, onChanged, controller),
+                    // vertical divider
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Container(
+                        width: 1,
+                        height: 8,
+                        color: Colors.black.withAlpha(100),
+                      ),
+                    ),
+                    timeFrame == TimeFrame.hour ?
+                      TimeSelector(controller, dateTime, onChanged) :
+                      DateSelector(dateTime, timeFrame, onChanged),
+                    // vertical divider
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      child: Container(
+                        width: 1,
+                        height: 8,
+                        color: Colors.black.withAlpha(100),
+                      ),
+                    ),
+                    _buildChevronButton(true, timeFrame, dateTime, onChanged, controller),
+                  ],
+                ),
+              );
+            },
           ),
         ),
-      const SizedBox(width: 12),
-      Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: isTime ? 2 : 0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.teal.shade100.withAlpha(200),
-                borderRadius: const BorderRadius.all(Radius.circular(12)),
-              ),
-              child: ValueListenableBuilder(
-                valueListenable: dateTimeNotifier,
-                builder: (context, dateTime, child) {
-                  return IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(
-                          width: 0,
-                          height: 25,
-                        ),
-                        _buildChevronButton(false, isTime, dateTime, onChanged, controller),
-                        // vertical divider
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 5),
-                          child: Container(
-                            width: 1,
-                            height: 8,
-                            color: Colors.black.withAlpha(100),
-                          ),
-                        ),
-                        isTime ?
-                          TimeSelector(controller, dateTime, onChanged) :
-                          DateSelector(dateTime, onChanged),
-                        // vertical divider
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 5),
-                          child: Container(
-                            width: 1,
-                            height: 8,
-                            color: Colors.black.withAlpha(100),
-                          ),
-                        ),
-                        _buildChevronButton(true, isTime, dateTime, onChanged, controller),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          if (isTime) const Mark(),
-        ],
-      )
+      ),
+      if (timeFrame == TimeFrame.hour) const Mark(),
     ],
   );
+  
+  if (!inTable) {
+    stack = Expanded(
+      child: stack,
+    );
+  }
+  
+  List<Widget> children = [
+    Text(
+      label,
+      style: const TextStyle(fontSize: 16),
+    ),
+    const SizedBox(width: 12),
+    stack,
+  ];
+  
+  if (inTable) {
+    return TableRow(
+      children: children,
+    );
+  } else {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: children,
+    );
+  }
 }
+
+class DateTimeField extends StatelessWidget {
+  const DateTimeField({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
+}
+
 
 class TimeSelector extends StatefulWidget {
   final FixedExtentScrollController? controller;
@@ -240,32 +276,6 @@ class _TimeSelectorState extends State<TimeSelector> {
   }
 }
 
-class MouseDragScrollBehavior extends MaterialScrollBehavior {
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.mouse,
-    PointerDeviceKind.touch,
-    PointerDeviceKind.stylus,
-    PointerDeviceKind.trackpad,
-    PointerDeviceKind.unknown,
-  };
-}
-
-class Mark extends StatelessWidget {
-  const Mark({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 12,
-      height: 9,
-      child: CustomPaint(
-        painter: TrianglePainter(const Color.fromARGB(255, 69, 139, 128)),
-      ),
-    );
-  }
-}
-
 class TrianglePainter extends CustomPainter {
   // specify color in constructor
   Color color;
@@ -291,12 +301,29 @@ class TrianglePainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
+class Mark extends StatelessWidget {
+  const Mark({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 12,
+      height: 9,
+      child: CustomPaint(
+        painter: TrianglePainter(const Color.fromARGB(255, 69, 139, 128)),
+      ),
+    );
+  }
+}
+
 class DateSelector extends StatefulWidget {
   final DateTime dateTime;
+  final TimeFrame timeFrame;
   final Function(DateTime) onChanged;
   
   const DateSelector(
     this.dateTime,
+    this.timeFrame,
     this.onChanged,
     {super.key}
   );
@@ -308,7 +335,33 @@ class DateSelector extends StatefulWidget {
 class _DateSelectorState extends State<DateSelector> {
   @override
   Widget build(BuildContext context) {
-    var label = "${relativeDaysNatural(widget.dateTime)} (${conditionallyRemoveYear(context, [widget.dateTime], showWeekDay: false)[0]})";
+    List<String> labels = [];
+    if (widget.timeFrame == TimeFrame.day) {
+      labels.add("${relativeDaysNatural(widget.dateTime)} (${conditionallyRemoveYear(context, [widget.dateTime], showWeekDay: false)[0]})");
+    } if (widget.timeFrame == TimeFrame.week) {
+      var dtMonday = widget.dateTime;
+      var dtSunday = widget.dateTime.add(const Duration(days: 6));
+      var dtStrings = conditionallyRemoveYear(context, [dtMonday, dtSunday], showWeekDay: false);
+      labels.add(relativeWeeksNatural(widget.dateTime));
+      labels.add("${dtStrings[0]} - ${dtStrings[1]}");
+    } else if (widget.timeFrame == TimeFrame.month) {
+      // convert month to string
+      var month = DateFormat("MMMM").format(widget.dateTime);
+      var year = widget.dateTime.year;
+      labels.add("$month $year");
+    }
+    
+    List<Widget> children = [const SizedBox(height: 5)];
+    for (int i = 0; i < labels.length; i++) {
+      children.add(Text(
+        labels[i],
+        style: TextStyle(
+          fontSize: 16,
+          color: i == 0 ? Colors.black : const Color.fromARGB(255, 0, 145, 137),
+        ),
+      ));
+    }
+    children.add(const SizedBox(height: 5));
     
     return Expanded(
       child: InkWell(
@@ -320,25 +373,35 @@ class _DateSelectorState extends State<DateSelector> {
             lastDate: DateTime(2100),
           ).then((nDT) {
             if (nDT != null) {
-              nDT = DateTime(nDT.year, nDT.month, nDT.day, widget.dateTime.hour);
+              if (widget.timeFrame == TimeFrame.week) {
+                // set to monday
+                nDT = nDT.subtract(Duration(days: nDT.weekday - 1));
+              } else if (widget.timeFrame == TimeFrame.month) {
+                // set to 10th of the month
+                nDT = DateTime(nDT.year, nDT.month, 10);
+              } else {
+                nDT = DateTime(nDT.year, nDT.month, nDT.day, widget.dateTime.hour);
+              }
               widget.onChanged(nDT);
             }
           });
         },
-        child: Center(
-          child: Text(label),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: children,
         ),
       ),
     );
   }
 }
 
-Widget _buildChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(DateTime) onChanged, FixedExtentScrollController? scrollController) =>
+Widget _buildChevronButton(bool isUp, TimeFrame timeFrame, DateTime dateTime, Function(DateTime) onChanged, FixedExtentScrollController? scrollController) =>
   InkWell(
-    enableFeedback: !isTime,
+    enableFeedback: timeFrame != TimeFrame.hour,
     onTap: () {
       Duration duration;
-      if (isTime) {
+      if (timeFrame == TimeFrame.hour) {
         if ((isUp && dateTime.hour == 23) || (!isUp && dateTime.hour == 0)) {
           duration = const Duration(hours: -23);
           dateTime = isUp ? dateTime.add(duration) : dateTime.subtract(duration);
@@ -351,8 +414,17 @@ Widget _buildChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(D
           });
           scrollController?.animateToItem(newDateTime.hour, duration: const Duration(milliseconds: 100), curve: Curves.easeInOut);
         }
-      } else {
-        duration = isUp ? const Duration(days: 1) : const Duration(days: -1);
+      }
+      else if (timeFrame == TimeFrame.month) {
+        // Select the 10th day of the previous / next month
+        dateTime = dateTime.add(Duration(days: isUp ? 30 : -30));
+        dateTime = DateTime(dateTime.year, dateTime.month, 10);
+        onChanged(dateTime);
+      }
+      else {
+        int x = isUp ? 1 : -1;
+        if (timeFrame == TimeFrame.week) x *= 7;
+        duration = Duration(days: x);
         dateTime = dateTime.add(duration);
         onChanged(dateTime);
       }
@@ -362,3 +434,14 @@ Widget _buildChevronButton(bool isUp, bool isTime, DateTime dateTime, Function(D
       child: Icon(isUp ? Icons.chevron_right : Icons.chevron_left),
     ),
   );
+
+class MouseDragScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.touch,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.unknown,
+  };
+}

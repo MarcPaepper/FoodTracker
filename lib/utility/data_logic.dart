@@ -114,6 +114,8 @@ List<Unit> getConvertibleUnits(Unit targetUnit, Conversion densityConversion, Co
     possibleUnits.addAll(volumetricUnits);
   } else if (weightUnits.contains(targetUnit)) {
     possibleUnits.addAll(weightUnits);
+  } else {
+    possibleUnits.add(targetUnit);
   }
   if (densityConversion.enabled) {
     possibleUnits.addAll(volumetricUnits);

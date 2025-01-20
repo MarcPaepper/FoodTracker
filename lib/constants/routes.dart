@@ -71,7 +71,7 @@ var routes = {
       trackedId: result?.$2,
     );
   },
-  statsRoute:		  	(context) => const StatsView(),
+  statsRoute:		  	(context) =>       StatsView(ValueNotifier(DateTime.now())),
   testRoute:	  		(context) => const TestView(),
   optionsRoute:		  (context) => const OptionsView(),
   importExportRoute:(context) => const ImportExportView(),

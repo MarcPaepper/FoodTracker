@@ -55,7 +55,7 @@ class _MainViewState extends State<MainView> {
             physics: AlwaysScrollableScrollPhysics(),
             children: [
               MealsView(dateTimeNotifier),
-              StatsView(),
+              StatsView(dateTimeNotifier),
               ProductsView(),
               NutritionalValueView(),
               TargetsView(),

@@ -57,7 +57,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     
     _scrollController = FixedExtentScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0);
+      // _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0);
     });
     
     super.initState();
