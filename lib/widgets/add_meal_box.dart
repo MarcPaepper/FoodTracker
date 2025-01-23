@@ -91,17 +91,22 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           MultiValueListenableBuilder(
             listenables: [widget.dateTimeNotifier, ingredientsNotifier],
             builder: (context, values, child) {
+              DateTime dateTime = values[0];
+              List<(ProductQuantity, Color)> ingredients = values[1];
+              
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: DailyTargetsBox(
-                  values[0],
-                  values[1],
-                  (ingredients) {
-                    ingredientsNotifier.value = ingredients;
-                    Future(() {
-                      setState(() {});
-                    });
+                  dateTime,
+                  ingredients.map((ingr) => ([ingr.$1], ingr.$2)).toList(),
+                  null,
+                  (newIngredients) {
+                    ingredientsNotifier.value = newIngredients.map((ingr) => (ingr.$1[0], ingr.$2)).toList();
+                    // Future(() { // Why??
+                    //   setState(() {});
+                    // });
                   },
+                  FoldMode.startUnfolded,
                   false,
                   false,
                 ),

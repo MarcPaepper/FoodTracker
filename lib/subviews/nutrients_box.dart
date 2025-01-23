@@ -205,65 +205,64 @@ class NutrientsBox extends StatelessWidget {
     // sort nutValues by order id
     nutValues.sort((a, b) => a.orderId - b.orderId);
     
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: nutValues.length,
-      itemBuilder: (context, index) {
-        var nutValue = nutValues[index];
-        var nutrient = nutrients.firstWhere((nut) => nut.nutritionalValueId == nutValue.id);
-        
-        bool dark = index % 2 == 0;
-        var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
-        
-        return ListTile(
-          tileColor: color,
-          key: Key("tile for the nutrient ${nutrient.nutritionalValueId}"),
-          contentPadding: EdgeInsets.zero,
-          minVerticalPadding: 0,
-          visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
-          title: Row(
-            children: [
-              // Text field for the nutrient amount
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-                child: SizedBox(
-                  width: 140,
-                  child: AmountField(
-                    controller: nutrientAmountControllers[index],
-                    canBeEmpty: true,
-                    hintText: roundDouble(nutrient.value),
-                    onChangedAndParsed: (value) {
-                      nutrient.value = value;
-                      nutrient.autoCalc = false;
-                      devtools.log("updating nutrient ${nutrient.nutritionalValueId} to $value");
-                      nutrientsNotifier.value = List.from(nutrients);
-                      intermediateSave();
-                    },
-                    onEmptied: () {
-                      nutrient.autoCalc = true;
-                      devtools.log("updating nutrient ${nutrient.nutritionalValueId} to auto");
-                      nutrientsNotifier.value = List.from(nutrients);
-                      intermediateSave();
-                    },
-                    padding: 0,
-                    borderColor: nutrient.autoCalc ? const Color.fromARGB(181,  56, 141, 211) : null,//Color.fromARGB(197, 76, 129, 124),
-                    fillColor: nutrient.autoCalc   ? const Color.fromARGB( 44, 155, 186, 245) : null,
-                    hintColor: nutrient.autoCalc   ? const Color.fromARGB(174,  18,  83, 136)  : null,
-                  ),
+    List<Widget> children = [];
+    for (var index = 0; index < nutValues.length; index++) {
+      var nutValue = nutValues[index];
+      var nutrient = nutrients.firstWhere((nut) => nut.nutritionalValueId == nutValue.id);
+      
+      bool dark = index % 2 == 0;
+      var color = dark ? const Color.fromARGB(11, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
+      
+      children.add(ListTile(
+        tileColor: color,
+        key: Key("tile for the nutrient ${nutrient.nutritionalValueId}"),
+        contentPadding: EdgeInsets.zero,
+        minVerticalPadding: 0,
+        visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+        title: Row(
+          children: [
+            // Text field for the nutrient amount
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+              child: SizedBox(
+                width: 140,
+                child: AmountField(
+                  controller: nutrientAmountControllers[index],
+                  canBeEmpty: true,
+                  hintText: roundDouble(nutrient.value),
+                  onChangedAndParsed: (value) {
+                    nutrient.value = value;
+                    nutrient.autoCalc = false;
+                    devtools.log("updating nutrient ${nutrient.nutritionalValueId} to $value");
+                    nutrientsNotifier.value = List.from(nutrients);
+                    intermediateSave();
+                  },
+                  onEmptied: () {
+                    nutrient.autoCalc = true;
+                    devtools.log("updating nutrient ${nutrient.nutritionalValueId} to auto");
+                    nutrientsNotifier.value = List.from(nutrients);
+                    intermediateSave();
+                  },
+                  padding: 0,
+                  borderColor: nutrient.autoCalc ? const Color.fromARGB(181,  56, 141, 211) : null,//Color.fromARGB(197, 76, 129, 124),
+                  fillColor: nutrient.autoCalc   ? const Color.fromARGB( 44, 155, 186, 245) : null,
+                  hintColor: nutrient.autoCalc   ? const Color.fromARGB(174,  18,  83, 136)  : null,
                 ),
               ),
-              // Text for the nutrient name
-              Text(
-                "${nutValue.unit} ${nutValue.showFullName ? nutValue.name : ""}",
-                style: const TextStyle(
-                  fontSize: 16,
-                ),
-              )
-            ],
-          ),
-        );
-      },
+            ),
+            // Text for the nutrient name
+            Text(
+              "${nutValue.unit} ${nutValue.showFullName ? nutValue.name : ""}",
+              style: const TextStyle(
+                fontSize: 16,
+              ),
+            )
+          ],
+        ),
+      ));
+    }
+    return Column(
+      children: children,
     );
   }
 }

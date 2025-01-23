@@ -850,6 +850,9 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   List<Meal> meals,
   List<Meal>? oldMeals,
   bool sortByRelevancy,
+  {
+    int maxProducts = 7,
+  }
 ) {
   if (targets.isEmpty) return ({}, []);
   
@@ -954,7 +957,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   contributingProducts.sort((a, b) => relevancy[b]!.compareTo(relevancy[a]!));
   
   // combine the products that contributed the least to the target
-  for (int i = 7; i < contributingProducts.length; i++) {
+  for (int i = maxProducts; i < contributingProducts.length; i++) {
     var p = contributingProducts[i];
     // combine the product into the null product
     for (var t in targets) {
@@ -966,7 +969,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   }
   
   // shorten the contributingProducts list
-  contributingProducts = contributingProducts.sublist(0, min(7, contributingProducts.length));
+  contributingProducts = contributingProducts.sublist(0, min(maxProducts, contributingProducts.length));
   
   if (sortByRelevancy) {
     // make all progress maps in targetProgress have the same order as contributingProducts
@@ -1034,14 +1037,18 @@ double calcProductTargetRecursively(Map<int, Product> productsMap, Unit targetUn
 
 // returns -1 if the date is before the interval, 0 if it is inside the interval, 1 if it is after the interval
 int isDateInsideInterval(DateTime refDate, DateTime start, DateTime end) {
-  // check whether the refDate is inside the temporary range
   start = start.subtract(const Duration(days: 1));
-  end = end.add(const Duration(days: 1));
   
   start = DateTime(start.year, start.month, start.day, 23, 59, 59);
-  end = DateTime(end.year, end.month, end.day, 0, 0, 0);
-  
+  end = DateTime(end.year, end.month, end.day, 23, 59, 59);
   if (refDate.isBefore(start)) return -1;
   if (refDate.isAfter(end)) return 1;
   return 0;
+}
+
+int daysBetween(DateTime earlier, DateTime later) {
+  later = DateTime.utc(later.year, later.month, later.day);
+  earlier = DateTime.utc(earlier.year, earlier.month, earlier.day);
+
+  return later.difference(earlier).inDays;
 }

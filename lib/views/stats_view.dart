@@ -4,10 +4,13 @@ import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/loading_page.dart';
 import 'package:food_tracker/widgets/multi_stream_builder.dart';
+import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
 import 'package:food_tracker/widgets/spacer_row.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/data/data_objects.dart';
+import '../subviews/daily_targets_box.dart';
+import '../utility/data_logic.dart';
 import '../widgets/border_box.dart';
 import '../widgets/datetime_selectors.dart';
 
@@ -31,13 +34,18 @@ enum CalculationMethod {
   avg,
 }
 
-class _StatsViewState extends State<StatsView> {
+class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixin {
   late final DataService _dataService;
   Map<Target, bool> _activeTargets = {};
   TimeFrame _timeFrame = TimeFrame.day;
-  CalculationMethod _calculationMethod = CalculationMethod.sum;
+  CalculationMethod _calculationMethod = CalculationMethod.avg;
   bool includeEmptyDays = false;
   final ValueNotifier<DateTime> _dateTimeNotifier = ValueNotifier(DateTime.now());
+  
+  List<Meal> relevantMeals = [];
+  
+  int hash = 0;
+  (Map<Target, Map<Product?, double>>, List<Product>)? dailyTargetProgressData;
   
   final textStyle = GoogleFonts.lato().copyWith(
     fontSize: 16,
@@ -49,157 +57,250 @@ class _StatsViewState extends State<StatsView> {
     _dataService = DataService.current();
     super.initState();
   }
+  
+  @override
+  bool get wantKeepAlive => true;
     
   @override
   Widget build(BuildContext context) {
-    return MultiStreamBuilder(
-      streams: [
-        _dataService.streamProducts(),
-        _dataService.streamNutritionalValues(),
-        _dataService.streamTargets(),
-        _dataService.streamMeals(),
+    super.build(context);
+    
+    return MultiValueListenableBuilder(
+      listenables: [
+        _dateTimeNotifier,
+        widget.globalDateTimeNotifier,
       ],
-      builder: (context, snapshots) {
-        Widget? msg;
-        
-        if (snapshots.any((snap) => snap.hasError)) {
-          msg = Text("Error: ${snapshots.firstWhere((snap) => snap.hasError).error}");
-        } else if (snapshots.any((snap) => snap.connectionState == ConnectionState.waiting)) {
-          msg = const Column(
-            children: [
-              SizedBox(height: 130),
-              LoadingPage(),
-            ],
-          );
-        }
-        
-        if (msg != null) {
-          return msg;
-        }
-        
-        final products = snapshots[0].data as List<Product>;
-        final productsMap = Map<int, Product>.fromEntries(products.map((product) => MapEntry(product.id, product)));
-        final nutvalues = snapshots[1].data as List<NutritionalValue>;
-        final targets = snapshots[2].data as List<Target>;
-        final meals = snapshots[3].data as List<Meal>;
-        
-        // check if there are new targets
-        if (targets.any((target) => !_activeTargets.containsKey(target))) {
-          var copy = Map<Target, bool>.from(_activeTargets);
-          for (var target in targets) {
-            if (!_activeTargets.containsKey(target)) {
-              copy[target] = target.isPrimary;
-            }
-          }
-          _activeTargets = copy;
-        }
-        
-        bool isGlobal = _timeFrame == TimeFrame.day;
-        ValueNotifier<DateTime> notifier = isGlobal ? widget.globalDateTimeNotifier : _dateTimeNotifier;
-        
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Timeframe Dropdown
-              Table(
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                columnWidths: const {
-                  0: IntrinsicColumnWidth(),
-                  1: IntrinsicColumnWidth(),
-                  2: FlexColumnWidth(),
-                },
+      builder: (context, values, child) {
+        return MultiStreamBuilder(
+          streams: [
+            _dataService.streamProducts(),
+            _dataService.streamNutritionalValues(),
+            _dataService.streamTargets(),
+            _dataService.streamMeals(),
+          ],
+          builder: (context, snapshots) {
+            Widget? msg;
+            
+            if (snapshots.any((snap) => snap.hasError)) {
+              msg = Text("Error: ${snapshots.firstWhere((snap) => snap.hasError).error}");
+            } else if (snapshots.any((snap) => snap.connectionState == ConnectionState.waiting)) {
+              msg = const Column(
                 children: [
-                  TableRow(
-                    children: [
-                      const Text("Timeframe:", style: TextStyle(fontSize: 16)),
-                      const SizedBox(width: 12),
-                      DropdownButtonFormField<TimeFrame>(
-                        value: _timeFrame,
-                        decoration: dropdownStyleEnabled,
-                        onChanged: (TimeFrame? value) {
-                          setState(() {
-                            _timeFrame = value!;
-                            if (value == TimeFrame.week) {
-                              // set to monday
-                              _dateTimeNotifier.value = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
-                            } else if (value == TimeFrame.month) {
-                              // set to 10th of the month
-                              _dateTimeNotifier.value = DateTime(DateTime.now().year, DateTime.now().month, 10);
-                            }
-                          });
-                        },
-                        items: [
-                          DropdownMenuItem(
-                            value: TimeFrame.day,
-                            child: Text("Daily", style: textStyle),
-                          ),
-                          DropdownMenuItem(
-                            value: TimeFrame.week,
-                            child: Text("Weekly", style: textStyle),
-                          ),
-                          DropdownMenuItem(
-                            value: TimeFrame.month,
-                            child: Text("Monthly", style: textStyle),
+                  SizedBox(height: 130),
+                  LoadingPage(),
+                ],
+              );
+            }
+            
+            if (msg != null) {
+              return msg;
+            }
+            
+            final products = snapshots[0].data as List<Product>;
+            final productsMap = Map<int, Product>.fromEntries(products.map((product) => MapEntry(product.id, product)));
+            final nutvalues = snapshots[1].data as List<NutritionalValue>;
+            final targets = snapshots[2].data as List<Target>;
+            final meals = snapshots[3].data as List<Meal>;
+            
+            // check if there are new targets
+            if (targets.any((target) => !_activeTargets.containsKey(target))) {
+              var copy = Map<Target, bool>.from(_activeTargets);
+              for (var target in targets) {
+                if (!_activeTargets.containsKey(target)) {
+                  copy[target] = target.isPrimary;
+                }
+              }
+              _activeTargets = copy;
+            }
+            
+            bool isGlobal = _timeFrame == TimeFrame.day;
+            ValueNotifier<DateTime> notifier = isGlobal ? widget.globalDateTimeNotifier : _dateTimeNotifier;
+            
+            // hash consists of products, nutvalues, targets, meals and settings
+            ListEquality leq = const ListEquality();
+            MapEquality meq = const MapEquality();
+            int newHash = Object.hash(leq.hash(products), leq.hash(nutvalues), leq.hash(targets), leq.hash(meals), meq.hash(_activeTargets), _timeFrame, _calculationMethod, includeEmptyDays, notifier.value);
+            // devtools.log("old hash $hash, new hash $newHash");
+            if (hash != newHash) {
+              DateTime start = notifier.value;
+              DateTime end;
+              if (_timeFrame == TimeFrame.day) {
+                end = start;
+              } else if (_timeFrame == TimeFrame.week) {
+                end = start.add(const Duration(days: 6));
+              } else {
+                end = start.add(const Duration(days: 30));
+                end = DateTime(end.year, end.month, 1);
+                end = end.subtract(const Duration(days: 1));
+                start = DateTime(start.year, start.month, 1);
+              }
+              relevantMeals = meals.where((meal) => isDateInsideInterval(meal.dateTime, start, end) == 0).toList();
+              var activeTargets = _activeTargets.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
+              dailyTargetProgressData = getDailyTargetProgress(notifier.value, activeTargets, productsMap, nutvalues, relevantMeals, [], true, maxProducts: 100);
+              hash = newHash;
+              if (!isGlobal && _calculationMethod == CalculationMethod.avg) {
+                var dt1970 = DateTime(1970);
+                // count how many days have at least one meal
+                int startDay = daysBetween(dt1970, start);
+                int endDay = daysBetween(dt1970, end);
+                int dayCount = endDay - startDay + 1;
+                if (!includeEmptyDays) {
+                  Set<int> days = {};
+                  for (var meal in relevantMeals) {
+                    days.add(daysBetween(dt1970, meal.dateTime));
+                  }
+                  dayCount = days.length;
+                }
+                dailyTargetProgressData = (dailyTargetProgressData!.$1.map((target, map) {
+                  var newMap = Map<Product?, double>.fromEntries(map.entries.map((entry) {
+                    double newValue = entry.value / dayCount;
+                    return MapEntry(entry.key, newValue);
+                  }));
+                  return MapEntry(target, newMap);
+                }), dailyTargetProgressData!.$2);
+              }
+            }
+            
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Timeframe Dropdown
+                    Table(
+                      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                      columnWidths: const {
+                        0: IntrinsicColumnWidth(),
+                        1: IntrinsicColumnWidth(),
+                        2: FlexColumnWidth(),
+                      },
+                      children: [
+                        TableRow(
+                          children: [
+                            const Text("Timeframe:", style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 12),
+                            DropdownButtonFormField<TimeFrame>(
+                              value: _timeFrame,
+                              decoration: dropdownStyleEnabled,
+                              onChanged: (TimeFrame? value) {
+                                setState(() {
+                                  _timeFrame = value!;
+                                  if (value == TimeFrame.week) {
+                                    // set to monday
+                                    DateTime newDT = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+                                    _dateTimeNotifier.value = DateTime(newDT.year, newDT.month, newDT.day);
+                                  } else if (value == TimeFrame.month) {
+                                    // set to 10th of the month
+                                    _dateTimeNotifier.value = DateTime(DateTime.now().year, DateTime.now().month, 10);
+                                  }
+                                });
+                              },
+                              items: [
+                                DropdownMenuItem(
+                                  value: TimeFrame.day,
+                                  child: Text("Daily", style: textStyle),
+                                ),
+                                DropdownMenuItem(
+                                  value: TimeFrame.week,
+                                  child: Text("Weekly", style: textStyle),
+                                ),
+                                DropdownMenuItem(
+                                  value: TimeFrame.month,
+                                  child: Text("Monthly", style: textStyle),
+                                ),
+                              ],
+                            ),
+                          ]
+                        ),
+                        ...isGlobal ? [] : [
+                          getSpacerRow(elements: 3, height: 12),
+                          TableRow(
+                            children: [
+                              const Text("Calculate:", style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 12),
+                              DropdownButtonFormField<CalculationMethod>(
+                                value: _calculationMethod,
+                                decoration: dropdownStyleEnabled,
+                                onChanged: (CalculationMethod? value) {
+                                  setState(() {
+                                    _calculationMethod = value!;
+                                  });
+                                },
+                                items: [
+                                  DropdownMenuItem(
+                                    value: CalculationMethod.avg,
+                                    child: Text("Daily Average", style: textStyle),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: CalculationMethod.sum,
+                                    child: Text("Cumulative Sum", style: textStyle),
+                                  ),
+                                ],
+                              ),
+                            ]
                           ),
                         ],
-                      ),
-                    ]
-                  ),
-                  ...isGlobal ? [] : [
-                    getSpacerRow(elements: 3, height: 12),
-                    TableRow(
-                      children: [
-                        const Text("Calculate:", style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 12),
-                        DropdownButtonFormField<CalculationMethod>(
-                          value: _calculationMethod,
-                          decoration: dropdownStyleEnabled,
-                          onChanged: (CalculationMethod? value) {
-                            setState(() {
-                              _calculationMethod = value!;
-                            });
-                          },
-                          items: [
-                            DropdownMenuItem(
-                              value: CalculationMethod.avg,
-                              child: Text("Daily Average", style: textStyle),
-                            ),
-                            DropdownMenuItem(
-                              value: CalculationMethod.sum,
-                              child: Text("Cumulative Sum", style: textStyle),
-                            ),
-                          ],
-                        ),
-                      ]
+                      ],
                     ),
+                    ... (!isGlobal && _calculationMethod == CalculationMethod.avg) ? [
+                      const SizedBox(height: 10),
+                      SwitchListTile(
+                        title: const Text("Include days with 0 meals", style: TextStyle(fontSize: 16)),
+                        value: includeEmptyDays,
+                        // controlAffinity: ListTileControlAffinity.leading,
+                        visualDensity: VisualDensity.compact,
+                        contentPadding: const EdgeInsets.all(0),
+                        onChanged: (bool value) {
+                          setState(() {
+                            includeEmptyDays = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                    ] : [const SizedBox(height: 14)],
+                    getDateTimeRow(context, false, null, _timeFrame, notifier, (newDT) => notifier.value = newDT),
+                    const SizedBox(height: 12),
+                    _buildGraphBox(productsMap, nutvalues, targets),
+                    const SizedBox(height: 12),
+                    _buildTargetSelector(targets, productsMap, nutvalues),
                   ],
-                ],
-              ),
-              ... (!isGlobal && _calculationMethod == CalculationMethod.avg) ? [
-                const SizedBox(height: 10),
-                SwitchListTile(
-                  title: const Text("Include days with 0 meals", style: TextStyle(fontSize: 16)),
-                  value: includeEmptyDays,
-                  // controlAffinity: ListTileControlAffinity.leading,
-                  visualDensity: VisualDensity.compact,
-                  contentPadding: const EdgeInsets.all(0),
-                  onChanged: (bool value) {
-                    setState(() {
-                      includeEmptyDays = value;
-                    });
-                  },
                 ),
-                const SizedBox(height: 10),
-              ] : [const SizedBox(height: 14)],
-              getDateTimeRow(context, false, null, _timeFrame, notifier, (newDT) => notifier.value = newDT),
-              const SizedBox(height: 12),
-              _buildTargetSelector(targets, productsMap, nutvalues),
-            ],
-          ),
+              ),
+            );
+          }
         );
       }
+    );
+  }
+  
+  Widget _buildGraphBox(Map<int, Product> productsMap, List<NutritionalValue> nutvalues, List<Target> targets) {
+    if (dailyTargetProgressData == null) {
+      return const LoadingPage();
+    }
+    
+    var isGlobal = _timeFrame == TimeFrame.day;
+    ValueNotifier<DateTime> notifier = isGlobal ? widget.globalDateTimeNotifier : _dateTimeNotifier;
+    
+    Map<Target, Map<Product?, double>> progress = dailyTargetProgressData!.$1;
+    List<Product> contributingProducts = dailyTargetProgressData!.$2;
+    List<(List<ProductQuantity>, Color)> ingredients = [];
+    for (int i = 0; i < contributingProducts.length; i++) {
+      Product product = contributingProducts[i];
+      ingredients.add(([ProductQuantity(productId: product.id, amount: 1, unit: product.defaultUnit)], productColors[i % productColors.length]));
+      // devtools.log("product $i: ${product.name} color: ${productColors[i % productColors.length]}");
+    }
+    
+    return DailyTargetsBox(
+      notifier.value,
+      ingredients,
+      relevantMeals,
+      (newIngredients) => devtools.log("new ingredients: $newIngredients"),
+      FoldMode.neverFold,
+      false,
+      true,
+      null, null, null, null, null, null, null, null, null, null,
+      progress,
     );
   }
   

@@ -494,10 +494,12 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               
                               return DailyTargetsBox(
                                 null,
-                                ingredients,
-                                (newIngredients) => _ingredientsNotifier.value = List.from(newIngredients),
+                                ingredients.map((ingr) => ([ingr.$1], ingr.$2)).toList(),
+                                null,
+                                (newIngredients) => _ingredientsNotifier.value = newIngredients.map((ingr) => (ingr.$1[0], ingr.$2)).toList(),
+                                FoldMode.startFolded,
                                 true,
-                                true,
+                                false,
                                 name,
                                 _defaultUnitNotifier,
                                 _nutrientsNotifier,

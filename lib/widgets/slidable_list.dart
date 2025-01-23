@@ -21,9 +21,10 @@ class SlidableList extends StatefulWidget {
 class _SlidableListState extends State<SlidableList> {
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    // return ListView(
+    return Column(
+      // shrinkWrap: true,
+      // physics: const NeverScrollableScrollPhysics(),
       children: List.generate(widget.entries.length, (index) {
         var entry = widget.entries[index];
         var menuItems = entry.menuItems;
@@ -63,11 +64,14 @@ class _SlidableReorderableListState extends State<SlidableReorderableList> {
   @override
   Widget build(BuildContext context) {
     return ReorderableListView(
+    // return ReorderableList(
       clipBehavior: Clip.antiAlias,
       shrinkWrap: true,
       buildDefaultDragHandles: widget.buildDefaultDragHandles,
       onReorder: widget.onReorder,
       physics: widget.physics,
+      // itemCount: widget.entries.length,
+      // itemBuilder: (context, index) {
       children: List.generate(widget.entries.length, (index) {
         var entry = widget.entries[index];
         var menuItems = entry.menuItems;
@@ -81,6 +85,7 @@ class _SlidableReorderableListState extends State<SlidableReorderableList> {
           child: child,
         );
       }).toList(),
+      // },
     );
   }
 }
