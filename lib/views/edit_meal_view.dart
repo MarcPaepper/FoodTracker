@@ -81,15 +81,12 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
                       loaded = true;
                     }
                     
-                    return ScrollConfiguration(
-                      behavior: MouseDragScrollBehavior().copyWith(scrollbars: false, overscroll: false),
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: Form(
-                            key: _formKey,
-                            child: _buildView(products, meal),
-                          ),
+                    return SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Form(
+                          key: _formKey,
+                          child: _buildView(products, meal),
                         ),
                       ),
                     );

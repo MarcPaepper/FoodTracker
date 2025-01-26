@@ -98,10 +98,10 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: DailyTargetsBox(
                   dateTime,
-                  ingredients.map((ingr) => ([ingr.$1], ingr.$2)).toList(),
+                  ingredients,
                   null,
                   (newIngredients) {
-                    ingredientsNotifier.value = newIngredients.map((ingr) => (ingr.$1[0], ingr.$2)).toList();
+                    ingredientsNotifier.value = newIngredients;
                     // Future(() { // Why??
                     //   setState(() {});
                     // });

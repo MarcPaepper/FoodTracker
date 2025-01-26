@@ -5,6 +5,7 @@ import 'package:food_tracker/views/meals_view.dart';
 import 'package:food_tracker/views/stats_view.dart';
 import '../constants/data.dart';
 import '../services/data/data_service.dart';
+import '../utility/theme.dart';
 import 'products_view.dart';
 import 'nutvalues_view.dart';
 import 'options_view.dart';
@@ -39,8 +40,8 @@ class _MainViewState extends State<MainView> {
   @override
   Widget build(BuildContext context) {
     return ScrollConfiguration(
-      // clamping scroll physics to avoid overscroll
-      behavior: const ScrollBehavior().copyWith(overscroll: false),
+      // clamping scroll physics to avoid overscrollScrollConfiguration(
+      behavior: MouseDragScrollBehavior().copyWith(scrollbars: false, overscroll: false),
       child: DefaultTabController(
         length: 6,
         child: Scaffold(

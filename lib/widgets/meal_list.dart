@@ -11,10 +11,9 @@ import "../services/data/data_service.dart";
 import "../utility/text_logic.dart";
 import "../utility/theme.dart";
 import "add_meal_box.dart";
+import "loading_page.dart";
 
 import "dart:developer" as devtools show log;
-
-import "loading_page.dart";
 
 class MealList extends StatefulWidget {
   final Map<int, Product>? productsMap;

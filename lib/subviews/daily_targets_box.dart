@@ -1,11 +1,12 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
+import 'package:intl/intl.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/data_logic.dart';
+import '../utility/text_logic.dart';
 import '../widgets/amount_field.dart';
 import '../widgets/border_box.dart';
 import '../widgets/color_indicator_strip.dart';
@@ -25,15 +26,24 @@ enum FoldMode {
   neverFold,
 }
 
+enum TimeFormat {
+  hours,
+  weekdays,
+  days,
+}
+
 class DailyTargetsBox extends StatefulWidget {
   final DateTime? dateTime;
-  final List<(List<ProductQuantity>, Color)>? ingredients;
+  final List<(ProductQuantity, Color)>? ingredients;
   final List<Meal>? meals; // ingredients but with timestamps
-  final void Function(List<(List<ProductQuantity>, Color)>) onIngredientsChanged;
+  final void Function(List<(ProductQuantity, Color)>) onIngredientsChanged;
   final FoldMode startFolded;
   
   final bool ingredientList;
   final bool scrollList;
+  
+  final TimeFormat? timeFormat;
+  
   final String? name;
   final ValueNotifier<Unit>? defaultUnitNotifier;
   final ValueNotifier<List<ProductNutrient>>? nutrientsNotifier;
@@ -60,6 +70,7 @@ class DailyTargetsBox extends StatefulWidget {
     this.ingredientList,
     this.scrollList,
     [
+      this.timeFormat,
       this.name,
       this.defaultUnitNotifier,
       this.nutrientsNotifier,
@@ -255,14 +266,14 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 
                 // mapping
                 Map<int, Product> productsMap = products.asMap().map((key, value) => MapEntry(value.id, value));
-                Map<int, Color> colors = widget.ingredients?.asMap().map((key, value) => MapEntry(value.$1[0].productId ?? -1, value.$2)) ?? {};
+                Map<int, Color> colors = widget.ingredients?.asMap().map((key, value) => MapEntry(value.$1.productId ?? -1, value.$2)) ?? {};
                 
                 // get target progress
                 Map<Target, Map<Product?, double>> targetProgress;
                 List<Product> contributingProducts;
                 if (widget.overrideProgress != null) {
                   targetProgress = widget.overrideProgress!;
-                  contributingProducts = widget.ingredients!.map((ingr) => productsMap[ingr.$1[0].productId]!).toList();
+                  contributingProducts = widget.ingredients!.map((ingr) => productsMap[ingr.$1.productId]!).toList();
                 } else {
                   // old meal, new meal processing
                   if (widget.meals != null) {
@@ -273,17 +284,15 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                       newMeals = snapshotM!.data as List<Meal>;
                       oldMeals = [];
                     } else {
+                   
                       // convert ProductQuantity to Meal
-                      newMeals = [];
-                      for (var ingr in widget.ingredients!) {
-                        for (var pQ in ingr.$1) {
-                          newMeals.add(Meal(
-                            id: -1,
-                            dateTime: widget.dateTime ?? DateTime.now(),
-                            productQuantity: pQ,
-                          ));
-                        }
-                      }
+                      newMeals = widget.ingredients!.map((ingr) {
+                        return Meal(
+                          id: -1,
+                          dateTime: widget.dateTime ?? DateTime.now(),
+                          productQuantity: ingr.$1,
+                        );
+                      }).toList();
                       oldMeals = widget.dateTime == null ? [] : snapshotM!.data as List<Meal>;
                     }
                   }
@@ -429,7 +438,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                     
                     // make sure all contributing products have the right color
                     for (var i = 0; i < contributingColored.length; i++) {
-                      int index = widget.ingredients!.indexWhere((element) => element.$1[0].productId == contributingColored[i].id);
+                      int index = widget.ingredients!.indexWhere((element) => element.$1.productId == contributingColored[i].id);
                       var (productQuantity, color) = widget.ingredients![index];
                       var desiredColor = productColors[i % productColors.length];
                       if (color != desiredColor) {
@@ -444,7 +453,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                     // make sure those are grey
                     const grey = Color.fromARGB(255, 99, 99, 99);
                     for (var p in nonContributingProducts) {
-                      var index = widget.ingredients!.indexWhere((element) => element.$1[0].productId == p!.id);
+                      var index = widget.ingredients!.indexWhere((element) => element.$1.productId == p!.id);
                       var (productQuantity, color) = widget.ingredients![index];
                       if (color != grey) {
                         // devtools.log("changing color of ${p?.name} from $color to $grey because of non-contribution");
@@ -499,12 +508,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                             ),
                           );
                         }
-                        return ScrollConfiguration(
-                          behavior: ScrollConfiguration.of(context).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Graph(constraints.maxWidth, targets, products, colors, nutritionalValues, targetProgress, widget.ingredientList)
-                          ),
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Graph(constraints.maxWidth, targets, products, colors, nutritionalValues, targetProgress, widget.ingredientList)
                         );
                       }
                     ),
@@ -515,6 +521,8 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                         widget.ingredients,
                         contributingProducts,
                         productOverflow,
+                        widget.scrollList,
+                        widget.timeFormat ?? TimeFormat.hours,
                       ),
                     ],
                   ],
@@ -611,26 +619,42 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   
   Widget _buildProductList(
     Map<int, Product> productsMap,
-    List<(List<ProductQuantity>, Color)>? ingredients,
+    List<(ProductQuantity, Color)>? ingredients,
     List<Product> contributingProducts,
     bool listOther,
+    bool showMeals,
+    [
+      TimeFormat timeFormat = TimeFormat.hours,
+    ]
   ) {
     if (ingredients == null) return Container();
     
+    // find out height for scroll list
+    double viewHeight = 0;
+    bool showAll = false;
+    if (showMeals) {
+      double viewportHeight = MediaQuery.of(context).size.height;
+      viewportHeight -= 516; // subtract the height of the graph
+      int numberOfRows = viewportHeight ~/ 57;
+      numberOfRows = math.max(3, math.min(7, numberOfRows)); // clamp between 3 and 7
+      viewHeight = numberOfRows * 57.0;
+      showAll = numberOfRows + 2 > contributingProducts.length;
+    }
+    
     var contributingIngredients = contributingProducts.where((p) => p.id >= 0).map((p) {
-      return ingredients.firstWhereOrNull((ingr) => ingr.$1[0].productId == p.id);
+      return ingredients.firstWhereOrNull((ingr) => ingr.$1.productId == p.id);
     }).toList();
     if (contributingProducts.any((p) => p.id == -1)) {
-      contributingIngredients.insert(0, ([ProductQuantity(productId: -1, amount: 0, unit: Unit.g)], DailyTargetsBox.pseudoColor));
+      contributingIngredients.insert(0, (ProductQuantity(productId: -1, amount: 0, unit: Unit.g), DailyTargetsBox.pseudoColor));
     }
     if (contributingProducts.any((p) => p.id == -2)) {
-      contributingIngredients.insert(0, ([ProductQuantity(productId: -2, amount: 0, unit: Unit.g)], DailyTargetsBox.selfColor));
+      contributingIngredients.insert(0, (ProductQuantity(productId: -2, amount: 0, unit: Unit.g), DailyTargetsBox.selfColor));
     }
     
     List<Widget> children = [];
     
-    int max = contributingIngredients.length + (listOther ? 1 : 0);
-    for (int i = 0; i < max; i++) {
+    int maxLength = contributingIngredients.length + (listOther ? 1 : 0);
+    for (int i = 0; i < maxLength; i++) {
       bool isProduct = i < contributingIngredients.length;
       
       var ingr = isProduct ? contributingIngredients[i] : null;
@@ -646,7 +670,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       var colorText = Color.fromARGB(255, r, g, b);
       var colorBg = i % 2 == 0 ? const Color.fromARGB(14, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
       
-      var product = isProduct ? productsMap[productQuantities![0].productId]! : null;
+      var product = isProduct ? productsMap[productQuantities!.productId] : null;
       
       children.add(
         Container(
@@ -658,13 +682,98 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    child: Text(
-                      product?.name ?? "Other Products",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: colorText,
-                        fontStyle: isProduct ? FontStyle.normal : FontStyle.italic,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product?.name ?? "Other Products",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: showMeals ? FontWeight.w500 : FontWeight.normal,
+                            color: colorText,
+                            fontStyle: isProduct ? FontStyle.normal : FontStyle.italic,
+                          ),
+                        ),
+                        ... (showMeals && isProduct ? [
+                          const SizedBox(height: 4),
+                          Builder(
+                            builder: (context) {
+                              if (product == null) return Container();
+                              var meals = widget.meals!.where((m) => m.productQuantity.productId == product.id).toList();
+                              if (meals.isEmpty) return Container();
+                              // List<(String, String)> mealStrings = [];
+                              List<TableRow> tableRows = [];
+                              if (meals.length > 3) {
+                                // combine meals
+                                // test if all meals use the same product quantity unit
+                                var unit = meals[0].productQuantity.unit;
+                                var sameUnit = meals.every((m) => m.productQuantity.unit == unit);
+                                if (!sameUnit) unit = product.defaultUnit;
+                                
+                                var totalAmount = 0.0;
+                                for (var meal in meals) {
+                                  totalAmount += convertToUnit(unit, meal.productQuantity.unit, meal.productQuantity.amount, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
+                                }
+                                meals = [Meal(id: -meals.length, dateTime: DateTime.now(), productQuantity: ProductQuantity(productId: product.id, amount: totalAmount, unit: unit))];
+                              }
+                              
+                              for (var meal in meals) {
+                                String timeString;
+                                if (meal.id < 0) {
+                                  timeString = "${-meal.id} meals";
+                                } else if (timeFormat == TimeFormat.hours) {
+                                  timeString = "${meal.dateTime.hour.toString()} h";
+                                } else if (timeFormat == TimeFormat.weekdays) {
+                                  timeString = DateFormat("EEEE").format(meal.dateTime);
+                                } else {
+                                  timeString = "${meal.dateTime.day}.";
+                                }
+                                timeString += "";
+                                
+                                var amount = meal.productQuantity.amount;
+                                var unit = meal.productQuantity.unit;
+                                var unitString = unit == Unit.quantity ? product.quantityName : unitToString(unit);
+                                tableRows.add(
+                                  TableRow(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(right: 8),
+                                        child: Text(
+                                          timeString,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black.withOpacity(0.66),
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        "${truncateZeros(roundDouble(amount))} $unitString",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black.withOpacity(0.66),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              double colWidth;
+                              if (timeFormat == TimeFormat.weekdays) {
+                                colWidth = 100;
+                              } else {
+                                colWidth = 70;
+                              }
+                              return Table(
+                                columnWidths: {
+                                  0: FixedColumnWidth(colWidth),
+                                  1: const IntrinsicColumnWidth(),
+                                },
+                                children: tableRows,
+                              );
+                            }
+                          ),
+                        ] : []),
+                      ],
                     ),
                   ),
                 ),
@@ -674,9 +783,43 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
         ),
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children,
-    );
+    
+    if (showMeals) {
+      if (showAll) {
+        return Column(
+          children: children,
+        );
+      }
+      else {
+        return Column(
+          children:  [
+            // horizontal black line
+            Container(
+              height: 1.2,
+              color: Colors.black.withOpacity(0.8),
+            ),
+            // scroll view with meals
+            SizedBox(
+              height: viewHeight,
+              child: ListView(
+                children: children,
+                
+              ),
+            ),
+          ],
+        );
+      }
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      );
+    }
   }
+}
+
+enum MealView {
+  hidden,
+  timestamp,
+  aggregate,
 }

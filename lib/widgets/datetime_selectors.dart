@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../services/data/data_objects.dart';
 import '../utility/text_logic.dart';
+import '../utility/theme.dart';
 import 'spacer_row.dart';
 
 // import 'dart:developer' as devtools show log;
@@ -434,14 +435,3 @@ Widget _buildChevronButton(bool isUp, TimeFrame timeFrame, DateTime dateTime, Fu
       child: Icon(isUp ? Icons.chevron_right : Icons.chevron_left),
     ),
   );
-
-class MouseDragScrollBehavior extends MaterialScrollBehavior {
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.mouse,
-    PointerDeviceKind.touch,
-    PointerDeviceKind.stylus,
-    PointerDeviceKind.trackpad,
-    PointerDeviceKind.unknown,
-  };
-}

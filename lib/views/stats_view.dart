@@ -151,13 +151,15 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                   }
                   dayCount = days.length;
                 }
-                dailyTargetProgressData = (dailyTargetProgressData!.$1.map((target, map) {
-                  var newMap = Map<Product?, double>.fromEntries(map.entries.map((entry) {
-                    double newValue = entry.value / dayCount;
-                    return MapEntry(entry.key, newValue);
-                  }));
-                  return MapEntry(target, newMap);
-                }), dailyTargetProgressData!.$2);
+                if (dayCount != 0) {
+                  dailyTargetProgressData = (dailyTargetProgressData!.$1.map((target, map) {
+                    var newMap = Map<Product?, double>.fromEntries(map.entries.map((entry) {
+                      double newValue = entry.value / dayCount;
+                      return MapEntry(entry.key, newValue);
+                    }));
+                    return MapEntry(target, newMap);
+                  }), dailyTargetProgressData!.$2);
+                }
               }
             }
             
@@ -284,11 +286,25 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
     
     Map<Target, Map<Product?, double>> progress = dailyTargetProgressData!.$1;
     List<Product> contributingProducts = dailyTargetProgressData!.$2;
-    List<(List<ProductQuantity>, Color)> ingredients = [];
+    List<(ProductQuantity, Color)> ingredients = [];
     for (int i = 0; i < contributingProducts.length; i++) {
       Product product = contributingProducts[i];
-      ingredients.add(([ProductQuantity(productId: product.id, amount: 1, unit: product.defaultUnit)], productColors[i % productColors.length]));
+      ingredients.add((ProductQuantity(productId: product.id, amount: 1, unit: product.defaultUnit), productColors[i % productColors.length]));
       // devtools.log("product $i: ${product.name} color: ${productColors[i % productColors.length]}");
+    }
+    
+    TimeFormat tf;
+    switch (_timeFrame) {
+      case TimeFrame.day:
+        tf = TimeFormat.hours;
+        break;
+      case TimeFrame.week:
+        tf = TimeFormat.weekdays;
+        break;
+      case TimeFrame.month:
+      default:
+        tf = TimeFormat.days;
+        break;
     }
     
     return DailyTargetsBox(
@@ -299,6 +315,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
       FoldMode.neverFold,
       false,
       true,
+      tf,
       null, null, null, null, null, null, null, null, null, null,
       progress,
     );

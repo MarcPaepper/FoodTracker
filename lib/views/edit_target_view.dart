@@ -13,7 +13,6 @@ import '../services/data/data_service.dart';
 import '../utility/modals.dart';
 import '../utility/text_logic.dart';
 import '../widgets/amount_field.dart';
-import '../widgets/datetime_selectors.dart';
 import '../widgets/loading_page.dart';
 import '../widgets/multi_stream_builder.dart';
 import '../widgets/product_dropdown.dart';
@@ -150,52 +149,49 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
                 ),
             ],
           ),
-          body: ScrollConfiguration(
-            behavior: MouseDragScrollBehavior().copyWith(scrollbars: false, overscroll: false),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildPrimaryToggle(),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(6, 2, 0, 8),
-                        child: Text("Type of target:", style: TextStyle(fontSize: 16)),
-                      ),
-                      _buildTypeDropdown(),
-                      const SizedBox(height: 10),
-                      _buildSelectorDropdown(nutvalues, productsMap),
-                      ValueListenableBuilder(
-                        valueListenable: _trackedIdNotifier,
-                        builder: (context, trackedId, child) {
-                          if (trackedId == null) {
-                            return const SizedBox.shrink();
-                          }
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.fromLTRB(6, 12, 0, 8),
-                                child: Text("Daily Target:", style: TextStyle(fontSize: 16)),
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(child: _buildAmountField()),
-                                  const SizedBox(width: 10),
-                                  _buildUnitDropdown(nutvalues, products),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              _buildAddButton(nutvalues, products),
-                            ],
-                          );
-                        },
-                      ),
-                    ]
-                  ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPrimaryToggle(),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(6, 2, 0, 8),
+                      child: Text("Type of target:", style: TextStyle(fontSize: 16)),
+                    ),
+                    _buildTypeDropdown(),
+                    const SizedBox(height: 10),
+                    _buildSelectorDropdown(nutvalues, productsMap),
+                    ValueListenableBuilder(
+                      valueListenable: _trackedIdNotifier,
+                      builder: (context, trackedId, child) {
+                        if (trackedId == null) {
+                          return const SizedBox.shrink();
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.fromLTRB(6, 12, 0, 8),
+                              child: Text("Daily Target:", style: TextStyle(fontSize: 16)),
+                            ),
+                            Row(
+                              children: [
+                                Expanded(child: _buildAmountField()),
+                                const SizedBox(width: 10),
+                                _buildUnitDropdown(nutvalues, products),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _buildAddButton(nutvalues, products),
+                          ],
+                        );
+                      },
+                    ),
+                  ]
                 ),
               ),
             ),

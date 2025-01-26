@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 const tabColorActive = Color.fromARGB(255, 193, 255, 253);
@@ -191,3 +192,14 @@ List<Color> productColors = [
   Colors.indigo,	  // indigo
   Colors.purple,	  // purple
 ];
+
+class MouseDragScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.touch,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.unknown,
+  };
+}
