@@ -59,7 +59,6 @@ class _GraphState extends State<Graph> {
       });
     }
     
-    // remove secondary targets if they are not shown
     var activeProgress = Map<Target, Map<Product?, double>>.from(widget.targetProgress);
     var hasSecondary = activeProgress.keys.any((t) => !t.isPrimary);
     var btnMargin = hasSecondary ? buttonMargin : 0;
@@ -245,8 +244,17 @@ class _GraphPainter extends CustomPainter {
       }
 
       // Draw product contributions
-      double currentHeight = 0;
-      productContributions?.forEach((product, contribution) {
+      // double currentHeight = 0;
+      // start with the maximum height
+      // double initialY = maxBarHeight * (1 - 0*totalProgress[target]! / maximum) + 20;
+      double initialY = baseline - totalProgress[target]! * maxBarHeight;
+      double currentY = initialY;
+      
+      for (int j = (productContributions ?? {}).length - 1; j >= 0; j--) {
+      // for (int j = 0; j < (productContributions ?? {}).length; j++) {
+        var entry = productContributions!.entries.elementAt(j);
+        var product = entry.key;
+        var contribution = entry.value;
         Color color;
         if (product == null) {
           const light = 90;
@@ -256,15 +264,20 @@ class _GraphPainter extends CustomPainter {
         }
 
         double contributionHeight = (contribution / target.amount) * maxBarHeight;
+        double remainingHeight = baseline - currentY;
+        double extra = min(remainingHeight, 1);
+        // currentHeight += contributionHeight;
+        
         if (contributionHeight > 0) {
           canvas.drawRect(
-            Rect.fromLTWH(entryLeft + margin, baseline - currentHeight - contributionHeight, barWidth, contributionHeight),
+            // Rect.fromLTWH(entryLeft + margin, baseline - currentHeight - contributionHeight, barWidth, contributionHeight),
+            // Rect.fromLTWH(entryLeft + margin, currentY, barWidth, baseline - currentY),
+            Rect.fromLTWH(entryLeft + margin, currentY, barWidth, contributionHeight + extra),
             Paint()..color = color,
           );
         }
-
-        currentHeight += contributionHeight;
-      });
+        currentY += contributionHeight;
+      }
       // the number of decimal places for the full target.amount precision
       int targetPrecision;
       String targetText = truncateZeros(target.amount);
@@ -279,8 +292,9 @@ class _GraphPainter extends CustomPainter {
         targetPrecision = - (targetText.length - truncatedText.length);
       }
       
-      // Draw current progress
+      // --- drawing text ---
       
+      double currentHeight = maxBarHeight * totalProgress[target]!;
       var tooClose = (currentHeight - maxBarHeight).abs() < 20;
       var below = currentHeight > maxBarHeight && !tooClose;
       

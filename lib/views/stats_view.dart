@@ -136,7 +136,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
               }
               relevantMeals = meals.where((meal) => isDateInsideInterval(meal.dateTime, start, end) == 0).toList();
               var activeTargets = _activeTargets.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
-              dailyTargetProgressData = getDailyTargetProgress(notifier.value, activeTargets, productsMap, nutvalues, relevantMeals, [], true, maxProducts: 100);
+              dailyTargetProgressData = getDailyTargetProgress(notifier.value, activeTargets, productsMap, nutvalues, relevantMeals, [], true, maxProducts: 1000);
               hash = newHash;
               if (!isGlobal && _calculationMethod == CalculationMethod.avg) {
                 var dt1970 = DateTime(1970);

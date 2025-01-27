@@ -7,13 +7,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/intl_standalone.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import 'utility/theme.dart';
 import 'constants/routes.dart';
 import 'views/main_view.dart';
 import 'views/test_view.dart';
 
-// import "dart:developer" as devtools show log;
+import "dart:developer" as devtools show log;
 
 void main() {
   initializeDateFormatting(Platform.localeName).then((_) => runApp(
@@ -35,4 +36,7 @@ void main() {
       ],
     )
   ));
+  Future.delayed(const Duration(seconds: 1), () {
+    VisibilityDetectorController.instance.updateInterval = Duration.zero;
+  });
 }

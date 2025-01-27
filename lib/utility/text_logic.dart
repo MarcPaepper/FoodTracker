@@ -110,8 +110,10 @@ String relativeWeeksNatural(DateTime date) {
   date = date.getDateOnly();
   // Select beginning of current day
   var now = DateTime.now().getDateOnly();
+  // set monday of now week
+  now = now.subtract(Duration(days: now.weekday - 1));
   var diff = date.difference(now).inDays;
-  var weeks = (diff / 7).round();
+  var weeks = (diff / 7.0).round();
   if (weeks == 0) {
     return "This week";
   } else if (weeks == 1) {

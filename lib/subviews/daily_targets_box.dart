@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:intl/intl.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
@@ -112,6 +113,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   var previewAmountController = TextEditingController();
   var previewUnitNotifier = ValueNotifier<Unit>(Unit.g);
   Unit? previousUnit;
+  
+  ValueNotifier<int?> lowestVisIndexNotifier = ValueNotifier(null);
+  ValueNotifier<int?> highestVisIndexNotifier = ValueNotifier(null);
   
   @override
   void initState() {
@@ -508,10 +512,83 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                             ),
                           );
                         }
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Graph(constraints.maxWidth, targets, products, colors, nutritionalValues, targetProgress, widget.ingredientList)
-                        );
+                        Widget graph;
+                        if (widget.scrollList) {
+                          Map<int, int> contributingProductIndices = {};
+                          for (var i = 0; i < contributingProducts.length; i++) {
+                            contributingProductIndices[contributingProducts[i].id] = i;
+                          }
+                          
+                          return MultiValueListenableBuilder(
+                            listenables: [
+                              lowestVisIndexNotifier,
+                              highestVisIndexNotifier,
+                            ],
+                            builder: (context, values, child) {
+                              int? lowestVisIndex = values[0] as int?;
+                              int? highestVisIndex = values[1] as int?;
+                              // move all products which are not visible to greyed out dummy products at the top or bottom of the list
+                              Map<Target, Map<Product?, double>> newTargetProgress = {};
+                              Product? lowNullProduct;
+                              Product? highNullProduct;
+                              if (lowestVisIndex != null && lowestVisIndex > 0) {
+                                lowNullProduct = _getDummyProduct(-4);
+                              }
+                              if (highestVisIndex != null && highestVisIndex < contributingProducts.length - 1) {
+                                highNullProduct = _getDummyProduct(-3);
+                              }
+                              
+                              for (var entry in targetProgress.entries) {
+                                Map<Product?, double> newMap = {};
+                                for (var product in entry.value.keys) {
+                                  if (product == null) {
+                                    newMap[product] = entry.value[product]!;
+                                  } else {
+                                    var index = contributingProductIndices[product.id];
+                                    if (index == null) continue;
+                                    Product productToEdit;
+                                    if (index < lowestVisIndex!) {
+                                      productToEdit = lowNullProduct!;
+                                    } else if (index > highestVisIndex!) {
+                                      productToEdit = highNullProduct!;
+                                    } else {
+                                      productToEdit = contributingProducts[index];
+                                    }
+                                    newMap[productToEdit] = entry.value[product]! + (newMap[productToEdit] ?? 0);
+                                  }
+                                }
+                                newTargetProgress[entry.key] = newMap;
+                              }
+                              
+                              // add the dummy products to the contributing products list
+                              List<Product> productsPlus = List.from(contributingProducts);
+                              if (lowNullProduct != null) productsPlus.insert(0, lowNullProduct);
+                              if (highNullProduct != null) productsPlus.add(highNullProduct);
+                              colors[-4] = const Color.fromARGB(255, 99, 99, 99);
+                              colors[-3] = const Color.fromARGB(255, 99, 99, 99);
+                              
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Graph(
+                                  constraints.maxWidth,
+                                  targets,
+                                  productsPlus,
+                                  colors,
+                                  nutritionalValues,
+                                  newTargetProgress,
+                                  widget.ingredientList,
+                                ),
+                              );
+                            }
+                          );
+                        } else {
+                          graph = SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Graph(constraints.maxWidth, targets, products, colors, nutritionalValues, targetProgress, widget.ingredientList),
+                          );
+                        }
+                        
+                        return graph;
                       }
                     ),
                     if (widget.ingredientList || widget.scrollList) ...[
@@ -630,15 +707,20 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
     if (ingredients == null) return Container();
     
     // find out height for scroll list
+    const lineHeight = 57.0;
     double viewHeight = 0;
+    int maxLinesVis = 10000;
     bool showAll = false;
     if (showMeals) {
       double viewportHeight = MediaQuery.of(context).size.height;
-      viewportHeight -= 516; // subtract the height of the graph
+      viewportHeight -= 466; // subtract the height of the graph
       int numberOfRows = viewportHeight ~/ 57;
-      numberOfRows = math.max(3, math.min(7, numberOfRows)); // clamp between 3 and 7
-      viewHeight = numberOfRows * 57.0;
+      numberOfRows = math.max(3, math.min(6, numberOfRows)); // clamp between 3 and 7
+      maxLinesVis = numberOfRows + 1;
+      viewHeight = numberOfRows * lineHeight;
       showAll = numberOfRows + 2 > contributingProducts.length;
+      lowestVisIndexNotifier.value ??= 0;
+      highestVisIndexNotifier.value ??= numberOfRows - 1;
     }
     
     var contributingIngredients = contributingProducts.where((p) => p.id >= 0).map((p) {
@@ -726,7 +808,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                                 } else if (timeFormat == TimeFormat.weekdays) {
                                   timeString = DateFormat("EEEE").format(meal.dateTime);
                                 } else {
-                                  timeString = "${meal.dateTime.day}.";
+                                  timeString = "${meal.dateTime.day}.${meal.dateTime.month}.";
                                 }
                                 timeString += "";
                                 
@@ -786,11 +868,44 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
     
     if (showMeals) {
       if (showAll) {
+        lowestVisIndexNotifier.value = 0;
+        highestVisIndexNotifier.value = contributingIngredients.length - 1;
+        Future.delayed(Duration.zero, () {
+          lowestVisIndexNotifier.value = 0;
+          highestVisIndexNotifier.value = contributingIngredients.length - 1;
+        });
         return Column(
           children: children,
         );
       }
       else {
+        // add visibility detector to the children
+        children = children.mapIndexed<Widget>((i, child) => VisibilityDetector(
+          key: ValueKey("daily targets box scroll list $i"),
+          onVisibilityChanged: (info) {
+            bool visible = info.visibleFraction > 0;
+            if (visible) {
+              if (i < (lowestVisIndexNotifier.value ?? 0)) {
+                if ((highestVisIndexNotifier.value ?? contributingIngredients.length - 1) >= i + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
+              } else if (i > (highestVisIndexNotifier.value ?? 0)) {
+                if ((lowestVisIndexNotifier.value ?? 0) <= i - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
+              }
+            } else {
+              double middle = (lowestVisIndexNotifier.value! + highestVisIndexNotifier.value!) / 2;
+              if (i >= (lowestVisIndexNotifier.value ?? 0) && i <= middle) {
+                if (highestVisIndexNotifier.value == contributingProducts.length - 1) return;
+                lowestVisIndexNotifier.value = i + 1;
+                if ((highestVisIndexNotifier.value ?? contributingProducts.length - 1) >= i + 1 + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
+              }
+              if (i <= (highestVisIndexNotifier.value ?? 0) && i >= middle) {
+                highestVisIndexNotifier.value = i - 1;
+                if ((lowestVisIndexNotifier.value ?? 0) <= i - 1 - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
+              }
+            }
+          },
+          child: child,
+        )).toList();
+        
         return Column(
           children:  [
             // horizontal black line
@@ -803,7 +918,6 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
               height: viewHeight,
               child: ListView(
                 children: children,
-                
               ),
             ),
           ],
@@ -818,8 +932,21 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   }
 }
 
-enum MealView {
-  hidden,
-  timestamp,
-  aggregate,
+Product _getDummyProduct(int id) {
+  return Product(
+    id: id,
+    name: "Dummy",
+    isTemporary: true,
+    defaultUnit: Unit.g,
+    densityConversion: Conversion.defaultDensity(),
+    quantityConversion: Conversion.defaultQuantity(),
+    quantityName: "",
+    autoCalc: false,
+    amountForIngredients: 0,
+    ingredientsUnit: Unit.g,
+    amountForNutrients: 0,
+    nutrientsUnit: Unit.g,
+    ingredients: [],
+    nutrients: [],
+  );
 }
