@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
+
 class LoadingPage extends StatelessWidget {
   const LoadingPage({Key? key}) : super(key: key);
 
@@ -8,10 +10,10 @@ class LoadingPage extends StatelessWidget {
     Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: const EdgeInsets.all(50.0),
+        padding: const EdgeInsets.all(50.0 * gsf),
         child: SizedBox(
-          width: 30,
-          height: 30,
+          width: 30 * gsf,
+          height: 30 * gsf,
           child: CircularProgressIndicator(
             color: Colors.teal.shade500
           ),

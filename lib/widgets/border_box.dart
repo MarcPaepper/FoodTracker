@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
+
 enum TitlePosition {
   left,
   center,
@@ -37,11 +39,11 @@ class _BorderBoxState extends State<BorderBox> {
     
     Widget? titleWidget = widget.titleWidget ?? (widget.title != null
       ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 9.0),
+              padding: const EdgeInsets.symmetric(horizontal: 9.0 * gsf),
         child: Text(
           widget.title!,
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 16 * gsf,
           ),
         ),
       ) : null);
@@ -52,19 +54,19 @@ class _BorderBoxState extends State<BorderBox> {
         : Alignment.topCenter,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(8, titleWidget == null ? 8 : 11, 8, 0),
+          padding: EdgeInsets.fromLTRB(8, titleWidget == null ? 8 : 11, 8, 0) * gsf,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(15 * gsf),
               border: Border.all(
                 color: borderColor,
-                width: 2,
+                width: 2 * gsf,
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.only(top: titleWidget == null ? 0 : 15),
+              padding: EdgeInsets.only(top: titleWidget == null ? 0 : 15) * gsf,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(13),
+                borderRadius: BorderRadius.circular(13) * gsf,
                 child: widget.child,
               ),
             ),
@@ -72,7 +74,7 @@ class _BorderBoxState extends State<BorderBox> {
         ),
         titleWidget == null ? const SizedBox.shrink() :
           Container(
-            transform: Matrix4.translationValues(widget.titlePosition == TitlePosition.left ? 18 : 0, 0, 0),
+            transform: Matrix4.translationValues(widget.titlePosition == TitlePosition.left ? 18 * gsf : 0, 0, 0),
             color: widget.titleBgColor,
             child: titleWidget,
           ),

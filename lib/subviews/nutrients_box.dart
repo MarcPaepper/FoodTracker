@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../utility/data_logic.dart';
 import '../utility/text_logic.dart';
@@ -118,14 +119,15 @@ class NutrientsBox extends StatelessWidget {
           errorMsg == null
             ? const SizedBox()
             : Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16 * gsf, 12 * gsf, 16 * gsf, 0 * gsf),
               child: Text(
                 errorMsg,
                 textAlign: TextAlign.left,
                 style: TextStyle(
                   color: errorType == ErrorType.warning ? warningColor : Colors.red,
-                  fontSize: 16)
+                  fontSize: 16 * gsf,
                 ),
+              ),
             );
         
         return BorderBox(
@@ -134,7 +136,7 @@ class NutrientsBox extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+                padding: const EdgeInsets.fromLTRB(14 * gsf, 6 * gsf, 14 * gsf, 0 * gsf),
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   children: [
@@ -142,12 +144,12 @@ class NutrientsBox extends StatelessWidget {
                       "Nutrients for ",
                       maxLines: 3,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 16 * gsf,
                       ),
                     ),
                     Flexible(
                       child: Padding( // resulting ingredient amount field
-                        padding: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.only(right: 12) * gsf,
                         child: AmountField(
                           controller: nutrientAmountController,
                           onChangedAndParsed: (value) {
@@ -169,7 +171,7 @@ class NutrientsBox extends StatelessWidget {
                       " :  ",
                       maxLines: 3,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 16 * gsf,
                       ),
                     ),
                     const Column(
@@ -178,18 +180,18 @@ class NutrientsBox extends StatelessWidget {
                           message: "Fields left empty are calculated automatically from ingredients and are shown as blue.",
                           child: Icon(
                             Icons.info_outline,
-                            size: 22.0,
+                            size: 22.0 * gsf,
                             color: Colors.blue,
                           ),
                         ),
-                        SizedBox(height: 14),
+                        SizedBox(height: 14 * gsf),
                       ],
                     ),
                   ],
                 ),
               ),
               errorText,
-              const SizedBox(height: 12),
+              const SizedBox(height: 12 * gsf),
               _buildNutrientsList(valueNutrients, nutValues),
             ],
           ),
@@ -218,14 +220,14 @@ class NutrientsBox extends StatelessWidget {
         key: Key("tile for the nutrient ${nutrient.nutritionalValueId}"),
         contentPadding: EdgeInsets.zero,
         minVerticalPadding: 0,
-        visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+        visualDensity: const VisualDensity(horizontal: 0 * gsf, vertical: -4),
         title: Row(
           children: [
             // Text field for the nutrient amount
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+              padding: const EdgeInsets.fromLTRB(14 * gsf, 12 * gsf, 8 * gsf, 12 * gsf),
               child: SizedBox(
-                width: 140,
+                width: 140 * gsf,
                 child: AmountField(
                   controller: nutrientAmountControllers[index],
                   canBeEmpty: true,
@@ -254,7 +256,7 @@ class NutrientsBox extends StatelessWidget {
             Text(
               "${nutValue.unit} ${nutValue.showFullName ? nutValue.name : ""}",
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 16 * gsf,
               ),
             )
           ],

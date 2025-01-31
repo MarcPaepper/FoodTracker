@@ -5,16 +5,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 
 // import 'dart:developer' as devtools show log;
 
 import '../utility/text_logic.dart';
 
-const double barWidth = 30;
-const double targetMargin = 25;
-const double buttonMargin = 45;
-const double minMargin = 15;
+const double barWidth = 30 * gsf;
+const double targetMargin = 25 * gsf;
+const double buttonMargin = 45 * gsf;
+const double minMargin = 15 * gsf;
 
 class Graph extends StatefulWidget {
   final double maxWidth;
@@ -70,7 +71,7 @@ class _GraphState extends State<Graph> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
-          height: hasRebuild ? 300 : 300,
+          height: hasRebuild ? 300 * gsf : 300 * gsf,
           width: max(
             widget.maxWidth - btnMargin,
             minMargin * 2 + activeProgress.length * (2 * minMargin + barWidth) + targetMargin,
@@ -82,16 +83,16 @@ class _GraphState extends State<Graph> {
         ),
         hasSecondary ? SizedBox(
           width: buttonMargin,
-          height: 300,
+          height: 300 * gsf,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(6, 0, 10, 12),
+            padding: const EdgeInsets.fromLTRB(6, 0, 10, 12) * gsf,
             child: ElevatedButton(
               style: importantButtonStyle.copyWith(
                 backgroundColor: WidgetStateProperty.all(Colors.grey.shade400),
                 visualDensity: VisualDensity.compact,
                 padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
                 shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(6)),
+                  borderRadius: BorderRadius.all(Radius.circular(6 * gsf)),
                 )),
               ),
               onPressed: () {
@@ -164,21 +165,21 @@ class _GraphPainter extends CustomPainter {
       TextPainter textPainter = TextPainter(
         text: TextSpan(
           text: name,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
+          style: const TextStyle(fontSize: 12 * gsf, color: Colors.black),
         ),
         textDirection: TextDirection.ltr,
       );
       
       // Measure the width of the text
       textPainter.layout(minWidth: 0, maxWidth: double.infinity);
-      if (textPainter.width > entryWidth - 10) allOneLiners = false;
+      if (textPainter.width > entryWidth - 10 * gsf) allOneLiners = false;
 
       var nameFragments = name.split(' ');
       var maxLength = 0.0;
       for (var fragment in nameFragments) {
         textPainter.text = TextSpan(
           text: fragment,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
+          style: const TextStyle(fontSize: 12 * gsf, color: Colors.black),
         );
         textPainter.layout(minWidth: 0, maxWidth: double.infinity);
         if (textPainter.width > maxLength) maxLength = textPainter.width;
@@ -186,8 +187,8 @@ class _GraphPainter extends CustomPainter {
       maxLengths.add(maxLength);
     }
     
-    var baseShift = allOneLiners ? 20 : 34;
-    double maxBarHeight = (size.height - baseShift - 20) / maximum;
+    var baseShift = allOneLiners ? 20 * gsf : 34 * gsf;
+    double maxBarHeight = (size.height - baseShift - 20 * gsf) / maximum;
     double baseline = size.height - baseShift;
     
     // --- drawing texts ---
@@ -198,31 +199,31 @@ class _GraphPainter extends CustomPainter {
       TextPainter textPainter = TextPainter(
         text: TextSpan(
           text: name,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
+          style: const TextStyle(fontSize: 12 * gsf, color: Colors.black),
         ),
         textDirection: TextDirection.ltr,
       );
 
       // Layout text with infinite width to calculate its actual width
-      textPainter.layout(minWidth: 0, maxWidth: entryWidth - 10);
-      bool overflows = maxLengths[i] > entryWidth - 10;
+      textPainter.layout(minWidth: 0, maxWidth: entryWidth - 10 * gsf);
+      bool overflows = maxLengths[i] > entryWidth - 10 * gsf;
       
       textPainter = TextPainter(
         text: TextSpan(
           text: name,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
+          style: const TextStyle(fontSize: 12 * gsf, color: Colors.black),
         ),
         textAlign: overflows ? TextAlign.left : TextAlign.center,
         textDirection: TextDirection.ltr,
       );
 
-      textPainter.layout(minWidth: 0, maxWidth: entryWidth - 10);
+      textPainter.layout(minWidth: 0, maxWidth: entryWidth - 10 * gsf);
       
       Offset offset;
       if (overflows) {
-        offset = Offset(entryLeft + (entryWidth - textPainter.width) / 2, baseline + 5);
+        offset = Offset(entryLeft + (entryWidth - textPainter.width) / 2, baseline + 5 * gsf);
       } else {
-        offset = Offset(entryLeft + (entryWidth - textPainter.width) / 2, baseline + 5);
+        offset = Offset(entryLeft + (entryWidth - textPainter.width) / 2, baseline + 5 * gsf);
       }
       
       textPainter.paint(canvas, offset);
@@ -295,7 +296,7 @@ class _GraphPainter extends CustomPainter {
       // --- drawing text ---
       
       double currentHeight = maxBarHeight * totalProgress[target]!;
-      var tooClose = (currentHeight - maxBarHeight).abs() < 20;
+      var tooClose = (currentHeight - maxBarHeight).abs() < 20 * gsf;
       var below = currentHeight > maxBarHeight && !tooClose;
       
       // determine a good precision for the current amount
@@ -332,15 +333,15 @@ class _GraphPainter extends CustomPainter {
       TextPainter textPainter = TextPainter(
         text: TextSpan(
           text: text,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
+          style: const TextStyle(fontSize: 12 * gsf, color: Colors.black),
         ),
         textAlign: TextAlign.center,
         textDirection: TextDirection.ltr,
       );
-      textPainter.layout(minWidth: 0, maxWidth: 100);
+      textPainter.layout(minWidth: 0, maxWidth: 100 * gsf);
       double x = entryLeft + margin + barWidth / 2 - textPainter.width / 2;
-      double y = baseline - currentHeight - textPainter.height - 2;
-      if (tooClose) y = min(y, baseline - maxBarHeight - textPainter.height - 4);
+      double y = baseline - currentHeight - textPainter.height - 2 * gsf;
+      if (tooClose) y = min(y, baseline - maxBarHeight - textPainter.height - 4 * gsf);
       textPainter.paint(canvas, Offset(x, y));
       
       // Draw target line
@@ -348,22 +349,25 @@ class _GraphPainter extends CustomPainter {
       canvas.drawLine(
         Offset(entryLeft, targetY),
         Offset(entryLeft + entryWidth, targetY),
-        Paint()..color = Colors.black..strokeWidth = 1..style = PaintingStyle.stroke,
+        Paint()
+          ..color = Colors.black
+          ..strokeWidth = 1 * gsf
+          ..style = PaintingStyle.stroke,
       );
       
       // Draw target amount
       textPainter = TextPainter(
         text: TextSpan(
           text: tooClose ? "" : targetText,
-          style: const TextStyle(fontSize: 12, color: Colors.black),
+          style: const TextStyle(fontSize: 12 * gsf, color: Colors.black),
         ),
         textAlign: TextAlign.center,
         textDirection: TextDirection.ltr,
       );
-      textPainter.layout(minWidth: 0, maxWidth: 100);
+      textPainter.layout(minWidth: 0, maxWidth: 100 * gsf);
       x = entryLeft + margin + barWidth / 2 - textPainter.width / 2;
       // If the bar is above the target, draw the text below the bar
-      y = baseline - maxBarHeight - textPainter.height - 4;
+      y = baseline - maxBarHeight - textPainter.height - 4 * gsf;
       
       if (below) {
         // paint a white outline around the text
@@ -372,17 +376,17 @@ class _GraphPainter extends CustomPainter {
           text: TextSpan(
             text: tooClose ? "" : targetText,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 12 * gsf,
               foreground: Paint()
                 ..style = PaintingStyle.stroke
-                ..strokeWidth = 2.5
+                ..strokeWidth = 2.5 * gsf
                 ..color = Color.fromARGB(200, whiteness, whiteness, whiteness),
             ),
           ),
           textAlign: TextAlign.center,
           textDirection: TextDirection.ltr,
         );
-        outlinePainter.layout(minWidth: 0, maxWidth: 100);
+        outlinePainter.layout(minWidth: 0, maxWidth: 100 * gsf);
         outlinePainter.paint(canvas, Offset(x, y));
       }
       textPainter.paint(canvas, Offset(x, y));
@@ -395,13 +399,13 @@ class _GraphPainter extends CustomPainter {
     TextPainter textPainter = TextPainter(
       text: const TextSpan(
         text: '🏁',
-        style: TextStyle(fontSize: 19, color: Colors.black),
+        style: TextStyle(fontSize: 19 * gsf, color: Colors.black),
       ),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     );
     textPainter.layout(minWidth: 0, maxWidth: targetMargin);
-    textPainter.paint(canvas, Offset(entryLeft + 10, baseline - maxBarHeight - 12));
+    textPainter.paint(canvas, Offset(entryLeft + 10 * gsf, baseline - maxBarHeight - 12 * gsf));
   }
 
   @override

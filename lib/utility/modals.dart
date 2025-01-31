@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 import 'package:food_tracker/utility/text_logic.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_service.dart';
 import '../widgets/search_field.dart';
 import '../constants/routes.dart';
@@ -28,7 +29,7 @@ void _showSnackbar({
   var children = <Widget>[];
   if (icon != null) {
     children.add(icon);
-    children.add(const SizedBox(width: 10));
+    children.add(const SizedBox(width: 10 * gsf));
   }
   children.add(Text(msg));
   
@@ -62,69 +63,69 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
                   Navigator.of(context).pop(false);
                 },
                 icon: const Icon(Icons.save, color: Colors.white),
-                label: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                  child: Column(
+                label: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10) * gsf,
+                  child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
                         'Save',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 2),
+                      SizedBox(height: 2 * gsf),
                        Text(
                         'Save changes and exit',
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 14 * gsf),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 16 * gsf),
             ],
             ElevatedButton.icon(
               style: actionButtonStyle,
               onPressed: () => Navigator.of(context).pop(true),
               icon: const Icon(Icons.delete, color: Colors.white),
               label: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                padding: EdgeInsets.symmetric(vertical: 10 * gsf, horizontal: 10 * gsf),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       'Discard',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                      style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold)
                     ),
-                    SizedBox(height: 2),
+                    SizedBox(height: 2 * gsf),
                     Text(
                       "Ignore unsaved changes",
-                      style: TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14 * gsf),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 16 * gsf),
             ElevatedButton.icon(
               style: actionButtonStyle,
               onPressed: () => Navigator.of(context).pop(false),
               icon: RotatedBox(
                 quarterTurns: 2,
-                child: Image.asset("assets/geschwungen_arrow.png", width: 24, height: 24)
+                child: Image.asset("assets/geschwungen_arrow.png", width: 24 * gsf, height: 24 * gsf)
               ),
               label: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10) * gsf,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
                       'Cancel',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                      style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold)
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 2 * gsf),
                     Text(
                       'Continue editing ${prodName != null ? "'$prodName'" : "the product"}',
-                      style: const TextStyle(fontSize: 14)
+                      style: const TextStyle(fontSize: 14 * gsf)
                     ),
                   ],
                 ),
@@ -149,10 +150,10 @@ void showUsedAsIngredientDialog({
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12) * gsf,
           child: Text(
             '"$name" is used as an ingredient in:',
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16 * gsf),
           ),
         ),
         Expanded(
@@ -174,15 +175,15 @@ void showUsedAsIngredientDialog({
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12) * gsf,
               child: ElevatedButton(
                 style: actionButtonStyle,
                 onPressed: () {
                   Navigator.of(context).pop(null);
                 },
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10, horizontal: 40),
-                  child: Text('Cancel'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 40) * gsf,
+                  child: const Text('Cancel'),
                 ),
               ),
             ),
@@ -213,7 +214,7 @@ void showProductDialog({
       var searchController = TextEditingController();
       
       return Dialog(
-        insetPadding: const EdgeInsets.all(28),
+        insetPadding: const EdgeInsets.all(28) * gsf,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -232,7 +233,7 @@ void showProductDialog({
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12) * gsf,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -248,12 +249,12 @@ void showProductDialog({
                           onAddProduct(context, name, false, beforeAdd, onSelected);
                         },
                         child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 0, vertical: 10.0),
+                          padding: EdgeInsets.symmetric(horizontal: 0 * gsf, vertical: 10.0 * gsf),
                           child: Text('Create new'),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 16 * gsf),
                   ],
                   Expanded(
                     child: ElevatedButton(
@@ -263,7 +264,7 @@ void showProductDialog({
                         Navigator.of(context).pop();
                       },
                       child: const Padding(
-                        padding: EdgeInsets.all(10.0),
+                        padding: EdgeInsets.all(10.0 * gsf),
                         child: Text('Cancel'),
                       ),
                     ),
@@ -418,7 +419,7 @@ class _MainListState extends State<_MainList> {
           style: TextStyle(
             color: Colors.grey,
             fontStyle: FontStyle.italic,
-            fontSize: 16.0,
+            fontSize: 16.0 * gsf,
           ),
         ),
       );
@@ -430,12 +431,12 @@ class _MainListState extends State<_MainList> {
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(15),
-              topRight: Radius.circular(15),
+              topLeft: Radius.circular(15 * gsf),
+              topRight: Radius.circular(15 * gsf),
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0) * gsf,
             child: SearchField(
               searchController: _searchController,
               onChanged: (value) => setState(() {}),

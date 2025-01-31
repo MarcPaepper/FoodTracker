@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../utility/modals.dart';
 
@@ -92,7 +93,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
     return ExcludeFocusTraversal(
       excluding: widget.skipTraversal,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(10.0) * gsf,
         focusNode: _focusNode,
         onFocusChange: (hasFocus) {
           setState(() {
@@ -116,18 +117,18 @@ class _ProductDropdownState extends State<ProductDropdown> {
         },
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10.0),
+            borderRadius: BorderRadius.circular(10.0) * gsf,
             color: fillColor,
           ),
           clipBehavior: Clip.antiAlias,
           child: Focus(
             skipTraversal: true,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(14, 10, 13, 8),
+              padding: const EdgeInsets.fromLTRB(14, 10, 13, 8) * gsf,
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    width: 1.75,
+                    width: 1.75 * gsf,
                     color: (_hasFocus)
                       ? underlineColorFocused
                       : underlineColor,
@@ -142,7 +143,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
                         widget.selectedProduct!.name,
                         style: TextStyle(
                           color: textColor,
-                          fontSize: 16,
+                          fontSize: 16 * gsf,
                         ),
                       )
                     : Text(
@@ -150,7 +151,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
                         style: TextStyle(
                           color: textColor,
                           fontStyle: FontStyle.italic,
-                          fontSize: 16,
+                          fontSize: 16 * gsf,
                         ),
                       ),
                   const Spacer(),

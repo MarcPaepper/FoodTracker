@@ -5,6 +5,7 @@ import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/utility/modals.dart';
 import 'package:food_tracker/widgets/sort_field.dart';
 
+import '../constants/ui.dart';
 import '../utility/data_logic.dart';
 import '../utility/text_logic.dart';
 
@@ -170,7 +171,7 @@ class _ProductTileState extends State<ProductTile> {
          },
         child: ListTile(
           dense: true,
-          contentPadding: const EdgeInsets.fromLTRB(16, 0, 9, 0),
+          contentPadding: const EdgeInsets.fromLTRB(16, 0, 9, 0) * gsf,
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -179,7 +180,7 @@ class _ProductTileState extends State<ProductTile> {
                   text: TextSpan(
                     style: DefaultTextStyle.of(context).style.copyWith(
                       color: Colors.black,
-                      fontSize: 16.5,
+                      fontSize: 16.5 * gsf,
                     ),
                     children: childrenColored,
                   ),

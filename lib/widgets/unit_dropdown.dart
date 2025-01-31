@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 
 // import 'dart:developer' as devtools show log;
@@ -49,6 +50,7 @@ class _UnitDropdownState extends State<UnitDropdown> {
         decoration: enabled ? dropdownStyleEnabled : dropdownStyleDisabled,
         isExpanded: true,
         value: widget.current,
+        style: const TextStyle(fontSize: 50 * gsf),
         items: items.entries.map((entry) => DropdownMenuItem<Unit>(
           value: entry.key,
           child: entry.value,
@@ -75,7 +77,7 @@ Map<Unit, Widget> buildUnitItems({
         text: TextSpan(
           style: TextStyle(
             fontFamily: GoogleFonts.nunitoSans().fontFamily,
-            fontSize: 16,
+            fontSize: 16 * gsf,
             color: Colors.black,
           ),
           text: quantityName,
@@ -96,7 +98,7 @@ Map<Unit, Widget> buildUnitItems({
           text: unit == Unit.quantity ? quantityName : unitToString(unit),
           style: TextStyle(
             fontFamily: GoogleFonts.nunitoSans().fontFamily,
-            fontSize: 16,
+            fontSize: 16 * gsf,
             color: Colors.black,
           ),
         ),
@@ -110,6 +112,11 @@ Map<Unit, Widget> buildUnitItems({
         child: items[unit],
       );
     }
+    
+    items[unit] = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 35 * gsf - 35),
+      child: items[unit],
+    );
   }
   
   return items;

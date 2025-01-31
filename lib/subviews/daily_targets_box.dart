@@ -1,9 +1,13 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:intl/intl.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/data_logic.dart';
@@ -150,11 +154,11 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
     
     if (widget.startFolded == FoldMode.neverFold) {
       foldButton = const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8),
+        padding: EdgeInsets.symmetric(horizontal: 8 * gsf),
         child: Text(
           "Graph",
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 16 * gsf,
             color: Color(0xFF191919),
           ),
         ),
@@ -167,23 +171,23 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
           });
         },
         child: Padding(
-          padding: EdgeInsets.all(isBig ? 4 : 0),
+          padding: EdgeInsets.all(isBig ? 4 : 0) * gsf,
           child: Row(
             mainAxisSize: foldedIn ? MainAxisSize.max : MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(width: 8),
+              const SizedBox(width: 8 * gsf),
               const Text(
                 "Daily Targets",
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 16 * gsf,
                   color: Color(0xFF191919),
                 ),
               ),
-              SizedBox(width: isBig ? 8 : 0),
+              SizedBox(width: (isBig ? 8 : 0) * gsf),
               Icon(
                 foldedIn ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                size: isBig ? 28 : 22,
+                size: (isBig ? 28 : 22) * gsf,
               ),
             ],
           ),
@@ -201,11 +205,11 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   return BorderBox(
     titleWidget: foldedIn ? null : foldButton,
     child: foldedIn ? Padding(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(4) * gsf,
       child: foldButton,
     ) :
       Padding(
-        padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 0) * gsf,
         child: MultiValueListenableBuilder(
           listenables: widget.ingredientList ? [
             previewAmountNotifier,
@@ -244,7 +248,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                 // loading page
                 if (!snapshots.any((s) => s.hasData) || snapshots.any((s) => s.data == null)) {
                   return const SizedBox(
-                    height: 300,
+                    height: 300 * gsf,
                     child: LoadingPage(),
                   );
                 }
@@ -500,12 +504,12 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                       builder: (context, constraints) {
                         if (conversionFailed) {
                           return const SizedBox(
-                            height: 300,
+                            height: 300 * gsf,
                             child: Center(
                               child: Text(
                                 "Conversion failed",
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 16 * gsf,
                                   color: Colors.red,
                                 ),
                               ),
@@ -640,19 +644,19 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
         return Row(
           mainAxisSize: MainAxisSize.max,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(12, 0, 5, 0),
-              child: Text(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 5, 0) * gsf,
+              child: const Text(
                 "Nutrients for ",
                 maxLines: 3,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 16 * gsf,
                 ),
               ),
             ),
             Flexible(
               child: Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(right: 12) * gsf,
                 child: AmountField(
                   controller: previewAmountController,
                   canBeEmpty: true,
@@ -685,7 +689,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
               " :  ",
               maxLines: 3,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 16 * gsf,
               ),
             ),
           ],
@@ -707,13 +711,14 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
     if (ingredients == null) return Container();
     
     // find out height for scroll list
-    const lineHeight = 57.0;
+    const lineHeight = 57.0 * gsf;
     double viewHeight = 0;
     int maxLinesVis = 10000;
     bool showAll = false;
     if (showMeals) {
       double viewportHeight = MediaQuery.of(context).size.height;
-      viewportHeight -= 466; // subtract the height of the graph
+      if (kIsWeb) viewportHeight -= 466 * gsf; // subtract the height of the graph
+      else viewportHeight -= 466 * gsf;
       int numberOfRows = viewportHeight ~/ 57;
       numberOfRows = math.max(3, math.min(6, numberOfRows)); // clamp between 3 and 7
       maxLinesVis = numberOfRows + 1;
@@ -770,14 +775,14 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                         Text(
                           product?.name ?? "Other Products",
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 16 * gsf,
                             fontWeight: showMeals ? FontWeight.w500 : FontWeight.normal,
                             color: colorText,
                             fontStyle: isProduct ? FontStyle.normal : FontStyle.italic,
                           ),
                         ),
                         ... (showMeals && isProduct ? [
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 4 * gsf),
                           Builder(
                             builder: (context) {
                               if (product == null) return Container();
@@ -819,11 +824,11 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                                   TableRow(
                                     children: [
                                       Padding(
-                                        padding: const EdgeInsets.only(right: 8),
+                                        padding: const EdgeInsets.only(right: 8) * gsf,
                                         child: Text(
                                           timeString,
                                           style: TextStyle(
-                                            fontSize: 14,
+                                            fontSize: 14 * gsf,
                                             color: Colors.black.withOpacity(0.66),
                                           ),
                                         ),
@@ -831,7 +836,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                                       Text(
                                         "${truncateZeros(roundDouble(amount))} $unitString",
                                         style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 14 * gsf,
                                           color: Colors.black.withOpacity(0.66),
                                         ),
                                       ),
@@ -841,9 +846,9 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                               }
                               double colWidth;
                               if (timeFormat == TimeFormat.weekdays) {
-                                colWidth = 100;
+                                colWidth = 100 * gsf;
                               } else {
-                                colWidth = 70;
+                                colWidth = 70 * gsf;
                               }
                               return Table(
                                 columnWidths: {

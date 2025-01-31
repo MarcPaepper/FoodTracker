@@ -1,42 +1,46 @@
 import 'package:flutter/material.dart';
 
-class TestView extends StatefulWidget {
+class TestView extends StatelessWidget {
   const TestView({Key? key}) : super(key: key);
 
   @override
-  State<TestView> createState() => _TestViewState();
-}
-
-class _TestViewState extends State<TestView> {
-  // List<FocusNode> _focusNodes = [];
-  
-  @override
   Widget build(BuildContext context) {
-    // int number = 10;
-    // for (var i = _focusNodes.length; i < number; i++) {
-    //   _focusNodes.add(FocusNode());
-    // }
+    List<DropdownMenuItem<int>> debugItems = [
+      DropdownMenuItem(
+        value: 1,
+        child: Text("Option 1"),
+      ),
+      DropdownMenuItem(
+        value: 2,
+        child: Text("Option 2"),
+      ),
+    ];
     
-    // // ListView of TextFields
-    // return ListView.builder(
-    //   itemCount: number,
-    //   itemBuilder: (context, index) {
-    //     return TextField(
-    //       // focusNode: _focusNodes[index],
-    //       decoration: InputDecoration(
-    //         labelText: "Field $index",
-    //       ),
-    //     );
-    //   },
-    // );
-    return Placeholder();
+    return Scaffold(
+      body: SizedBox(
+        height: 200,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: DropdownButton<int> ( // rendered correctly
+                isExpanded: true,
+                value: 1,
+                items: debugItems,
+                onChanged: (int? value) {},
+              ),
+            ),
+            Expanded(
+              child: DropdownButtonFormField<int>( // looks weird
+                isExpanded: true,
+                value: 1,
+                items: debugItems,
+                onChanged: (int? value) {},
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
-  
-  // @override
-  // void dispose() {
-  //   for (var node in _focusNodes) {
-  //     node.dispose();
-  //   }
-  //   super.dispose();
-  // }
 }

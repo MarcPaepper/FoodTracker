@@ -7,6 +7,7 @@ import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
 import 'package:food_tracker/widgets/unit_dropdown.dart';
 
 import '../constants/data.dart';
+import '../constants/ui.dart';
 import '../services/data/data_exceptions.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
@@ -151,19 +152,19 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
           ),
           body: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(12.0) * gsf,
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildPrimaryToggle(),
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(6, 2, 0, 8),
-                      child: Text("Type of target:", style: TextStyle(fontSize: 16)),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 2, 0, 8) * gsf,
+                      child: const Text("Type of target:", style: TextStyle(fontSize: 16 * gsf)),
                     ),
                     _buildTypeDropdown(),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 10 * gsf),
                     _buildSelectorDropdown(nutvalues, productsMap),
                     ValueListenableBuilder(
                       valueListenable: _trackedIdNotifier,
@@ -174,18 +175,18 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.fromLTRB(6, 12, 0, 8),
-                              child: Text("Daily Target:", style: TextStyle(fontSize: 16)),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(6, 12, 0, 8) * gsf,
+                              child: const Text("Daily Target:", style: TextStyle(fontSize: 16 * gsf)),
                             ),
                             Row(
                               children: [
                                 Expanded(child: _buildAmountField()),
-                                const SizedBox(width: 10),
+                                const SizedBox(width: 10 * gsf),
                                 _buildUnitDropdown(nutvalues, products),
                               ],
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 20 * gsf),
                             _buildAddButton(nutvalues, products),
                           ],
                         );
@@ -284,7 +285,7 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
             hint: Text("Choose a Nutritional Value",
               style: TextStyle(
                 color: Theme.of(context).textTheme.bodyMedium!.color ?? Colors.black,
-                fontSize: 16,
+                fontSize: 16 * gsf,
                 fontWeight: FontWeight.normal,
                 fontStyle: FontStyle.italic,
               ),
@@ -349,10 +350,10 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
           var nutvalue = nutvalues.firstWhereOrNull((element) => element.id == trackedId);
           
           return Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 8, 0),
+            padding: const EdgeInsets.fromLTRB(4, 0, 8, 0) * gsf,
             child: Text(nutvalue?.unit ?? "g",
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 16 * gsf,
               ),
             ),
           );

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/routes.dart';
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/data_logic.dart';
@@ -83,7 +84,7 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
                     text: value.name,
                     style: DefaultTextStyle.of(context).style.copyWith(
                       color: Colors.black,
-                      fontSize: 16.5,
+                      fontSize: 16.5 * gsf,
                     ),
                   ),
                 ],
@@ -115,9 +116,9 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
   
   Widget _buildAddButton() => ElevatedButton.icon(
     style: addButtonStyle,
-    icon: const Icon(Icons.add),
+    icon: const Icon(Icons.add, size: 24 * gsf),
     label: const Padding(
-      padding: EdgeInsets.only(left: 5.0),
+      padding: EdgeInsets.only(left: 5.0 * gsf),
       child: Text("Add Nutritional Value"),
     ),
     onPressed: () {

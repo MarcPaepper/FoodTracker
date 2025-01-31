@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/routes.dart';
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/data_logic.dart';
@@ -115,8 +116,8 @@ class _TargetsViewState extends State<TargetsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(fontSize: 16.5)),
-                    Text(amount, style: const TextStyle(fontSize: 14)),
+                    Text(name, style: const TextStyle(fontSize: 16.5 * gsf)),
+                    Text(amount, style: const TextStyle(fontSize: 14 * gsf)),
                   ],
                 ),
               ),
@@ -124,15 +125,15 @@ class _TargetsViewState extends State<TargetsView> {
               if (target.isPrimary) 
                 const Tooltip(
                   message: "Primary Target",
-                  child: Icon(Icons.circle, size: 10, color: Colors.teal),
+                  child: Icon(Icons.circle, size: 10 * gsf, color: Colors.teal),
                   // child: Text("P", style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
                 ),
-              const SizedBox(width: kIsWeb ? 30 : 10),
+              const SizedBox(width: (kIsWeb ? 30 : 10) * gsf),
             ],
           ),
           minVerticalPadding: 0,
-          visualDensity: const VisualDensity(vertical: 1, horizontal: 0),
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+          visualDensity: const VisualDensity(vertical: 1 * gsf, horizontal: 0),
+          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10 * gsf),
           tileColor: color,
           onTap: () {
             Navigator.pushNamed(context, editTargetRoute, arguments: (target.trackedType, target.trackedId));
@@ -171,7 +172,7 @@ class _TargetsViewState extends State<TargetsView> {
     style: addButtonStyle,
     icon: const Icon(Icons.add),
     label: const Padding(
-      padding: EdgeInsets.only(left: 5.0),
+      padding: EdgeInsets.only(left: 5.0 * gsf),
       child: Text("Add Daily Target"),
     ),
     onPressed: () {

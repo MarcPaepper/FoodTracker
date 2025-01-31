@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../utility/theme.dart';
 import '../widgets/amount_field.dart';
@@ -109,13 +111,16 @@ class ConversionBoxes extends StatelessWidget {
             controller: quantityNameController,
             decoration: const InputDecoration(
               labelText: "Designation",
-              labelStyle: TextStyle(color: Colors.black),
+              labelStyle: TextStyle(color: Colors.black, fontSize: 16 * gsf),
               floatingLabelBehavior: FloatingLabelBehavior.always,
               floatingLabelStyle: TextStyle(color: Colors.black),
               floatingLabelAlignment: FloatingLabelAlignment.start,
-              contentPadding: EdgeInsets.fromLTRB(12, 3, 12, 0),
+              contentPadding: kIsWeb ?
+                EdgeInsets.fromLTRB(12 * gsf, 11 * gsf - 4, 12 * gsf, 3 * gsf) :
+                EdgeInsets.fromLTRB(12 * gsf, 3 * gsf,     12 * gsf, 0 * gsf),
               alignLabelWithHint: true,
             ),
+            style: const TextStyle(color: Colors.black, fontSize: 16 * gsf),
             textInputAction: TextInputAction.next,
             validator: (String? value) {
               if (!conversion.enabled) {
@@ -149,17 +154,17 @@ class ConversionBoxes extends StatelessWidget {
         );
         
         var equalSign = Padding(
-          padding: const EdgeInsets.only(left: 12),
+          padding: const EdgeInsets.only(left: 12 * gsf),
           child: Text(
             "=",
             style: TextStyle(
               color: Colors.black.withAlpha(textAlpha),
-              fontSize: 16,
+              fontSize: 16 * gsf,
             ),
           ),
         );
         
-        bool isWide = constraints.maxWidth > 450;
+        bool isWide = constraints.maxWidth > 450 * gsf;
         
         Widget inputFields = isWide
           ? Row(
@@ -227,9 +232,9 @@ class ConversionBoxes extends StatelessWidget {
               // spacing
               const TableRow(
                 children: [
-                  SizedBox(height: 14),
-                  SizedBox(height: 14),
-                  SizedBox(height: 14),
+                  SizedBox(height: 14 * gsf),
+                  SizedBox(height: 14 * gsf),
+                  SizedBox(height: 14 * gsf),
                 ]
               ),
               TableRow(
@@ -263,7 +268,7 @@ class ConversionBoxes extends StatelessWidget {
         return BorderBox(
           borderColor: borderColor,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(0, 6, 12, conversion.enabled ? 14 : 0),
+            padding: EdgeInsets.fromLTRB(0 * gsf, 6 * gsf, 12 * gsf, (conversion.enabled ? 14 : 0) * gsf),
             child: Column(
               children: [
                 SwitchListTile(
@@ -279,12 +284,12 @@ class ConversionBoxes extends StatelessWidget {
                     onConversionChanged(densityConversionNotifier.value, quantityConversionNotifier.value);
                   },
                   title: Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 2 * gsf),
                     child: Text(
                       text,
                       style: TextStyle(
                         color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
-                        fontSize: 16,
+                        fontSize: 16 * gsf,
                       ),
                     ),
                   ),
@@ -294,13 +299,13 @@ class ConversionBoxes extends StatelessWidget {
                 // Text for validation message
                 if (validationString != null)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0) * gsf,
                     child: 
                     Text(
                       validationString,
                       style: const TextStyle(
                         color: Colors.red,
-                        fontSize: 15,
+                        fontSize: 15 * gsf,
                       ),
                     ),
                   ),

@@ -1,10 +1,10 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../utility/text_logic.dart';
 import '../utility/theme.dart';
@@ -40,7 +40,7 @@ class _DateAndTimeTableState extends State<DateAndTimeTable> {
     }
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0);
+      _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0 * gsf);
     });
     
     super.initState();
@@ -57,7 +57,7 @@ class _DateAndTimeTableState extends State<DateAndTimeTable> {
       },
       children: [
         getDateTimeRow(context, true, null, TimeFrame.day, widget.dateTimeNotifier, widget.updateDateTime),
-        getSpacerRow(elements: 3, height: 10),
+        getSpacerRow(elements: 3, height: 10 * gsf),
         getDateTimeRow(context, true, _scrollController, TimeFrame.hour, widget.dateTimeNotifier, widget.updateDateTime),
       ]
     );
@@ -94,11 +94,11 @@ dynamic getDateTimeRow(
     alignment: Alignment.topCenter,
     children: [
       Padding(
-        padding: EdgeInsets.only(top: timeFrame == TimeFrame.hour ? 2 : 0),
+        padding: EdgeInsets.only(top: timeFrame == TimeFrame.hour ? 2 : 0) * gsf,
         child: Container(
           decoration: BoxDecoration(
             color: Colors.teal.shade100.withAlpha(200),
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            borderRadius: const BorderRadius.all(Radius.circular(12 * gsf)),
           ),
           child: ValueListenableBuilder(
             valueListenable: dateTimeNotifier,
@@ -111,12 +111,12 @@ dynamic getDateTimeRow(
                   children: [
                     const SizedBox(
                       width: 0,
-                      height: 25,
+                      height: 25 * gsf,
                     ),
                     _buildChevronButton(false, timeFrame, dateTime, onChanged, controller),
                     // vertical divider
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      padding: const EdgeInsets.symmetric(vertical: 5) * gsf,
                       child: Container(
                         width: 1,
                         height: 8,
@@ -128,10 +128,10 @@ dynamic getDateTimeRow(
                       DateSelector(dateTime, timeFrame, onChanged),
                     // vertical divider
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 5),
+                      padding: const EdgeInsets.symmetric(vertical: 5) * gsf,
                       child: Container(
-                        width: 1,
-                        height: 8,
+                        width: 1 * gsf,
+                        height: 8 * gsf,
                         color: Colors.black.withAlpha(100),
                       ),
                     ),
@@ -156,9 +156,9 @@ dynamic getDateTimeRow(
   List<Widget> children = [
     Text(
       label,
-      style: const TextStyle(fontSize: 16),
+      style: const TextStyle(fontSize: 16 * gsf),
     ),
-    const SizedBox(width: 12),
+    const SizedBox(width: 12 * gsf),
     stack,
   ];
   
@@ -208,7 +208,7 @@ class _TimeSelectorState extends State<TimeSelector> {
   
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.only(top: 3.0),
+        padding: const EdgeInsets.only(top: 3.0) * gsf,
         child: RotatedBox(
           quarterTurns: -1,
           child: Stack(
@@ -226,7 +226,7 @@ class _TimeSelectorState extends State<TimeSelector> {
                 child: ListWheelScrollView.useDelegate(
                   controller: widget.controller,
                   scrollBehavior: MouseDragScrollBehavior().copyWith(scrollbars: false),
-                  itemExtent: 38.0,
+                  itemExtent: 38.0 * gsf,
                   diameterRatio: 5.5,
                   physics: const FixedExtentScrollPhysics(),
                   onSelectedItemChanged: (index) {
@@ -308,8 +308,8 @@ class Mark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 12,
-      height: 9,
+      width: 12 * gsf,
+      height: 9 * gsf,
       child: CustomPaint(
         painter: TrianglePainter(const Color.fromARGB(255, 69, 139, 128)),
       ),
@@ -352,12 +352,12 @@ class _DateSelectorState extends State<DateSelector> {
       labels.add("$month $year");
     }
     
-    List<Widget> children = [const SizedBox(height: 5)];
+    List<Widget> children = [const SizedBox(height: 5 * gsf)];
     for (int i = 0; i < labels.length; i++) {
       children.add(Text(
         labels[i],
         style: TextStyle(
-          fontSize: 16,
+          fontSize: 16 * gsf,
           color: i == 0 ? Colors.black : const Color.fromARGB(255, 0, 145, 137),
         ),
       ));
@@ -431,7 +431,7 @@ Widget _buildChevronButton(bool isUp, TimeFrame timeFrame, DateTime dateTime, Fu
       }
     },
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(7, 9, 9, 9),
-      child: Icon(isUp ? Icons.chevron_right : Icons.chevron_left),
+      padding: const EdgeInsets.fromLTRB(7, 9, 9, 9) * gsf,
+      child: Icon(isUp ? Icons.chevron_right : Icons.chevron_left, size: 24 * gsf),
     ),
   );

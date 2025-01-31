@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import "dart:developer" as devtools show log;
 
+import '../constants/ui.dart';
 import '../utility/merge_input_decoration.dart';
 import '../utility/text_logic.dart';
 import '../utility/theme.dart';
@@ -44,7 +45,7 @@ class AmountField extends StatelessWidget {
     var inputTheme = getTheme().inputDecorationTheme;
     
     var inputDec = InputDecoration(
-      contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14),
+      contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14) * gsf,
       hintText: hintText,
       hintStyle: TextStyle(color: hintColor ?? inputTheme.hintStyle?.color),
       fillColor: fillColor ?? inputTheme.fillColor,
@@ -64,7 +65,7 @@ class AmountField extends StatelessWidget {
     }
     
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: padding ?? 12),
+      padding: EdgeInsets.symmetric(horizontal: padding ?? 12 * gsf),
       child: Focus(
         skipTraversal: true,
         onFocusChange: (bool hasFocus) {

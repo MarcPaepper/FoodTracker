@@ -8,6 +8,7 @@ import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
 import 'package:food_tracker/widgets/spacer_row.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../subviews/daily_targets_box.dart';
 import '../utility/data_logic.dart';
@@ -48,7 +49,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
   (Map<Target, Map<Product?, double>>, List<Product>)? dailyTargetProgressData;
   
   final textStyle = GoogleFonts.lato().copyWith(
-    fontSize: 16,
+    fontSize: 16 * gsf,
     fontVariations: const [FontVariation('wdth', 150)], // Adjust 'wdth' value to stretch
   );
   
@@ -86,7 +87,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
             } else if (snapshots.any((snap) => snap.connectionState == ConnectionState.waiting)) {
               msg = const Column(
                 children: [
-                  SizedBox(height: 130),
+                  SizedBox(height: 130 * gsf),
                   LoadingPage(),
                 ],
               );
@@ -165,7 +166,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
             
             return SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16) * gsf,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -180,8 +181,8 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                       children: [
                         TableRow(
                           children: [
-                            const Text("Timeframe:", style: TextStyle(fontSize: 16)),
-                            const SizedBox(width: 12),
+                            const Text("Timeframe:", style: TextStyle(fontSize: 16 * gsf)),
+                            const SizedBox(width: 12 * gsf),
                             DropdownButtonFormField<TimeFrame>(
                               value: _timeFrame,
                               decoration: dropdownStyleEnabled,
@@ -216,11 +217,11 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                           ]
                         ),
                         ...isGlobal ? [] : [
-                          getSpacerRow(elements: 3, height: 12),
+                          getSpacerRow(elements: 3, height: 12 * gsf),
                           TableRow(
                             children: [
-                              const Text("Calculate:", style: TextStyle(fontSize: 16)),
-                              const SizedBox(width: 12),
+                              const Text("Calculate:", style: TextStyle(fontSize: 16 * gsf)),
+                              const SizedBox(width: 12 * gsf),
                               DropdownButtonFormField<CalculationMethod>(
                                 value: _calculationMethod,
                                 decoration: dropdownStyleEnabled,
@@ -246,9 +247,9 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                       ],
                     ),
                     ... (!isGlobal && _calculationMethod == CalculationMethod.avg) ? [
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 10 * gsf),
                       SwitchListTile(
-                        title: const Text("Include days with 0 meals", style: TextStyle(fontSize: 16)),
+                        title: const Text("Include days with 0 meals", style: TextStyle(fontSize: 16 * gsf)),
                         value: includeEmptyDays,
                         // controlAffinity: ListTileControlAffinity.leading,
                         visualDensity: VisualDensity.compact,
@@ -259,12 +260,12 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                           });
                         },
                       ),
-                      const SizedBox(height: 10),
-                    ] : [const SizedBox(height: 14)],
+                      const SizedBox(height: 10 * gsf),
+                    ] : [const SizedBox(height: 14 * gsf)],
                     getDateTimeRow(context, false, null, _timeFrame, notifier, (newDT) => notifier.value = newDT),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 12 * gsf),
                     _buildGraphBox(productsMap, nutvalues, targets),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 12 * gsf),
                     _buildTargetSelector(targets, productsMap, nutvalues),
                   ],
                 ),
@@ -325,8 +326,8 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
     return BorderBox(
       title: "Show Targets",
       child: ListTileTheme(
-        contentPadding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
-        horizontalTitleGap: 6,
+        contentPadding: const EdgeInsets.fromLTRB(8, 0, 0, 0) * gsf,
+        horizontalTitleGap: 6 * gsf,
         child: Column(
           children: targets.map((target) {
             String name;
@@ -339,11 +340,11 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
             }
             
             return CheckboxListTile(
-              title: Text(name, style: const TextStyle(fontSize: 16)),
+              title: Text(name, style: const TextStyle(fontSize: 16 * gsf)),
               value: _activeTargets[target],
               dense: true,
               controlAffinity: ListTileControlAffinity.leading,
-              visualDensity: const VisualDensity(vertical: -1),
+              visualDensity: const VisualDensity(vertical: -1 * gsf),
               onChanged: (bool? value) {
                 setState(() {
                   _activeTargets[target] = value!;

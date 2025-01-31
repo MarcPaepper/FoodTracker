@@ -6,6 +6,7 @@ import 'package:food_tracker/subviews/daily_targets_box.dart';
 import 'package:food_tracker/widgets/datetime_selectors.dart';
 import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/theme.dart';
@@ -57,7 +58,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     
     _scrollController = FixedExtentScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0);
+      // _scrollController.jumpTo(widget.dateTimeNotifier.value.hour * 38.0 * gsf);
     });
     
     super.initState();
@@ -82,12 +83,12 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             ),
             child: const Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 5),
+                padding: EdgeInsets.symmetric(vertical: 5 * gsf),
                 child: Text("New Meal"),
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 14 * gsf),
           MultiValueListenableBuilder(
             listenables: [widget.dateTimeNotifier, ingredientsNotifier],
             builder: (context, values, child) {
@@ -95,7 +96,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
               List<(ProductQuantity, Color)> ingredients = values[1];
               
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 4 * gsf),
                 child: DailyTargetsBox(
                   dateTime,
                   ingredients,
@@ -113,9 +114,9 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
               );
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 14 * gsf),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -133,12 +134,12 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
               ],
             )
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 6 * gsf),
           ValueListenableBuilder(
             valueListenable: widget.dateTimeNotifier,
             builder: (context, dateTime, child) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                padding: const EdgeInsets.symmetric(horizontal: 4.0) * gsf,
                 child: FoodBox(
                   productsMap: widget.productsMap,
                   ingredientsNotifier: ingredientsNotifier,
@@ -150,7 +151,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
               );
             }
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 12 * gsf),
           ValueListenableBuilder(
             valueListenable: ingredientsNotifier,
             builder: (context, ingredients, child) {
@@ -199,8 +200,8 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: isVisible ? 39 : 0,
-              height: 93,
+              width: isVisible ? 39 * gsf : 0,
+              height: 93 * gsf,
               child: AnimatedOpacity(
                 opacity: isVisible ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
@@ -229,7 +230,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: isVisible ? 14 : 4,
+              width: (isVisible ? 14 : 4) * gsf,
             ),
           ],
         );
@@ -249,8 +250,10 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
     }
     
     return ElevatedButton.icon(
-      style: style,
-      icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0),),
+      style: style.copyWith(
+        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 19)),
+      ),
+      icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0), size: 24 * gsf),
       iconAlignment: IconAlignment.end,
       onPressed: enabled ? () {
         for (var ingredient in ingredientsNotifier.value) {
@@ -266,8 +269,8 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
         ingredientAmountControllers.clear();
       } : null,
       label: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4),
-        child: Text("Add Meal"),
+        padding: EdgeInsets.symmetric(horizontal: 4 * gsf, vertical: 0),
+        child: Text("Add Meal", style: TextStyle(fontSize: 16 * gsf)),
       ),
     );
   }

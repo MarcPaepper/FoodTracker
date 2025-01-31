@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/routes.dart';
+import '../constants/ui.dart';
 import '../services/data/async_provider.dart';
 import '../services/data/data_objects.dart';
 import '../utility/data_logic.dart';
@@ -118,13 +119,13 @@ class _IngredientsBoxState extends State<IngredientsBox> {
           errorMsg == null
             ? const SizedBox()
             : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 15 * gsf),
               child: Text(
                 errorMsg,
                 textAlign: TextAlign.left,
                 style: TextStyle(
                   color: errorType == ErrorType.warning ? warningColor : Colors.red,
-                  fontSize: 16)
+                  fontSize: 16 * gsf)
                 ),
             );
         
@@ -183,33 +184,33 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                   widget.autoCalcAmountNotifier.value = value;
                   widget.intermediateSave();
                 },
-                title: const Padding(
-                  padding: EdgeInsets.only(top: 2),
-                  child: Text(
+                title: Padding(
+                  padding: const EdgeInsets.only(top: 2) * gsf,
+                  child: const Text(
                     "Auto calculate the resulting amount",
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 16 * gsf,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 10 * gsf),
               Padding(
-                padding: const EdgeInsets.fromLTRB(4, 0, 8, 8),
+                padding: const EdgeInsets.fromLTRB(4, 0, 8, 8) * gsf,
                 child: Row(
                   children: [
                     Padding( // resulting ingredient amount field
-                      padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 10),
+                      padding: EdgeInsets.symmetric(horizontal: valueAutoCalc ? 12 : 10) * gsf,
                       child: valueAutoCalc ? 
                         Text(
                           valueResultingAmount.isNaN ? "NaN" : roundDouble(valueResultingAmount),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 16 * gsf,
                           )
                         )
                         : SizedBox(
-                          width: 80,
+                          width: 80 * gsf,
                           child: AmountField(
                             controller: widget.resultingAmountController,
                             enabled: !valueAutoCalc,
@@ -222,7 +223,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                         ),
                     ),
                     SizedBox( // ingredient unit dropdown
-                      width: 95,
+                      width: 95 * gsf,
                       child: UnitDropdown(
                         items: buildUnitItems(verbose: true, quantityName: widget.quantityNameController.text), 
                         current: valueUnit,
@@ -233,13 +234,13 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 8 * gsf),
                     Flexible(
                       child: Text(
                         "of $productName contains:",
                         maxLines: 3,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 16 * gsf,
                         ),
                       ),
                     ),
@@ -247,7 +248,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                 ),
               ),
               errorText,
-              const SizedBox(height: 8),
+              const SizedBox(height: 8 * gsf),
               _buildIngredientsList(context, widget.productsMap, valueIngredients, amounts, errors, valueUnit, widget.quantityNameController.text),
               _buildAddIngredientButton(context, widget.productsMap, valueIngredients, widget.id),
             ],
@@ -276,7 +277,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
           child: Text(
             "No ingredients yet",
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 16 * gsf,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -294,7 +295,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         buildDefaultDragHandles: false,
         
         entries: _getIngredientEntries(context, productsMap, ingredients, amounts, errors, targetUnit, widget.id),
-        menuWidth: 90,
+        menuWidth: 90 * gsf,
         onReorder: ((oldIndex, newIndex) {
           if (oldIndex < newIndex) {
             newIndex -= 1;
@@ -390,7 +391,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
           " ⚠ $errorMsg",
           style: TextStyle(
             color: errorType == ErrorType.error ? Colors.red : warningColor,
-            fontSize: 16,
+            fontSize: 16 * gsf,
           ),
         );
       
@@ -407,7 +408,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               title: Container(
                 color: color,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14) * gsf,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -445,7 +446,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                         ),
                         validator: (value) => errorType == ErrorType.none ? null : errorMsg,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 12 * gsf),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -469,7 +470,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                               }
                             ),
                           ),
-                          const SizedBox(width: 9),
+                          const SizedBox(width: 9 * gsf),
                           // unit dropdown
                           Expanded(
                             child: UnitDropdown(
@@ -556,20 +557,20 @@ class _IngredientsBoxState extends State<IngredientsBox> {
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromARGB(255, 210, 235, 198),
         foregroundColor: Colors.black,
-        minimumSize: const Size(double.infinity, 50),
+        minimumSize: const Size(double.infinity, 50 * gsf),
         alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16 * gsf),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(14),
-            bottomRight: Radius.circular(14),
+            bottomLeft: Radius.circular(14 * gsf),
+            bottomRight: Radius.circular(14 * gsf),
           ),
         ),
         textStyle: Theme.of(context).textTheme.bodyLarge,
       ),
-      icon: const Icon(Icons.add),
+      icon: const Icon(Icons.add, size: 24 * gsf),
       label: const Padding(
-        padding: EdgeInsets.only(left: 5.0),
+        padding: EdgeInsets.only(left: 5.0 * gsf),
         child: Text("Add Ingredient"),
       ),
       onPressed: () async {// remove all ingredient products from products list

@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/multi_stream_builder.dart';
 
+import '../constants/ui.dart';
 import '../subviews/conversion_boxes.dart';
 import '../subviews/daily_targets_box.dart';
 import '../subviews/nutrients_box.dart';
@@ -374,13 +375,13 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
             ),
             body: _loaded ? SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(6.0),
+                padding: const EdgeInsets.all(6.0) * gsf,
                 child: Form(
                   key: _formKey,
                   child: Column(
                     children: [
                       _buildNameField(products!),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 5 * gsf),
                       _buildDefaultUnitDropdown(),
                       TemporaryBox(
                         isTemporaryNotifier: _isTemporaryNotifier,
@@ -408,7 +409,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         },
                         onNameChanged: (newName) => _interimProduct = getProductFromForm().$1.copyWith(newQuantityName: newName),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 14 * gsf),
                       IngredientsBox(
                         id: _id,
                         prevProduct: _prevProduct,
@@ -454,7 +455,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         },
                         requestIngredientFocus: _requestIngredientFocus,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 14 * gsf),
                       NutrientsBox(
                         nutValues: nutValues!,
                         productsMap: productsMap,
@@ -475,7 +476,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                         },
                         intermediateSave: () => _interimProduct = getProductFromForm().$1,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 14 * gsf),
                       MultiValueListenableBuilder(
                         listenables: [
                           _ingredientsNotifier,
@@ -510,7 +511,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           );
                         }
                       ),
-                      const SizedBox(height: 11),
+                      const SizedBox(height: 11 * gsf),
                       _buildAddButton(meals!),
                     ]
                   ),
@@ -552,7 +553,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   }
   
   Widget _buildInfoButton() => SizedBox(
-    width: 30,
+    width: 30 * gsf,
     child: IconButton(
       onPressed: () {
         showProductInfoDialog(context, _prevProduct);
@@ -569,7 +570,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       builder: (context, value, child) {
         var name = _productNameController.text.trim();
         return IconButton(
-          padding: const EdgeInsets.fromLTRB(kIsWeb ? 5 : 0, 0, kIsWeb ? 10 : 0, 0),
+          padding: const EdgeInsets.fromLTRB(kIsWeb ? 5 : 0, 0, kIsWeb ? 10 : 0, 0) * gsf,
           constraints: const BoxConstraints(),
           onPressed: () async {
             // Map all products which include the current product (_id) as an ingredient
@@ -653,7 +654,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                               child: const Text("Delete"),
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 20 * gsf),
                           Expanded(
                             child: TextButton(
                               style: actionButtonStyle,
@@ -675,7 +676,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   Widget _buildNameField(List<Product> products) {
     var textField = Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(8.0) * gsf,
       child: TextFormField(
         autofocus: !(_isEdit || widget.isCopy || _interimProduct != null),
         controller: _productNameController,
@@ -734,7 +735,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     List<Product> products,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8) * gsf,
       child: TextButton(
         onPressed: () {
           String name;
@@ -773,17 +774,17 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           valueListenable: _quantityNameController,
           builder: (context, value, child) {
             return Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8.0) * gsf,
               child: Row(
                 children: [
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12) * gsf,
                       child: Text(
                         "Default Unit:",
                         style: TextStyle(
                           color: Colors.black.withAlpha(200),
-                          fontSize: 16,
+                          fontSize: 16 * gsf,
                         ),
                       ),
                     ),
@@ -846,17 +847,17 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   }
   
   Widget _buildAddButton(List<Meal> meals) => Padding(
-    padding: const EdgeInsets.all(8.0),
+    padding: const EdgeInsets.all(8.0) * gsf,
     child: ElevatedButton(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all(Colors.teal.shade400),
         foregroundColor: WidgetStateProperty.all(Colors.white),
-        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 60)),
-        textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 60 * gsf)),
+        textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16 * gsf)),
         shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(14)),
+          borderRadius: BorderRadius.all(Radius.circular(14 * gsf)),
         )),
-        padding: WidgetStateProperty.all(const EdgeInsets.all(12)),
+        padding: WidgetStateProperty.all(const EdgeInsets.all(12 * gsf)),
       ),
       onPressed: () => saveProduct(meals),
       child: Text(_isEdit ? "Update Product" : "Add Product"),

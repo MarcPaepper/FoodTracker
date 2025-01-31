@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
+
 enum SortType {
   relevancy,
   alphabetical,
@@ -41,7 +43,7 @@ class _SortFieldState extends State<SortField> {
   
   final _dropdownTextStyle = const TextStyle(
     color: Colors.black,
-    fontSize: 16,
+    fontSize: 16 * gsf,
     fontWeight: FontWeight.normal,
   );
 
@@ -53,9 +55,9 @@ class _SortFieldState extends State<SortField> {
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderRadius: BorderRadius.all(Radius.circular(10 * gsf)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 12 : 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 12 : 8) * gsf,
       ),
       onPressed: () {
         setState(() {
@@ -67,12 +69,12 @@ class _SortFieldState extends State<SortField> {
           Row(
             children: [
               const Icon(Icons.sort),
-              const SizedBox(width: 26, height: 32),
+              const SizedBox(width: 26 * gsf, height: 32 * gsf),
               const Text(
                 "Sorting",
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 16,
+                  fontSize: 16 * gsf,
                   fontWeight: FontWeight.normal,
                 ),
               ),
@@ -88,9 +90,9 @@ class _SortFieldState extends State<SortField> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(5, 16, 0, 5),
-                        child: Text('Sort by:'),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(5, 16, 0, 5) * gsf,
+                        child: const Text('Sort by:'),
                       ),
                       DropdownButtonFormField<SortType>(
                         decoration: _dropdownDecoration,
@@ -120,18 +122,18 @@ class _SortFieldState extends State<SortField> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 8 * gsf),
                     ],
                   ),
                 ),
-                const SizedBox(width: 20),
+                const SizedBox(width: 20 * gsf),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(5, 16, 0, 5),
-                        child: Text('Direction:'),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(5, 16, 0, 5) * gsf,
+                        child: const Text('Direction:'),
                       ),
                       DropdownButtonFormField<SortOrder>(
                         decoration: _dropdownDecoration,
@@ -152,7 +154,7 @@ class _SortFieldState extends State<SortField> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 8 * gsf),
                     ],
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
 import '../utility/data_logic.dart';
 import '../utility/theme.dart';
 import '../widgets/loading_page.dart';
@@ -29,14 +30,14 @@ class _ImportExportViewState extends State<ImportExportView> {
         body: _loading
           ? const Column(
               children: [
-                SizedBox(height: 180),
+                SizedBox(height: 180 * gsf),
                 LoadingPage(),
               ],
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: 8 * gsf),
                 _buildPortButton(context, true),
                 _buildPortButton(context, false),
               ],
@@ -47,7 +48,7 @@ class _ImportExportViewState extends State<ImportExportView> {
   
   Widget _buildPortButton(BuildContext context, bool isExport) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0) * gsf,
       child: ElevatedButton(
         style: lightButtonStyle,
         onPressed: () {
@@ -64,8 +65,8 @@ class _ImportExportViewState extends State<ImportExportView> {
         },
         child: Row(
           children: [
-            Image.asset("assets/${isExport ? "up" : "down"}load.png", width: 24, height: 24),
-            const SizedBox(width: 20),
+            Image.asset("assets/${isExport ? "up" : "down"}load.png", width: 24 * gsf, height: 24 * gsf),
+            const SizedBox(width: 20 * gsf),
             Text(isExport ? "Export" : "Import"),
           ],
         ),

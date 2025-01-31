@@ -5,6 +5,7 @@ import "package:flutter/material.dart";
 import "package:food_tracker/utility/theme.dart";
 
 import "../constants/routes.dart";
+import "../constants/ui.dart";
 import "../services/data/async_provider.dart";
 import '../services/data/data_objects.dart';
 import "../utility/data_logic.dart";
@@ -75,7 +76,7 @@ class _FoodBoxState extends State<FoodBox> {
             clipBehavior: Clip.antiAlias,
             // rounded corners
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(14) * gsf,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,7 +111,7 @@ class _FoodBoxState extends State<FoodBox> {
       builder: (state) {
         return SlidableList(
           entries: entries,
-          menuWidth: canChange ? 90 : 50,
+          menuWidth: (canChange ? 90 : 50) * gsf,
         );
       },
     );
@@ -195,12 +196,12 @@ class _FoodBoxState extends State<FoodBox> {
       var errorBox = errorType == ErrorType.none
         ? const SizedBox()
         : Padding(
-          padding: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.only(top: 8) * gsf,
           child: Text(
             " ⚠ $errorMsg",
             style: TextStyle(
               color: errorType == ErrorType.error ? Colors.red : warningColor,
-              fontSize: 16,
+              fontSize: 16 * gsf,
             ),
           ),
         );
@@ -222,11 +223,11 @@ class _FoodBoxState extends State<FoodBox> {
                 child: IntrinsicHeight(
                   child: Row(
                     children: [
-                      ColorIndicatorStrip(ingredient.$2, 13, extra),
-                      const SizedBox(width: 5),
+                      ColorIndicatorStrip(ingredient.$2, 13 * gsf, extra),
+                      const SizedBox(width: 5 * gsf),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: kIsWeb ? 16: 18), // TODO: Should mobile also have 16 padding?
+                          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: (kIsWeb ? 16: 18) * gsf), // TODO: Should mobile also have 16 padding?
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -260,7 +261,7 @@ class _FoodBoxState extends State<FoodBox> {
                                 },
                                 refDate: widget.refDate,
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 14 * gsf),
                               Row(
                                 children: [
                                   Expanded(
@@ -281,7 +282,7 @@ class _FoodBoxState extends State<FoodBox> {
                                       }
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 12 * gsf),
                                   // unit dropdown
                                   Expanded(
                                     child: UnitDropdown(
@@ -310,7 +311,7 @@ class _FoodBoxState extends State<FoodBox> {
                           )
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 16 * gsf),
                     ],
                   ),
                 ),
@@ -373,14 +374,14 @@ class _FoodBoxState extends State<FoodBox> {
         shape: WidgetStateProperty.all<RoundedRectangleBorder>(
           RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
-              bottomLeft: const Radius.circular(14),
-              bottomRight: const Radius.circular(14),
-              topRight: Radius.circular(roundedTop ? 14 : 0),
-              topLeft: Radius.circular(roundedTop ? 14 : 0),
+              bottomLeft: const Radius.circular(14) * gsf,
+              bottomRight: const Radius.circular(14) * gsf,
+              topRight: Radius.circular(roundedTop ? 14 : 0) * gsf,
+              topLeft: Radius.circular(roundedTop ? 14 : 0) * gsf,
             ),
           ),
         ),
-        minimumSize: WidgetStateProperty.all<Size>(const Size(0, 50)),
+        minimumSize: WidgetStateProperty.all<Size>(const Size(0, 50 * gsf)),
       ),
       onPressed: () async {
         Map<int, double>? relevancies;
@@ -431,8 +432,8 @@ class _FoodBoxState extends State<FoodBox> {
           refDate: widget.refDate,
         );
       },
-      label: const Text("Add Ingredient"),
-      icon: const Icon(Icons.add),
+      label: const Text("Add Ingredient", style: TextStyle(fontSize: 16 * gsf)),
+      icon: const Icon(Icons.add, size: 24 * gsf),
     );
   }
 }

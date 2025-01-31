@@ -5,6 +5,7 @@ import 'package:food_tracker/services/data/async_provider.dart';
 import 'package:food_tracker/utility/theme.dart';
 
 import '../constants/routes.dart';
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../widgets/loading_page.dart';
@@ -54,7 +55,7 @@ class _ProductsViewState extends State<ProductsView> {
                 Container(
                   color: Colors.white,
                   child: Padding(
-                    padding: kIsWeb ? const EdgeInsets.fromLTRB(12, 18, 12, 0) : const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                    padding: (kIsWeb ? const EdgeInsets.fromLTRB(12, 18, 12, 0) : const EdgeInsets.fromLTRB(12, 12, 12, 0))  * gsf,
                     child: SortField(
                       sortType: _sortType,
                       sortOrder: _sortOrder,
@@ -70,7 +71,7 @@ class _ProductsViewState extends State<ProductsView> {
                 Container(
                   color: Colors.white,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: kIsWeb ? 16.0 : 12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: kIsWeb ? 16.0 : 12.0) * gsf,
                     child: SearchField(
                       searchController: _searchController,
                       onChanged: (value) => setState(() {
@@ -107,7 +108,7 @@ class _ProductsViewState extends State<ProductsView> {
             style: TextStyle(
               color: Colors.grey[600],
               fontStyle: FontStyle.italic,
-              fontSize: 16.0,
+              fontSize: 16.0 * gsf,
             ),
           ),
         );
@@ -141,14 +142,14 @@ class _ProductsViewState extends State<ProductsView> {
             color: products.length % 2 == 0 ? Colors.grey[100] : Colors.white,
             child: Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0) * gsf,
                 child: Text(
                   "${products.length} Products",
                   style: TextStyle(
                     color: Colors.grey[600],
                     // italic
                     fontStyle: FontStyle.italic,
-                    fontSize: 16.0,
+                    fontSize: 16.0 * gsf,
                   ),
                 ),
               ),
@@ -174,7 +175,7 @@ class _ProductsViewState extends State<ProductsView> {
       style: addButtonStyle,
       icon: const Icon(Icons.add),
       label: Padding(
-        padding: const EdgeInsets.only(left: 5.0),
+        padding: const EdgeInsets.only(left: 5.0) * gsf,
         child: Text("Add ${nameQuotation ?? "Product"}"),
       ),
       onPressed: () {

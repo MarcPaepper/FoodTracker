@@ -2,6 +2,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
 import '../widgets/multi_value_listenable_builder.dart';
 import '../utility/data_logic.dart';
 import '../utility/text_logic.dart';
@@ -58,7 +59,7 @@ class TemporaryBox extends StatelessWidget {
         }
         
         const textStyle = TextStyle(
-          fontSize: 16,
+          fontSize: 16 * gsf,
           color: Colors.black,
           fontWeight: FontWeight.normal,
         );
@@ -80,7 +81,7 @@ class TemporaryBox extends StatelessWidget {
         return BorderBox(
           borderColor: borderColor,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(0, 6, 12, isTemporary ? 14 : 0),
+            padding: EdgeInsets.fromLTRB(0, 6, 12, isTemporary ? 14 : 0) * gsf,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -93,26 +94,26 @@ class TemporaryBox extends StatelessWidget {
                     intermediateSave();
                   },
                   title: Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 2) * gsf,
                     child: Text(
                       "Temporary",
                       style: TextStyle(
                         color: Colors.black.withAlpha(((textAlpha + 255) / 2).round()),
-                        fontSize: 16,
+                        fontSize: 16 * gsf,
                       ),
                     ),
                   ),
                 ),
-                SizedBox(height: isTemporary ? 8 : 6),
+                SizedBox(height: (isTemporary ? 8 : 6) * gsf),
                 // Single button to show a date range picker
                 if (isTemporary)
                   Padding(
-                    padding: const EdgeInsets.only(left: 12),
+                    padding: const EdgeInsets.only(left: 12) * gsf,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal.shade50,
                         shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(14)),
+                          borderRadius: BorderRadius.all(Radius.circular(14 * gsf)),
                         ),
                         padding: const EdgeInsets.fromLTRB(8, 6, 0, 6),
                       ),
@@ -137,11 +138,11 @@ class TemporaryBox extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Icon(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8) * gsf,
+                            child: const Icon(
                               Icons.edit_calendar,
-                              size: 28,
+                              size: 28 * gsf,
                             ),
                           ),
                           const Spacer(),
@@ -159,12 +160,12 @@ class TemporaryBox extends StatelessWidget {
                                 TableRow(
                                   children: [
                                     const SizedBox(width: 0),
-                                    const SizedBox(width: 10),
+                                    const SizedBox(width: 10 * gsf),
                                     Text(
                                       beginningText,
                                       style: textStyle,
                                     ),
-                                    const SizedBox(width: 14),
+                                    const SizedBox(width: 14 * gsf),
                                     Text(
                                       "($beginningTextNat)",
                                       style: textStyle.copyWith(
@@ -180,12 +181,12 @@ class TemporaryBox extends StatelessWidget {
                                       "-",
                                       style: textStyle,
                                     ),
-                                    const SizedBox(width: 10),
+                                    const SizedBox(width: 10 * gsf),
                                     Text(
                                       endText,
                                       style: textStyle,
                                     ),
-                                    const SizedBox(width: 14),
+                                    const SizedBox(width: 14 * gsf),
                                     Text(
                                       "($endTextNat)",
                                       style: textStyle.copyWith(

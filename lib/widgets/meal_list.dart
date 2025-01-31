@@ -6,6 +6,7 @@ import "package:food_tracker/services/data/async_provider.dart";
 import "package:scrollable_positioned_list/scrollable_positioned_list.dart";
 
 import "../constants/routes.dart";
+import "../constants/ui.dart";
 import "../services/data/data_objects.dart";
 import "../services/data/data_service.dart";
 import "../utility/text_logic.dart";
@@ -74,7 +75,7 @@ class _MealListState extends State<MealList> {
         productsMap: widget.productsMap ?? {},
         onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
       ),
-      const SizedBox(height: 5),
+      const SizedBox(height: 5 * gsf),
     ];
     
     List<Widget> mealTiles = getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded);
@@ -92,31 +93,31 @@ class _MealListState extends State<MealList> {
           padding: EdgeInsets.zero,
         ),
         Positioned(
-          bottom: 16.0,
-          left: 16.0,
+          bottom: 16.0 * gsf,
+          left: 16.0 * gsf,
           child: ValueListenableBuilder<bool>(
             valueListenable: _isButtonVisible,
             builder: (context, isVisible, child) {
               return SizedBox(
-                width: 45,
-                height: 45,
+                width: 45 * gsf,
+                height: 45 * gsf,
                 child: Center(
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    width: isVisible ? 45 : 0,
-                    height: isVisible ? 45 : 0,
+                    width: (isVisible ? 45 : 0) * gsf,
+                    height: (isVisible ? 45 : 0) * gsf,
                     child: AnimatedOpacity(
                       opacity: isVisible ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 300),
                       child: Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(10) * gsf,
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.8),
-                              blurRadius: 4.0,
+                              blurRadius: 4.0 * gsf,
                               spreadRadius: 0.0,
-                              offset: const Offset(-0.3, 0.2),
+                              offset: const Offset(-0.3, 0.2) * gsf,
                             ),
                           ],
                         ),
@@ -143,7 +144,7 @@ class _MealListState extends State<MealList> {
                               child: AnimatedOpacity(
                                 opacity: isVisible ? 1.0 : 0.0,
                                 duration: const Duration(milliseconds: 300),
-                                child: const Icon(Icons.keyboard_double_arrow_down)
+                                child: const Icon(Icons.keyboard_double_arrow_down, size: 24 * gsf)
                               ),
                             ),
                           ),
@@ -198,42 +199,48 @@ class _MealListState extends State<MealList> {
       
       children.add(
         ListTile(
+          // minTileHeight: 4,
           title: Row(
             children: [
-              const SizedBox(width: 12),
+              const SizedBox(width: 12 * gsf),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 2.5),
-                    Text(productName, style: const TextStyle(fontSize: 16.5)),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(amountText, style: const TextStyle(fontSize: 14, color: Color.fromARGB(255, 0, 85, 255))),
-                          Text(hourText, style: const TextStyle(fontSize: 14)),
-                        ],
-                      ),
+                    const SizedBox(height: 2.5 * gsf), // anti gsf
+                    Text(productName, style: const TextStyle(fontSize: 16.5 * gsf)),//, height: 1.0)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(amountText, style: const TextStyle(fontSize: 14 * gsf, color: Color.fromARGB(255, 0, 85, 255))),//, height: 1)),
+                        Text(hourText, style: const TextStyle(fontSize: 14 * gsf)),//, height: 1)),
+                      ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 2 * gsf), // anti gsf
                   ],
                 ),
               ),
               PopupMenuButton(
+                iconSize: (kIsWeb ? 24 : 24) * gsf,
+                style: ButtonStyle(
+                  padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 8, vertical: 0) * gsf),
+                  minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
+                ),
                 itemBuilder: (context) => const [
                   PopupMenuItem(
                     value: 0,
-                    child: Text("Edit meal"),
+                    height: 40 * gsf,
+                    child: Text("Edit meal", style: TextStyle(fontSize: 16 * gsf)),
                   ),
                   PopupMenuItem(
                     value: 1,
-                    child: Text("Edit product"),
+                    height: 40 * gsf,
+                    child: Text("Edit product", style: TextStyle(fontSize: 16 * gsf)),
                   ),
                   PopupMenuItem(
                     value: 2,
-                    child: Text("Delete meal"),
+                    height: 40 * gsf,
+                    child: Text("Delete meal", style: TextStyle(fontSize: 16 * gsf)),
                   ),
                 ],
                 onSelected: (int value) {
@@ -274,9 +281,10 @@ class _MealListState extends State<MealList> {
 
   Widget _buildHorizontalLine() =>
     const Divider(
-      indent: 7,
-      endIndent: 10,
-      height: 1,
+      indent: 7 * gsf,
+      endIndent: 10 * gsf,
+      height: 1 * gsf,
+      thickness: 1 * gsf,
     );
 
   Widget getDateStrip(BuildContext context, DateTime dateTime) {
@@ -290,7 +298,7 @@ class _MealListState extends State<MealList> {
     }
     
     var widget = Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 2),
+      padding: const EdgeInsets.only(top: 4, bottom: 2) * gsf,
       // key: key,
       child: Row(
         children: [
@@ -300,8 +308,8 @@ class _MealListState extends State<MealList> {
               color: const Color.fromARGB(255, 200, 200, 200),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
-                  child: Text(text, style: const TextStyle(fontSize: 15.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0) * gsf,
+                  child: Text(text, style: const TextStyle(fontSize: 15.5 * gsf)),
                 ),
               ),
             ),

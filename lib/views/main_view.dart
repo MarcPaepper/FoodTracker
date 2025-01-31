@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/views/meals_view.dart';
 import 'package:food_tracker/views/stats_view.dart';
 import '../constants/data.dart';
+import '../constants/ui.dart';
 import '../services/data/data_service.dart';
 import '../utility/theme.dart';
 import 'products_view.dart';
@@ -73,12 +74,12 @@ class _MainViewState extends State<MainView> {
     physics: AlwaysScrollableScrollPhysics(),
     tabAlignment: TabAlignment.center,
     tabs: [
-      Tab(text: "Meals"),
-      Tab(text: "Stats"),
-      Tab(text: "Products"),
-      Tab(text: "Nutrition"),
-      Tab(text: "Targets"),
-      Tab(text: "Options"),
+      Tab(text: "Meals", height: 38 * gsf),
+      Tab(text: "Stats", height: 38 * gsf),
+      Tab(text: "Products", height: 38 * gsf),
+      Tab(text: "Nutrition", height: 38 * gsf),
+      Tab(text: "Targets", height: 38 * gsf),
+      Tab(text: "Options", height: 38 * gsf),
     ],
   );
 }

@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
@@ -83,7 +84,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
                     
                     return SingleChildScrollView(
                       child: Padding(
-                        padding: const EdgeInsets.all(6.0),
+                        padding: const EdgeInsets.all(6.0) * gsf,
                         child: Form(
                           key: _formKey,
                           child: _buildView(products, meal),
@@ -121,7 +122,7 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
               refDate: dateTime,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12) * gsf,
               child: DateAndTimeTable(
                 dateTimeNotifier: dateTimeNotifier,
                 updateDateTime:   _updateDateTime,
@@ -138,15 +139,15 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
   void _updateDateTime(DateTime newDateTime) => dateTimeNotifier.value = newDateTime;
   
   Widget _buildUpdateButton(Meal meal, List<Product> products) => Padding(
-    padding: const EdgeInsets.all(8.0),
+    padding: const EdgeInsets.all(8.0) * gsf,
     child: ElevatedButton(
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all(Colors.teal.shade400),
         foregroundColor: WidgetStateProperty.all(Colors.white),
-        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 50)),
-        textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16)),
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 50 * gsf)),
+        textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16 * gsf)),
         shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(14)),
+          borderRadius: BorderRadius.all(Radius.circular(14 * gsf)),
         )),
       ),
       onPressed: () {

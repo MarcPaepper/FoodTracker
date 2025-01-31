@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 
 import '../constants/data.dart';
+import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
 import '../utility/modals.dart';
@@ -139,7 +140,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
               _showFullName.value     = _interimValue!.showFullName;
             }
             return Padding(
-              padding: const EdgeInsets.all(7.0),
+              padding: const EdgeInsets.all(7.0) * gsf,
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -161,7 +162,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   }
   
   Widget _buildNameField(List<NutritionalValue> nutValues) => Padding(
-    padding: const EdgeInsets.all(8.0),
+    padding: const EdgeInsets.all(8.0) * gsf,
     child: TextFormField(
       controller: _name,
       decoration: const InputDecoration(
@@ -186,7 +187,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   );
   
   Widget _buildUnitField() => Padding(
-    padding: const EdgeInsets.all(8.0),
+    padding: const EdgeInsets.all(8.0) * gsf,
     child: TextFormField(
       controller: _unit,
       decoration: const InputDecoration(
@@ -209,7 +210,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
     valueListenable: _showFullName,
     builder: (context, value, child) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 8.0) * gsf,
         child: SwitchListTile(
           visualDensity: VisualDensity.compact,
           title: const Text("Show Full Name"),
@@ -225,7 +226,7 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   );
   
   Widget _buildAddButton() => Padding(
-    padding: const EdgeInsets.all(8.0),
+    padding: const EdgeInsets.all(8.0) * gsf,
     child: ElevatedButton(
       style: importantButtonStyle,
       onPressed: () {
