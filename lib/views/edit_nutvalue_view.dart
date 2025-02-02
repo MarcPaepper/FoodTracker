@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 
@@ -61,10 +62,15 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? "Edit Nutritional Value" : "Edit Nutritional Value"),
+        toolbarHeight: appBarHeight,
+        title: Text(isEdit ? "Edit Nutritional Value" : "Edit Nutritional Value", style: const TextStyle(fontSize: 16 * gsf)),
         // show the delete button if editing
         actions: isEdit ? [
           IconButton(
+            padding: kIsWeb ? 
+              const EdgeInsets.fromLTRB(5, 5, 5, 5) * gsf : 
+              EdgeInsets.zero,
+            icon: const Icon(Icons.delete, size: 21 * gsf),
             onPressed: () async {
               var targets = await _dataService.getAllTargets();
               // Check if any target has the Type NutritionalValue and the nutval ID
@@ -111,8 +117,8 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
                 );
               }
             },
-            icon: const Icon(Icons.delete),
-          )
+          ),
+          const SizedBox(width: 5 * gsf),
         ] : null
       ),
       body: StreamBuilder(
@@ -165,8 +171,9 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
     padding: const EdgeInsets.all(8.0) * gsf,
     child: TextFormField(
       controller: _name,
-      decoration: const InputDecoration(
-        labelText: "Name"
+      decoration: InputDecoration(
+        labelText: "Name",
+        contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 2) * gsf,
       ),
       validator: (String? value) {
         for (var prod in nutValues) {
@@ -190,8 +197,9 @@ class _EditNutritionalValueViewState extends State<EditNutritionalValueView> {
     padding: const EdgeInsets.all(8.0) * gsf,
     child: TextFormField(
       controller: _unit,
-      decoration: const InputDecoration(
-        labelText: "Unit"
+      decoration: InputDecoration(
+        labelText: "Unit",
+        contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 2) * gsf,
       ),
       validator: (String? value) {
         if (value == null || value.isEmpty) {

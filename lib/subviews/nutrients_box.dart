@@ -178,6 +178,10 @@ class NutrientsBox extends StatelessWidget {
                       children: [
                        Tooltip(
                           message: "Fields left empty are calculated automatically from ingredients and are shown as blue.",
+                          textStyle: TextStyle(
+                            fontSize: 14 * gsf,
+                            color: Colors.white,
+                          ),
                           child: Icon(
                             Icons.info_outline,
                             size: 22.0 * gsf,
@@ -220,7 +224,7 @@ class NutrientsBox extends StatelessWidget {
         key: Key("tile for the nutrient ${nutrient.nutritionalValueId}"),
         contentPadding: EdgeInsets.zero,
         minVerticalPadding: 0,
-        visualDensity: const VisualDensity(horizontal: 0 * gsf, vertical: -4),
+        visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
         title: Row(
           children: [
             // Text field for the nutrient amount

@@ -125,6 +125,10 @@ class _TargetsViewState extends State<TargetsView> {
               if (target.isPrimary) 
                 const Tooltip(
                   message: "Primary Target",
+                  textStyle: TextStyle(
+                    fontSize: 14 * gsf,
+                    color: Colors.white,
+                  ),
                   child: Icon(Icons.circle, size: 10 * gsf, color: Colors.teal),
                   // child: Text("P", style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
                 ),
@@ -133,7 +137,7 @@ class _TargetsViewState extends State<TargetsView> {
           ),
           minVerticalPadding: 0,
           visualDensity: const VisualDensity(vertical: 1 * gsf, horizontal: 0),
-          contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10 * gsf),
+          contentPadding: const EdgeInsets.symmetric(vertical: 7 * gsf - 7, horizontal: 10 * gsf),
           tileColor: color,
           onTap: () {
             Navigator.pushNamed(context, editTargetRoute, arguments: (target.trackedType, target.trackedId));
@@ -170,7 +174,7 @@ class _TargetsViewState extends State<TargetsView> {
   
   Widget _buildAddButton() => ElevatedButton.icon(
     style: addButtonStyle,
-    icon: const Icon(Icons.add),
+    icon: const Icon(Icons.add, size: 20 * gsf),
     label: const Padding(
       padding: EdgeInsets.only(left: 5.0 * gsf),
       child: Text("Add Daily Target"),

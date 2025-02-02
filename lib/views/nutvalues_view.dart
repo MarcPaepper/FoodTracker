@@ -77,6 +77,7 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
           
           return ListTile(
             key: Key(value.id.toString()),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12 * gsf, vertical: 8 * gsf - 4),
             title: RichText(
               text: TextSpan(
                 children: [
@@ -116,7 +117,7 @@ class _NutritionalValueViewState extends State<NutritionalValueView> {
   
   Widget _buildAddButton() => ElevatedButton.icon(
     style: addButtonStyle,
-    icon: const Icon(Icons.add, size: 24 * gsf),
+    icon: const Icon(Icons.add, size: 20 * gsf),
     label: const Padding(
       padding: EdgeInsets.only(left: 5.0 * gsf),
       child: Text("Add Nutritional Value"),

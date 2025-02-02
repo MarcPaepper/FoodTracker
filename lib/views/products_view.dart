@@ -173,7 +173,7 @@ class _ProductsViewState extends State<ProductsView> {
     
     return ElevatedButton.icon(
       style: addButtonStyle,
-      icon: const Icon(Icons.add),
+      icon: const Icon(Icons.add, size: 20 * gsf),
       label: Padding(
         padding: const EdgeInsets.only(left: 5.0) * gsf,
         child: Text("Add ${nameQuotation ?? "Product"}"),

@@ -68,7 +68,7 @@ class _SortFieldState extends State<SortField> {
         children: [
           Row(
             children: [
-              const Icon(Icons.sort),
+              const Icon(Icons.sort, size: 24 * gsf),
               const SizedBox(width: 26 * gsf, height: 32 * gsf),
               const Text(
                 "Sorting",
@@ -79,7 +79,7 @@ class _SortFieldState extends State<SortField> {
                 ),
               ),
               const Spacer(),
-              Icon(_expanded ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+              Icon(_expanded ? Icons.arrow_drop_up : Icons.arrow_drop_down, size: 24 * gsf),
             ],
           ),
           if (_expanded)
@@ -92,12 +92,17 @@ class _SortFieldState extends State<SortField> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(5, 16, 0, 5) * gsf,
-                        child: const Text('Sort by:'),
+                        child: const Text('Sort by:', style: TextStyle(fontSize: 16 * gsf)),
                       ),
                       DropdownButtonFormField<SortType>(
                         decoration: _dropdownDecoration,
                         alignment: Alignment.bottomLeft,
                         value: widget.sortType,
+                        style: const TextStyle(fontSize: 28 * gsf),
+                        icon: const Icon(Icons.arrow_drop_down),
+                        iconSize: 22 * gsf,
+                        isDense: true,
+                        isExpanded: true,
                         onChanged: (SortType? value) {
                           if (value != null) {
                             widget.onChanged(value, widget.sortOrder);
@@ -133,11 +138,16 @@ class _SortFieldState extends State<SortField> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(5, 16, 0, 5) * gsf,
-                        child: const Text('Direction:'),
+                        child: const Text('Direction:', style: TextStyle(fontSize: 16 * gsf)),
                       ),
                       DropdownButtonFormField<SortOrder>(
                         decoration: _dropdownDecoration,
                         value: widget.sortOrder,
+                        style: const TextStyle(fontSize: 28 * gsf),
+                        icon: const Icon(Icons.arrow_drop_down),
+                        iconSize: 24 * gsf,
+                        isDense: true,
+                        isExpanded: true,
                         onChanged: (SortOrder? value) {
                           if (value != null) {
                             widget.onChanged(widget.sortType, value);

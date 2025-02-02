@@ -11,8 +11,8 @@ import "../services/data/data_objects.dart";
 import "../services/data/data_service.dart";
 import "../utility/text_logic.dart";
 import "../utility/theme.dart";
-import "add_meal_box.dart";
-import "loading_page.dart";
+import "../widgets/add_meal_box.dart";
+import "../widgets/loading_page.dart";
 
 import "dart:developer" as devtools show log;
 

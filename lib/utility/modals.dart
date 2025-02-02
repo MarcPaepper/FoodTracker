@@ -62,9 +62,9 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
                   save();
                   Navigator.of(context).pop(false);
                 },
-                icon: const Icon(Icons.save, color: Colors.white),
+                icon: const Icon(Icons.save, color: Colors.white, size: 24 * gsf),
                 label: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10) * gsf,
+                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10) * gsf,
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -86,9 +86,9 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
             ElevatedButton.icon(
               style: actionButtonStyle,
               onPressed: () => Navigator.of(context).pop(true),
-              icon: const Icon(Icons.delete, color: Colors.white),
+              icon: const Icon(Icons.delete, color: Colors.white, size: 24 * gsf),
               label: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10 * gsf, horizontal: 10 * gsf),
+                padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10 * gsf),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -114,7 +114,7 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
                 child: Image.asset("assets/geschwungen_arrow.png", width: 24 * gsf, height: 24 * gsf)
               ),
               label: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10) * gsf,
+                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10) * gsf,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -258,13 +258,15 @@ void showProductDialog({
                   ],
                   Expanded(
                     child: ElevatedButton(
-                      style: actionButtonStyle,
+                      style: actionButtonStyle.copyWith(
+                        padding: WidgetStateProperty.all(EdgeInsets.zero),
+                      ),
                       onPressed: () {
                         onSelected(null);
                         Navigator.of(context).pop();
                       },
                       child: const Padding(
-                        padding: EdgeInsets.all(10.0 * gsf),
+                        padding: EdgeInsets.symmetric(horizontal: 0 * gsf, vertical: 10.0 * gsf),
                         child: Text('Cancel'),
                       ),
                     ),

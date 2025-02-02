@@ -274,11 +274,14 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         minVerticalPadding: 0,
         visualDensity: VisualDensity(horizontal: 0, vertical: -2),
         title: Center(
-          child: Text(
-            "No ingredients yet",
-            style: TextStyle(
-              fontSize: 16 * gsf,
-              fontStyle: FontStyle.italic,
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 14 * gsf - 14),
+            child: Text(
+              "No ingredients yet",
+              style: TextStyle(
+                fontSize: 16 * gsf,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
         ),
@@ -508,10 +511,15 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               color: const Color.fromARGB(255, 90, 150, 255),
               child: Tooltip(
                 message: "Edit Product",
+                textStyle: const TextStyle(
+                  fontSize: 14 * gsf,
+                  color: Colors.white,
+                ),
                 child: ExcludeFocusTraversal(
                   child: IconButton(
                     color: Colors.white,
                     icon: const Icon(Icons.edit),
+                    iconSize: 24 * gsf,
                     onPressed: () {
                       // navigate to edit the product
                       if (product != null) {
@@ -530,10 +538,15 @@ class _IngredientsBoxState extends State<IngredientsBox> {
               color: Colors.red,
               child: Tooltip(
                 message: "Delete Ingredient",
+                textStyle: const TextStyle(
+                  fontSize: 14 * gsf,
+                  color: Colors.white,
+                ),
                 child: ExcludeFocusTraversal(
                   child: IconButton(
                     color: Colors.white,
                     icon: const Icon(Icons.delete),
+                    iconSize: 24 * gsf,
                     onPressed: () {
                       ingredients.removeAt(index);
                       widget.ingredientAmountControllers.removeAt(index);
@@ -568,7 +581,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         ),
         textStyle: Theme.of(context).textTheme.bodyLarge,
       ),
-      icon: const Icon(Icons.add, size: 24 * gsf),
+      icon: const Icon(Icons.add, size: 20 * gsf),
       label: const Padding(
         padding: EdgeInsets.only(left: 5.0 * gsf),
         child: Text("Add Ingredient"),

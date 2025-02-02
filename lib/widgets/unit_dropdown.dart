@@ -51,6 +51,7 @@ class _UnitDropdownState extends State<UnitDropdown> {
         isExpanded: true,
         value: widget.current,
         style: const TextStyle(fontSize: 50 * gsf),
+        iconSize: 20 * gsf,
         items: items.entries.map((entry) => DropdownMenuItem<Unit>(
           value: entry.key,
           child: entry.value,

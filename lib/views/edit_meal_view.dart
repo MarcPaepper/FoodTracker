@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:food_tracker/utility/theme.dart';
 
 import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
@@ -56,7 +57,8 @@ class _EditMealViewState extends State<EditMealView> with AutomaticKeepAliveClie
       onPopInvoked: _onPopInvoked,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Edit Meal'),
+          toolbarHeight: appBarHeight,
+          title: const Text('Edit Meal', style: TextStyle(fontSize: 16 * gsf)),
         ),
         body: StreamBuilder(
           stream: dataService.streamProducts(),

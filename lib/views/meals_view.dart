@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:food_tracker/widgets/meal_list.dart';
+import 'package:food_tracker/subviews/meal_list.dart';
 
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';

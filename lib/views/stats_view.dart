@@ -186,6 +186,11 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                             DropdownButtonFormField<TimeFrame>(
                               value: _timeFrame,
                               decoration: dropdownStyleEnabled,
+                              style: const TextStyle(fontSize: 46 * gsf),
+                              icon: const Icon(Icons.arrow_drop_down),
+                              iconSize: 24 * gsf,
+                              isDense: true,
+                              isExpanded: true,
                               onChanged: (TimeFrame? value) {
                                 setState(() {
                                   _timeFrame = value!;
@@ -202,15 +207,24 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                               items: [
                                 DropdownMenuItem(
                                   value: TimeFrame.day,
-                                  child: Text("Daily", style: textStyle),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                                    child: Text("Daily", style: textStyle),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: TimeFrame.week,
-                                  child: Text("Weekly", style: textStyle),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                                    child: Text("Weekly", style: textStyle),
+                                  ),
                                 ),
                                 DropdownMenuItem(
                                   value: TimeFrame.month,
-                                  child: Text("Monthly", style: textStyle),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                                    child: Text("Monthly", style: textStyle),
+                                  ),
                                 ),
                               ],
                             ),
@@ -225,6 +239,11 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                               DropdownButtonFormField<CalculationMethod>(
                                 value: _calculationMethod,
                                 decoration: dropdownStyleEnabled,
+                                style: const TextStyle(fontSize: 46 * gsf),
+                                icon: const Icon(Icons.arrow_drop_down),
+                                iconSize: 24 * gsf,
+                                isDense: true,
+                                isExpanded: true,
                                 onChanged: (CalculationMethod? value) {
                                   setState(() {
                                     _calculationMethod = value!;
@@ -233,11 +252,17 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                                 items: [
                                   DropdownMenuItem(
                                     value: CalculationMethod.avg,
-                                    child: Text("Daily Average", style: textStyle),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                                      child: Text("Daily Average", style: textStyle),
+                                    ),
                                   ),
                                   DropdownMenuItem(
                                     value: CalculationMethod.sum,
-                                    child: Text("Cumulative Sum", style: textStyle),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                                      child: Text("Cumulative Sum", style: textStyle),
+                                    ),
                                   ),
                                 ],
                               ),

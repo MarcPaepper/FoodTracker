@@ -323,10 +323,15 @@ class _FoodBoxState extends State<FoodBox> {
               color: const Color.fromARGB(255, 90, 150, 255),
               child: Tooltip(
                 message: "Edit Product",
+                textStyle: const TextStyle(
+                  fontSize: 14 * gsf,
+                  color: Colors.white,
+                ),
                 child: ExcludeFocusTraversal(
                   child: IconButton(
                     color: Colors.white,
                     icon: const Icon(Icons.edit),
+                    iconSize: 24 * gsf,
                     onPressed: () {
                       // navigate to edit the product
                       if (product != null) {
@@ -345,11 +350,16 @@ class _FoodBoxState extends State<FoodBox> {
               Container(
                 color: Colors.red,
                 child: Tooltip(
+                  textStyle: const TextStyle(
+                    fontSize: 14 * gsf,
+                    color: Colors.white,
+                  ),
                   message: "Delete Ingredient",
                   child: ExcludeFocusTraversal(
                     child: IconButton(
-                      color: Colors.white,
+                      color: Colors.green,
                       icon: const Icon(Icons.delete),
+                      iconSize: 24 * gsf,
                       onPressed: () {
                         ingredients.removeAt(index);
                         widget.ingredientAmountControllers.removeAt(index);

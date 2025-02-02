@@ -195,44 +195,51 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
         var now = DateTime.now();
         bool isVisible = dateTime.isBefore(DateTime(now.year, now.month, now.day - 5));
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: isVisible ? 39 * gsf : 0,
-              height: 93 * gsf,
-              child: AnimatedOpacity(
-                opacity: isVisible ? 1.0 : 0.0,
+        return Tooltip(
+          message: "Scroll to selected date",
+          textStyle: const TextStyle(
+            fontSize: 14 * gsf,
+            color: Colors.white,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
+                width: isVisible ? 39 * gsf : 0,
+                height: 93 * gsf,
                 child: AnimatedOpacity(
                   opacity: isVisible ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 300),
-                  child: ElevatedButton(
-                    style: lightButtonStyle.copyWith(
-                      padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                      backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 187, 192, 255)),
-                      foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
-                    ),
-                    onPressed: isVisible ? widget.onScrollButtonClicked : null,
-                    child: AnimatedOpacity(
-                      opacity: isVisible ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
+                  child: AnimatedOpacity(
+                    opacity: isVisible ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: ElevatedButton(
+                      style: lightButtonStyle.copyWith(
+                        padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                        backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 187, 192, 255)),
+                        foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
+                      ),
+                      onPressed: isVisible ? widget.onScrollButtonClicked : null,
                       child: AnimatedOpacity(
                         opacity: isVisible ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
-                        child: const Icon(Icons.keyboard_double_arrow_up)
+                        child: AnimatedOpacity(
+                          opacity: isVisible ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: const Icon(Icons.keyboard_double_arrow_up, size: 24 * gsf)
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: (isVisible ? 14 : 4) * gsf,
-            ),
-          ],
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: (isVisible ? 14 : 4) * gsf,
+              ),
+            ],
+          ),
         );
       },
     );

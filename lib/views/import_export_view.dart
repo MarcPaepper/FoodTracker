@@ -24,7 +24,8 @@ class _ImportExportViewState extends State<ImportExportView> {
       canPop: !_loading,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Import/Export'),
+          toolbarHeight: appBarHeight,
+          title: const Text('Import/Export', style: TextStyle(fontSize: 16 * gsf)),
           automaticallyImplyLeading: !_loading, // Disable back button if loading
         ),
         body: _loading
@@ -66,8 +67,8 @@ class _ImportExportViewState extends State<ImportExportView> {
         child: Row(
           children: [
             Image.asset("assets/${isExport ? "up" : "down"}load.png", width: 24 * gsf, height: 24 * gsf),
-            const SizedBox(width: 20 * gsf),
-            Text(isExport ? "Export" : "Import"),
+            const SizedBox(width: 16 * gsf),
+            Text(isExport ? "Export" : "Import", style: const TextStyle(fontSize: 16 * gsf)),
           ],
         ),
       ),

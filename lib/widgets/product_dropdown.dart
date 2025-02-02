@@ -157,6 +157,7 @@ class _ProductDropdownState extends State<ProductDropdown> {
                   const Spacer(),
                   Icon(
                     Icons.arrow_drop_down,
+                    size: 20 * gsf,
                     color: textColor.withAlpha(170),
                   ),
                 ],

@@ -33,9 +33,10 @@ class _OptionsViewState extends State<OptionsView> {
         onPressed: () => Navigator.pushNamed(context, importExportRoute),
         child: const Row(
           children: [
-            Icon(Icons.import_export),
-            SizedBox(width: 20 * gsf),
-            Text("Import/Export"),
+            SizedBox(width: 3),
+            Icon(Icons.import_export, size: 24 * gsf),
+            SizedBox(width: 17),
+            Text("Import/Export", style: TextStyle(fontSize: 16 * gsf)),
           ],
         ),
       ),
@@ -49,9 +50,9 @@ class _OptionsViewState extends State<OptionsView> {
         onPressed: () => DataService.current().reload(),
         child: const Row(
           children: [
-            Icon(Icons.refresh),
-            SizedBox(width: 20 * gsf),
-            Text("Reload Database"),
+            Icon(Icons.refresh, size: 24 * gsf),
+            SizedBox(width: 20),
+            Text("Reload Database", style: TextStyle(fontSize: 16 * gsf)),
           ],
         ),
       ),

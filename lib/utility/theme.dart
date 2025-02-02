@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../constants/ui.dart';
 
+const appBarHeight = 40 * gsf;
+
 const tabColorActive = Color.fromARGB(255, 193, 255, 253);
 const warningColor = Color.fromARGB(255, 255, 174, 0);
 
@@ -14,6 +16,7 @@ var actionButtonStyle = ButtonStyle(
   backgroundColor: WidgetStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
   foregroundColor: WidgetStateProperty.all(Colors.white),
   textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16 * gsf)),
+  padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 12, vertical: 12) * gsf),
   shape: WidgetStateProperty.all(const RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(12 * gsf)),
   )),

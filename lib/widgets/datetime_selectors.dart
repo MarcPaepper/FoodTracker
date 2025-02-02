@@ -118,8 +118,8 @@ dynamic getDateTimeRow(
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 5) * gsf,
                       child: Container(
-                        width: 1,
-                        height: 8,
+                        width: 1 * gsf,
+                        height: 8 * gsf,
                         color: Colors.black.withAlpha(100),
                       ),
                     ),
@@ -356,6 +356,7 @@ class _DateSelectorState extends State<DateSelector> {
     for (int i = 0; i < labels.length; i++) {
       children.add(Text(
         labels[i],
+        textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 16 * gsf,
           color: i == 0 ? Colors.black : const Color.fromARGB(255, 0, 145, 137),

@@ -115,7 +115,7 @@ class TemporaryBox extends StatelessWidget {
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.all(Radius.circular(14 * gsf)),
                         ),
-                        padding: const EdgeInsets.fromLTRB(8, 6, 0, 6),
+                        padding: const EdgeInsets.fromLTRB(8 * gsf, 12 * gsf - 6, 0, 12 * gsf - 6),
                       ),
                       onPressed: () async {
                         var range = await showDateRangePicker(

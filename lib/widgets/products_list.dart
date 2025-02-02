@@ -131,10 +131,14 @@ class _ProductTileState extends State<ProductTile> {
       temporaryIndicator = Tooltip(
         message: "Temporary product. Date is ${isValid ? "inside" : "outside"} the range.",
         triggerMode: TooltipTriggerMode.longPress,
+        textStyle: const TextStyle(
+          fontSize: 14 * gsf,
+          color: Colors.white,
+        ),
         child: Icon(
           isValid ? Icons.event_available : Icons.event_busy,
           color: (isValid ? Colors.blue : Colors.orange).withOpacity(.7),
-          size: 20,
+          size: 20 * gsf,
         ),
       );
     }
@@ -171,7 +175,7 @@ class _ProductTileState extends State<ProductTile> {
          },
         child: ListTile(
           dense: true,
-          contentPadding: const EdgeInsets.fromLTRB(16, 0, 9, 0) * gsf,
+          contentPadding: const EdgeInsets.fromLTRB(16 * gsf, 5 * gsf - 5, 9 * gsf, 5 * gsf - 5),
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

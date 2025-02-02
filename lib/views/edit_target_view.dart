@@ -1,6 +1,7 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/theme.dart';
 import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
@@ -105,7 +106,11 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
             } catch (e) {
               Future(() {
                 showErrorbar(context, "Error: Target not found");
-                Navigator.of(context).pop(null);
+                try {
+                  Navigator.of(context).pop(null);
+                } catch (e) {
+                  // ignore
+                }
               });
             }
           }
@@ -132,12 +137,16 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
         
         return Scaffold(
           appBar: AppBar(
-            title: Text(isEdit ? "Edit Target" : "Add Target"),
+            toolbarHeight: appBarHeight,
+            title: Text(isEdit ? "Edit Target" : "Add Target", style: const TextStyle(fontSize: 16 * gsf)),
             // show the delete button if editing
             actions: [
               if (isEdit)
                 IconButton(
-                  icon: const Icon(Icons.delete),
+                  padding: kIsWeb ? 
+                    const EdgeInsets.fromLTRB(5, 5, 5, 5) * gsf : 
+                    EdgeInsets.zero,
+                  icon: const Icon(Icons.delete, size: 21 * gsf),
                   // onPressed: () {}
                   onPressed: () async {
                     if (widget.trackedId == null || widget.type == null) {
@@ -224,16 +233,28 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
       valueListenable: _typeNotifier,
       builder: (context, type, child) {
         return DropdownButtonFormField<Type>(
+          style: const TextStyle(fontSize: 43 * gsf),
+          icon: const Icon(Icons.arrow_drop_down),
+          iconSize: 24 * gsf,
+          isDense: true,
+          isExpanded: true,
           decoration: dropdownStyleEnabled,
           value: type,
           items: const [
             DropdownMenuItem(
               value: NutritionalValue,
-              child: Text("Nutritional Value"),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                child: Text("Nutritional Value", style: TextStyle(fontSize: 16 * gsf)),
+              ),
+              
             ),
             DropdownMenuItem(
               value: Product,
-              child: Text("Product"),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                child: Text("Product", style: TextStyle(fontSize: 16 * gsf)),
+              ),
             ),
           ],
           onChanged: (type) {
@@ -280,7 +301,12 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
           );
         } else if (type == NutritionalValue) {
           return DropdownButtonFormField<int>(
-            decoration: dropdownStyleEnabled.copyWith(),
+            decoration: dropdownStyleEnabled,
+            style: const TextStyle(fontSize: 43 * gsf),
+            icon: const Icon(Icons.arrow_drop_down),
+            iconSize: 24 * gsf,
+            isDense: true,
+            isExpanded: true,
             value: trackedId,
             hint: Text("Choose a Nutritional Value",
               style: TextStyle(
@@ -292,7 +318,10 @@ class _EditTargetViewState extends State<EditTargetView> with AutomaticKeepAlive
             ),
             items: nutvalues.map((nutvalue) => DropdownMenuItem<int>(
               value: nutvalue.id,
-              child: Text(nutvalue.name),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                child: Text(nutvalue.name, style: const TextStyle(fontSize: 16 * gsf)),
+              ),
             )).toList(),
             onChanged: (value) {
               _trackedIdNotifier.value = value!;
