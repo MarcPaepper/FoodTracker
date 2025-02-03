@@ -223,7 +223,7 @@ class _MealListState extends State<MealList> {
               PopupMenuButton(
                 iconSize: (kIsWeb ? 24 : 24) * gsf,
                 style: ButtonStyle(
-                  padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 8, vertical: 0) * gsf),
+                  padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 4, vertical: 4) * gsf),
                   minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
                 ),
                 itemBuilder: (context) => const [

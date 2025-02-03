@@ -391,7 +391,7 @@ class _FoodBoxState extends State<FoodBox> {
             ),
           ),
         ),
-        minimumSize: WidgetStateProperty.all<Size>(const Size(0, 50 * gsf)),
+        minimumSize: WidgetStateProperty.all<Size>(const Size(0, 55 * gsf)),
       ),
       onPressed: () async {
         Map<int, double>? relevancies;

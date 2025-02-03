@@ -98,7 +98,7 @@ class _SortFieldState extends State<SortField> {
                         decoration: _dropdownDecoration,
                         alignment: Alignment.bottomLeft,
                         value: widget.sortType,
-                        style: const TextStyle(fontSize: 28 * gsf),
+                        style: const TextStyle(fontSize: (kIsWeb ? 28 : 20) * gsf),
                         icon: const Icon(Icons.arrow_drop_down),
                         iconSize: 22 * gsf,
                         isDense: true,
@@ -143,7 +143,7 @@ class _SortFieldState extends State<SortField> {
                       DropdownButtonFormField<SortOrder>(
                         decoration: _dropdownDecoration,
                         value: widget.sortOrder,
-                        style: const TextStyle(fontSize: 28 * gsf),
+                        style: const TextStyle(fontSize: (kIsWeb ? 28 : 20) * gsf),
                         icon: const Icon(Icons.arrow_drop_down),
                         iconSize: 24 * gsf,
                         isDense: true,

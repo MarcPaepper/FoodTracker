@@ -51,6 +51,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
   final textStyle = GoogleFonts.lato().copyWith(
     fontSize: 16 * gsf,
     fontVariations: const [FontVariation('wdth', 150)], // Adjust 'wdth' value to stretch
+    color: Colors.black,
   );
   
   @override
@@ -186,7 +187,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                             DropdownButtonFormField<TimeFrame>(
                               value: _timeFrame,
                               decoration: dropdownStyleEnabled,
-                              style: const TextStyle(fontSize: 46 * gsf),
+                              style: const TextStyle(fontSize: 46 * gsf, color: Colors.black),
                               icon: const Icon(Icons.arrow_drop_down),
                               iconSize: 24 * gsf,
                               isDense: true,
@@ -239,7 +240,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                               DropdownButtonFormField<CalculationMethod>(
                                 value: _calculationMethod,
                                 decoration: dropdownStyleEnabled,
-                                style: const TextStyle(fontSize: 46 * gsf),
+                                style: const TextStyle(fontSize: 46 * gsf, color: Colors.black),
                                 icon: const Icon(Icons.arrow_drop_down),
                                 iconSize: 24 * gsf,
                                 isDense: true,
@@ -278,6 +279,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                         value: includeEmptyDays,
                         // controlAffinity: ListTileControlAffinity.leading,
                         visualDensity: VisualDensity.compact,
+                        dense: true,
                         contentPadding: const EdgeInsets.all(0),
                         onChanged: (bool value) {
                           setState(() {

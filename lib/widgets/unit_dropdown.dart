@@ -50,7 +50,10 @@ class _UnitDropdownState extends State<UnitDropdown> {
         decoration: enabled ? dropdownStyleEnabled : dropdownStyleDisabled,
         isExpanded: true,
         value: widget.current,
-        style: const TextStyle(fontSize: 50 * gsf),
+        style: const TextStyle(
+          fontSize: kIsWeb ? (50 * gsf) : (42 * gsf), 
+          overflow: TextOverflow.ellipsis,
+        ),
         iconSize: 20 * gsf,
         items: items.entries.map((entry) => DropdownMenuItem<Unit>(
           value: entry.key,
@@ -75,6 +78,7 @@ Map<Unit, Widget> buildUnitItems({
   for (var unit in units) {
     if (unit == Unit.quantity && verbose) {
       items[unit] = RichText(
+        overflow: TextOverflow.ellipsis,
         text: TextSpan(
           style: TextStyle(
             fontFamily: GoogleFonts.nunitoSans().fontFamily,
