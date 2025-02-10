@@ -12,8 +12,9 @@ class BorderBox extends StatefulWidget {
   final Widget? child;
   final Widget? titleWidget;
   final String? title;
-  final TitlePosition titlePosition;
   final Color titleBgColor;
+  final TitlePosition titlePosition;
+  final double horizontalPadding;
   
   const BorderBox({
     super.key,
@@ -24,6 +25,7 @@ class BorderBox extends StatefulWidget {
     // this.titleBgColor = const Color(0xFFFAFDFB),
     this.titleBgColor = Colors.white,
     this.titlePosition = TitlePosition.center,
+    this.horizontalPadding = 8 * gsf,
   });
 
   @override
@@ -31,8 +33,6 @@ class BorderBox extends StatefulWidget {
 }
 
 class _BorderBoxState extends State<BorderBox> {
-  
-  
   @override
   Widget build(BuildContext context) {
     var borderColor = widget.borderColor ?? const Color.fromARGB(200, 25, 82, 77);
@@ -54,7 +54,7 @@ class _BorderBoxState extends State<BorderBox> {
         : Alignment.topCenter,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(8, titleWidget == null ? 8 : 11, 8, 0) * gsf,
+          padding: EdgeInsets.fromLTRB(widget.horizontalPadding, titleWidget == null ? 8 : 11, widget.horizontalPadding, 0) * gsf,
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15 * gsf),

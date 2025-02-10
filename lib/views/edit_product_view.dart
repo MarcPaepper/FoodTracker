@@ -406,6 +406,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           onValidate: () => _formKey.currentState!.validate(),
                           intermediateSave: () => _interimProduct = getProductFromForm().$1,
                           onConversionChanged: (newDensityConversion, newQuantityConversion) {
+                            updateDefaultAmounts(_defaultUnitNotifier.value, newQuantityConversion);
                             _interimProduct = getProductFromForm().$1.copyWith(
                               newDensityConversion: newDensityConversion,
                               newQuantityConversion: newQuantityConversion,
@@ -805,43 +806,10 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                       current: _defaultUnitNotifier.value,
                       onChanged: (Unit? unit) {
                         if (unit != null) {
-                          // if ingredient and nutrient values are default, change them to the new unit
-                          var defValue = _defaultUnitNotifier.value == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
-                          var newDefValue = unit == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
-                          Unit ingredientsUnit = _ingredientsUnitNotifier.value;
-                          Unit nutrientsUnit = _nutrientsUnitNotifier.value;
-                          double resultingAmount = _resultingAmountNotifier.value;
-                          double amountForNutrients = _nutrientAmountNotifier.value;
-                          if (
-                            _ingredientsNotifier.value.isEmpty
-                            && ingredientsUnit == _defaultUnitNotifier.value
-                            && _resultingAmountNotifier.value == defValue
-                          ) {
-                            ingredientsUnit = unit;
-                            resultingAmount = newDefValue;
-                          }
-                          if (
-                            _nutrientsNotifier.value.every((nutrient) => nutrient.autoCalc)
-                            && nutrientsUnit == _defaultUnitNotifier.value
-                            && _resultingAmountNotifier.value == defValue
-                          ) {
-                            nutrientsUnit = unit;
-                            amountForNutrients = newDefValue;
-                          }
-                          _interimProduct = getProductFromForm().$1.copyWith(
-                            newDefaultUnit: unit,
-                            newIngredientsUnit: ingredientsUnit,
-                            newNutrientsUnit: nutrientsUnit,
-                            newAmountForIngredients: resultingAmount,
-                            newAmountForNutrients: amountForNutrients,
-                          );
+                          updateDefaultAmounts(unit, _quantityConversionNotifier.value);
+                          
+                          _interimProduct = getProductFromForm().$1.copyWith(newDefaultUnit: unit,);
                           _defaultUnitNotifier.value = unit;
-                          _ingredientsUnitNotifier.value = ingredientsUnit;
-                          _nutrientsUnitNotifier.value = nutrientsUnit;
-                          _resultingAmountNotifier.value = resultingAmount;
-                          _nutrientAmountNotifier.value = amountForNutrients;
-                          _nutrientAmountController.text = truncateZeros(amountForNutrients);
-                          _resultingAmountController.text = truncateZeros(resultingAmount);
                         }
                       },
                       intermediateSave: () => _interimProduct = getProductFromForm().$1,
@@ -975,6 +943,62 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     } catch (e) {
       devtools.log("Error focusing ingredient $index: $e");
     }
+  }
+  
+  // if ingredient and nutrient values are default, change them to the new unit                    
+  void updateDefaultAmounts(Unit unit, Conversion quantityConversion) {
+    Unit newUnit = unit;
+    if (unit == Unit.quantity && quantityConversion.enabled) {
+      // if the quantity conversion is enabled, change the unit to the other unit
+      newUnit = _quantityConversionNotifier.value.unit2;
+    }
+    double defValue;
+    if (_defaultUnitNotifier.value == Unit.quantity && !_quantityConversionNotifier.value.enabled) {
+      defValue = 1;
+    } else {
+      defValue = Product.defaultValues().amountForIngredients;
+    }
+    
+    var newDefValue = newUnit == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
+    
+    Unit ingredientsUnit = _ingredientsUnitNotifier.value;
+    Unit nutrientsUnit = _nutrientsUnitNotifier.value;
+    double resultingAmount = _resultingAmountNotifier.value;
+    double amountForNutrients = _nutrientAmountNotifier.value;
+    bool hasChanged = false;
+    if (
+      _ingredientsNotifier.value.isEmpty
+      && ingredientsUnit == _defaultUnitNotifier.value
+      && resultingAmount == defValue
+    ) {
+      ingredientsUnit = newUnit;
+      resultingAmount = newDefValue;
+      hasChanged = true;
+    }
+    if (
+      _nutrientsNotifier.value.every((nutrient) => nutrient.autoCalc)
+      && nutrientsUnit == _defaultUnitNotifier.value
+      && amountForNutrients == defValue
+    ) {
+      nutrientsUnit = newUnit;
+      amountForNutrients = newDefValue;
+      hasChanged = true;
+    }
+    if (!hasChanged) return;
+              
+    _interimProduct = getProductFromForm().$1.copyWith(
+      newIngredientsUnit: ingredientsUnit,
+      newNutrientsUnit: nutrientsUnit,
+      newAmountForIngredients: resultingAmount,
+      newAmountForNutrients: amountForNutrients,
+    );
+    _defaultUnitNotifier.value = unit;
+    _ingredientsUnitNotifier.value = ingredientsUnit;
+    _nutrientsUnitNotifier.value = nutrientsUnit;
+    _resultingAmountNotifier.value = resultingAmount;
+    _nutrientAmountNotifier.value = amountForNutrients;
+    _nutrientAmountController.text = truncateZeros(amountForNutrients);
+    _resultingAmountController.text = truncateZeros(resultingAmount);
   }
   
   (Product, bool) getProductFromForm() {

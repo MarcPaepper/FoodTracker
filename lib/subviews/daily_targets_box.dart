@@ -17,13 +17,12 @@ import '../widgets/border_box.dart';
 import '../widgets/color_indicator_strip.dart';
 import '../widgets/graph.dart';
 import '../widgets/loading_page.dart';
-
-import 'dart:developer' as devtools show log;
-import 'dart:math' as math;
-
 import '../widgets/multi_stream_builder.dart';
 import '../widgets/multi_value_listenable_builder.dart';
 import '../widgets/unit_dropdown.dart';
+
+import 'dart:developer' as devtools show log;
+import 'dart:math' as math;
 
 enum FoldMode {
   startFolded,
@@ -204,6 +203,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   
   return BorderBox(
     titleWidget: foldedIn ? null : foldButton,
+    horizontalPadding: 0,
     child: foldedIn ? Padding(
       padding: const EdgeInsets.all(4) * gsf,
       child: foldButton,
@@ -711,7 +711,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
     if (ingredients == null) return Container();
     
     // find out height for scroll list
-    const lineHeight = 57.0 * gsf;
+    const lineHeight = 57 * gsf;
     double viewHeight = 0;
     int maxLinesVis = 10000;
     bool showAll = false;
@@ -719,7 +719,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       double viewportHeight = MediaQuery.of(context).size.height;
       if (kIsWeb) viewportHeight -= 466 * gsf; // subtract the height of the graph
       else viewportHeight -= 466 * gsf;
-      int numberOfRows = viewportHeight ~/ 57;
+      int numberOfRows = viewportHeight ~/ lineHeight;
       numberOfRows = math.max(3, math.min(6, numberOfRows)); // clamp between 3 and 7
       maxLinesVis = numberOfRows + 1;
       viewHeight = numberOfRows * lineHeight;
@@ -766,9 +766,10 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
             child: Row(
               children: [
                 ColorIndicatorStrip(colorBar, 13, 0.25),
+                SizedBox(height: showMeals ? (57 * gsf) : 0),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    padding: const EdgeInsets.fromLTRB(8, 5, 8, 4) * gsf, // vert 5
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -892,8 +893,10 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
             if (visible) {
               if (i < (lowestVisIndexNotifier.value ?? 0)) {
                 if ((highestVisIndexNotifier.value ?? contributingIngredients.length - 1) >= i + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
+                lowestVisIndexNotifier.value = i;
               } else if (i > (highestVisIndexNotifier.value ?? 0)) {
                 if ((lowestVisIndexNotifier.value ?? 0) <= i - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
+                highestVisIndexNotifier.value = i;
               }
             } else {
               double middle = (lowestVisIndexNotifier.value! + highestVisIndexNotifier.value!) / 2;

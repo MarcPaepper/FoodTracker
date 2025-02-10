@@ -296,7 +296,7 @@ class _GraphPainter extends CustomPainter {
       // --- drawing text ---
       
       double currentHeight = maxBarHeight * totalProgress[target]!;
-      var tooClose = (currentHeight - maxBarHeight).abs() < 20 * gsf;
+      var tooClose = (currentHeight - maxBarHeight).abs() < (19 * gsf);
       var below = currentHeight > maxBarHeight && !tooClose;
       
       // determine a good precision for the current amount

@@ -74,12 +74,12 @@ class _MainViewState extends State<MainView> {
     physics: AlwaysScrollableScrollPhysics(),
     tabAlignment: TabAlignment.center,
     tabs: [
-      Tab(text: "Meals"),//, height: 38 * gsf),
-      Tab(text: "Stats"),//, height: 38 * gsf),
-      Tab(text: "Products"),//, height: 38 * gsf),
-      Tab(text: "Nutrition"),//, height: 38 * gsf),
-      Tab(text: "Targets"),//, height: 38 * gsf),
-      Tab(text: "Options"),//, height: 38 * gsf),
+      Tab(text: "Meals", height: 45 * gsf),
+      Tab(text: "Stats", height: 45 * gsf),
+      Tab(text: "Products", height: 45 * gsf),
+      Tab(text: "Nutrition", height: 45 * gsf),
+      Tab(text: "Targets", height: 45 * gsf),
+      Tab(text: "Options", height: 45 * gsf),
     ],
   );
 }

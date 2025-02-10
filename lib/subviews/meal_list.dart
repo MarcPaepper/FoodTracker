@@ -229,17 +229,20 @@ class _MealListState extends State<MealList> {
                 itemBuilder: (context) => const [
                   PopupMenuItem(
                     value: 0,
-                    height: 40 * gsf,
+                    height: 44 * gsf,
+                    padding: EdgeInsets.only(left: 12.0, right: 12.3),
                     child: Text("Edit meal", style: TextStyle(fontSize: 16 * gsf)),
                   ),
                   PopupMenuItem(
                     value: 1,
-                    height: 40 * gsf,
+                    height: 44 * gsf,
+                    padding: EdgeInsets.only(left: 12.0, right: 12.3),
                     child: Text("Edit product", style: TextStyle(fontSize: 16 * gsf)),
                   ),
                   PopupMenuItem(
                     value: 2,
-                    height: 40 * gsf,
+                    height: 44 * gsf,
+                    padding: EdgeInsets.only(left: 12.0, right: 12.3),
                     child: Text("Delete meal", style: TextStyle(fontSize: 16 * gsf)),
                   ),
                 ],
@@ -298,7 +301,7 @@ class _MealListState extends State<MealList> {
     }
     
     var widget = Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 2) * gsf,
+      padding: const EdgeInsets.only(top: 3, bottom: 1.5) * gsf,
       // key: key,
       child: Row(
         children: [

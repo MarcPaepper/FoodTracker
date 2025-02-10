@@ -42,6 +42,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
   CalculationMethod _calculationMethod = CalculationMethod.avg;
   bool includeEmptyDays = false;
   final ValueNotifier<DateTime> _dateTimeNotifier = ValueNotifier(DateTime.now());
+  bool sortByRelevancy = true;
   
   List<Meal> relevantMeals = [];
   
@@ -167,7 +168,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
             
             return SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16) * gsf,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16) * gsf,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -187,7 +188,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                             DropdownButtonFormField<TimeFrame>(
                               value: _timeFrame,
                               decoration: dropdownStyleEnabled,
-                              style: const TextStyle(fontSize: 46 * gsf, color: Colors.black),
+                              style: const TextStyle(fontSize: 41 * gsf, color: Colors.black),
                               icon: const Icon(Icons.arrow_drop_down),
                               iconSize: 24 * gsf,
                               isDense: true,
@@ -293,6 +294,8 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                     const SizedBox(height: 12 * gsf),
                     _buildGraphBox(productsMap, nutvalues, targets),
                     const SizedBox(height: 12 * gsf),
+                    _buildSortingSelector(),
+                    const SizedBox(height: 12 * gsf),
                     _buildTargetSelector(targets, productsMap, nutvalues),
                   ],
                 ),
@@ -349,9 +352,51 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
     );
   }
   
+  Widget _buildSortingSelector() {
+    // return Placeholder();
+    return Row(
+      children: [
+        const Text("Sort products by", style: TextStyle(fontSize: 16 * gsf)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: DropdownButtonFormField<bool>(
+            value: sortByRelevancy,
+            decoration: dropdownStyleEnabled,
+            style: const TextStyle(fontSize: 46 * gsf, color: Colors.black),
+            icon: const Icon(Icons.arrow_drop_down),
+            iconSize: 24,
+            isDense: true,
+            onChanged: (bool? value) {
+              setState(() {
+                sortByRelevancy = value!;
+              });
+            },
+            items: const [
+              DropdownMenuItem(
+                value: true,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                  child: Text("Relevancy", style: TextStyle(fontSize: 16 * gsf)),
+                ),
+              ),
+              DropdownMenuItem(
+                value: false,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                  child: Text("Time (first occurence)", style: TextStyle(fontSize: 16 * gsf)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
   Widget _buildTargetSelector(List<Target> targets, Map<int, Product> productsMap, List<NutritionalValue> nutvalues) {
     return BorderBox(
       title: "Show Targets",
+      horizontalPadding: 0,
       child: ListTileTheme(
         contentPadding: const EdgeInsets.fromLTRB(8, 0, 0, 0) * gsf,
         horizontalTitleGap: 6 * gsf,

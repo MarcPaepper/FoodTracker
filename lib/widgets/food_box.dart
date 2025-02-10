@@ -72,6 +72,7 @@ class _FoodBoxState extends State<FoodBox> {
       valueListenable: widget.ingredientsNotifier,
       builder: (context, List<(ProductQuantity, Color)> ingredients, _) {
         return BorderBox(
+          horizontalPadding: 0,
           child: Container(
             clipBehavior: Clip.antiAlias,
             // rounded corners

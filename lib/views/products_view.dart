@@ -171,10 +171,16 @@ class _ProductsViewState extends State<ProductsView> {
       nameQuotation = index == -1 ? "\"${_searchController.text}\"" : null;
     }
     
+    var style = addButtonStyle;
+    if (!kIsWeb) {
+      style = style.copyWith(
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, 0)),
+      );
+    }
+    
     return ElevatedButton.icon(
       style: addButtonStyle.copyWith(
-        // padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16 * gsf, vertical: kIsWeb ? 0 : 20)),
-        minimumSize: WidgetStateProperty.all(const Size(double.infinity, kIsWeb ? 0 : (55 * gsf))),
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, kIsWeb ? 0 : (60 * gsf))),
       ),
       icon: const Icon(Icons.add, size: 20 * gsf),
       label: Padding(

@@ -73,7 +73,6 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
       minVerticalPadding: 0,
       contentPadding: const EdgeInsets.all(0.0),
       title: Column(
-        
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
@@ -89,15 +88,15 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             ),
           ),
           const SizedBox(height: 14 * gsf),
-          MultiValueListenableBuilder(
-            listenables: [widget.dateTimeNotifier, ingredientsNotifier],
-            builder: (context, values, child) {
-              DateTime dateTime = values[0];
-              List<(ProductQuantity, Color)> ingredients = values[1];
-              
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4 * gsf),
-                child: DailyTargetsBox(
+          Padding( // daily targets box
+            padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+            child: MultiValueListenableBuilder(
+              listenables: [widget.dateTimeNotifier, ingredientsNotifier],
+              builder: (context, values, child) {
+                DateTime dateTime = values[0];
+                List<(ProductQuantity, Color)> ingredients = values[1];
+                
+                return DailyTargetsBox(
                   dateTime,
                   ingredients,
                   null,
@@ -110,12 +109,12 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                   FoldMode.startUnfolded,
                   false,
                   false,
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
           const SizedBox(height: 14 * gsf),
-          Padding(
+          Padding( // date and time selectors
             padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -132,24 +131,24 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                   ),
                 ),
               ],
-            )
+            ),
           ),
           const SizedBox(height: 6 * gsf),
-          ValueListenableBuilder(
-            valueListenable: widget.dateTimeNotifier,
-            builder: (context, dateTime, child) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0) * gsf,
-                child: FoodBox(
+          Padding( // food box
+            padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+            child: ValueListenableBuilder(
+              valueListenable: widget.dateTimeNotifier,
+              builder: (context, dateTime, child) {
+                return FoodBox(
                   productsMap: widget.productsMap,
                   ingredientsNotifier: ingredientsNotifier,
                   ingredientAmountControllers: ingredientAmountControllers,
                   ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
                   requestIngredientFocus: _requestIngredientFocus,
                   refDate: dateTime,
-                ),
-              );
-            }
+                );
+              }
+            ),
           ),
           const SizedBox(height: 12 * gsf),
           ValueListenableBuilder(
