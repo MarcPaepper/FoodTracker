@@ -7,6 +7,7 @@ import 'package:food_tracker/utility/theme.dart';
 import 'package:intl/intl.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
+import '../constants/routes.dart';
 import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
 import '../services/data/data_service.dart';
@@ -119,6 +120,8 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
   
   ValueNotifier<int?> lowestVisIndexNotifier = ValueNotifier(null);
   ValueNotifier<int?> highestVisIndexNotifier = ValueNotifier(null);
+  
+  ScrollController productListScrollController = ScrollController();
   
   @override
   void initState() {
@@ -517,7 +520,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                           );
                         }
                         Widget graph;
-                        if (widget.scrollList) {
+                        if (widget.scrollList) { // scrollable graph
                           Map<int, int> contributingProductIndices = {};
                           for (var i = 0; i < contributingProducts.length; i++) {
                             contributingProductIndices[contributingProducts[i].id] = i;
@@ -725,7 +728,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       viewHeight = numberOfRows * lineHeight;
       showAll = numberOfRows + 2 > contributingProducts.length;
       lowestVisIndexNotifier.value ??= 0;
-      highestVisIndexNotifier.value ??= numberOfRows - 1;
+      highestVisIndexNotifier.value ??= maxLinesVis - 1;
     }
     
     var contributingIngredients = contributingProducts.where((p) => p.id >= 0).map((p) {
@@ -745,7 +748,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       bool isProduct = i < contributingIngredients.length;
       
       var ingr = isProduct ? contributingIngredients[i] : null;
-      var productQuantities = isProduct ? ingr!.$1 : null;
+      var productQuantity = isProduct ? ingr!.$1 : null;
       var colorBar = isProduct ? ingr!.$2 : const Color.fromARGB(255, 90, 90, 90);
       var r = colorBar.red, g = colorBar.green, b = colorBar.blue;
       var avgRGB = (r + g + b) / 3 / 255;
@@ -757,7 +760,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
       var colorText = Color.fromARGB(255, r, g, b);
       var colorBg = i % 2 == 0 ? const Color.fromARGB(14, 83, 83, 117) : const Color.fromARGB(6, 200, 200, 200);
       
-      var product = isProduct ? productsMap[productQuantities!.productId] : null;
+      var product = isProduct ? productsMap[productQuantity!.productId] : null;
       
       children.add(
         Container(
@@ -773,13 +776,27 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          product?.name ?? "Other Products",
-                          style: TextStyle(
-                            fontSize: 16 * gsf,
-                            fontWeight: showMeals ? FontWeight.w500 : FontWeight.normal,
-                            color: colorText,
-                            fontStyle: isProduct ? FontStyle.normal : FontStyle.italic,
+                        InkWell(
+                          onTap: () {
+                            if (isProduct) {
+                              // navigate to edit product page
+                              var productId = productQuantity!.productId;
+                              var product = productsMap[productId]!;
+                              
+                              Navigator.of(context).pushNamed(
+                                editProductRoute,
+                                arguments: (product.name, false),
+                              );
+                            }
+                          },
+                          child: Text(
+                            product?.name ?? "Other Products",
+                            style: TextStyle(
+                              fontSize: 16 * gsf,
+                              fontWeight: showMeals ? FontWeight.w500 : FontWeight.normal,
+                              color: colorText,
+                              fontStyle: isProduct ? FontStyle.normal : FontStyle.italic,
+                            ),
                           ),
                         ),
                         ... (showMeals && isProduct ? [
@@ -892,20 +909,24 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
             bool visible = info.visibleFraction > 0;
             if (visible) {
               if (i < (lowestVisIndexNotifier.value ?? 0)) {
-                if ((highestVisIndexNotifier.value ?? contributingIngredients.length - 1) >= i + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
+                devtools.log("case 1");
                 lowestVisIndexNotifier.value = i;
+                if ((highestVisIndexNotifier.value ?? contributingIngredients.length - 1) >= i + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
               } else if (i > (highestVisIndexNotifier.value ?? 0)) {
-                if ((lowestVisIndexNotifier.value ?? 0) <= i - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
+                devtools.log("case 2");
                 highestVisIndexNotifier.value = i;
+                if ((lowestVisIndexNotifier.value ?? 0) <= i - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
               }
             } else {
               double middle = (lowestVisIndexNotifier.value! + highestVisIndexNotifier.value!) / 2;
-              if (i >= (lowestVisIndexNotifier.value ?? 0) && i <= middle) {
+              if (i >= (lowestVisIndexNotifier.value ?? 0) && i <= middle && productListScrollController.offset > lineHeight - 1) {
+                devtools.log("case 3");
                 if (highestVisIndexNotifier.value == contributingProducts.length - 1) return;
                 lowestVisIndexNotifier.value = i + 1;
                 if ((highestVisIndexNotifier.value ?? contributingProducts.length - 1) >= i + 1 + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
               }
-              if (i <= (highestVisIndexNotifier.value ?? 0) && i >= middle) {
+              if (i <= (highestVisIndexNotifier.value ?? 0) && i >= middle && i >= maxLinesVis) {
+                devtools.log("case 4");
                 highestVisIndexNotifier.value = i - 1;
                 if ((lowestVisIndexNotifier.value ?? 0) <= i - 1 - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
               }
@@ -925,6 +946,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
             SizedBox(
               height: viewHeight,
               child: ListView(
+                controller: productListScrollController,
                 children: children,
               ),
             ),

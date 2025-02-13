@@ -1,5 +1,6 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/utility/modals.dart';
@@ -175,7 +176,9 @@ class _ProductTileState extends State<ProductTile> {
          },
         child: ListTile(
           dense: true,
-          contentPadding: const EdgeInsets.fromLTRB(16 * gsf, 5 * gsf - 5, 9 * gsf, 5 * gsf - 5),
+          contentPadding: kIsWeb ?
+            const EdgeInsets.fromLTRB(16 * gsf, 3 * gsf, 9 * gsf, 3 * gsf) :
+            const EdgeInsets.fromLTRB(16 * gsf, 0, 9 * gsf, 0),
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

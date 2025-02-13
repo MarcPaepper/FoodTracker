@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/views/meals_view.dart';
 import 'package:food_tracker/views/stats_view.dart';
@@ -74,12 +75,12 @@ class _MainViewState extends State<MainView> {
     physics: AlwaysScrollableScrollPhysics(),
     tabAlignment: TabAlignment.center,
     tabs: [
-      Tab(text: "Meals", height: 45 * gsf),
-      Tab(text: "Stats", height: 45 * gsf),
-      Tab(text: "Products", height: 45 * gsf),
-      Tab(text: "Nutrition", height: 45 * gsf),
-      Tab(text: "Targets", height: 45 * gsf),
-      Tab(text: "Options", height: 45 * gsf),
+      Tab(text: "Meals", height: (kIsWeb ? 42 : 46) * gsf),
+      Tab(text: "Stats", height: (kIsWeb ? 42 : 46) * gsf),
+      Tab(text: "Products", height: (kIsWeb ? 42 : 46) * gsf),
+      Tab(text: "Nutrition", height: (kIsWeb ? 42 : 46) * gsf),
+      Tab(text: "Targets", height: (kIsWeb ? 42 : 46) * gsf),
+      Tab(text: "Options", height: (kIsWeb ? 42 : 46) * gsf),
     ],
   );
 }

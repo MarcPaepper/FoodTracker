@@ -260,6 +260,7 @@ class _MealListState extends State<MealList> {
                   }
                 },
               ),
+              const SizedBox(width: kIsWeb ? 6 * gsf : 0),
             ],
           ),
           minVerticalPadding: 0,

@@ -180,7 +180,7 @@ class _ProductsViewState extends State<ProductsView> {
     
     return ElevatedButton.icon(
       style: addButtonStyle.copyWith(
-        minimumSize: WidgetStateProperty.all(const Size(double.infinity, kIsWeb ? 0 : (60 * gsf))),
+        minimumSize: WidgetStateProperty.all(const Size(double.infinity, (kIsWeb ? 52 : 60) * gsf)),
       ),
       icon: const Icon(Icons.add, size: 20 * gsf),
       label: Padding(

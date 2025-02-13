@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_tracker/services/data/data_service.dart';
 import 'package:food_tracker/utility/theme.dart';
@@ -188,7 +189,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                             DropdownButtonFormField<TimeFrame>(
                               value: _timeFrame,
                               decoration: dropdownStyleEnabled,
-                              style: const TextStyle(fontSize: 41 * gsf, color: Colors.black),
+                              style: const TextStyle(fontSize: (kIsWeb ? 47 : 41) * gsf, color: Colors.black),
                               icon: const Icon(Icons.arrow_drop_down),
                               iconSize: 24 * gsf,
                               isDense: true,
@@ -362,7 +363,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
           child: DropdownButtonFormField<bool>(
             value: sortByRelevancy,
             decoration: dropdownStyleEnabled,
-            style: const TextStyle(fontSize: 46 * gsf, color: Colors.black),
+            style: const TextStyle(fontSize: (kIsWeb ? 47 : 41) * gsf, color: Colors.black),
             icon: const Icon(Icons.arrow_drop_down),
             iconSize: 24,
             isDense: true,

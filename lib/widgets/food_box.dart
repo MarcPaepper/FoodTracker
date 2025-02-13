@@ -358,7 +358,7 @@ class _FoodBoxState extends State<FoodBox> {
                   message: "Delete Ingredient",
                   child: ExcludeFocusTraversal(
                     child: IconButton(
-                      color: Colors.green,
+                      color: Colors.white,
                       icon: const Icon(Icons.delete),
                       iconSize: 24 * gsf,
                       onPressed: () {

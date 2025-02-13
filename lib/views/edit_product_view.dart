@@ -494,25 +494,28 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                             nutrients = nutrients.where((n) => !n.autoCalc).toList();
                             var name = _productNameController.text.trim();
                             
-                            return DailyTargetsBox(
-                              null,
-                              ingredients,
-                              null,
-                              (newIngredients) => _ingredientsNotifier.value = newIngredients,
-                              FoldMode.startFolded,
-                              true,
-                              false,
-                              null,
-                              name,
-                              _defaultUnitNotifier,
-                              _nutrientsNotifier,
-                              _nutrientAmountNotifier,
-                              _nutrientsUnitNotifier,
-                              _resultingAmountNotifier,
-                              _ingredientsUnitNotifier,
-                              _densityConversionNotifier,
-                              _quantityConversionNotifier,
-                              _quantityNameController,
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0) * gsf,
+                              child: DailyTargetsBox(
+                                null,
+                                ingredients,
+                                null,
+                                (newIngredients) => _ingredientsNotifier.value = newIngredients,
+                                FoldMode.startFolded,
+                                true,
+                                false,
+                                null,
+                                name,
+                                _defaultUnitNotifier,
+                                _nutrientsNotifier,
+                                _nutrientAmountNotifier,
+                                _nutrientsUnitNotifier,
+                                _resultingAmountNotifier,
+                                _ingredientsUnitNotifier,
+                                _densityConversionNotifier,
+                                _quantityConversionNotifier,
+                                _quantityNameController,
+                              ),
                             );
                           }
                         ),

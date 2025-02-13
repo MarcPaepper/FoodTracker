@@ -175,7 +175,7 @@ class _TargetsViewState extends State<TargetsView> {
   Widget _buildAddButton() => ElevatedButton.icon(
     
     style: addButtonStyle.copyWith(
-      minimumSize: WidgetStateProperty.all(const Size(double.infinity, kIsWeb ? 0 : (60 * gsf))),
+      minimumSize: WidgetStateProperty.all(const Size(double.infinity, (kIsWeb ? 52 : 60) * gsf)),
     ),
     icon: const Icon(Icons.add, size: 20 * gsf),
     label: const Padding(

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/ui.dart';
 
-const appBarHeight = 40 * gsf;
+const appBarHeight = (kIsWeb ? 45 : 40) * gsf;
 
 const tabColorActive = Color.fromARGB(255, 193, 255, 253);
 const warningColor = Color.fromARGB(255, 255, 174, 0);
