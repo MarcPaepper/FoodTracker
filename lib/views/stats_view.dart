@@ -123,8 +123,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
             // hash consists of products, nutvalues, targets, meals and settings
             ListEquality leq = const ListEquality();
             MapEquality meq = const MapEquality();
-            int newHash = Object.hash(leq.hash(products), leq.hash(nutvalues), leq.hash(targets), leq.hash(meals), meq.hash(_activeTargets), _timeFrame, _calculationMethod, includeEmptyDays, notifier.value);
-            // devtools.log("old hash $hash, new hash $newHash");
+            int newHash = Object.hash(leq.hash(products), leq.hash(nutvalues), leq.hash(targets), leq.hash(meals), meq.hash(_activeTargets), _timeFrame, _calculationMethod, includeEmptyDays, sortByRelevancy, notifier.value);
             if (hash != newHash) {
               DateTime start = notifier.value;
               DateTime end;
@@ -140,9 +139,9 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
               }
               relevantMeals = meals.where((meal) => isDateInsideInterval(meal.dateTime, start, end) == 0).toList();
               var activeTargets = _activeTargets.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
-              dailyTargetProgressData = getDailyTargetProgress(notifier.value, activeTargets, productsMap, nutvalues, relevantMeals, [], true, maxProducts: 1000);
+              dailyTargetProgressData = getDailyTargetProgress(notifier.value, activeTargets, productsMap, nutvalues, relevantMeals, [], sortByRelevancy, maxProducts: 1000);
               hash = newHash;
-              if (!isGlobal && _calculationMethod == CalculationMethod.avg) {
+              if (!isGlobal && _calculationMethod == CalculationMethod.avg) { // calculate daily average
                 var dt1970 = DateTime(1970);
                 // count how many days have at least one meal
                 int startDay = daysBetween(dt1970, start);
@@ -155,6 +154,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                   }
                   dayCount = days.length;
                 }
+                // divide all values by dayCount
                 if (dayCount != 0) {
                   dailyTargetProgressData = (dailyTargetProgressData!.$1.map((target, map) {
                     var newMap = Map<Product?, double>.fromEntries(map.entries.map((entry) {

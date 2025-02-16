@@ -301,7 +301,7 @@ class Meal {
   
   @override
   String toString() {
-    return "<Meal $dateTime: $productQuantity.amount ${unitToString(productQuantity.unit)} prod id $productQuantity.productId>";
+    return "<Meal $dateTime: $productQuantity.amount ${unitToString(productQuantity.unit)} prod id ${productQuantity.productId}>";
   }
 }
 

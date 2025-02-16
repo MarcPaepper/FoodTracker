@@ -95,11 +95,11 @@ class ConversionBoxes extends StatelessWidget {
               if (unit != null) {
                 conversion = conversion.withUnit1(unit);
                 if (index == 0) {
-                  densityConversionNotifier.value = conversion;
                   onConversionChanged(conversion, otherConversion);
+                  densityConversionNotifier.value = conversion;
                 } else {
-                  quantityConversionNotifier.value = conversion;
                   onConversionChanged(otherConversion, conversion);
+                  quantityConversionNotifier.value = conversion;
                 }
               }
             }
@@ -143,11 +143,11 @@ class ConversionBoxes extends StatelessWidget {
             if (unit != null) {
               conversion = conversion.withUnit2(unit);
               if (index == 0) {
-                densityConversionNotifier.value = conversion;
                 onConversionChanged(conversion, otherConversion);
+                densityConversionNotifier.value = conversion;
               } else {
-                quantityConversionNotifier.value = conversion;
                 onConversionChanged(otherConversion, conversion);
+                quantityConversionNotifier.value = conversion;
               }
             }
           }
@@ -175,12 +175,12 @@ class ConversionBoxes extends StatelessWidget {
                 index: 1,
                 onChanged: (value) {
                   conversion = notifier.value.withAmount1(value);
-                  notifier.value = conversion;
                   if (index == 0) {
                     onConversionChanged(conversion, otherConversion);
                   } else {
                     onConversionChanged(otherConversion, conversion);
                   }
+                  notifier.value = conversion;
                 }
               )),
               Expanded(child: dropdown1),
@@ -191,12 +191,12 @@ class ConversionBoxes extends StatelessWidget {
                 index: 2,
                 onChanged: (value) {
                   conversion = notifier.value.withAmount2(value);
-                  notifier.value = conversion;
                   if (index == 0) {
                     onConversionChanged(conversion, otherConversion);
                   } else {
                     onConversionChanged(otherConversion, conversion);
                   }
+                  notifier.value = conversion;
                 }
               )),
               Expanded(child: dropdown2),
@@ -218,12 +218,12 @@ class ConversionBoxes extends StatelessWidget {
                     index: 1,
                     onChanged: (value) {
                       conversion = notifier.value.withAmount1(value);
-                      notifier.value = conversion;
                       if (index == 0) {
                         onConversionChanged(conversion, otherConversion);
                       } else {
                         onConversionChanged(otherConversion, conversion);
                       }
+                      notifier.value = conversion;
                     }
                   ),
                   dropdown1,
@@ -249,12 +249,12 @@ class ConversionBoxes extends StatelessWidget {
                     index: 2,
                     onChanged: (value) {
                       conversion = notifier.value.withAmount2(value);
-                      notifier.value = conversion;
                       if (index == 0) {
                         onConversionChanged(conversion, otherConversion);
                       } else {
                         onConversionChanged(otherConversion, conversion);
                       }
+                      notifier.value = conversion;
                     }
                   ),
                   dropdown2,
@@ -280,8 +280,14 @@ class ConversionBoxes extends StatelessWidget {
                     if (!value) {
                       Future(() => onValidate());
                     }
-                    notifier.value = notifier.value.switched(value);
-                    onConversionChanged(densityConversionNotifier.value, quantityConversionNotifier.value);
+                    Conversion conv = notifier.value.switched(value);
+                    if (index == 0) {
+                      onConversionChanged(conv, otherConversion);
+                      densityConversionNotifier.value = conv;
+                    } else {
+                      onConversionChanged(otherConversion, conv);
+                      quantityConversionNotifier.value = conv;
+                    }
                   },
                   title: Padding(
                     padding: const EdgeInsets.only(top: 2 * gsf),

@@ -521,7 +521,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                         }
                         Widget graph;
                         if (widget.scrollList) { // scrollable graph
-                          Map<int, int> contributingProductIndices = {};
+                          Map<int, int> contributingProductIndices = {}; // map product id to index in contributingProducts
                           for (var i = 0; i < contributingProducts.length; i++) {
                             contributingProductIndices[contributingProducts[i].id] = i;
                           }
@@ -545,6 +545,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                                 highNullProduct = _getDummyProduct(-3);
                               }
                               
+                              // Create a new targetProgress to grey out invisible entries with the dummy products
                               for (var entry in targetProgress.entries) {
                                 Map<Product?, double> newMap = {};
                                 for (var product in entry.value.keys) {
@@ -563,6 +564,12 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                                     }
                                     newMap[productToEdit] = entry.value[product]! + (newMap[productToEdit] ?? 0);
                                   }
+                                }
+                                // move highNullProduct to the end of the map
+                                if (highNullProduct != null && newMap.containsKey(highNullProduct)) {
+                                  var highEntry = newMap[highNullProduct];
+                                  newMap.remove(highNullProduct);
+                                  newMap[highNullProduct] = highEntry!;
                                 }
                                 newTargetProgress[entry.key] = newMap;
                               }
@@ -820,6 +827,35 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                                   totalAmount += convertToUnit(unit, meal.productQuantity.unit, meal.productQuantity.amount, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
                                 }
                                 meals = [Meal(id: -meals.length, dateTime: DateTime.now(), productQuantity: ProductQuantity(productId: product.id, amount: totalAmount, unit: unit))];
+                              } else if (meals.length > 1) {
+                                // add all meals of the same hour / day together (depending on timeframe)
+                                
+                                DateTime Function(DateTime) roundFunc = timeFormat == TimeFormat.hours ? roundToHour : roundToDay;
+                                List<Meal> newMeals = [];
+                                Meal oldMeal = meals[0];
+                                DateTime oldDT = roundFunc(oldMeal.dateTime);
+                                for (var i = 1; i < meals.length; i++) {
+                                  Meal newMeal = meals[i];
+                                  DateTime newDT = roundFunc(newMeal.dateTime);
+                                  if (oldDT == newDT) {
+                                    Unit unit;
+                                    if (oldMeal.productQuantity.unit == newMeal.productQuantity.unit) {
+                                      unit = oldMeal.productQuantity.unit;
+                                    } else {
+                                      unit = product.defaultUnit;
+                                    }
+                                    // convert both to the same unit
+                                    double amount1 = convertToUnit(unit, oldMeal.productQuantity.unit, oldMeal.productQuantity.amount, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
+                                    double amount2 = convertToUnit(unit, newMeal.productQuantity.unit, newMeal.productQuantity.amount, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
+                                    oldMeal = oldMeal.copyWith(newProductQuantity: ProductQuantity(productId: product.id, amount: amount1 + amount2, unit: unit));
+                                  } else {
+                                    newMeals.add(oldMeal);
+                                    oldMeal = newMeal;
+                                    oldDT = newDT;
+                                  }
+                                }
+                                newMeals.add(oldMeal);
+                                if (meals.length != newMeals.length) meals = newMeals;
                               }
                               
                               for (var meal in meals) {
@@ -833,7 +869,6 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                                 } else {
                                   timeString = "${meal.dateTime.day}.${meal.dateTime.month}.";
                                 }
-                                timeString += "";
                                 
                                 var amount = meal.productQuantity.amount;
                                 var unit = meal.productQuantity.unit;
@@ -909,24 +944,20 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
             bool visible = info.visibleFraction > 0;
             if (visible) {
               if (i < (lowestVisIndexNotifier.value ?? 0)) {
-                devtools.log("case 1");
                 lowestVisIndexNotifier.value = i;
                 if ((highestVisIndexNotifier.value ?? contributingIngredients.length - 1) >= i + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
               } else if (i > (highestVisIndexNotifier.value ?? 0)) {
-                devtools.log("case 2");
                 highestVisIndexNotifier.value = i;
                 if ((lowestVisIndexNotifier.value ?? 0) <= i - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
               }
             } else {
               double middle = (lowestVisIndexNotifier.value! + highestVisIndexNotifier.value!) / 2;
-              if (i >= (lowestVisIndexNotifier.value ?? 0) && i <= middle && productListScrollController.offset > lineHeight - 1) {
-                devtools.log("case 3");
+              if (i >= (lowestVisIndexNotifier.value ?? 0) && i <= middle && productListScrollController.hasClients && productListScrollController.offset > lineHeight - 1) {
                 if (highestVisIndexNotifier.value == contributingProducts.length - 1) return;
                 lowestVisIndexNotifier.value = i + 1;
                 if ((highestVisIndexNotifier.value ?? contributingProducts.length - 1) >= i + 1 + maxLinesVis) highestVisIndexNotifier.value = i + maxLinesVis;
               }
               if (i <= (highestVisIndexNotifier.value ?? 0) && i >= middle && i >= maxLinesVis) {
-                devtools.log("case 4");
                 highestVisIndexNotifier.value = i - 1;
                 if ((lowestVisIndexNotifier.value ?? 0) <= i - 1 - maxLinesVis) lowestVisIndexNotifier.value = i - maxLinesVis;
               }

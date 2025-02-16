@@ -868,11 +868,11 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     }
   }
   
-  // sort the products by their order in the meals
+  // sort the products by their first appearance in the meals
   Map<Product, int> mealSorting = {};
   for (int i = 0; i < meals.length; i++) {
     int? id = meals[i].productQuantity.productId;
-    if (id != null && productsMap.containsKey(id)) {
+    if (id != null && productsMap.containsKey(id) && !mealSorting.containsKey(productsMap[id])) {
       mealSorting[productsMap[id]!] = i;
     }
   }
@@ -1051,4 +1051,12 @@ int daysBetween(DateTime earlier, DateTime later) {
   earlier = DateTime.utc(earlier.year, earlier.month, earlier.day);
 
   return later.difference(earlier).inDays;
+}
+
+DateTime roundToDay(DateTime dt) {
+  return DateTime.utc(dt.year, dt.month, dt.day);
+}
+
+DateTime roundToHour(DateTime dt) {
+  return DateTime.utc(dt.year, dt.month, dt.day, dt.hour);
 }

@@ -950,19 +950,18 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   // if ingredient and nutrient values are default, change them to the new unit                    
   void updateDefaultAmounts(Unit unit, Conversion quantityConversion) {
+    Unit oldUnit = _defaultUnitNotifier.value;
+    if (_defaultUnitNotifier.value == Unit.quantity && _quantityConversionNotifier.value.enabled) {
+      // if the quantity conversion is enabled, the old unit is the unit given in the quantity conversion
+      oldUnit = _quantityConversionNotifier.value.unit2;
+    }
     Unit newUnit = unit;
-    if (unit == Unit.quantity && quantityConversion.enabled) {
+    if (newUnit == Unit.quantity && quantityConversion.enabled) {
       // if the quantity conversion is enabled, change the unit to the other unit
-      newUnit = _quantityConversionNotifier.value.unit2;
+      newUnit = quantityConversion.unit2;
     }
-    double defValue;
-    if (_defaultUnitNotifier.value == Unit.quantity && !_quantityConversionNotifier.value.enabled) {
-      defValue = 1;
-    } else {
-      defValue = Product.defaultValues().amountForIngredients;
-    }
-    
-    var newDefValue = newUnit == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
+    double oldDefValue = oldUnit == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
+    double newDefValue = newUnit == Unit.quantity ? 1.0 : Product.defaultValues().amountForIngredients;
     
     Unit ingredientsUnit = _ingredientsUnitNotifier.value;
     Unit nutrientsUnit = _nutrientsUnitNotifier.value;
@@ -971,8 +970,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     bool hasChanged = false;
     if (
       _ingredientsNotifier.value.isEmpty
-      && ingredientsUnit == _defaultUnitNotifier.value
-      && resultingAmount == defValue
+      && ingredientsUnit == oldUnit
+      && resultingAmount == oldDefValue
     ) {
       ingredientsUnit = newUnit;
       resultingAmount = newDefValue;
@@ -980,8 +979,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     }
     if (
       _nutrientsNotifier.value.every((nutrient) => nutrient.autoCalc)
-      && nutrientsUnit == _defaultUnitNotifier.value
-      && amountForNutrients == defValue
+      && nutrientsUnit == oldUnit
+      && amountForNutrients == oldDefValue
     ) {
       nutrientsUnit = newUnit;
       amountForNutrients = newDefValue;
