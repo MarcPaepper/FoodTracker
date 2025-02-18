@@ -50,651 +50,7 @@ class DebugDataProvider implements DataProvider {
           );
         }
         
-        products = [];
-        
-        // Brühe 0
-        products.add(
-          Product(
-            id: 0,
-            name: "Brühe",
-            creationDate: DateTime.now().subtract(const Duration(days: 10)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 0)),
-            isTemporary: false,
-            defaultUnit: Unit.ml,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 95,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.ml,
-            ingredients: [],
-            nutrients: [
-              quickNutri(0, 0, 0), // kcal
-              quickNutri(0, 1, 10), // fat
-              quickNutri(0, 2, 0), // saturated fat
-              quickNutri(0, 3, 0), // carbohydrates
-              quickNutri(0, 4, 0), // sugar
-              quickNutri(0, 5, 0), // protein
-              quickNutri(0, 6, 5), // salt
-            ],
-          ));
-        
-        // Fleisch 2
-        products.add(
-          Product(
-            id: 1,
-            name: "Fleisch",
-            creationDate: DateTime.now().subtract(const Duration(days: 9)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [],
-            nutrients: [
-              quickNutri(1, 0, 100), // kcal
-              quickNutri(1, 1, 10), // fat
-              quickNutri(1, 2, 3), // saturated fat
-              quickNutri(1, 3, 0), // carbohydrates
-              quickNutri(1, 4, 0), // sugar
-              quickNutri(1, 5, 20), // protein
-              quickNutri(1, 6, 0), // salt
-            ],
-          ));
-        
-        // Apfel 2
-        products.add(
-          Product(
-            id: 2,
-            name: "Apfel",
-            creationDate: DateTime.now().subtract(const Duration(days: 8)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: false,
-            defaultUnit: Unit.quantity,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 150,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 1,
-            nutrientsUnit: Unit.kg,
-            ingredients: [],
-            nutrients: [
-              quickNutri(2, 0, 0), // kcal
-              quickNutri(2, 1, 0), // fat
-              quickNutri(2, 2, 0), // saturated fat
-              quickNutri(2, 3, 200), // carbohydrates
-              quickNutri(2, 4, 100), // sugar
-              quickNutri(2, 5, 0), // protein
-              quickNutri(2, 6, 0), // salt
-            ],
-          ));
-        
-        // Ei 3
-        products.add(
-          Product(
-            id: 3,
-            name: "Ei",
-            creationDate: DateTime.now().subtract(const Duration(days: 7)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 3)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 50,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [],
-            nutrients: [
-              quickNutri(3, 0, 0), // kcal
-              quickNutri(3, 1, 0), // fat
-              quickNutri(3, 2, 0), // saturated fat
-              quickNutri(3, 3, 0), // carbohydrates
-              quickNutri(3, 4, 0), // sugar
-              quickNutri(3, 5, 20), // protein
-              quickNutri(3, 6, 0), // salt
-            ],
-          ));
-
-        // Milch 4
-        products.add(
-          Product(
-            id: 4,
-            name: "Milch",
-            creationDate: DateTime.now().subtract(const Duration(days: 10)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: true,
-            temporaryBeginning: DateTime.now().subtract(const Duration(days: 1)),
-            temporaryEnd: DateTime.now().subtract(const Duration(days: 5)),
-            defaultUnit: Unit.ml,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 103,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.ml,
-              enabled: false,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.ml,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.ml,
-            ingredients: [],
-            nutrients: [
-              quickNutri(4, 0, 64), // kcal
-              quickNutri(4, 1, 3.5), // fat
-              quickNutri(4, 2, 2.3), // saturated fat
-              quickNutri(4, 3, 5), // carbohydrates
-              quickNutri(4, 4, 5), // sugar
-              quickNutri(4, 5, 3.5), // protein
-              quickNutri(4, 6, 0.1), // salt
-            ],
-          ));
-
-        // Käse 5
-        products.add(
-          Product(
-            id: 5,
-            name: "Käse",
-            creationDate: DateTime.now().subtract(const Duration(days: 10)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: true,
-            temporaryBeginning: DateTime.now().subtract(const Duration(days: 1)),
-            temporaryEnd: DateTime.now().add(const Duration(days: 5)),
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 1,
-            ingredientsUnit: Unit.kg,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [
-              ProductQuantity(
-                productId: 4,
-                amount: 14.285,
-                unit: Unit.ml,
-              )
-            ],
-            nutrients: [
-              quickNutri(4, 0, 330), // kcal
-              quickNutri(4, 1, 25), // fat
-              quickNutri(4, 2, 17.3), // saturated fat
-              quickNutri(4, 3, 0.0001), // carbohydrates
-              quickNutri(4, 4, 0.0001), // sugar
-              quickNutri(4, 5, 25), // protein
-              quickNutri(4, 6, 1.8), // salt
-            ],
-          ));
-        
-        // Mehl 6
-        products.add(
-          Product(
-            id: 6,
-            name: "Mehl",
-            creationDate: DateTime.now().subtract(const Duration(days: 10)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [],
-            nutrients: [
-              quickNutri(6, 0, 0), // kcal
-              quickNutri(6, 1, 0), // fat
-              quickNutri(6, 2, 0), // saturated fat
-              quickNutri(6, 3, 70), // carbohydrates
-              quickNutri(6, 4, 0), // sugar
-              quickNutri(6, 5, 10), // protein
-              quickNutri(6, 6, 0), // salt
-            ],
-          ));
-        
-        // Zucker 7
-        products.add(
-          Product(
-            id: 7,
-            name: "Zucker",
-            creationDate: DateTime.now().subtract(const Duration(days: 10)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [],
-            nutrients: [
-              quickNutri(7, 0, 400), // kcal
-              quickNutri(7, 1, 0), // fat
-              quickNutri(7, 2, 0), // saturated fat
-              quickNutri(7, 3, 100), // carbohydrates
-              quickNutri(7, 4, 100), // sugar
-              quickNutri(7, 5, 0), // protein
-              quickNutri(7, 6, 0), // salt
-            ],
-          ));
-        
-        // Apfelkuchen 8 
-        products.add(
-          Product(
-            id: 8,
-            name: "Apfelkuchen",
-            creationDate: DateTime.now().subtract(const Duration(days: 10)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityName: "x",
-            autoCalc: true,
-            amountForIngredients: 450,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [
-              ProductQuantity(
-                productId: 2,
-                amount: 100,
-                unit: Unit.g,
-              ),
-              ProductQuantity(
-                productId: 3,
-                amount: 1,
-                unit: Unit.quantity,
-              ),
-              ProductQuantity(
-                productId: 4,
-                amount: 100,
-                unit: Unit.ml
-              ),
-              ProductQuantity(
-                productId: 6,
-                amount: 100,
-                unit: Unit.g,
-              ),
-              ProductQuantity(
-                productId: 7,
-                amount: 100,
-                unit: Unit.g,
-              ),
-            ],
-            nutrients: [
-              quickNutri(8, 0, 0), // kcal
-              quickNutri(8, 1, 0), // fat
-              quickNutri(8, 2, 0), // saturated fat
-              quickNutri(8, 3, 0), // carbohydrates
-              quickNutri(8, 4, 0), // sugar
-              quickNutri(8, 5, 0), // protein
-              quickNutri(8, 6, 0.5), // salt
-            ],
-          ));
-        
-        // Brot 9
-        products.add(
-          Product(
-            id: 9,
-            name: "Brot",
-            creationDate: DateTime.now().subtract(const Duration(days: 6)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 500,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [
-              ProductQuantity(
-                productId: 6,
-                amount: 100,
-                unit: Unit.g,
-              ),
-              ProductQuantity(
-                productId: 7,
-                amount: 100,
-                unit: Unit.g,
-              ),
-            ],
-            nutrients: [
-              quickNutri(9, 0, 250), // kcal
-              quickNutri(9, 1, 3.5), // fat
-              quickNutri(9, 2, 0.5), // saturated fat
-              quickNutri(9, 3, 50), // carbohydrates
-              quickNutri(9, 4, 2), // sugar
-              quickNutri(9, 5, 8), // protein
-              quickNutri(9, 6, 1.2), // salt
-            ],
-          ));
-        
-        // Banane 10
-        products.add(
-          Product(
-            id: 10,
-            name: "Banane",
-            creationDate: DateTime.now().subtract(const Duration(days: 5)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
-            isTemporary: false,
-            defaultUnit: Unit.quantity,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 120,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 1,
-            nutrientsUnit: Unit.kg,
-            ingredients: [],
-            nutrients: [
-              quickNutri(10, 0, 89), // kcal
-              quickNutri(10, 1, 0.3), // fat
-              quickNutri(10, 2, 0.1), // saturated fat
-              quickNutri(10, 3, 23), // carbohydrates
-              quickNutri(10, 4, 12), // sugar
-              quickNutri(10, 5, 1.1), // protein
-              quickNutri(10, 6, 0), // salt
-            ],
-          ));
-        
-        // Kartoffel 11
-        products.add(
-          Product(
-            id: 11,
-            name: "Kartoffel",
-            creationDate: DateTime.now().subtract(const Duration(days: 4)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [],
-            nutrients: [
-              quickNutri(11, 0, 77), // kcal
-              quickNutri(11, 1, 0.1), // fat
-              quickNutri(11, 2, 0), // saturated fat
-              quickNutri(11, 3, 17), // carbohydrates
-              quickNutri(11, 4, 0.8), // sugar
-              quickNutri(11, 5, 2), // protein
-              quickNutri(11, 6, 0), // salt
-            ],
-          ));
-        
-        // Suppe 12
-        products.add(
-          Product(
-            id: 12,
-            name: "Lecker Suppe",
-            creationDate: DateTime.now().subtract(const Duration(days: 3)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 300,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityName: "Teller",
-            autoCalc: true,
-            amountForIngredients: 550,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [
-              ProductQuantity(
-                productId: 0,
-                amount: 300,
-                unit: Unit.ml,
-              ),
-              ProductQuantity(
-                productId: 1,
-                amount: 100,
-                unit: Unit.g,
-              ),
-              ProductQuantity(
-                productId: 11,
-                amount: 100,
-                unit: Unit.g,
-              ),
-              ProductQuantity(
-                productId: 3,
-                amount: 1,
-                unit: Unit.quantity,
-              ),
-            ],
-            nutrients: [
-              quickNutri(12, 0, 0), // kcal
-              quickNutri(12, 1, 0), // fat
-              quickNutri(12, 2, 0), // saturated fat
-              quickNutri(12, 3, 0), // carbohydrates
-              quickNutri(12, 4, 0), // sugar
-              quickNutri(12, 5, 0), // protein
-              quickNutri(12, 6, 0), // salt
-            ],
-          ));
-        
-        // Mozarella Sticks 13
-        products.add(
-          Product(
-            id: 13,
-            name: "Mozarella Sticks",
-            creationDate: DateTime.now().subtract(const Duration(days: 2)),
-            lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
-            isTemporary: false,
-            defaultUnit: Unit.g,
-            densityConversion: const Conversion(
-              amount1: 100,
-              unit1: Unit.ml,
-              amount2: 100,
-              unit2: Unit.g,
-              enabled: false,
-            ),
-            quantityConversion: const Conversion(
-              amount1: 1,
-              unit1: Unit.quantity,
-              amount2: 50,
-              unit2: Unit.g,
-              enabled: true,
-            ),
-            quantityName: "x",
-            autoCalc: false,
-            amountForIngredients: 100,
-            ingredientsUnit: Unit.g,
-            amountForNutrients: 100,
-            nutrientsUnit: Unit.g,
-            ingredients: [],
-            nutrients: [
-              quickNutri(13, 0, 300), // kcal
-              quickNutri(13, 1, 20), // fat
-              quickNutri(13, 2, 10), // saturated fat
-              quickNutri(13, 3, 20), // carbohydrates
-              quickNutri(13, 4, 3), // sugar
-              quickNutri(13, 5, 15), // protein
-              quickNutri(13, 6, 1), // salt
-            ],
-          ));
-        
-        // - end of products -
+        products = getDebugProducts();
         
         // update map
         for (var product in products) {
@@ -710,134 +66,8 @@ class DebugDataProvider implements DataProvider {
         
         const diffDur = Duration();//days: 1);
         
-        meals = [
-          Meal(
-            id: 0,
-            productQuantity: ProductQuantity(
-              productId: 0,
-              amount: 20,
-              unit: Unit.ml,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 6),
-          ),
-          Meal(
-            id: 1,
-            productQuantity: ProductQuantity(
-              productId: 1,
-              amount: 100,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 2),
-          ),
-          Meal(
-            id: 2,
-            productQuantity: ProductQuantity(
-              productId: 2,
-              amount: 1,
-              unit: Unit.quantity,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 3),
-          ),
-          Meal(
-            id: 3,
-            productQuantity: ProductQuantity(
-              productId: 3,
-              amount: 1,
-              unit: Unit.quantity,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 4),
-          ),
-          Meal(
-            id: 4,
-            productQuantity: ProductQuantity(
-              productId: 4,
-              amount: 100,
-              unit: Unit.ml,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 5),
-          ),
-          Meal(
-            id: 5,
-            productQuantity: ProductQuantity(
-              productId: 5,
-              amount: 50,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 1),
-          ),
-          Meal(
-            id: 6,
-            productQuantity: ProductQuantity(
-              productId: 6,
-              amount: 100,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 7),
-          ),
-          Meal(
-            id: 7,
-            productQuantity: ProductQuantity(
-              productId: 7,
-              amount: 50,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 8),
-          ),
-          Meal(
-            id: 8,
-            productQuantity: ProductQuantity(
-              productId: 8,
-              amount: 500,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 9),
-          ),
-          Meal(
-            id: 9,
-            productQuantity: ProductQuantity(
-              productId: 9,
-              amount: 250,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 10),
-          ),
-          Meal(
-            id: 10,
-            productQuantity: ProductQuantity(
-              productId: 10,
-              amount: 1,
-              unit: Unit.quantity,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 11),
-          ),
-          Meal(
-            id: 11,
-            productQuantity: ProductQuantity(
-              productId: 11,
-              amount: 100,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 12),
-          ),
-          Meal(
-            id: 12,
-            productQuantity: ProductQuantity(
-              productId: 12,
-              amount: 1,
-              unit: Unit.quantity,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 13),
-          ),
-          Meal(
-            id: 13,
-            productQuantity: ProductQuantity(
-              productId: 13,
-              amount: 300,
-              unit: Unit.g,
-            ),
-            dateTime: DateTime.now().subtract(diffDur * 14),
-          ),
-        ].reversed.toList();
+        meals = getDebugMeals(diffDur);
+        
         // duplicate meals with rising datetime differences
         List<Meal> origMeals = List.from(meals);
         for (int i = 1; i < origMeals.length; i++) {
@@ -918,7 +148,7 @@ class DebugDataProvider implements DataProvider {
     if (invalidProductCount > 0) _mealsStreamController.add(meals);
   }
   
-  // Products
+  // ----- Products -----
   
   @override
   Stream<List<Product>> streamProducts() {
@@ -957,6 +187,15 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<List<Product>> createProducts(List<Product> products) async {
+    List<Product> newProducts = [];
+    for (var product in products) {
+      newProducts.add(await createProduct(product));
+    }
+    return Future.value(newProducts);
+  }
+  
+  @override
   Future<Product> updateProduct(Product product, {bool recalc = true}) async {
     if (recalc) {
       var updatedProducts = recalcProductNutrients(product, products, productsMap);
@@ -974,6 +213,15 @@ class DebugDataProvider implements DataProvider {
     }
     _productsStreamController.add(products);
     return Future.value(product);
+  }
+  
+  @override
+  Future<List<Product>> updateProducts(List<Product> products) async {
+    List<Product> updatedProducts = [];
+    for (var product in products) {
+      updatedProducts.add(await updateProduct(product, recalc: false));
+    }
+    return Future.value(updatedProducts);
   }
   
   @override
@@ -1129,6 +377,15 @@ class DebugDataProvider implements DataProvider {
   }
   
   @override
+  Future<List<Meal>> createMeals(List<Meal> meals) async {
+    List<Meal> newMeals = [];
+    for (var meal in meals) {
+      newMeals.add(await createMeal(meal));
+    }
+    return Future.value(newMeals);
+  }
+  
+  @override
   Future<Meal> updateMeal(Meal meal) {
     int lenPrev = meals.length;
     meals.removeWhere((element) => element.id == meal.id);
@@ -1218,4 +475,786 @@ class DebugDataProvider implements DataProvider {
     _targetsStreamController.add(targets);
     return Future.value();
   }
+  
+  // ----- Debug Data -----
+  
+  
+  List<Product> getDebugProducts() {
+    List<Product> debugProducts = [];
+    
+    // Brühe 0
+    debugProducts.add(
+      Product(
+        id: 0,
+        name: "Brühe",
+        creationDate: DateTime.now().subtract(const Duration(days: 10)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 0)),
+        isTemporary: false,
+        defaultUnit: Unit.ml,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 95,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.ml,
+        ingredients: [],
+        nutrients: [
+          quickNutri(0, 0, 0), // kcal
+          quickNutri(0, 1, 10), // fat
+          quickNutri(0, 2, 0), // saturated fat
+          quickNutri(0, 3, 0), // carbohydrates
+          quickNutri(0, 4, 0), // sugar
+          quickNutri(0, 5, 0), // protein
+          quickNutri(0, 6, 5), // salt
+        ],
+      ));
+    
+    // Fleisch 2
+    debugProducts.add(
+      Product(
+        id: 1,
+        name: "Fleisch",
+        creationDate: DateTime.now().subtract(const Duration(days: 9)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [],
+        nutrients: [
+          quickNutri(1, 0, 100), // kcal
+          quickNutri(1, 1, 10), // fat
+          quickNutri(1, 2, 3), // saturated fat
+          quickNutri(1, 3, 0), // carbohydrates
+          quickNutri(1, 4, 0), // sugar
+          quickNutri(1, 5, 20), // protein
+          quickNutri(1, 6, 0), // salt
+        ],
+      ));
+    
+    // Apfel 2
+    debugProducts.add(
+      Product(
+        id: 2,
+        name: "Apfel",
+        creationDate: DateTime.now().subtract(const Duration(days: 8)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+        isTemporary: false,
+        defaultUnit: Unit.quantity,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 150,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 1,
+        nutrientsUnit: Unit.kg,
+        ingredients: [],
+        nutrients: [
+          quickNutri(2, 0, 0), // kcal
+          quickNutri(2, 1, 0), // fat
+          quickNutri(2, 2, 0), // saturated fat
+          quickNutri(2, 3, 200), // carbohydrates
+          quickNutri(2, 4, 100), // sugar
+          quickNutri(2, 5, 0), // protein
+          quickNutri(2, 6, 0), // salt
+        ],
+      ));
+    
+    // Ei 3
+    debugProducts.add(
+      Product(
+        id: 3,
+        name: "Ei",
+        creationDate: DateTime.now().subtract(const Duration(days: 7)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 3)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 50,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [],
+        nutrients: [
+          quickNutri(3, 0, 0), // kcal
+          quickNutri(3, 1, 0), // fat
+          quickNutri(3, 2, 0), // saturated fat
+          quickNutri(3, 3, 0), // carbohydrates
+          quickNutri(3, 4, 0), // sugar
+          quickNutri(3, 5, 20), // protein
+          quickNutri(3, 6, 0), // salt
+        ],
+      ));
+
+    // Milch 4
+    debugProducts.add(
+      Product(
+        id: 4,
+        name: "Milch",
+        creationDate: DateTime.now().subtract(const Duration(days: 10)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+        isTemporary: true,
+        temporaryBeginning: DateTime.now().subtract(const Duration(days: 1)),
+        temporaryEnd: DateTime.now().subtract(const Duration(days: 5)),
+        defaultUnit: Unit.ml,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 103,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.ml,
+          enabled: false,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.ml,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.ml,
+        ingredients: [],
+        nutrients: [
+          quickNutri(4, 0, 64), // kcal
+          quickNutri(4, 1, 3.5), // fat
+          quickNutri(4, 2, 2.3), // saturated fat
+          quickNutri(4, 3, 5), // carbohydrates
+          quickNutri(4, 4, 5), // sugar
+          quickNutri(4, 5, 3.5), // protein
+          quickNutri(4, 6, 0.1), // salt
+        ],
+      ));
+
+    // Käse 5
+    debugProducts.add(
+      Product(
+        id: 5,
+        name: "Käse",
+        creationDate: DateTime.now().subtract(const Duration(days: 10)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+        isTemporary: true,
+        temporaryBeginning: DateTime.now().subtract(const Duration(days: 1)),
+        temporaryEnd: DateTime.now().add(const Duration(days: 5)),
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 1,
+        ingredientsUnit: Unit.kg,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [
+          ProductQuantity(
+            productId: 4,
+            amount: 14.285,
+            unit: Unit.ml,
+          )
+        ],
+        nutrients: [
+          quickNutri(4, 0, 330), // kcal
+          quickNutri(4, 1, 25), // fat
+          quickNutri(4, 2, 17.3), // saturated fat
+          quickNutri(4, 3, 0.0001), // carbohydrates
+          quickNutri(4, 4, 0.0001), // sugar
+          quickNutri(4, 5, 25), // protein
+          quickNutri(4, 6, 1.8), // salt
+        ],
+      ));
+    
+    // Mehl 6
+    debugProducts.add(
+      Product(
+        id: 6,
+        name: "Mehl",
+        creationDate: DateTime.now().subtract(const Duration(days: 10)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [],
+        nutrients: [
+          quickNutri(6, 0, 0), // kcal
+          quickNutri(6, 1, 0), // fat
+          quickNutri(6, 2, 0), // saturated fat
+          quickNutri(6, 3, 70), // carbohydrates
+          quickNutri(6, 4, 0), // sugar
+          quickNutri(6, 5, 10), // protein
+          quickNutri(6, 6, 0), // salt
+        ],
+      ));
+    
+    // Zucker 7
+    debugProducts.add(
+      Product(
+        id: 7,
+        name: "Zucker",
+        creationDate: DateTime.now().subtract(const Duration(days: 10)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [],
+        nutrients: [
+          quickNutri(7, 0, 400), // kcal
+          quickNutri(7, 1, 0), // fat
+          quickNutri(7, 2, 0), // saturated fat
+          quickNutri(7, 3, 100), // carbohydrates
+          quickNutri(7, 4, 100), // sugar
+          quickNutri(7, 5, 0), // protein
+          quickNutri(7, 6, 0), // salt
+        ],
+      ));
+    
+    // Apfelkuchen 8 
+    debugProducts.add(
+      Product(
+        id: 8,
+        name: "Apfelkuchen",
+        creationDate: DateTime.now().subtract(const Duration(days: 10)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 2)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityName: "x",
+        autoCalc: true,
+        amountForIngredients: 450,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [
+          ProductQuantity(
+            productId: 2,
+            amount: 100,
+            unit: Unit.g,
+          ),
+          ProductQuantity(
+            productId: 3,
+            amount: 1,
+            unit: Unit.quantity,
+          ),
+          ProductQuantity(
+            productId: 4,
+            amount: 100,
+            unit: Unit.ml
+          ),
+          ProductQuantity(
+            productId: 6,
+            amount: 100,
+            unit: Unit.g,
+          ),
+          ProductQuantity(
+            productId: 7,
+            amount: 100,
+            unit: Unit.g,
+          ),
+        ],
+        nutrients: [
+          quickNutri(8, 0, 0), // kcal
+          quickNutri(8, 1, 0), // fat
+          quickNutri(8, 2, 0), // saturated fat
+          quickNutri(8, 3, 0), // carbohydrates
+          quickNutri(8, 4, 0), // sugar
+          quickNutri(8, 5, 0), // protein
+          quickNutri(8, 6, 0.5), // salt
+        ],
+      ));
+    
+    // Brot 9
+    debugProducts.add(
+      Product(
+        id: 9,
+        name: "Brot",
+        creationDate: DateTime.now().subtract(const Duration(days: 6)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 500,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [
+          ProductQuantity(
+            productId: 6,
+            amount: 100,
+            unit: Unit.g,
+          ),
+          ProductQuantity(
+            productId: 7,
+            amount: 100,
+            unit: Unit.g,
+          ),
+        ],
+        nutrients: [
+          quickNutri(9, 0, 250), // kcal
+          quickNutri(9, 1, 3.5), // fat
+          quickNutri(9, 2, 0.5), // saturated fat
+          quickNutri(9, 3, 50), // carbohydrates
+          quickNutri(9, 4, 2), // sugar
+          quickNutri(9, 5, 8), // protein
+          quickNutri(9, 6, 1.2), // salt
+        ],
+      ));
+    
+    // Banane 10
+    debugProducts.add(
+      Product(
+        id: 10,
+        name: "Banane",
+        creationDate: DateTime.now().subtract(const Duration(days: 5)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
+        isTemporary: false,
+        defaultUnit: Unit.quantity,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 120,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 1,
+        nutrientsUnit: Unit.kg,
+        ingredients: [],
+        nutrients: [
+          quickNutri(10, 0, 89), // kcal
+          quickNutri(10, 1, 0.3), // fat
+          quickNutri(10, 2, 0.1), // saturated fat
+          quickNutri(10, 3, 23), // carbohydrates
+          quickNutri(10, 4, 12), // sugar
+          quickNutri(10, 5, 1.1), // protein
+          quickNutri(10, 6, 0), // salt
+        ],
+      ));
+    
+    // Kartoffel 11
+    debugProducts.add(
+      Product(
+        id: 11,
+        name: "Kartoffel",
+        creationDate: DateTime.now().subtract(const Duration(days: 4)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [],
+        nutrients: [
+          quickNutri(11, 0, 77), // kcal
+          quickNutri(11, 1, 0.1), // fat
+          quickNutri(11, 2, 0), // saturated fat
+          quickNutri(11, 3, 17), // carbohydrates
+          quickNutri(11, 4, 0.8), // sugar
+          quickNutri(11, 5, 2), // protein
+          quickNutri(11, 6, 0), // salt
+        ],
+      ));
+    
+    // Suppe 12
+    debugProducts.add(
+      Product(
+        id: 12,
+        name: "Lecker Suppe",
+        creationDate: DateTime.now().subtract(const Duration(days: 3)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 300,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityName: "Teller",
+        autoCalc: true,
+        amountForIngredients: 550,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [
+          ProductQuantity(
+            productId: 0,
+            amount: 300,
+            unit: Unit.ml,
+          ),
+          ProductQuantity(
+            productId: 1,
+            amount: 100,
+            unit: Unit.g,
+          ),
+          ProductQuantity(
+            productId: 11,
+            amount: 100,
+            unit: Unit.g,
+          ),
+          ProductQuantity(
+            productId: 3,
+            amount: 1,
+            unit: Unit.quantity,
+          ),
+        ],
+        nutrients: [
+          quickNutri(12, 0, 0), // kcal
+          quickNutri(12, 1, 0), // fat
+          quickNutri(12, 2, 0), // saturated fat
+          quickNutri(12, 3, 0), // carbohydrates
+          quickNutri(12, 4, 0), // sugar
+          quickNutri(12, 5, 0), // protein
+          quickNutri(12, 6, 0), // salt
+        ],
+      ));
+    
+    // Mozarella Sticks 13
+    debugProducts.add(
+      Product(
+        id: 13,
+        name: "Mozarella Sticks",
+        creationDate: DateTime.now().subtract(const Duration(days: 2)),
+        lastEditDate: DateTime.now().subtract(const Duration(days: 1)),
+        isTemporary: false,
+        defaultUnit: Unit.g,
+        densityConversion: const Conversion(
+          amount1: 100,
+          unit1: Unit.ml,
+          amount2: 100,
+          unit2: Unit.g,
+          enabled: false,
+        ),
+        quantityConversion: const Conversion(
+          amount1: 1,
+          unit1: Unit.quantity,
+          amount2: 50,
+          unit2: Unit.g,
+          enabled: true,
+        ),
+        quantityName: "x",
+        autoCalc: false,
+        amountForIngredients: 100,
+        ingredientsUnit: Unit.g,
+        amountForNutrients: 100,
+        nutrientsUnit: Unit.g,
+        ingredients: [],
+        nutrients: [
+          quickNutri(13, 0, 300), // kcal
+          quickNutri(13, 1, 20), // fat
+          quickNutri(13, 2, 10), // saturated fat
+          quickNutri(13, 3, 20), // carbohydrates
+          quickNutri(13, 4, 3), // sugar
+          quickNutri(13, 5, 15), // protein
+          quickNutri(13, 6, 1), // salt
+        ],
+      ));
+    
+    // - end of products -
+    
+    return debugProducts;
+  }
+  
+  List<Meal> getDebugMeals(Duration diffDur) => [
+    Meal(
+      id: 0,
+      productQuantity: ProductQuantity(
+        productId: 0,
+        amount: 20,
+        unit: Unit.ml,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 6),
+    ),
+    Meal(
+      id: 1,
+      productQuantity: ProductQuantity(
+        productId: 1,
+        amount: 100,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 2),
+    ),
+    Meal(
+      id: 2,
+      productQuantity: ProductQuantity(
+        productId: 2,
+        amount: 1,
+        unit: Unit.quantity,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 3),
+    ),
+    Meal(
+      id: 3,
+      productQuantity: ProductQuantity(
+        productId: 3,
+        amount: 1,
+        unit: Unit.quantity,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 4),
+    ),
+    Meal(
+      id: 4,
+      productQuantity: ProductQuantity(
+        productId: 4,
+        amount: 100,
+        unit: Unit.ml,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 5),
+    ),
+    Meal(
+      id: 5,
+      productQuantity: ProductQuantity(
+        productId: 5,
+        amount: 50,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 1),
+    ),
+    Meal(
+      id: 6,
+      productQuantity: ProductQuantity(
+        productId: 6,
+        amount: 100,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 7),
+    ),
+    Meal(
+      id: 7,
+      productQuantity: ProductQuantity(
+        productId: 7,
+        amount: 50,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 8),
+    ),
+    Meal(
+      id: 8,
+      productQuantity: ProductQuantity(
+        productId: 8,
+        amount: 500,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 9),
+    ),
+    Meal(
+      id: 9,
+      productQuantity: ProductQuantity(
+        productId: 9,
+        amount: 250,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 10),
+    ),
+    Meal(
+      id: 10,
+      productQuantity: ProductQuantity(
+        productId: 10,
+        amount: 1,
+        unit: Unit.quantity,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 11),
+    ),
+    Meal(
+      id: 11,
+      productQuantity: ProductQuantity(
+        productId: 11,
+        amount: 100,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 12),
+    ),
+    Meal(
+      id: 12,
+      productQuantity: ProductQuantity(
+        productId: 12,
+        amount: 1,
+        unit: Unit.quantity,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 13),
+    ),
+    Meal(
+      id: 13,
+      productQuantity: ProductQuantity(
+        productId: 13,
+        amount: 300,
+        unit: Unit.g,
+      ),
+      dateTime: DateTime.now().subtract(diffDur * 14),
+    ),
+  ].reversed.toList();
 }

@@ -298,6 +298,7 @@ List<Product> recalcProductNutrients(Product product, List<Product> products, Ma
   return updatedProducts;
 }
 
+// recalculate the nutrients and amount for the product
 Product updateProductNutrients(Product product, Map<int, Product> productsMap) {
   // calc the resulting amount of the product
   if (product.autoCalc) {
@@ -622,6 +623,8 @@ Future<void> importData(BuildContext context) async {
       await service.reset("test");
       devtools.log("Data resetted");
       
+      List<Future<void>> futures = []; // running db operations in parallel
+      
       // map old ids to new ids
       var nutValIds = <int, int>{};
       var productIds = <int, int>{};
@@ -642,6 +645,7 @@ Future<void> importData(BuildContext context) async {
       }
       
       // import products
+      devtools.log("Importing products");
       var products = productsJson.values.map((value) {
         value = Map<String, dynamic>.from(value);
         // give the nutrients a dummy id which is changed later
@@ -668,10 +672,18 @@ Future<void> importData(BuildContext context) async {
         ingredientsMap[product.id] = product.ingredients;
         product.ingredients = [];
         
-        var p = await service.createProduct(product);
-        productIds[product.id] = p.id;
+        // var p = await service.createProduct(product);
+        // in future
+        futures.add(() async {
+          var p = await service.createProduct(product);
+          productIds[product.id] = p.id;
+        } ());
       }
+      await Future.wait(futures);
+      futures.clear();
+      
       // add the ingredients
+      devtools.log("Adding ingredients");
       for (var entry in ingredientsMap.entries) {
         var newParentId = productIds[entry.key];
         if (newParentId == null) throw Exception("Product id not found");
@@ -687,12 +699,17 @@ Future<void> importData(BuildContext context) async {
           );
         }).toList();
         // update the product
-        var product = await service.getProduct(newParentId);
-        product.ingredients = ingredientsNew;
-        await service.updateProduct(product);
+        futures.add(() async {
+          var product = await service.getProduct(newParentId);
+          product.ingredients = ingredientsNew;
+          await service.updateProduct(product);
+        } ());
       }
+      await Future.wait(futures);
+      futures.clear();
       
       // import meals
+      devtools.log("Importing meals");
       var meals = mealsJson.values.map((value) => mapToMeal(value)).toList();
       for (var meal in meals) {
         // change the product id
@@ -703,10 +720,15 @@ Future<void> importData(BuildContext context) async {
           amount: meal.productQuantity.amount,
           unit: meal.productQuantity.unit,
         );
-        await service.createMeal(meal);
+        // await service.createMeal(meal);
+        // in future
+        futures.add(service.createMeal(meal));
       }
+      await Future.wait(futures);
+      futures.clear();
       
       // import targets
+      devtools.log("Importing targets");
       var targets = targetsJson.map((value) => mapToTarget(value)).toList();
       targets.sort((a, b) => a.orderId.compareTo(b.orderId));
       for (var target in targets) {
@@ -974,7 +996,9 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   if (sortByRelevancy) {
     // make all progress maps in targetProgress have the same order as contributingProducts
     for (var t in targets) {
-      var progress = targetProgress[t]!;
+      var progress = targetProgress[t];
+      if (progress == null) continue;
+      
       // sort the map entries by the relevancy of their product
       var sortedEntries = progress.entries.toList()..sort((a, b) {
         // if a or b is null, it will be ranked top

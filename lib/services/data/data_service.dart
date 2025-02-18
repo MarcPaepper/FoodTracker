@@ -57,7 +57,9 @@ class DataService implements DataProvider {
   @override Future<Iterable<Product>> getAllProducts({bool cache = true})                   => _condLoad().then((_) => _provider.getAllProducts(cache: cache));
   @override Future<Product> getProduct(int id)                                              => _condLoad().then((_) => _provider.getProduct(id));
   @override Future<Product> createProduct(Product product)                                  => _condLoad().then((_) => _provider.createProduct(product));
+  @override Future<List<Product>> createProducts(List<Product> products)                    => _condLoad().then((_) => _provider.createProducts(products));
   @override Future<Product> updateProduct(Product product)                                  => _condLoad().then((_) => _provider.updateProduct(product));
+  @override Future<List<Product>> updateProducts(List<Product> products)                    => _condLoad().then((_) => _provider.updateProducts(products));
   @override Future<void> deleteProduct(int id)                                              => _condLoad().then((_) => _provider.deleteProduct(id));
   @override Future<void> deleteProductWithName(String name)                                 => _condLoad().then((_) => _provider.deleteProductWithName(name));
   
@@ -80,6 +82,7 @@ class DataService implements DataProvider {
   @override Future<Iterable<Meal>> getAllMeals({bool cache = true})								          => _condLoad().then((_) => _provider.getAllMeals(cache: cache));
   @override Future<Meal> getMeal(int id)                                                    => _condLoad().then((_) => _provider.getMeal(id));
   @override Future<Meal> createMeal(Meal meal)                                              => _condLoad().then((_) => _provider.createMeal(meal));
+  @override Future<List<Meal>> createMeals(List<Meal> meals)                                => _condLoad().then((_) => _provider.createMeals(meals));
   @override Future<Meal> updateMeal(Meal meal)                                              => _condLoad().then((_) => _provider.updateMeal(meal));
   @override Future<void> deleteMeal(int id)                                                 => _condLoad().then((_) => _provider.deleteMeal(id));
   

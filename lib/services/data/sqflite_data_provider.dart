@@ -252,11 +252,8 @@ class SqfliteDataProvider implements DataProvider {
     var now = DateTime.now();
     product.lastEditDate ??= now;
     product.creationDate ??= now;
-    var map = productToMap(product);
-    // remove id, ingredients, nutrients
-    map.remove(idColumn);
-    map.remove("ingredients");
-    map.remove("nutrients");
+    var map = productToMap(product)
+      ..removeWhere((key, value) => [idColumn, "ingredients", "nutrients"].contains(key));
     
     final id = await _db!.insert(productTable, map);
     
@@ -274,6 +271,41 @@ class SqfliteDataProvider implements DataProvider {
   }
   
   @override
+  Future<List<Product>> createProducts(List<Product> products) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    var now = DateTime.now();
+    final batch = _db!.batch();
+    
+    for (var product in products) {
+      product.lastEditDate ??= now;
+      product.creationDate ??= now;
+      
+      final map = productToMap(product)
+        ..removeWhere((key, value) => [idColumn, "ingredients", "nutrients"].contains(key));
+      
+      batch.insert(productTable, map);
+    }
+    
+    final ids = (await batch.commit()).map((id) => id as int).toList();
+    
+    for (int i = 0; i < products.length; i++) {
+      products[i] = products[i].copyWith(newId: ids[i]);
+      _addIngredients(product: products[i], containedInId: ids[i]);
+      _addProductNutrientsForProduct(product: products[i], productId: ids[i]);
+      
+      _products.add(products[i]);
+      _productsMap[ids[i]] = products[i];
+    }
+    
+    _productsStreamController.add(_products);
+    Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor(ids));
+    
+    return products;
+  }
+
+  
+  @override
   Future<Product> updateProduct(Product product, {bool recalc = true}) async {
     if (!isLoaded()) throw DataNotLoadedException();
     
@@ -284,11 +316,8 @@ class SqfliteDataProvider implements DataProvider {
       }
     }
     
-    var map = productToMap(product);
-    // remove id, ingredients, nutrients
-    map.remove(idColumn);
-    map.remove("ingredients");
-    map.remove("nutrients");
+    var map = productToMap(product)
+      ..removeWhere((key, value) => [idColumn, "ingredients", "nutrients"].contains(key));
     
     final updatedCount = await _db!.update(productTable, map, where: '$idColumn = ?', whereArgs: [product.id]);
     if (updatedCount != 1) throw InvalidUpdateException();
@@ -306,6 +335,84 @@ class SqfliteDataProvider implements DataProvider {
     if(recalc) Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([product.id]));
     
     return product;
+  }
+  
+  @override
+  Future<List<Product>> updateProducts(List<Product> products, {bool recalc = true}) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    for (var product in products) {
+      _products.removeWhere((p) => p.id == product.id);
+      _products.add(product);
+      _productsMap[product.id] = product;
+    }
+    var updatedProducts = List<Product>.from(products);
+    
+    if (recalc) {
+      for (var product in products) {
+        var affectedProducts = recalcProductNutrients(product, _products, _productsMap);
+        // merge the affected products with the cached products
+        for (var affectedProduct in affectedProducts) {
+          _products.removeWhere((p) => p.id == affectedProduct.id);
+          _products.add(affectedProduct);
+          _productsMap[affectedProduct.id] = affectedProduct;
+          updatedProducts.removeWhere((p) => p.id == affectedProduct.id);
+          updatedProducts.add(affectedProduct);
+        }
+      }
+    }
+    // Create a batch for updating the main product table.
+    final productBatch = _db!.batch();
+    for (var product in updatedProducts) {
+      // Convert product to a map and remove keys that should not be updated.
+      final map = productToMap(product)
+        ..removeWhere((key, value) => [idColumn, 'ingredients', 'nutrients'].contains(key));
+      productBatch.update(productTable, map, where: '$idColumn = ?', whereArgs: [product.id]);
+    }
+    // Commit the batch – all updates are sent in a single call.
+    final updateResults = await productBatch.commit();
+    
+    // Verify that each update affected exactly one row.
+    for (var res in updateResults) {
+      if (res != 1) throw InvalidUpdateException();
+    }
+    
+    final batch = _db!.batch();
+    
+    for (var product in updatedProducts) {
+      // Re add ingredients
+      batch.delete(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [product.id]);
+      for (var ingredient in product.ingredients) {
+        if (ingredient.productId == null) throw ArgumentError("Ingredient product id is null");
+        batch.insert(ingredientTable, {
+          productIdColumn:        ingredient.productId!,
+          isContainedInIdColumn:  product.id,
+          amountColumn:           ingredient.amount,
+          unitColumn:             unitToString(ingredient.unit),
+        });
+      }
+      
+      // Re add product nutrients
+      batch.delete(productNutrientTable, where: '$productIdColumn = ?', whereArgs: [product.id]);
+      for (var nutrient in product.nutrients) {
+        batch.insert(productNutrientTable, {
+          nutritionalValueIdColumn: nutrient.nutritionalValueId,
+          productIdColumn:          product.id,
+          autoCalcColumn:           nutrient.autoCalc ? 1 : 0,
+          valueColumn:              nutrient.value,
+        });
+      }
+    }
+    
+    await batch.commit();
+    
+    _productsStreamController.add(_products);
+    if (recalc) {
+      final ids = updatedProducts.map((p) => p.id).toList();
+      Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor(ids));
+    }
+    
+    return updatedProducts;
   }
   
   @override
@@ -576,8 +683,7 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     meal = meal.copyWith(newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
-    var map = mealToMap(meal);
-    map.remove(idColumn);
+    var map = mealToMap(meal)..remove(idColumn);
     final id = await _db!.insert(mealTable, map);
     
     var newMeal = meal.copyWith(newId: id);
@@ -586,6 +692,31 @@ class SqfliteDataProvider implements DataProvider {
     Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor([newMeal.productQuantity.productId!]));
     
     return newMeal;
+  }
+  
+  @override
+  Future<List<Meal>> createMeals(List<Meal> meals) async {
+    if (!isLoaded()) throw DataNotLoadedException();
+    
+    final batch = _db!.batch();
+    
+    for (var meal in meals) {
+      meal = meal.copyWith(newCreationDate: DateTime.now(), newLastEditDate: DateTime.now());
+      var map = mealToMap(meal)..remove(idColumn);
+      batch.insert(mealTable, map);
+    }
+    
+    final ids = (await batch.commit()).map((id) => id as int).toList();
+    
+    for (int i = 0; i < meals.length; i++) {
+      meals[i] = meals[i].copyWith(newId: ids[i]);
+      _meals.insert(findInsertIndex(_meals, meals[i]), meals[i]);
+    }
+    
+    _mealsStreamController.add(_meals);
+    Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.updateRelevancyFor(meals.map((m) => m.productQuantity.productId!).toList()));
+    
+    return meals;
   }
   
   @override

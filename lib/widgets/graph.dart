@@ -187,7 +187,7 @@ class _GraphPainter extends CustomPainter {
       maxLengths.add(maxLength);
     }
     
-    var baseShift = allOneLiners ? 20 * gsf : 34 * gsf;
+    var baseShift = allOneLiners ? 24 * gsf : 34 * gsf;
     double maxBarHeight = (size.height - baseShift - 20 * gsf) / maximum;
     double baseline = size.height - baseShift;
     

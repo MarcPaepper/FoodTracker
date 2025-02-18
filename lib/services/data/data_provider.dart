@@ -14,7 +14,9 @@ abstract class DataProvider {
   void reloadProductStream();
   Future<Product> getProduct(int id);
   Future<Product> createProduct(Product product);
+  Future<List<Product>> createProducts(List<Product> products);
   Future<Product> updateProduct(Product product);
+  Future<List<Product>> updateProducts(List<Product> products);
   Future<void> deleteProduct(int id);
   Future<void> deleteProductWithName(String name);
   
@@ -33,6 +35,7 @@ abstract class DataProvider {
   void reloadMealStream();
   Future<Meal> getMeal(int id);
   Future<Meal> createMeal(Meal meal);
+  Future<List<Meal>> createMeals(List<Meal> meals);
   Future<Meal> updateMeal(Meal meal);
   Future<void> deleteMeal(int id);
   
