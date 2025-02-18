@@ -275,7 +275,7 @@ class SqfliteDataProvider implements DataProvider {
     if (!isLoaded()) throw DataNotLoadedException();
     
     var now = DateTime.now();
-    final batch = _db!.batch();
+    var batch = _db!.batch();
     
     for (var product in products) {
       product.lastEditDate ??= now;
@@ -288,11 +288,12 @@ class SqfliteDataProvider implements DataProvider {
     }
     
     final ids = (await batch.commit()).map((id) => id as int).toList();
+    batch = _db!.batch();
     
     for (int i = 0; i < products.length; i++) {
       products[i] = products[i].copyWith(newId: ids[i]);
-      _addIngredients(product: products[i], containedInId: ids[i]);
-      _addProductNutrientsForProduct(product: products[i], productId: ids[i]);
+      _addIngredients(product: products[i], containedInId: ids[i], batch: batch);
+      _addProductNutrientsForProduct(product: products[i], productId: ids[i], batch: batch);
       
       _products.add(products[i]);
       _productsMap[ids[i]] = products[i];
@@ -351,7 +352,7 @@ class SqfliteDataProvider implements DataProvider {
     if (recalc) {
       for (var product in products) {
         var affectedProducts = recalcProductNutrients(product, _products, _productsMap);
-        // merge the affected products with the cached products
+        
         for (var affectedProduct in affectedProducts) {
           _products.removeWhere((p) => p.id == affectedProduct.id);
           _products.add(affectedProduct);
@@ -361,18 +362,15 @@ class SqfliteDataProvider implements DataProvider {
         }
       }
     }
-    // Create a batch for updating the main product table.
+    
     final productBatch = _db!.batch();
     for (var product in updatedProducts) {
-      // Convert product to a map and remove keys that should not be updated.
       final map = productToMap(product)
         ..removeWhere((key, value) => [idColumn, 'ingredients', 'nutrients'].contains(key));
       productBatch.update(productTable, map, where: '$idColumn = ?', whereArgs: [product.id]);
     }
-    // Commit the batch – all updates are sent in a single call.
-    final updateResults = await productBatch.commit();
     
-    // Verify that each update affected exactly one row.
+    final updateResults = await productBatch.commit();
     for (var res in updateResults) {
       if (res != 1) throw InvalidUpdateException();
     }
@@ -381,27 +379,12 @@ class SqfliteDataProvider implements DataProvider {
     
     for (var product in updatedProducts) {
       // Re add ingredients
-      batch.delete(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [product.id]);
-      for (var ingredient in product.ingredients) {
-        if (ingredient.productId == null) throw ArgumentError("Ingredient product id is null");
-        batch.insert(ingredientTable, {
-          productIdColumn:        ingredient.productId!,
-          isContainedInIdColumn:  product.id,
-          amountColumn:           ingredient.amount,
-          unitColumn:             unitToString(ingredient.unit),
-        });
-      }
+      _deleteIngredients(containedInId: product.id, batch: batch);
+      _addIngredients(product: product, containedInId: product.id, batch: batch);
       
       // Re add product nutrients
-      batch.delete(productNutrientTable, where: '$productIdColumn = ?', whereArgs: [product.id]);
-      for (var nutrient in product.nutrients) {
-        batch.insert(productNutrientTable, {
-          nutritionalValueIdColumn: nutrient.nutritionalValueId,
-          productIdColumn:          product.id,
-          autoCalcColumn:           nutrient.autoCalc ? 1 : 0,
-          valueColumn:              nutrient.value,
-        });
-      }
+      _deleteProductNutrientsForProduct(productId: product.id, batch: batch);
+      _addProductNutrientsForProduct(product: product, productId: product.id, batch: batch);
     }
     
     await batch.commit();
@@ -446,10 +429,12 @@ class SqfliteDataProvider implements DataProvider {
   
   // ----- Ingredients -----
   
-  Future<void> _addIngredients({required Product product, required int containedInId}) async {
+  Future<void> _addIngredients({required Product product, required int containedInId, Batch? batch}) async {
+    // if batch is given use its insert function (but convert it to an async) otherwise use the database insert
+    final Future Function(String, Map<String, dynamic>) insertFunction = batch != null ? (table, map) async => batch.insert(table, map) : _db!.insert;
     for (final ingredient in product.ingredients) {
       if (ingredient.productId == null) throw ArgumentError("Ingredient product id is null");
-      await _db!.insert(ingredientTable, {
+      await insertFunction(ingredientTable, {
         productIdColumn:        ingredient.productId!,
         isContainedInIdColumn:  containedInId,
         amountColumn:           ingredient.amount,
@@ -458,8 +443,11 @@ class SqfliteDataProvider implements DataProvider {
     }
   }
   
-  Future<void> _deleteIngredients({required int containedInId}) async {
-    await _db!.delete(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [containedInId]);
+  Future<void> _deleteIngredients({required int containedInId, Batch? batch}) async {
+    final Future Function(String, {required String where, required List<dynamic> whereArgs}) deleteFunction
+      = batch != null ? (table, {required String where, required List<dynamic> whereArgs}) async => batch.delete(table, where: where, whereArgs: whereArgs) : _db!.delete;
+
+    await deleteFunction(ingredientTable, where: '$isContainedInIdColumn = ?', whereArgs: [containedInId]);
   }
   
   // ----- Nutritional values -----
@@ -593,9 +581,10 @@ class SqfliteDataProvider implements DataProvider {
   
   // ----- Product Nutrients -----
   
-  Future<void> _addProductNutrientsForProduct({required Product product, required int productId}) async {
+  Future<void> _addProductNutrientsForProduct({required Product product, required int productId, Batch? batch}) async {
+    final Future Function(String, Map<String, dynamic>) insertFunction = batch != null ? (table, map) async => batch.insert(table, map) : _db!.insert;
     for (final nutrient in product.nutrients) {
-      await _db!.insert(productNutrientTable, {
+      await insertFunction(productNutrientTable, {
         nutritionalValueIdColumn: nutrient.nutritionalValueId,
         productIdColumn:          productId,
         autoCalcColumn:           nutrient.autoCalc ? 1 : 0,
@@ -622,8 +611,10 @@ class SqfliteDataProvider implements DataProvider {
     }
   }
   
-  Future<void> _deleteProductNutrientsForProduct({required int productId}) async {
-    await _db!.delete(productNutrientTable, where: '$productIdColumn = ?', whereArgs: [productId]);
+  Future<void> _deleteProductNutrientsForProduct({required int productId, Batch? batch}) async {
+    final Future Function(String, {required String where, required List<dynamic> whereArgs}) deleteFunction
+      = batch != null ? (table, {required String where, required List<dynamic> whereArgs}) async => batch.delete(table, where: where, whereArgs: whereArgs) : _db!.delete;
+    await deleteFunction(productNutrientTable, where: '$productIdColumn = ?', whereArgs: [productId]);
   }
   
   Future<void> _deleteProductNutrientsForNutritionalValue({required int nutritionalValueId}) async {

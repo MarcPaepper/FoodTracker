@@ -623,14 +623,8 @@ Future<void> importData(BuildContext context) async {
       await service.reset("test");
       devtools.log("Data resetted");
       
-      List<Future<void>> futures = []; // running db operations in parallel
-      
       // map old ids to new ids
       var nutValIds = <int, int>{};
-      var productIds = <int, int>{};
-      
-      // save the ingredients, so they can be added later with the updated product ids
-      var ingredientsMap = <int, List<ProductQuantity>>{};
       
       // import nutritional values
       var nutritionalValues = nutritionalValuesJson.values.map((value) => mapToNutritionalValue(value)).toList();
@@ -644,9 +638,15 @@ Future<void> importData(BuildContext context) async {
         }
       }
       
+      // map old ids to new ids
+      var productIds = <int, int>{};
+      // save the ingredients, so they can be added later with the updated product ids
+      // maps the old parent product id to the ingredients (with old ingredient product ids)
+      var ingredientsMap = <int, List<ProductQuantity>>{};
+      
       // import products
       devtools.log("Importing products");
-      var products = productsJson.values.map((value) {
+      var importProducts = productsJson.values.map((value) {
         value = Map<String, dynamic>.from(value);
         // give the nutrients a dummy id which is changed later
         value["nutrients"] = (value["nutrients"] as List).map((nut) {
@@ -656,7 +656,8 @@ Future<void> importData(BuildContext context) async {
         
         return mapToProduct(value);
       }).toList();
-      for (var product in products) {
+      for (var importProduct in importProducts) {
+        Product product = importProduct;
         // change the nutritional value ids
         product.nutrients = product.nutrients.map((nut) {
           var newId = nutValIds[nut.nutritionalValueId];
@@ -671,42 +672,36 @@ Future<void> importData(BuildContext context) async {
         // save the ingredients
         ingredientsMap[product.id] = product.ingredients;
         product.ingredients = [];
-        
-        // var p = await service.createProduct(product);
-        // in future
-        futures.add(() async {
-          var p = await service.createProduct(product);
-          productIds[product.id] = p.id;
-        } ());
       }
-      await Future.wait(futures);
-      futures.clear();
+      List<int> oldIds = importProducts.map((p) => p.id).toList();
+      var newProducts = await service.createProducts(importProducts);
+      for (var i = 0; i < importProducts.length; i++) {
+        productIds[oldIds[i]] = newProducts[i].id;
+      }
       
       // add the ingredients
       devtools.log("Adding ingredients");
+      List<Product> updatedProducts = [];
       for (var entry in ingredientsMap.entries) {
         var newParentId = productIds[entry.key];
-        if (newParentId == null) throw Exception("Product id not found");
+        if (newParentId == null) throw Exception("Parent id not found");
         var ingredientsOld = entry.value;
         // change all product ids
         var ingredientsNew = ingredientsOld.map((ingr) {
           var newIngredientProductId = productIds[ingr.productId];
-          if (newIngredientProductId == null) throw Exception("Product id not found");
+          if (newIngredientProductId == null) throw Exception("Ingredient Product id not found");
           return ProductQuantity(
             productId: newIngredientProductId,
             amount: ingr.amount,
             unit: ingr.unit,
           );
         }).toList();
-        // update the product
-        futures.add(() async {
-          var product = await service.getProduct(newParentId);
-          product.ingredients = ingredientsNew;
-          await service.updateProduct(product);
-        } ());
+        var product = updatedProducts.firstWhereOrNull((p) => p.id == newParentId);
+        product ??= importProducts.firstWhere((p) => p.id == newParentId);
+        product.ingredients = ingredientsNew;
+        updatedProducts.add(product);
       }
-      await Future.wait(futures);
-      futures.clear();
+      await service.updateProducts(updatedProducts);
       
       // import meals
       devtools.log("Importing meals");
@@ -720,12 +715,8 @@ Future<void> importData(BuildContext context) async {
           amount: meal.productQuantity.amount,
           unit: meal.productQuantity.unit,
         );
-        // await service.createMeal(meal);
-        // in future
-        futures.add(service.createMeal(meal));
       }
-      await Future.wait(futures);
-      futures.clear();
+      await service.createMeals(meals);
       
       // import targets
       devtools.log("Importing targets");
