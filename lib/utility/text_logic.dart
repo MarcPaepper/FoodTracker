@@ -5,30 +5,72 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
   
-List<TextSpan> highlightOccurrences(String source, List<String> search) {
+List<TextSpan> highlightOccurrences(String source, List<String> search, [TextStyle? normalStyle, TextStyle? highlightStyle]) {
+  // normalStyle ??= const TextStyle(color: Colors.blue);
+  highlightStyle ??= const TextStyle(fontWeight: FontWeight.bold);
+  if (source == "") return const [TextSpan(text: "")];
+  if (search.isEmpty) return [TextSpan(text: source, style: normalStyle)];
+  
   var spans = <TextSpan>[];
   var lowerSource = source.toLowerCase();
-  var index = 0;
+  
+  // mark all characters of the word in the charMatch map
+  Map<int, bool> charMatch = source.split("").asMap().map((key, value) => MapEntry(key, false));
   for (var word in search) {
-    var lowerWord = word.toLowerCase();
-    var wordIndex = lowerSource.indexOf(lowerWord, index);
-    if (wordIndex == -1) {
+    if (word == "") {
+      devtools.log("Empty search word");
       continue;
     }
-    spans.add(TextSpan(
-      text: source.substring(index, wordIndex),
-    ));
-    spans.add(TextSpan(
-      text: source.substring(wordIndex, wordIndex + word.length),
-      style: const TextStyle(fontWeight: FontWeight.bold),
-    ));
-    index = wordIndex + word.length;
+    var lowerWord = word.toLowerCase();
+    int startIndex = 0;
+    int safetyCounter = 0;
+    do {
+      var subSrc = lowerSource.substring(startIndex);
+      var wordIndex = subSrc.indexOf(lowerWord, 0);
+      if (wordIndex == -1) {
+        break;
+      }
+      for (var i = wordIndex + startIndex; i < wordIndex + startIndex + word.length; i++) {
+        charMatch[i] = true;
+      }
+      startIndex += wordIndex + word.length;
+      safetyCounter++;
+      if (safetyCounter > 127) {
+        devtools.log("Safety Counter exceeded when highlighting");
+        break;
+      }
+    } while (startIndex < lowerSource.length);
   }
-  spans.add(TextSpan(
-    text: source.substring(index),
-  ));
+  
+  // split the source string into normal and highlighted parts
+  
+  String? currentNormal;
+  String? currentHighlight;
+  
+  for (var i = 0; i < source.length; i++) {
+    if (charMatch[i] == true) {
+      if (currentNormal != null) {
+        spans.add(TextSpan(text: currentNormal, style: normalStyle));
+        currentNormal = null;
+      }
+      currentHighlight = (currentHighlight ?? "") + source[i];
+    } else {
+      if (currentHighlight != null) {
+        spans.add(TextSpan(text: currentHighlight, style: highlightStyle));
+        currentHighlight = null;
+      }
+      currentNormal = (currentNormal ?? "") + source[i];
+    }
+  }
+  if (currentNormal != null) {
+    spans.add(TextSpan(text: currentNormal, style: normalStyle));
+  }
+  if (currentHighlight != null) {
+    spans.add(TextSpan(text: currentHighlight, style: highlightStyle));
+  }
+  
   return spans;
 }
 

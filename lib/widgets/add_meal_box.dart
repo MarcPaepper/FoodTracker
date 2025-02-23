@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:food_tracker/subviews/daily_targets_box.dart';
 import 'package:food_tracker/widgets/datetime_selectors.dart';
 import 'package:food_tracker/widgets/multi_value_listenable_builder.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import '../constants/ui.dart';
 import '../services/data/data_objects.dart';
@@ -14,12 +15,15 @@ import 'food_box.dart';
 
 import 'dart:developer' as devtools show log;
 
+import 'multi_opacity.dart';
+
 class AddMealBox extends StatefulWidget {
   // final DateTime copyDateTime;
   final ValueNotifier<DateTime> dateTimeNotifier;
   final Function(DateTime) onDateTimeChanged;
   final Map<int, Product> productsMap;
   final Function() onScrollButtonClicked;
+  final Function(double) onVisibilityChanged;
   
   const AddMealBox({
     // required this.copyDateTime,
@@ -27,6 +31,7 @@ class AddMealBox extends StatefulWidget {
     required this.onDateTimeChanged,
     required this.productsMap,
     required this.onScrollButtonClicked,
+    required this.onVisibilityChanged,
     super.key,
   });
 
@@ -42,7 +47,9 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   // late final ValueNotifier<DateTime> dateTimeNotifier;
   List<TextEditingController> ingredientAmountControllers = [];
   final List<FocusNode> ingredientDropdownFocusNodes = [];
-  
+  final ValueNotifier<double> stripVisibilityNotifier = ValueNotifier(0.0);
+  final ValueNotifier<double> columnVisibilityNotifier = ValueNotifier(0.0);
+    
   final _dataService = DataService.current();
   
   @override
@@ -72,90 +79,114 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
       //tileColor: Colors.green,
       minVerticalPadding: 0,
       contentPadding: const EdgeInsets.all(0.0),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      title: Stack(
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              // color: Color.fromARGB(255, 200, 200, 200),
-              color: Color.fromARGB(255, 197, 176, 202),
-            ),
-            child: const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 5 * gsf),
-                child: Text("New Meal"),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14 * gsf),
-          Padding( // daily targets box
-            padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
-            child: MultiValueListenableBuilder(
-              listenables: [widget.dateTimeNotifier, ingredientsNotifier],
-              builder: (context, values, child) {
-                DateTime dateTime = values[0];
-                List<(ProductQuantity, Color)> ingredients = values[1];
-                
-                return DailyTargetsBox(
-                  dateTime,
-                  ingredients,
-                  null,
-                  (newIngredients) {
-                    ingredientsNotifier.value = newIngredients;
-                    // Future(() { // Why??
-                    //   setState(() {});
-                    // });
-                  },
-                  FoldMode.startUnfolded,
-                  false,
-                  false,
-                );
-              },
+          VisibilityDetector(
+            key: const Key("New Meal strip"),
+            onVisibilityChanged: (info) {
+              double fraction = info.visibleFraction;
+              stripVisibilityNotifier.value = fraction;
+              if (columnVisibilityNotifier.value > 0.0) fraction = 1;
+              widget.onVisibilityChanged(fraction);
+            },
+            child: Container(
+              height: 100 * gsf,
             ),
           ),
-          const SizedBox(height: 14 * gsf),
-          Padding( // date and time selectors
-            padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildScrollButton(
-                  widget.dateTimeNotifier,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container( // New Meal strip
+                decoration: const BoxDecoration(
+                  // color: Color.fromARGB(255, 200, 200, 200),
+                  color: Color.fromARGB(255, 197, 176, 202),
                 ),
-                Expanded(
-                  child: DateAndTimeTable(
-                    dateTimeNotifier: widget.dateTimeNotifier,
-                    updateDateTime:   updateDateTime,
-                    scrollController: _scrollController,
+                child: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 5 * gsf),
+                    child: Text("New Meal"),
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6 * gsf),
-          Padding( // food box
-            padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
-            child: ValueListenableBuilder(
-              valueListenable: widget.dateTimeNotifier,
-              builder: (context, dateTime, child) {
-                return FoodBox(
-                  productsMap: widget.productsMap,
-                  ingredientsNotifier: ingredientsNotifier,
-                  ingredientAmountControllers: ingredientAmountControllers,
-                  ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
-                  requestIngredientFocus: _requestIngredientFocus,
-                  refDate: dateTime,
-                );
-              }
-            ),
-          ),
-          const SizedBox(height: 12 * gsf),
-          ValueListenableBuilder(
-            valueListenable: ingredientsNotifier,
-            builder: (context, ingredients, child) {
-              return _buildAddMealButton(context, ingredients.isNotEmpty);
-            },
+              ),
+              const SizedBox(height: 14 * gsf),
+              Padding( // daily targets box
+                padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+                child: MultiValueListenableBuilder(
+                  listenables: [widget.dateTimeNotifier, ingredientsNotifier],
+                  builder: (context, values, child) {
+                    DateTime dateTime = values[0];
+                    List<(ProductQuantity, Color)> ingredients = values[1];
+                    
+                    return DailyTargetsBox(
+                      dateTime,
+                      ingredients,
+                      null,
+                      (newIngredients) => ingredientsNotifier.value = newIngredients,
+                      FoldMode.startUnfolded,
+                      false,
+                      false,
+                    );
+                  },
+                ),
+              ),
+              VisibilityDetector(
+                key: const Key("Add Meal Column"),
+                onVisibilityChanged: (info) {
+                  double fraction = info.visibleFraction;
+                  columnVisibilityNotifier.value = fraction;
+                  fraction = fraction > 0 ? 1 : stripVisibilityNotifier.value;
+                  widget.onVisibilityChanged(fraction);
+                },
+                child: Column(
+                  children: [
+                    const SizedBox(height: 14 * gsf),
+                    Padding( // date and time selectors
+                      padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          _buildScrollButton(
+                            widget.dateTimeNotifier,
+                          ),
+                          Expanded(
+                            child: DateAndTimeTable(
+                              dateTimeNotifier: widget.dateTimeNotifier,
+                              updateDateTime:   updateDateTime,
+                              scrollController: _scrollController,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6 * gsf),
+                    Padding( // food box
+                      padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+                      child: ValueListenableBuilder(
+                        valueListenable: widget.dateTimeNotifier,
+                        builder: (context, dateTime, child) {
+                          return FoodBox(
+                            productsMap: widget.productsMap,
+                            ingredientsNotifier: ingredientsNotifier,
+                            ingredientAmountControllers: ingredientAmountControllers,
+                            ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
+                            requestIngredientFocus: _requestIngredientFocus,
+                            refDate: dateTime,
+                          );
+                        }
+                      ),
+                    ),
+                    const SizedBox(height: 12 * gsf),
+                    ValueListenableBuilder(
+                      valueListenable: ingredientsNotifier,
+                      builder: (context, ingredients, child) {
+                        return _buildAddMealButton(context, ingredients.isNotEmpty);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -163,7 +194,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   }
   
   void updateDateTime(DateTime newDateTime) {
-    // setState(() => dateTime = newDateTime);
+    // setState(() => dateTime = newDateTime); Why??
     widget.dateTimeNotifier.value = newDateTime;
     widget.onDateTimeChanged(newDateTime);
   }
@@ -207,28 +238,22 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
                 duration: const Duration(milliseconds: 300),
                 width: isVisible ? 39 * gsf : 0,
                 height: 93 * gsf,
-                child: AnimatedOpacity(
+                child: MultiOpacity(
+                  depth: 2,
                   opacity: isVisible ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 300),
-                  child: AnimatedOpacity(
-                    opacity: isVisible ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 300),
-                    child: ElevatedButton(
-                      style: lightButtonStyle.copyWith(
-                        padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                        backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 187, 192, 255)),
-                        foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
-                      ),
-                      onPressed: isVisible ? widget.onScrollButtonClicked : null,
-                      child: AnimatedOpacity(
-                        opacity: isVisible ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: AnimatedOpacity(
-                          opacity: isVisible ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 300),
-                          child: const Icon(Icons.keyboard_double_arrow_up, size: 24 * gsf)
-                        ),
-                      ),
+                  child: ElevatedButton(
+                    style: lightButtonStyle.copyWith(
+                      padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                      backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 187, 192, 255)),
+                      foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 79, 33, 243)),
+                    ),
+                    onPressed: isVisible ? widget.onScrollButtonClicked : null,
+                    child: MultiOpacity(
+                      depth: 2,
+                      opacity: isVisible ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 300),
+                      child: const Icon(Icons.keyboard_double_arrow_up, size: 24 * gsf),
                     ),
                   ),
                 ),
@@ -262,15 +287,13 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
       icon: Icon(Icons.send, color: Color.fromARGB(enabled ? 200 : 90, 0, 0, 0), size: 24 * gsf),
       iconAlignment: IconAlignment.end,
       onPressed: enabled ? () {
-        for (var ingredient in ingredientsNotifier.value) {
-          _dataService.createMeal(
-            Meal(
-              id: -1,
-              dateTime: widget.dateTimeNotifier.value,
-              productQuantity: ingredient.$1,
-            ),
-          );
-        }
+        _dataService.createMeals(
+          ingredientsNotifier.value.map((ingredient) => Meal(
+            id: -1,
+            dateTime: widget.dateTimeNotifier.value,
+            productQuantity: ingredient.$1,
+          )).toList(),
+        );
         ingredientsNotifier.value = [];
         ingredientAmountControllers.clear();
       } : null,

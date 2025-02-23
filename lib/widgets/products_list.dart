@@ -23,10 +23,11 @@ List<Widget> getProductTiles({
            DateTime? refDate,
   bool colorFromTop = false,
 }) {
-  var searchWords = search.split(" ");
+  var searchWords = search.toLowerCase().split(" ");
+  searchWords.removeWhere((element) => element == "");
   products = products.where((product) {
     var name = product.name.toLowerCase();
-    return searchWords.every((word) => name.contains(word.toLowerCase()));
+    return searchWords.every((word) => name.contains(word));
   }).toList();
   
   // sorting
@@ -43,11 +44,6 @@ List<Widget> getProductTiles({
               var relevancyB = relevancies[b.id] ?? 0;
               return relevancyA.compareTo(relevancyB);
             });
-            //for (int i = 0; i < products.length && i < 20; i++) {
-            //  var product = products[i];
-            //  String name = product.name.padRight(30).substring(0, 30);
-            //  devtools.log("!!! $name: ${relevancies[product.id]?.toStringAsFixed(2)}");
-            //}
             break;
           }
         case SortType.creationDate:
@@ -123,35 +119,38 @@ class _ProductTileState extends State<ProductTile> {
   @override
   Widget build(BuildContext context) {
     var refDate = widget.refDate;
-    bool isValid = true;
+    bool insideTempIntv = true;
     bool isTemp = widget.product.isTemporary;
     Widget temporaryIndicator = Container();
     
     if (refDate != null && isTemp) {
-      isValid = isDateInsideInterval(refDate, widget.product.temporaryBeginning!, widget.product.temporaryEnd!) == 0;
+      insideTempIntv = isDateInsideInterval(refDate, widget.product.temporaryBeginning!, widget.product.temporaryEnd!) == 0;
       temporaryIndicator = Tooltip(
-        message: "Temporary product. Date is ${isValid ? "inside" : "outside"} the range.",
+        message: "Temporary product. Date is ${insideTempIntv ? "inside" : "outside"} the range.",
         triggerMode: TooltipTriggerMode.longPress,
         textStyle: const TextStyle(
           fontSize: 14 * gsf,
           color: Colors.white,
         ),
         child: Icon(
-          isValid ? Icons.event_available : Icons.event_busy,
-          color: (isValid ? Colors.blue : Colors.orange).withOpacity(.7),
+          insideTempIntv ? Icons.event_available : Icons.event_busy,
+          color: (insideTempIntv ? Colors.blue : Colors.orange).withOpacity(.7),
           size: 20 * gsf,
         ),
       );
     }
     
-    List<TextSpan> children = highlightOccurrences(widget.product.name, widget.searchWords);
-    List<TextSpan> childrenColored = children.map((child) {
+    List<TextSpan> children;
+    List<TextSpan> childrenColored;
+    
+    children = highlightOccurrences(widget.product.name, widget.searchWords);
+    childrenColored = children.map((child) {
       var style = child.style ?? const TextStyle();
       
       return TextSpan(
         text: child.text,
         style: style.copyWith(
-          color: isValid ? style.color : Colors.black.withOpacity(.65)
+          color: insideTempIntv ? style.color : Colors.black.withOpacity(.65)
         ),
       );
     }).toList();

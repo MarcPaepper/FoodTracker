@@ -440,7 +440,7 @@ class _MainListState extends State<_MainList> {
           child: Padding(
             padding: const EdgeInsets.all(16.0) * gsf,
             child: SearchField(
-              searchController: _searchController,
+              textController: _searchController,
               onChanged: (value) => setState(() {}),
               autofocus: widget.autofocus,
             )

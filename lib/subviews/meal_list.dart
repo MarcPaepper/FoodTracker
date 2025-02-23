@@ -16,6 +16,13 @@ import "../widgets/loading_page.dart";
 
 import "dart:developer" as devtools show log;
 
+import "../widgets/multi_opacity.dart";
+import "../widgets/multi_value_listenable_builder.dart";
+import "../widgets/search_field.dart";
+
+const TextStyle normalProductStyle = TextStyle(fontSize: 16.5 * gsf);
+const TextStyle highlightProductStyle = TextStyle(fontSize: 16.5 * gsf, backgroundColor: Color.fromARGB(80, 255, 0, 212));
+
 class MealList extends StatefulWidget {
   final Map<int, Product>? productsMap;
   final List<Meal> meals;
@@ -38,7 +45,10 @@ class _MealListState extends State<MealList> {
   final DataService dataService = DataService.current();
   final ItemScrollController _scrollController = ItemScrollController();
   final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
+  final ScrollOffsetListener _scrollOffsetListener = ScrollOffsetListener.create();
   final ValueNotifier<bool> _isButtonVisible = ValueNotifier(false);
+  final TextEditingController _searchController = TextEditingController();
+  final ValueNotifier<double> _addMealVisibilityNotifier = ValueNotifier(1.0);
   late ValueNotifier<DateTime> dateTimeNotifier;
   
   Map<int, int> stripKeys = {}; // Key: days since 1970, Value: index of the strip in the list
@@ -60,7 +70,7 @@ class _MealListState extends State<MealList> {
 
   void _updateButtonVisibility() {
     // Check the scroll position to determine visibility
-    bool shouldBeVisible = _itemPositionsListener.itemPositions.value.any((position) => position.index > 45);
+    bool shouldBeVisible = _itemPositionsListener.itemPositions.value.every((position) => position.index > 35);
     if (shouldBeVisible != _isButtonVisible.value) {
       _isButtonVisible.value = shouldBeVisible;
     }
@@ -68,97 +78,125 @@ class _MealListState extends State<MealList> {
   
   @override
   Widget build(BuildContext context) {
-    List<Widget> children = [
-      AddMealBox(
-        dateTimeNotifier: dateTimeNotifier,
-        onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
-        productsMap: widget.productsMap ?? {},
-        onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
-      ),
-      const SizedBox(height: 5 * gsf),
-    ];
-    
-    List<Widget> mealTiles = getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded);
-    children.addAll(mealTiles);
-    
-    return Stack(
-      children: [
-        ScrollablePositionedList.builder(
-          itemCount: children.length,
-          itemBuilder: (context, index) => children[index],
-          itemScrollController: _scrollController,
-          itemPositionsListener: _itemPositionsListener,
-          reverse: true,
-          physics: const ClampingScrollPhysics(),
-          padding: EdgeInsets.zero,
-        ),
-        Positioned(
-          bottom: 16.0 * gsf,
-          left: 16.0 * gsf,
-          child: ValueListenableBuilder<bool>(
-            valueListenable: _isButtonVisible,
-            builder: (context, isVisible, child) {
-              return SizedBox(
-                width: 45 * gsf,
-                height: 45 * gsf,
-                child: Center(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: (isVisible ? 45 : 0) * gsf,
-                    height: (isVisible ? 45 : 0) * gsf,
-                    child: AnimatedOpacity(
-                      opacity: isVisible ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10) * gsf,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.8),
-                              blurRadius: 4.0 * gsf,
-                              spreadRadius: 0.0,
-                              offset: const Offset(-0.3, 0.2) * gsf,
+    return ValueListenableBuilder(
+      valueListenable: _searchController,
+      builder: (context, value, child) {
+        List<Widget> children = [
+          AddMealBox(
+            dateTimeNotifier: dateTimeNotifier,
+            onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
+            productsMap: widget.productsMap ?? {},
+            onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
+            onVisibilityChanged: (visibility) => _addMealVisibilityNotifier.value = visibility,
+          ),
+          const SizedBox(height: 5 * gsf),
+        ];
+        
+        List<Widget> mealTiles = getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded);
+        children.addAll(mealTiles);
+        
+        return Stack(
+          children: [
+            ScrollablePositionedList.builder(
+              itemCount: children.length,
+              itemBuilder: (context, index) => children[index],
+              itemScrollController: _scrollController,
+              itemPositionsListener: _itemPositionsListener,
+              scrollOffsetListener: _scrollOffsetListener,
+              reverse: true,
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.zero,
+            ),
+            Positioned(
+              bottom: 16.0 * gsf,
+              left: 16.0 * gsf,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _isButtonVisible,
+                builder: (context, isVisible, child) {
+                  return SizedBox(
+                    width: 45 * gsf,
+                    height: 45 * gsf,
+                    child: Center(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: (isVisible ? 45 : 0) * gsf,
+                        height: (isVisible ? 45 : 0) * gsf,
+                        child: AnimatedOpacity(
+                          opacity: isVisible ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10) * gsf,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.8),
+                                  blurRadius: 4.0 * gsf,
+                                  spreadRadius: 0.0,
+                                  offset: const Offset(-0.3, 0.2) * gsf,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          style: lightButtonStyle.copyWith(
-                            shadowColor: WidgetStateProperty.all(Colors.black),
-                            padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                            backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 182, 188, 255)),
-                            foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 41, 1, 185)),
-                          ),
-                          onPressed: () {
-                            _scrollController.scrollTo(
-                              index: 0,
-                              duration: const Duration(milliseconds: 500),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          child: AnimatedOpacity(
-                            opacity: isVisible ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 300),
-                            child: AnimatedOpacity(
-                              opacity: isVisible ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 300),
-                              child: AnimatedOpacity(
+                            child: ElevatedButton(
+                              style: lightButtonStyle.copyWith(
+                                shadowColor: WidgetStateProperty.all(Colors.black),
+                                padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                                backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 182, 188, 255)),
+                                foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 41, 1, 185)),
+                              ),
+                              onPressed: () {
+                                _scrollController.scrollTo(
+                                  index: 0,
+                                  duration: const Duration(milliseconds: 500),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              child: MultiOpacity(
+                                depth: 3,
                                 opacity: isVisible ? 1.0 : 0.0,
                                 duration: const Duration(milliseconds: 300),
-                                child: const Icon(Icons.keyboard_double_arrow_down, size: 24 * gsf)
+                                child: const Icon(Icons.keyboard_double_arrow_down, size: 24 * gsf),
                               ),
                             ),
-                          ),
+                          )
                         ),
-                      )
+                      ),
                     ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+                  );
+                },
+              ),
+            ),
+            // green search bar at the top
+            Positioned(
+              top: 0,
+              left: 0,  // Added left constraint
+              right: 0, // Added right constraint
+              child: MultiValueListenableBuilder(
+                listenables: [_addMealVisibilityNotifier, _searchController],
+                builder: (context, values, child) {
+                  double visibility = 1.0 - values[0];
+                  if (_searchController.text.isNotEmpty) visibility = 1.0;
+                  
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).appBarTheme.backgroundColor,
+                    ),
+                    child: SearchField(
+                      textController: _searchController,
+                      hintText: 'Search meals',
+                      whiteMode: true,
+                      isDense: true,
+                      visibility: visibility,
+                      onChanged: (String value) {},
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
+    
   }
 
   List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int, Product>? productsMap, List<Meal> meals, bool loaded) {
@@ -174,10 +212,26 @@ class _MealListState extends State<MealList> {
       lastHeader = DateTime(lastDate.year, lastDate.month, lastDate.day);
     }
     
+    // List<Meal> filteredMeals;
+    String search = _searchController.text.toLowerCase();
+    var searchWords = search.toLowerCase().split(" ");
+    // remove empty
+    searchWords.removeWhere((element) => element == "");
+    devtools.log("length: ${searchWords.length}");
+    final textScaler = MediaQuery.textScalerOf(context);
+    
+    Map<int, Widget> pT = {}; // productTexts: Key: product id, Value: product name text
+    
     for (int i = meals.length - 1; i >= 0; i--) {
       final meal = meals[i];
-      final product = productsMap?[meal.productQuantity.productId];
+      final pId = meal.productQuantity.productId;
+      final product = productsMap?[pId];
       final mealDate = DateTime(meal.dateTime.year, meal.dateTime.month, meal.dateTime.day);
+      
+      if (pId == null) {
+        devtools.log("Error: Product id of meal is null");
+        continue;
+      }
       
       if (lastHeader.isBefore(mealDate)) {
         devtools.log('MealList: meals are not sorted by date');
@@ -197,6 +251,30 @@ class _MealListState extends State<MealList> {
       var amountText = '${truncateZeros(meal.productQuantity.amount)}\u2009$unitName';
       var hourText = '${meal.dateTime.hour}h';
       
+      dynamic nameText = pT[pId];
+      if (nameText == null) {
+        List<InlineSpan> spans;
+        if (searchWords.isEmpty) {
+          spans = [TextSpan(text: productName, style: normalProductStyle)];
+          // nameText = Text.rich(TextSpan(text: productName, style: const TextStyle(fontSize: 16.5 * gsf)));
+        } else {
+          spans = highlightOccurrences(productName, searchWords, normalProductStyle, highlightProductStyle);
+        }
+        nameText = RichText(
+          text: TextSpan(
+            style: const TextStyle(
+              fontSize: 16.5 * gsf,
+              height: 1.5,
+              // fontWeight: FontWeight.w300,
+              letterSpacing: 0.5,
+            ),
+            children: spans,
+          ),
+          textScaler: textScaler,
+        );
+        pT[pId] = nameText;
+      }
+      
       children.add(
         ListTile(
           // minTileHeight: 4,
@@ -208,7 +286,7 @@ class _MealListState extends State<MealList> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 2.5 * gsf), // anti gsf
-                    Text(productName, style: const TextStyle(fontSize: 16.5 * gsf)),//, height: 1.0)),
+                    nameText,
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

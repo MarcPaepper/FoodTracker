@@ -73,7 +73,7 @@ class _ProductsViewState extends State<ProductsView> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: kIsWeb ? 16.0 : 12.0) * gsf,
                     child: SearchField(
-                      searchController: _searchController,
+                      textController: _searchController,
                       onChanged: (value) => setState(() {
                         _isSearching = value.isNotEmpty;
                       }),

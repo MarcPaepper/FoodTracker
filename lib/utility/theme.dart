@@ -52,6 +52,9 @@ ThemeData getTheme() =>
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.teal.shade400,
       foregroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      elevation: 0,
     ),
     tabBarTheme: TabBarTheme(
       labelColor: Colors.white,
@@ -200,7 +203,7 @@ var importantButtonStyle = ButtonStyle(
 List<Color> productColors = [
   Colors.red,      // red
   Colors.orange,   // orange
-  const Color.fromARGB(255, 255, 230, 0),   // yellow
+  const Color.fromARGB(255, 247, 222, 0),   // yellow
   Colors.green,    // green
   const Color.fromARGB(255, 33, 212, 243), 		// cyan
   Colors.indigo,	  // indigo

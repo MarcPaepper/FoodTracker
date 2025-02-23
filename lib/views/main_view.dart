@@ -48,10 +48,17 @@ class _MainViewState extends State<MainView> {
         length: 6,
         child: Scaffold(
           appBar: PreferredSize(
-            preferredSize: _tabBar.preferredSize,
+            preferredSize: _buildTabBar(context).preferredSize,
             child: Material(
+              elevation: 0,
+              shadowColor: Theme.of(context).appBarTheme.shadowColor,
               color: Theme.of(context).appBarTheme.backgroundColor,
-              child: SafeArea(child: _tabBar),
+              child: SafeArea(
+                child: Container(
+                  color: Theme.of(context).appBarTheme.backgroundColor,
+                  child: _buildTabBar(context),
+                ),
+              ),
             )
           ),
           body: TabBarView(
@@ -70,11 +77,13 @@ class _MainViewState extends State<MainView> {
     );
   }
   
-  TabBar get _tabBar => const TabBar(
+  TabBar _buildTabBar(BuildContext context) => TabBar(
     isScrollable: true,
     physics: AlwaysScrollableScrollPhysics(),
     tabAlignment: TabAlignment.center,
-    tabs: [
+    indicatorColor: Theme.of(context).appBarTheme.backgroundColor,
+    dividerColor: Theme.of(context).appBarTheme.backgroundColor,
+    tabs: const [
       Tab(text: "Meals", height: (kIsWeb ? 42 : 46) * gsf),
       Tab(text: "Stats", height: (kIsWeb ? 42 : 46) * gsf),
       Tab(text: "Products", height: (kIsWeb ? 42 : 46) * gsf),
