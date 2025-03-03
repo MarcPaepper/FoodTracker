@@ -482,7 +482,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           intermediateSave: () => _interimProduct = getProductFromForm().$1,
                         ),
                         const SizedBox(height: 14 * gsf),
-                        MultiValueListenableBuilder(
+                        MultiValueListenableBuilder( // Daily Targets Box
                           listenables: [
                             _ingredientsNotifier,
                             _nutrientsNotifier,
@@ -500,7 +500,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                                 null,
                                 ingredients,
                                 null,
-                                (newIngredients) => _ingredientsNotifier.value = newIngredients,
+                                (newIngredients) => _ingredientsNotifier.value = List.from(newIngredients),
                                 FoldMode.startFolded,
                                 true,
                                 false,

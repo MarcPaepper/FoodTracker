@@ -285,7 +285,7 @@ void showProductInfoDialog(BuildContext context, Product product) => showDialog(
   context: context,
   builder: (context) {
     var dates = [product.creationDate!, product.lastEditDate!];
-    var datesStr = conditionallyRemoveYear(context, dates, showWeekDay: false, removeYear: false);
+    var datesStr = conditionallyRemoveYear(context, dates, showWeekDay: false, removeYear: YearMode.never);
     
     return AlertDialog(
       title: const Text('Product Info'),

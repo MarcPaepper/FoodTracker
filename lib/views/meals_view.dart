@@ -54,6 +54,7 @@ class _MealsViewState extends State<MealsView> {
   Widget _buildListView(AsyncSnapshot snapshot, Map<int, Product>? productsMap, ValueNotifier<DateTime> dateTimeNotifier) {
     List<Meal> meals = [];
     
+    
     if (snapshot.hasData) meals = snapshot.data;
       // var now = DateTime.now();
       // now = DateTime(now.year, now.month, now.day, now.hour);
@@ -77,10 +78,14 @@ class _MealsViewState extends State<MealsView> {
     //   );
     // }
     
+    // map meal id to meal
+    Map<int, Meal> mealsMap = Map.fromEntries(meals.map((meal) => MapEntry(meal.id, meal)));
+    
     return Expanded(
       child: MealList(
         productsMap: productsMap,
         meals: meals,
+        mealsMap: mealsMap,
         dateTimeNotifier: dateTimeNotifier,
         loaded: snapshot.hasData,
       )

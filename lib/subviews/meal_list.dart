@@ -4,11 +4,13 @@ import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:food_tracker/services/data/async_provider.dart";
 import "package:scrollable_positioned_list/scrollable_positioned_list.dart";
+import "package:universal_io/io.dart";
 
 import "../constants/routes.dart";
 import "../constants/ui.dart";
 import "../services/data/data_objects.dart";
 import "../services/data/data_service.dart";
+import "../utility/data_logic.dart";
 import "../utility/text_logic.dart";
 import "../utility/theme.dart";
 import "../widgets/add_meal_box.dart";
@@ -20,18 +22,21 @@ import "../widgets/multi_opacity.dart";
 import "../widgets/multi_value_listenable_builder.dart";
 import "../widgets/search_field.dart";
 
-const TextStyle normalProductStyle = TextStyle(fontSize: 16.5 * gsf);
-const TextStyle highlightProductStyle = TextStyle(fontSize: 16.5 * gsf, backgroundColor: Color.fromARGB(80, 255, 0, 212));
+const TextStyle normalProductStyle = TextStyle(fontSize: 16.5 * gsf, color: Colors.black);
+const TextStyle highlightProductStyle = TextStyle(fontSize: 16.5 * gsf, color: Colors.black, backgroundColor: Color.fromARGB(80, 255, 0, 212));
+const TextStyle selectedProductStyle = TextStyle(fontSize: 16.5 * gsf, color: Colors.black, backgroundColor: Color.fromARGB(255, 255, 200, 0));
 
 class MealList extends StatefulWidget {
   final Map<int, Product>? productsMap;
   final List<Meal> meals;
+  final Map<int, Meal> mealsMap;
   final ValueNotifier<DateTime> dateTimeNotifier;
   final bool loaded;
   
   const MealList({
     required this.productsMap,
     required this.meals,
+    required this.mealsMap,
     required this.dateTimeNotifier,
     required this.loaded,
     super.key,
@@ -47,11 +52,15 @@ class _MealListState extends State<MealList> {
   final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
   final ScrollOffsetListener _scrollOffsetListener = ScrollOffsetListener.create();
   final ValueNotifier<bool> _isButtonVisible = ValueNotifier(false);
+  // final ValueNotifier<List<int>?> _foundMealsNotifier = ValueNotifier(null); // If searching, contains the ids of the found meals
+  final ValueNotifier<int?> _selectedMealNotifier = ValueNotifier(null); // If searching, contains the id of the highlighted meal
   final TextEditingController _searchController = TextEditingController();
+  final ValueNotifier<String> _searchNotifier = ValueNotifier("");
   final ValueNotifier<double> _addMealVisibilityNotifier = ValueNotifier(1.0);
   late ValueNotifier<DateTime> dateTimeNotifier;
   
-  Map<int, int> stripKeys = {}; // Key: days since 1970, Value: index of the strip in the list
+  Map<int, int> stripIndices = {}; // Key: days since 1970, Value: index of the strip in the list
+  Map<int, int> mealIndices = {}; // Key: meal id, Value: index of the meal in the list
   
   @override
   void initState() {
@@ -78,8 +87,11 @@ class _MealListState extends State<MealList> {
   
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: _searchController,
+    return MultiValueListenableBuilder(
+      listenables: [
+        _searchNotifier,
+        _selectedMealNotifier,
+      ],
       builder: (context, value, child) {
         List<Widget> children = [
           AddMealBox(
@@ -92,8 +104,7 @@ class _MealListState extends State<MealList> {
           const SizedBox(height: 5 * gsf),
         ];
         
-        List<Widget> mealTiles = getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.loaded);
-        children.addAll(mealTiles);
+        children.addAll(getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.mealsMap, widget.loaded));
         
         return Stack(
           children: [
@@ -171,10 +182,10 @@ class _MealListState extends State<MealList> {
               left: 0,  // Added left constraint
               right: 0, // Added right constraint
               child: MultiValueListenableBuilder(
-                listenables: [_addMealVisibilityNotifier, _searchController],
+                listenables: [_addMealVisibilityNotifier],
                 builder: (context, values, child) {
                   double visibility = 1.0 - values[0];
-                  if (_searchController.text.isNotEmpty) visibility = 1.0;
+                  if (_searchNotifier.value.isNotEmpty) visibility = 1.0;
                   
                   return Container(
                     decoration: BoxDecoration(
@@ -186,7 +197,11 @@ class _MealListState extends State<MealList> {
                       whiteMode: true,
                       isDense: true,
                       visibility: visibility,
-                      onChanged: (String value) {},
+                      onChanged: (String value) {
+                        if (value != _searchNotifier.value) {
+                          _searchNotifier.value = value;
+                        }
+                      },
                     ),
                   );
                 },
@@ -199,12 +214,14 @@ class _MealListState extends State<MealList> {
     
   }
 
-  List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int, Product>? productsMap, List<Meal> meals, bool loaded) {
-    if (!loaded) return const [LoadingPage()];
+  List<Widget> getMealTiles(BuildContext context, DataService dataService, Map<int, Product>? productsMap, List<Meal> meals, Map<int, Meal> mealsMap, bool loaded) {
+    DateTime now = DateTime.now();
     
+    if (!loaded) return const [LoadingPage()];
     List<Widget> children = [];
-    Map<int, int> newKeys = {};
-    // List<Widget> currentDayChildren = [];                                                                                                       
+    int childCount = 2;
+    Map<int, int> newStripIndices = {};
+    Map<int, int> newMealIndices = {};                                                                                                   
     DateTime lastHeader = DateTime(0);
     if (meals.isNotEmpty) {
       var lastMeal = meals[meals.length - 1];
@@ -212,21 +229,124 @@ class _MealListState extends State<MealList> {
       lastHeader = DateTime(lastDate.year, lastDate.month, lastDate.day);
     }
     
-    // List<Meal> filteredMeals;
-    String search = _searchController.text.toLowerCase();
-    var searchWords = search.toLowerCase().split(" ");
-    // remove empty
-    searchWords.removeWhere((element) => element == "");
-    devtools.log("length: ${searchWords.length}");
-    final textScaler = MediaQuery.textScalerOf(context);
+    String search = _searchNotifier.value.toLowerCase();
+    var searchWords = search.toLowerCase().split(" ")..removeWhere((element) => element == "");
+    List<int>? foundMeals; // ids of the found meals
     
+    // update the found meals list
+    if (search.isEmpty) {
+      // _foundMealsNotifier.value = null;
+      _selectedMealNotifier.value = null;
+    } else {
+      foundMeals = [];
+      bool selectedMealStillFound = false;
+      for (int i = 0; i < meals.length; i++) {
+        var meal = meals[i];
+        var product = productsMap?[meal.productQuantity.productId];
+        var name = product?.name.toLowerCase() ?? "";
+        if (searchWords.every((word) => name.contains(word))) {
+          foundMeals.add(meal.id);
+          if (_selectedMealNotifier.value == meal.id) selectedMealStillFound = true;
+        }
+      }
+      // _foundMealsNotifier.value = foundMeals;
+      if (!selectedMealStillFound) {
+        if (foundMeals.isEmpty) {
+          _selectedMealNotifier.value = null;
+        } else {
+          // find the nearest found meal to the current scroll position
+          
+          // find the lowest and highest scroll item index that is currently visible
+          int lowestIndex = 10000000;
+          int highestIndex = 0;
+          for (var position in _itemPositionsListener.itemPositions.value) {
+            if (position.index < lowestIndex) lowestIndex = position.index;
+            if (position.index > highestIndex) highestIndex = position.index;
+          }
+          double middleIndex = (lowestIndex + highestIndex) / 2;
+          
+          // select the found meal that is closest to the current scroll position
+          int closestIndex = 0;
+          double closestDistance = double.infinity;
+          for (int i = 0; i < foundMeals.length; i++) {
+            var meal = mealsMap[foundMeals[i]];
+            if (meal == null) continue;
+            var mealIndex = mealIndices[foundMeals[i]] ?? 0;
+            double distance = (mealIndex - middleIndex).abs();
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestIndex = i;
+            }
+          }
+          _selectedMealNotifier.value = foundMeals[closestIndex];
+        }
+      }
+    }
+    
+    final textScaler = MediaQuery.textScalerOf(context);
     Map<int, Widget> pT = {}; // productTexts: Key: product id, Value: product name text
+    
+    String locale = kIsWeb ? Localizations.localeOf(context).toString() : Platform.localeName;
+    Map<int, DateTime> dates = {};
+    DateTime d1970 = DateTime(1970);
+    int lastYear = 0, lastMonth = 0, lastDay = 0;
+    for (Meal meal in meals) {
+      var mealDate = meal.dateTime;
+      if (mealDate.year == lastYear && mealDate.month == lastMonth && mealDate.day == lastDay) continue;
+      mealDate = mealDate.getDateOnly();
+      var daysSince1970 = daysBetween(d1970, mealDate);
+      dates[daysSince1970] = mealDate;
+      lastYear = mealDate.year;
+      lastMonth = mealDate.month;
+      lastDay = mealDate.day;
+    }
+    
+    List<String> dateStringsList = conditionallyRemoveYear(locale, dates.values.toList(), showWeekDay: true, now: now, removeYear: YearMode.ifCurrent);
+    Map<int, String> dateStrings = Map.fromIterables(dates.keys, dateStringsList);
+    
+    // --- Styles ---
+    
+    const tsProd = TextStyle(fontSize: 14 * gsf, color: Color.fromARGB(255, 0, 85, 255));
+    const tsHour = TextStyle(fontSize: 14 * gsf);
+    const tsSpan = TextStyle(
+      fontSize: 16.5 * gsf,
+      height: 1.5,
+      leadingDistribution: TextLeadingDistribution.even,
+      letterSpacing: 0.5,
+    );
+    var popupButtonStyle = ButtonStyle(
+      padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 4, vertical: 4) * gsf),
+      minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
+    );
+    
+    // --- constant Widgets ---
+    
+    var popupEntries = const [
+      PopupMenuItem(
+        value: 0,
+        height: 44 * gsf,
+        padding: EdgeInsets.only(left: 12.0, right: 12.3),
+        child: Text("Edit meal", style: tsNormal),
+      ),
+      PopupMenuItem(
+        value: 1,
+        height: 44 * gsf,
+        padding: EdgeInsets.only(left: 12.0, right: 12.3),
+        child: Text("Edit product", style: tsNormal),
+      ),
+      PopupMenuItem(
+        value: 2,
+        height: 44 * gsf,
+        padding: EdgeInsets.only(left: 12.0, right: 12.3),
+        child: Text("Delete meal", style: tsNormal),
+      ),
+    ];
     
     for (int i = meals.length - 1; i >= 0; i--) {
       final meal = meals[i];
       final pId = meal.productQuantity.productId;
       final product = productsMap?[pId];
-      final mealDate = DateTime(meal.dateTime.year, meal.dateTime.month, meal.dateTime.day);
+      final mealDate = meal.dateTime.getDateOnly();
       
       if (pId == null) {
         devtools.log("Error: Product id of meal is null");
@@ -237,12 +357,15 @@ class _MealListState extends State<MealList> {
         devtools.log('MealList: meals are not sorted by date');
       } else if (lastHeader.isAfter(mealDate)) {
         // use days of lastHeader since 1970 as the key
-        int daysSince1970 = lastHeader.difference(DateTime(1970)).inDays;
-        newKeys[daysSince1970] = children.length + 2;
-        children.add(getDateStrip(context, lastHeader));
+        int daysSince1970 = daysBetween(d1970, lastHeader);
+        newStripIndices[daysSince1970] = childCount;
+        var result = getDateStrip(locale, lastHeader, dateStrings[daysSince1970]!, now);
+        children.add(result.$1);
+        childCount++;
         lastHeader = mealDate;
       } else if (i < meals.length - 1) {
         children.add(_buildHorizontalLine());
+        childCount++;
       }
       
       var unitName = unitToString(meal.productQuantity.unit);
@@ -251,33 +374,28 @@ class _MealListState extends State<MealList> {
       var amountText = '${truncateZeros(meal.productQuantity.amount)}\u2009$unitName';
       var hourText = '${meal.dateTime.hour}h';
       
+      bool isSelected = _selectedMealNotifier.value == meal.id;
       dynamic nameText = pT[pId];
-      if (nameText == null) {
+      if (nameText == null || isSelected) {
         List<InlineSpan> spans;
-        if (searchWords.isEmpty) {
+        if (searchWords.isEmpty || !(foundMeals?.contains(meal.id) ?? true)) {
           spans = [TextSpan(text: productName, style: normalProductStyle)];
-          // nameText = Text.rich(TextSpan(text: productName, style: const TextStyle(fontSize: 16.5 * gsf)));
         } else {
-          spans = highlightOccurrences(productName, searchWords, normalProductStyle, highlightProductStyle);
+          var style = isSelected ? selectedProductStyle : highlightProductStyle;
+          spans = highlightOccurrences(productName, searchWords, normalProductStyle, style);
         }
         nameText = RichText(
           text: TextSpan(
-            style: const TextStyle(
-              fontSize: 16.5 * gsf,
-              height: 1.5,
-              // fontWeight: FontWeight.w300,
-              letterSpacing: 0.5,
-            ),
+            style: tsSpan,
             children: spans,
           ),
           textScaler: textScaler,
         );
-        pT[pId] = nameText;
+        if (!isSelected) pT[pId] = nameText;
       }
       
       children.add(
         ListTile(
-          // minTileHeight: 4,
           title: Row(
             children: [
               const SizedBox(width: 12 * gsf),
@@ -290,8 +408,8 @@ class _MealListState extends State<MealList> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(amountText, style: const TextStyle(fontSize: 14 * gsf, color: Color.fromARGB(255, 0, 85, 255))),//, height: 1)),
-                        Text(hourText, style: const TextStyle(fontSize: 14 * gsf)),//, height: 1)),
+                        Text(amountText, style: tsProd),//, height: 1)),
+                        Text(hourText, style: tsHour),//, height: 1)),
                       ],
                     ),
                     const SizedBox(height: 2 * gsf), // anti gsf
@@ -299,31 +417,9 @@ class _MealListState extends State<MealList> {
                 ),
               ),
               PopupMenuButton(
-                iconSize: (kIsWeb ? 24 : 24) * gsf,
-                style: ButtonStyle(
-                  padding: WidgetStateProperty.all<EdgeInsetsGeometry>(const EdgeInsets.symmetric(horizontal: 4, vertical: 4) * gsf),
-                  minimumSize: WidgetStateProperty.all<Size>(const Size(0, 0)),
-                ),
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: 0,
-                    height: 44 * gsf,
-                    padding: EdgeInsets.only(left: 12.0, right: 12.3),
-                    child: Text("Edit meal", style: TextStyle(fontSize: 16 * gsf)),
-                  ),
-                  PopupMenuItem(
-                    value: 1,
-                    height: 44 * gsf,
-                    padding: EdgeInsets.only(left: 12.0, right: 12.3),
-                    child: Text("Edit product", style: TextStyle(fontSize: 16 * gsf)),
-                  ),
-                  PopupMenuItem(
-                    value: 2,
-                    height: 44 * gsf,
-                    padding: EdgeInsets.only(left: 12.0, right: 12.3),
-                    child: Text("Delete meal", style: TextStyle(fontSize: 16 * gsf)),
-                  ),
-                ],
+                iconSize: 24 * gsf,
+                style: popupButtonStyle,
+                itemBuilder: (context) => popupEntries,
                 onSelected: (int value) {
                   if (value == 0) {
                     // edit meal
@@ -346,16 +442,29 @@ class _MealListState extends State<MealList> {
           contentPadding: EdgeInsets.zero,
         ),
       );
+      childCount++;
+      newMealIndices[meal.id] = childCount - 3;
     }
     
     if (meals.isNotEmpty) {
-      int daysSince1970 = lastHeader.difference(DateTime(1970)).inDays;
-      newKeys[daysSince1970] = children.length + 2;
-      children.add(getDateStrip(context, lastHeader));
+      int daysSince1970 = daysBetween(d1970, lastHeader);
+      newStripIndices[daysSince1970] = childCount;
+      children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince1970]!, now).$1);
+      childCount++;
     }
     
-    if (!mapEquals(stripKeys, newKeys)) {
-      stripKeys = newKeys;
+    children.add(
+      Container(
+        height: 54 * gsf,
+        color: Colors.grey.shade300,
+      )
+    );
+    
+    if (!mapEquals(stripIndices, newStripIndices)) {
+      stripIndices = newStripIndices;
+    }
+    if (!mapEquals(mealIndices, newMealIndices)) {
+      mealIndices = newMealIndices;
     }
     
     return children;
@@ -369,77 +478,74 @@ class _MealListState extends State<MealList> {
       thickness: 1 * gsf,
     );
 
-  Widget getDateStrip(BuildContext context, DateTime dateTime) {
+  (Widget, double, double) getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now) {
     // Convert date to natural string
     String text;
     int relativeDays = dateTime.difference(DateTime.now()).inDays.abs();
+    DateTime now1 = DateTime.now();
+    double dur1 = 0;
     if (relativeDays <= 7) {
-      text = "${relativeDaysNatural(dateTime)} (${conditionallyRemoveYear(context, [dateTime], showWeekDay: true)[0]})";
+      text = "${relativeDaysNatural(dateTime, now)} ($dateString)";
     } else {
-      text = conditionallyRemoveYear(context, [dateTime], showWeekDay: true)[0];
+      text = dateString;
+      dur1 = DateTime.now().difference(now1).inMicroseconds.toDouble();
     }
+    now1 = DateTime.now();
     
-    var widget = Padding(
+    Widget p = Padding(
       padding: const EdgeInsets.only(top: 3, bottom: 1.5) * gsf,
       // key: key,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 5,
-            child: Container(
-              color: const Color.fromARGB(255, 200, 200, 200),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0) * gsf,
-                  child: Text(text, style: const TextStyle(fontSize: 15.5 * gsf)),
-                ),
-              ),
-            ),
+      child: Container(
+        color: const Color.fromARGB(255, 200, 200, 200),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0) * gsf,
+            child: Text(text, style: const TextStyle(fontSize: 15.5 * gsf)),
           ),
-        ],
+        ),
       ),
     );
-    return widget;
+    double dur2 = DateTime.now().difference(now1).inMicroseconds.toDouble();
+    return (p, dur1, dur2);
   }
   
   void _scrollToSelectedDateStrip(DateTime targetDate) {
     // convert date to days since 1970
-    int daysSince1970 = targetDate.difference(DateTime(1970)).inDays;
+    int daysSince1970 = daysBetween(DateTime(1970), targetDate);
     devtools.log("Trying to scroll to $daysSince1970");
     // find the nearest date in the stripKeys after the target date
-    int closestDate = 0;
-    for (int date in stripKeys.keys) {
-      if (date >= daysSince1970 && date < closestDate) {
+    int? closestDate;
+    for (int date in stripIndices.keys) {
+      if (date >= daysSince1970 && (closestDate == null || date < closestDate)) {
         closestDate = date;
-        break;
       }
     }
     // if none was found, find the nearest date before the target date
     if (closestDate == 0) {
-      for (int date in stripKeys.keys) {
-        if (date <= daysSince1970 && date > closestDate) {
+      for (int date in stripIndices.keys) {
+        if (date < daysSince1970 && (closestDate == null || date > closestDate)) {
           closestDate = date;
-          break;
         }
       }
     }
-    if (closestDate == 0) return;
+    devtools.log("Closest date: $closestDate");
+    if (closestDate == null) return;
     
     // Find the first date after the closest date
     int nextDate = closestDate;
     // for (int date in stripKeys.keys) {
     // reverse order
-    for (int i = stripKeys.keys.length - 1; i >= 0; i--) {
-      int date = stripKeys.keys.elementAt(i);
+    for (int i = stripIndices.keys.length - 1; i >= 0; i--) {
+      int date = stripIndices.keys.elementAt(i);
       if (date > closestDate) {
         nextDate = date;
         break;
       }
     }
     
-    int scrollToIndex = stripKeys[closestDate]!;
+    int scrollToIndex = stripIndices[closestDate]!;
     if (nextDate != closestDate) {
-      scrollToIndex = stripKeys[nextDate]! + 1;
+      scrollToIndex = stripIndices[nextDate]! + 1;
     }
     
     _scrollController.scrollTo(

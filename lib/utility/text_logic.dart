@@ -43,6 +43,12 @@ List<TextSpan> highlightOccurrences(String source, List<String> search, [TextSty
       }
     } while (startIndex < lowerSource.length);
   }
+  // fill in spaces between two highlighted characters
+  for (var i = 1; i < source.length - 1; i++) {
+    if (charMatch[i - 1] == true && charMatch[i + 1] == true && source[i] == " ") {
+      charMatch[i] = true;
+    }
+  }
   
   // split the source string into normal and highlighted parts
   
@@ -130,11 +136,10 @@ String _truncateZeros(String text) {
 String truncateZeros(dynamic number) => _truncateZeros(number.toString());
 
 // text should be yesterday / today / tomorrow / x days ago / in x days
-String relativeDaysNatural(DateTime date) {
+String relativeDaysNatural(DateTime date, [DateTime? now]) {
   date = date.getDateOnly();
-  // Select beginning of current day
-  var now = DateTime.now().getDateOnly();
-  var diff = date.difference(now).inDays;
+  now ??= DateTime.now().getDateOnly();
+  int diff = (date.difference(now).inMinutes / 60.0 / 24.0).round();
   if (diff == 0) {
     return "Today";
   } else if (diff == 1) {
@@ -175,21 +180,50 @@ extension MyDateExtension on DateTime {
   }
 }
 
-List<String> conditionallyRemoveYear(BuildContext context, List<DateTime> dates, {bool showWeekDay = true, bool removeYear = true}) {
-  var reg = RegExp(r"(\d{4})"); // match a year
-  var function = showWeekDay ? DateFormat.yMd : DateFormat.yMd;// yMEd
-  String locale = kIsWeb ? Localizations.localeOf(context).toString() : Platform.localeName;
-  var texts = dates.map((date) => function(locale).format(date)).toList(); // format dates
-  var matches = texts.map((text) => reg.firstMatch(text)).toList();
-  var years = matches.map((match) => match?.group(1)).toList();
-  var currentYear = DateTime.now().year.toString();
+enum YearMode {
+  ifCurrent,
+  ifAllCurrent,
+  never,
+}
+
+List<String> conditionallyRemoveYear(dynamic localeOrContext, List<DateTime> dates, {bool showWeekDay = true, YearMode removeYear = YearMode.ifAllCurrent, DateTime? now}) {
+  // var reg = RegExp(r"(\d{4})"); // match a year
+  // var function = showWeekDay ? DateFormat.yMd : DateFormat.yMd;// yMEd
+  String locale;
+  if (localeOrContext is BuildContext) {
+    locale = kIsWeb ? Localizations.localeOf(localeOrContext).toString() : Platform.localeName;
+  } else {
+    locale = localeOrContext;
+  }
+  var df = DateFormat.yMd(locale);
+  // var texts = dates.map((date) => function(locale).format(date)).toList(); // format dates
+  // var matches = texts.map((text) => reg.firstMatch(text)).toList();
+  // var years = matches.map((match) => match?.group(1)).toList();
+  List<String> texts = [];
+  List<String?> years = [];
+  for (var date in dates) {
+    var text = df.format(date);
+    texts.add(text);
+    years.add(date.year.toString());
+  }
   
-  if (removeYear && years.every((year) => year == currentYear)) {
+  now ??= DateTime.now();
+  var currentYear = now.year.toString();
+  
+  if (removeYear == YearMode.ifCurrent || removeYear == YearMode.ifAllCurrent && years.every((year) => year == currentYear)) {
     for (var i = 0; i < texts.length; i++) {
+      if (removeYear == YearMode.ifCurrent && years[i] != currentYear) continue;
+      
       // remove year completely and leading and trailing "/" or "-"
-      texts[i] = texts[i].replaceFirst(currentYear, "")
-                 .replaceAll(RegExp(r"^[/-]"), "")
-                 .replaceAll(RegExp(r"[/-]$"), "");
+      texts[i] = texts[i].replaceFirst(currentYear, "");
+                //  .replaceAll(RegExp(r"^[/-]"), "")
+                //  .replaceAll(RegExp(r"[/-]$"), "");
+      if (texts[i].startsWith("/") || texts[i].startsWith("-")) {
+        texts[i] = texts[i].substring(1);
+      }
+      if (texts[i].endsWith("/") || texts[i].endsWith("-")) {
+        texts[i] = texts[i].substring(0, texts[i].length - 1);
+      }
     }
   } else {
     // replace year with last two digits

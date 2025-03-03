@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../constants/ui.dart';
 
-const appBarHeight = (kIsWeb ? 45 : 40) * gsf;
+const appBarHeight = 50 * gsf;
 
 const tabColorActive = Color.fromARGB(255, 193, 255, 253);
 const warningColor = Color.fromARGB(255, 255, 174, 0);
 
 const errorBorderColor = Color.fromARGB(255, 230, 0, 0);
 const disabledBorderColor = Color.fromARGB(130, 158, 158, 158);
+
+const tsNormal = TextStyle(fontSize: 16 * gsf);
 
 var actionButtonStyle = ButtonStyle(
   backgroundColor: WidgetStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
@@ -204,9 +206,9 @@ List<Color> productColors = [
   Colors.red,      // red
   Colors.orange,   // orange
   const Color.fromARGB(255, 247, 222, 0),   // yellow
-  Colors.green,    // green
-  const Color.fromARGB(255, 33, 212, 243), 		// cyan
-  Colors.indigo,	  // indigo
+  const Color.fromARGB(255, 20, 175, 0),    // green
+  const Color.fromARGB(255, 0, 188, 212), 		// cyan
+  const Color.fromARGB(255, 85, 23, 255),	  // indigo
   Colors.purple,	  // purple
 ];
 
