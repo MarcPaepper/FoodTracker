@@ -1,5 +1,7 @@
 import "dart:async";
+import "dart:math";
 
+import "package:collection/collection.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:food_tracker/services/data/async_provider.dart";
@@ -52,7 +54,7 @@ class _MealListState extends State<MealList> {
   final ItemPositionsListener _itemPositionsListener = ItemPositionsListener.create();
   final ScrollOffsetListener _scrollOffsetListener = ScrollOffsetListener.create();
   final ValueNotifier<bool> _isButtonVisible = ValueNotifier(false);
-  // final ValueNotifier<List<int>?> _foundMealsNotifier = ValueNotifier(null); // If searching, contains the ids of the found meals
+  final ValueNotifier<List<int>?> _foundMealsNotifier = ValueNotifier(null); // If searching, contains the ids of the found meals
   final ValueNotifier<int?> _selectedMealNotifier = ValueNotifier(null); // If searching, contains the id of the highlighted meal
   final TextEditingController _searchController = TextEditingController();
   final ValueNotifier<String> _searchNotifier = ValueNotifier("");
@@ -202,6 +204,13 @@ class _MealListState extends State<MealList> {
                           _searchNotifier.value = value;
                         }
                       },
+                      foundMeals: _foundMealsNotifier.value,
+                      selectedMeal: _selectedMealNotifier.value,
+                      onMealSelected: (int mealId) {
+                        _selectedMealNotifier.value = mealId;
+                        int? mealIndex = mealIndices[mealId];
+                        if (mealIndex != null) _scrollMealIntoView(mealIndex);
+                      },
                     ),
                   );
                 },
@@ -235,7 +244,7 @@ class _MealListState extends State<MealList> {
     
     // update the found meals list
     if (search.isEmpty) {
-      // _foundMealsNotifier.value = null;
+      _foundMealsNotifier.value = null;
       _selectedMealNotifier.value = null;
     } else {
       foundMeals = [];
@@ -249,7 +258,7 @@ class _MealListState extends State<MealList> {
           if (_selectedMealNotifier.value == meal.id) selectedMealStillFound = true;
         }
       }
-      // _foundMealsNotifier.value = foundMeals;
+      if (!const ListEquality().equals(foundMeals, _foundMealsNotifier.value)) _foundMealsNotifier.value = foundMeals;
       if (!selectedMealStillFound) {
         if (foundMeals.isEmpty) {
           _selectedMealNotifier.value = null;
@@ -263,7 +272,8 @@ class _MealListState extends State<MealList> {
             if (position.index < lowestIndex) lowestIndex = position.index;
             if (position.index > highestIndex) highestIndex = position.index;
           }
-          double middleIndex = (lowestIndex + highestIndex) / 2;
+          double middleIndex = (lowestIndex + highestIndex) / 2 - 3;
+          if (lowestIndex == 0) middleIndex = max(0, middleIndex - 10);
           
           // select the found meal that is closest to the current scroll position
           int closestIndex = 0;
@@ -279,6 +289,8 @@ class _MealListState extends State<MealList> {
             }
           }
           _selectedMealNotifier.value = foundMeals[closestIndex];
+          int? mealIndex = mealIndices[foundMeals[closestIndex]];
+          if (mealIndex != null) _scrollMealIntoView(mealIndex);
         }
       }
     }
@@ -552,6 +564,29 @@ class _MealListState extends State<MealList> {
       index: scrollToIndex,
       duration: const Duration(milliseconds: 1000),
       curve: Curves.easeOut,
+    );
+  }
+  
+  void _scrollMealIntoView(int mealIndex) {
+    // Check whether the meal is already visible
+    var positions = _itemPositionsListener.itemPositions.value;
+    int lowestIndex = 10000000;
+    int highestIndex = 0;
+    for (var position in positions) {
+      if (position.index < lowestIndex) lowestIndex = position.index;
+      if (position.index > highestIndex) highestIndex = position.index;
+    }
+    int span = highestIndex - lowestIndex;
+    double lowIndex = lowestIndex + min(0.25 * span, 1);
+    double highIndex = highestIndex - min(0.25 * span, 5);
+    devtools.log("Lowest $lowestIndex, low $lowIndex, target $mealIndex, high $highIndex, highest $highestIndex, span $span");
+    if (mealIndex > lowIndex && mealIndex < highIndex) return;
+    
+    _scrollController.scrollTo(
+      index: mealIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      alignment: 0.35,
     );
   }
 }

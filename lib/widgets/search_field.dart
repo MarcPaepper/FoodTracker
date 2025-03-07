@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import '../constants/ui.dart';
 import 'multi_opacity.dart';
 
+import 'dart:developer' as devtools show log;
+
 class SearchField extends StatefulWidget {
   final TextEditingController textController;
   final Function(String) onChanged;
@@ -14,6 +16,9 @@ class SearchField extends StatefulWidget {
   final bool whiteMode;
   final bool isDense;
   final double? visibility;
+  final List<int>? foundMeals; // If searching, contains the ids of the found meals
+  final int? selectedMeal; // If searching, contains the id of the highlighted meal
+  final Function(int)? onMealSelected;
   
   const SearchField({
     required this.textController,
@@ -23,6 +28,9 @@ class SearchField extends StatefulWidget {
     this.whiteMode = false,
     this.isDense = false,
     this.visibility,
+    this.foundMeals,
+    this.selectedMeal,
+    this.onMealSelected,
     super.key
   });
 
@@ -35,7 +43,6 @@ class _SearchFieldState extends State<SearchField> {
 
   @override
   Widget build(BuildContext context) {
-    
     double vertPadding = 9;
     if (kIsWeb) vertPadding += 4;
     if (widget.isDense) vertPadding -= 5;
@@ -46,10 +53,10 @@ class _SearchFieldState extends State<SearchField> {
     double fldVis = max((vis * 54  - 14) / 40, 0.0);
     
     double height = 40 * fldVis * gsf;
-    double iconOpacity = fldVis == 1 ? 1 : max(fldVis * 3 - 2, 0) * 0.65;
-    double textOpacity = fldVis == 1 ? 1 : max(fldVis * 3 - 2, 0) * 0.5;
+    double iconOpacity   = fldVis == 1 ? 1 : max(fldVis * 3 - 2, 0) * 0.65;
+    double textOpacity   = fldVis == 1 ? 1 : max(fldVis * 3 - 2, 0) * 0.5;
     double buttonOpacity = fldVis == 1 ? 1 : max(fldVis * 3 - 2, 0) * 0.75;
-    double opacity     = fldVis == 1 ? 1 : sqrt(fldVis) * 0.95;
+    double opacity       = fldVis == 1 ? 1 : sqrt(fldVis) * 0.95;
     
     Widget tf;
     
@@ -127,20 +134,30 @@ class _SearchFieldState extends State<SearchField> {
           children: [
             Expanded(child: tf),
             const SizedBox(width: 6 * gsf),
-            _buildSelectButton(false, height, true, buttonOpacity),
-            _buildSelectButton(false, height, false, buttonOpacity),
+            _buildSelectButton(height, true, buttonOpacity),
+            _buildSelectButton(height, false, buttonOpacity),
           ],
         )
       ),
     );
   }
   
-  Widget _buildSelectButton(bool enabled, double height, bool up, double opacity) {
+  Widget _buildSelectButton(double height, bool up, double opacity) {
+    bool enabled = false;
+    if (widget.foundMeals != null && widget.selectedMeal != null) {
+      int index = widget.foundMeals!.indexOf(widget.selectedMeal!);
+      if (up) {
+        enabled = index > 0;
+      } else {
+        enabled = index < widget.foundMeals!.length - 1;
+      }
+    }
+    
     Color color;
     if (enabled) {
-      color = Colors.white.withOpacity(0.75 * opacity);
+      color = Colors.white;
     } else {
-      color = const Color.fromARGB(210, 204, 204, 204).withOpacity(0.75 * opacity);
+      color = const Color.fromARGB(210, 204, 204, 204).withOpacity(0.7 * opacity);
     }
     
     bool isVisible = widget.textController.text.isNotEmpty || _hasFocus;
@@ -153,18 +170,25 @@ class _SearchFieldState extends State<SearchField> {
       child: SizedBox(
         height: height,
         child: AnimatedContainer(
-          width: isVisible ? 35 * gsf : 0,
+          width: isVisible ? 42 * gsf : 0,
           alignment: Alignment.center,
           duration: const Duration(milliseconds: ms),
           curve: Curves.easeInOut,
           child: IconButton(
             onPressed: () {
-              // Your tap logic here
-            },
+              if (enabled) {
+                int index = widget.foundMeals!.indexOf(widget.selectedMeal!);
+                if (up) {
+                  widget.onMealSelected!(widget.foundMeals![index - 1]);
+                } else {
+                  widget.onMealSelected!(widget.foundMeals![index + 1]);
+                }
+              }
+            },  
             iconSize: 40 * gsf,
             padding: EdgeInsets.zero,
             alignment: Alignment.center,
-            constraints: BoxConstraints(minWidth: 35 * gsf, maxWidth: 35 * gsf, minHeight: height, maxHeight: height),
+            constraints: BoxConstraints(minWidth: 42 * gsf, maxWidth: 42 * gsf, minHeight: height, maxHeight: height),
             mouseCursor:    enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
             splashColor:    enabled ? null : Colors.transparent,
             hoverColor:     enabled ? null : Colors.transparent,
