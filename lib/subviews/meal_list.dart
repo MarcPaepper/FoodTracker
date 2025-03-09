@@ -577,9 +577,8 @@ class _MealListState extends State<MealList> {
       if (position.index > highestIndex) highestIndex = position.index;
     }
     int span = highestIndex - lowestIndex;
-    double lowIndex = lowestIndex + min(0.25 * span, 1);
-    double highIndex = highestIndex - min(0.25 * span, 5);
-    devtools.log("Lowest $lowestIndex, low $lowIndex, target $mealIndex, high $highIndex, highest $highestIndex, span $span");
+    double lowIndex = lowestIndex + min(0.3 * span, 1);
+    double highIndex = highestIndex - min(0.3 * span, 6);
     if (mealIndex > lowIndex && mealIndex < highIndex) return;
     
     _scrollController.scrollTo(

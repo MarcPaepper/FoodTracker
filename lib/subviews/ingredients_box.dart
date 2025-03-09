@@ -447,7 +447,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                             }
                           },
                         ),
-                        validator: (value) => errorType == ErrorType.none ? null : errorMsg,
+                        validator: (value) => errorType != ErrorType.error ? null : errorMsg,
                       ),
                       const SizedBox(height: 12 * gsf),
                       Row(

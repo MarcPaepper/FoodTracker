@@ -1047,7 +1047,16 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           densityConversion,
           quantityConversion,
         ).$1 != ErrorType.error;
-    
+    devtools.log("Product is valid: $isValid");
+    if (!isValid) {
+      devtools.log("1: ${_formKey.currentState!.validate()}");
+      devtools.log("2: ${_ingredientsValidNotifier.value}");
+      devtools.log("3: ${!isTemporary || validateTemporaryInterval(temporaryBeginning, temporaryEnd) == null}");
+      devtools.log("4: ${validateConversionBox(0, defUnit, densityConversion, quantityConversion, quantityName) == null}");
+      devtools.log("5: ${validateConversionBox(1, defUnit, densityConversion, quantityConversion, quantityName) == null}");
+      devtools.log("6: ${validateAmount(ingredientsUnit, defUnit, autoCalc, ingredients.isEmpty, resultingAmount, densityConversion, quantityConversion).$1 != ErrorType.error}");
+      devtools.log("7: ${validateAmount(nutrientsUnit, defUnit, anyNutrientAutoCalc, areNutrientsEmpty, amountForNutrients, densityConversion, quantityConversion).$1 != ErrorType.error}");
+    }
     return (
       Product(
         id:                   _isEdit ? _id : -1,
