@@ -48,57 +48,30 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Unsaved changes'),
-      content: const Text('The product has unsaved changes. How do you want to proceed?'),
-      surfaceTintColor: Colors.transparent,
-      actionsAlignment: MainAxisAlignment.spaceEvenly,
-      actions: <Widget>[
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (save != null) ...[
-              ElevatedButton.icon(
-                style: actionButtonStyle,
-                onPressed: () {
-                  save();
-                  Navigator.of(context).pop(false);
-                },
-                icon: const Icon(Icons.save, color: Colors.white, size: 24 * gsf),
-                label: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10) * gsf,
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Save',
-                        style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 2 * gsf),
-                       Text(
-                        'Save changes and exit',
-                        style: TextStyle(fontSize: 14 * gsf),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16 * gsf),
-            ],
+      content: Column(
+        children: [
+          const Text('The product has unsaved changes. How do you want to proceed?'),
+          const SizedBox(height: 24 * gsf),
+          if (save != null) ...[
             ElevatedButton.icon(
               style: actionButtonStyle,
-              onPressed: () => Navigator.of(context).pop(true),
-              icon: const Icon(Icons.delete, color: Colors.white, size: 24 * gsf),
-              label: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10 * gsf),
-                child: Column(
+              onPressed: () {
+                save();
+                Navigator.of(context).pop(false);
+              },
+              icon: const Icon(Icons.save, color: Colors.white, size: 24 * gsf),
+              label: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10) * gsf,
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Discard',
-                      style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold)
+                      'Save',
+                      style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 2 * gsf),
-                    Text(
-                      "Ignore unsaved changes",
+                      Text(
+                      'Save changes and exit',
                       style: TextStyle(fontSize: 14 * gsf),
                     ),
                   ],
@@ -106,34 +79,60 @@ Future showContinueWithoutSavingDialog(BuildContext context, {Function()? save, 
               ),
             ),
             const SizedBox(height: 16 * gsf),
-            ElevatedButton.icon(
-              style: actionButtonStyle,
-              onPressed: () => Navigator.of(context).pop(false),
-              icon: RotatedBox(
-                quarterTurns: 2,
-                child: Image.asset("assets/geschwungen_arrow.png", width: 24 * gsf, height: 24 * gsf)
-              ),
-              label: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10) * gsf,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Cancel',
-                      style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold)
-                    ),
-                    const SizedBox(height: 2 * gsf),
-                    Text(
-                      'Continue editing ${prodName != null ? "'$prodName'" : "the product"}',
-                      style: const TextStyle(fontSize: 14 * gsf)
-                    ),
-                  ],
-                ),
+          ],
+          ElevatedButton.icon(
+            style: actionButtonStyle,
+            onPressed: () => Navigator.of(context).pop(true),
+            icon: const Icon(Icons.delete, color: Colors.white, size: 24 * gsf),
+            label: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10 * gsf),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Discard',
+                    style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold)
+                  ),
+                  SizedBox(height: 2 * gsf),
+                  Text(
+                    "Ignore unsaved changes",
+                    style: TextStyle(fontSize: 14 * gsf),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: 16 * gsf),
+          ElevatedButton.icon(
+            style: actionButtonStyle,
+            onPressed: () => Navigator.of(context).pop(false),
+            icon: RotatedBox(
+              quarterTurns: 2,
+              child: Image.asset("assets/geschwungen_arrow.png", width: 24 * gsf, height: 24 * gsf)
+            ),
+            label: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10) * gsf,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Cancel',
+                    style: TextStyle(fontSize: 16 * gsf, fontWeight: FontWeight.bold)
+                  ),
+                  const SizedBox(height: 2 * gsf),
+                  Text(
+                    'Continue editing ${prodName != null ? "'$prodName'" : "the product"}',
+                    style: const TextStyle(fontSize: 14 * gsf)
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      surfaceTintColor: Colors.transparent,
+      actionsAlignment: MainAxisAlignment.spaceEvenly,
+      scrollable: true,
     ),
   );
 

@@ -138,7 +138,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                 start = DateTime(start.year, start.month, 1);
               }
               relevantMeals = meals.where((meal) => isDateInsideInterval(meal.dateTime, start, end) == 0).toList();
-              var activeTargets = _activeTargets.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
+              var activeTargets = _activeTargets.entries.where((entry) => entry.value).map((entry) => entry.key.copyWith(newIsPrimary: true)).toList();
               dailyTargetProgressData = getDailyTargetProgress(notifier.value, activeTargets, productsMap, nutvalues, relevantMeals, [], sortByRelevancy, maxProducts: 1000);
               hash = newHash;
               if (!isGlobal && _calculationMethod == CalculationMethod.avg) { // calculate daily average
@@ -419,8 +419,11 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
               controlAffinity: ListTileControlAffinity.leading,
               visualDensity: const VisualDensity(vertical: -1 * gsf),
               onChanged: (bool? value) {
+                var newTargets = Map<Target, bool>.from(_activeTargets);
+                newTargets[target] = value!;
+                devtools.log("newTargets: $newTargets");
                 setState(() {
-                  _activeTargets[target] = value!;
+                  _activeTargets = newTargets;
                 });
               },
             );

@@ -598,7 +598,7 @@ class Target{
     required this.orderId,
   });
   
-  copyWith({
+  Target copyWith({
     bool? newIsPrimary,
     Type? newTrackedType,
     int? newTrackedId,
