@@ -392,6 +392,8 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                           beginningNotifier: _temporaryBeginningNotifier,
                           endNotifier: _temporaryEndNotifier,
                           intermediateSave: () => _interimProduct = getProductFromForm().$1,
+                          meals: meals ?? [],
+                          productId: _id,
                         ),
                         const SizedBox(height: 8),
                         ConversionBoxes(
@@ -847,6 +849,54 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   void saveProduct(Iterable<Meal>? meals, {bool popAfter = true}) async {
     var (product, isValid) = getProductFromForm();
+    
+    List? problems = validUnits(product, await _dataService.getAllMeals(), await _dataService.getAllProducts());
+    if (problems != null && problems.isNotEmpty) {
+      isValid = false;
+      
+      List<Widget> children = [];
+      // Check if it's a list of products
+      if (problems is List<Product>) {
+        children.add(const Text("You changed the available units for this product. The product is used as an ingredient with now unavailable units in the following products:\n"));
+        for (var product in problems) {
+          children.add(Text(product.name));
+        }
+        children.add(const Text("\nThe units cannot be changed until every instance is changed to a compatible unit."));
+      } else if (problems is List<Meal>) {
+        children.add(const Text("You changed the available units for this product. The product is used as an ingredient with now unavailable units in the following meals:\n"));
+        for (var meal in problems) {
+          if (mounted) {
+            var amountStr = meal.productQuantity.amount.toString();
+            var unitStr = unitToLongString(meal.productQuantity.unit);
+            var dateStr = conditionallyRemoveYear(context, [meal.dateTime], showWeekDay: false, removeYear: YearMode.never)[0];
+            children.add(Text("$amountStr $unitStr at $dateStr"));
+          }
+        }
+        children.add(const Text("\nThe units cannot be changed until every instance is changed to a compatible unit."));
+      }
+      
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Error"),
+            scrollable: true,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+    
     product.lastEditDate = DateTime.now();
     
     // check if the product is used in a meal that is outside the new temporary interval
@@ -1047,16 +1097,16 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
           densityConversion,
           quantityConversion,
         ).$1 != ErrorType.error;
-    devtools.log("Product is valid: $isValid");
-    if (!isValid) {
-      devtools.log("1: ${_formKey.currentState!.validate()}");
-      devtools.log("2: ${_ingredientsValidNotifier.value}");
-      devtools.log("3: ${!isTemporary || validateTemporaryInterval(temporaryBeginning, temporaryEnd) == null}");
-      devtools.log("4: ${validateConversionBox(0, defUnit, densityConversion, quantityConversion, quantityName) == null}");
-      devtools.log("5: ${validateConversionBox(1, defUnit, densityConversion, quantityConversion, quantityName) == null}");
-      devtools.log("6: ${validateAmount(ingredientsUnit, defUnit, autoCalc, ingredients.isEmpty, resultingAmount, densityConversion, quantityConversion).$1 != ErrorType.error}");
-      devtools.log("7: ${validateAmount(nutrientsUnit, defUnit, anyNutrientAutoCalc, areNutrientsEmpty, amountForNutrients, densityConversion, quantityConversion).$1 != ErrorType.error}");
-    }
+    // devtools.log("Product is valid: $isValid")
+    // if (!isValid) {
+    //   devtools.log("1: ${_formKey.currentState!.validate()}");
+    //   devtools.log("2: ${_ingredientsValidNotifier.value}");
+    //   devtools.log("3: ${!isTemporary || validateTemporaryInterval(temporaryBeginning, temporaryEnd) == null}");
+    //   devtools.log("4: ${validateConversionBox(0, defUnit, densityConversion, quantityConversion, quantityName) == null}");
+    //   devtools.log("5: ${validateConversionBox(1, defUnit, densityConversion, quantityConversion, quantityName) == null}");
+    //   devtools.log("6: ${validateAmount(ingredientsUnit, defUnit, autoCalc, ingredients.isEmpty, resultingAmount, densityConversion, quantityConversion).$1 != ErrorType.error}");
+    //   devtools.log("7: ${validateAmount(nutrientsUnit, defUnit, anyNutrientAutoCalc, areNutrientsEmpty, amountForNutrients, densityConversion, quantityConversion).$1 != ErrorType.error}");
+    // }
     return (
       Product(
         id:                   _isEdit ? _id : -1,
@@ -1080,5 +1130,34 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       ),
       isValid,
     );
+  }
+  
+  List? validUnits(Product p, Iterable<Meal> meals, Iterable<Product> products) {
+    // list of all units that can be converted to the default unit
+    var units = getConvertibleUnits(p.defaultUnit, p.densityConversion, p.quantityConversion);
+    
+    // list of all products that contain p as an ingredient
+    products = products.where((prod) => prod.ingredients.any((ingr) => ingr.productId == p.id));
+    List<Product> incompatibleProducts = [];
+    for (var product in products) {
+      var unit = product.ingredients.firstWhere((ingr) => ingr.productId == p.id).unit;
+      if (!units.contains(unit)) {
+        incompatibleProducts.add(product);
+      }
+    }
+    if (incompatibleProducts.isNotEmpty) return incompatibleProducts;
+    
+    // check if every meal of this product has a compatible unit
+    meals = meals.where((meal) => meal.productQuantity.productId == p.id);
+    List<Meal> incompatibleMeals = [];
+    for (var meal in meals) {
+      var unit = meal.productQuantity.unit;
+      if (!units.contains(unit)) {
+        incompatibleMeals.add(meal);
+      }
+    }
+    if (incompatibleMeals.isNotEmpty) return incompatibleMeals;
+    
+    return null;
   }
 }

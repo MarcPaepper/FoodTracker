@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/ui.dart';
+import '../services/data/data_objects.dart';
 import '../widgets/multi_value_listenable_builder.dart';
 import '../utility/data_logic.dart';
 import '../utility/text_logic.dart';
@@ -18,11 +19,16 @@ class TemporaryBox extends StatelessWidget {
   
   final Function() intermediateSave;
   
+  final List<Meal> meals;
+  final int productId;
+  
   const TemporaryBox({
     required this.isTemporaryNotifier,
     required this.beginningNotifier,
     required this.endNotifier,
     required this.intermediateSave,
+    required this.meals,
+    required this.productId,
     super.key,
   });
 
@@ -42,6 +48,20 @@ class TemporaryBox extends StatelessWidget {
         if (isTemporary && (beginning == null || end == null)) {
           beginning = DateTime.now();
           end = DateTime.now().add(const Duration(days: 6));
+          
+          // test if there are meals using this product outside the interval
+          for (var meal in meals) {
+            if (productId < 0 || meal.productQuantity.productId != productId) continue;
+            
+            var dt = meal.dateTime.getDateOnly();
+            if (dt.isBefore(beginning!)) {
+              beginning = dt;
+            }
+            if (dt.isAfter(end!)) {
+              end = dt;
+            }
+          }
+          
           WidgetsBinding.instance.addPostFrameCallback((_) {
             beginningNotifier.value = beginning;
             endNotifier.value = end;
