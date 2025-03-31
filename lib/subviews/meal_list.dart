@@ -64,6 +64,8 @@ class _MealListState extends State<MealList> {
   Map<int, int> stripIndices = {}; // Key: days since 1970, Value: index of the strip in the list
   Map<int, int> mealIndices = {}; // Key: meal id, Value: index of the meal in the list
   
+  // final ValueNotifier<(int, double)> _topStripNotifier = ValueNotifier((-1, 0.0)); // Which strip is currently shown as a sticky header
+  
   @override
   void initState() {
     super.initState();
@@ -493,7 +495,7 @@ class _MealListState extends State<MealList> {
   (Widget, double, double) getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now) {
     // Convert date to natural string
     String text;
-    int relativeDays = dateTime.difference(DateTime.now()).inDays.abs();
+    int relativeDays = dateTime.difference(DateTime.now().getDateOnly()).inDays.abs();
     DateTime now1 = DateTime.now();
     double dur1 = 0;
     if (relativeDays <= 7) {

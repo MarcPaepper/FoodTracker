@@ -39,6 +39,7 @@ enum CalculationMethod {
 class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixin {
   late final DataService _dataService;
   Map<Target, bool> _activeTargets = {};
+  bool _isLineGraph = false;
   TimeFrame _timeFrame = TimeFrame.day;
   CalculationMethod _calculationMethod = CalculationMethod.avg;
   bool includeEmptyDays = false;
@@ -169,7 +170,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
             
             return SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16) * gsf,
+                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13) * gsf,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -182,6 +183,43 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                         2: FlexColumnWidth(),
                       },
                       children: [
+                        // // dropdown to select line / bar graph
+                        // TableRow(
+                        //   children: [
+                        //     const Text("Graph type:", style: TextStyle(fontSize: 16 * gsf)),
+                        //     const SizedBox(width: 12 * gsf),
+                        //     DropdownButtonFormField<bool>( // TODO: add icon
+                        //       value: _isLineGraph,
+                        //       decoration: dropdownStyleEnabled,
+                        //       style: const TextStyle(fontSize: (kIsWeb ? 47 : 40) * gsf, color: Colors.black),
+                        //       icon: const Icon(Icons.arrow_drop_down),
+                        //       iconSize: 24 * gsf,
+                        //       isDense: true,
+                        //       isExpanded: true,
+                        //       onChanged: (bool? value) {
+                        //         if (value == null || value == _isLineGraph) return;
+                        //         setState(() => _isLineGraph = value);
+                        //       },
+                        //       items: [
+                        //         DropdownMenuItem(
+                        //           value: true,
+                        //           child: Padding(
+                        //             padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                        //             child: Text("Line Graph", style: textStyle),
+                        //           ),
+                        //         ),
+                        //         DropdownMenuItem(
+                        //           value: false,
+                        //           child: Padding(
+                        //             padding: const EdgeInsets.symmetric(vertical: 25 * gsf - 25),
+                        //             child: Text("Bar Graph", style: textStyle),
+                        //           ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ]
+                        // ),
+                        // getSpacerRow(elements: 3, height: 12 * gsf),
                         TableRow(
                           children: [
                             const Text("Timeframe:", style: TextStyle(fontSize: 16 * gsf)),
@@ -189,7 +227,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                             DropdownButtonFormField<TimeFrame>(
                               value: _timeFrame,
                               decoration: dropdownStyleEnabled,
-                              style: const TextStyle(fontSize: (kIsWeb ? 47 : 41) * gsf, color: Colors.black),
+                              style: const TextStyle(fontSize: (kIsWeb ? 47 : 40) * gsf, color: Colors.black),
                               icon: const Icon(Icons.arrow_drop_down),
                               iconSize: 24 * gsf,
                               isDense: true,
@@ -242,7 +280,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                               DropdownButtonFormField<CalculationMethod>(
                                 value: _calculationMethod,
                                 decoration: dropdownStyleEnabled,
-                                style: const TextStyle(fontSize: 46 * gsf, color: Colors.black),
+                                style: const TextStyle(fontSize: (kIsWeb ? 47 : 40) * gsf, color: Colors.black),
                                 icon: const Icon(Icons.arrow_drop_down),
                                 iconSize: 24 * gsf,
                                 isDense: true,
@@ -363,7 +401,7 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
           child: DropdownButtonFormField<bool>(
             value: sortByRelevancy,
             decoration: dropdownStyleEnabled,
-            style: const TextStyle(fontSize: (kIsWeb ? 47 : 41) * gsf, color: Colors.black),
+            style: const TextStyle(fontSize: (kIsWeb ? 47 : 40) * gsf, color: Colors.black),
             icon: const Icon(Icons.arrow_drop_down),
             iconSize: 24,
             isDense: true,

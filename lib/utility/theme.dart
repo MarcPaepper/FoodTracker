@@ -206,10 +206,10 @@ List<Color> productColors = [
   Colors.red,      // red
   Colors.orange,   // orange
   const Color.fromARGB(255, 247, 222, 0),   // yellow
-  const Color.fromARGB(255, 20, 175, 0),    // green
-  const Color.fromARGB(255, 0, 188, 212), 		// cyan
-  const Color.fromARGB(255, 85, 23, 255),	  // indigo
-  Colors.purple,	  // purple
+  const Color.fromARGB(255, 22, 190, 0),    // green
+  const Color.fromARGB(255, 0, 225, 255), 		// cyan
+  const Color.fromARGB(255, 40, 0, 255),	  // indigo
+  const Color.fromARGB(255, 217, 0, 255),	  // purple
 ];
 
 class MouseDragScrollBehavior extends MaterialScrollBehavior {

@@ -138,7 +138,8 @@ String truncateZeros(dynamic number) => _truncateZeros(number.toString());
 // text should be yesterday / today / tomorrow / x days ago / in x days
 String relativeDaysNatural(DateTime date, [DateTime? now]) {
   date = date.getDateOnly();
-  now ??= DateTime.now().getDateOnly();
+  now ??= DateTime.now();
+  now = now.getDateOnly();
   int diff = (date.difference(now).inMinutes / 60.0 / 24.0).round();
   if (diff == 0) {
     return "Today";
