@@ -7,6 +7,7 @@ import "package:flutter/material.dart";
 import "package:food_tracker/services/data/async_provider.dart";
 import "package:scrollable_positioned_list/scrollable_positioned_list.dart";
 import "package:universal_io/io.dart";
+import "package:visibility_detector/visibility_detector.dart";
 
 import "../constants/routes.dart";
 import "../constants/ui.dart";
@@ -65,6 +66,8 @@ class _MealListState extends State<MealList> {
   Map<int, int> mealIndices = {}; // Key: meal id, Value: index of the meal in the list
   
   // final ValueNotifier<(int, double)> _topStripNotifier = ValueNotifier((-1, 0.0)); // Which strip is currently shown as a sticky header
+  final ValueNotifier<Map<int, double>> _visibleDaysNotifier = ValueNotifier({});
+  // Key: days since 2020 (positive if referring to the bottom most meal of the date, negative if reffering to the date strip), Value: visible fraction of the element
   
   @override
   void initState() {
@@ -103,119 +106,133 @@ class _MealListState extends State<MealList> {
             onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
             productsMap: widget.productsMap ?? {},
             onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
-            onVisibilityChanged: (visibility) => _addMealVisibilityNotifier.value = visibility,
+            onVisibilityChanged: (visibility) {
+              if (_addMealVisibilityNotifier.value != visibility) {
+                _addMealVisibilityNotifier.value = visibility;
+              }
+            },
           ),
           const SizedBox(height: 5 * gsf),
         ];
         
         children.addAll(getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.mealsMap, widget.loaded));
         
-        return Stack(
+        return Column(
           children: [
-            ScrollablePositionedList.builder(
-              itemCount: children.length,
-              itemBuilder: (context, index) => children[index],
-              itemScrollController: _scrollController,
-              itemPositionsListener: _itemPositionsListener,
-              scrollOffsetListener: _scrollOffsetListener,
-              reverse: true,
-              physics: const ClampingScrollPhysics(),
-              padding: EdgeInsets.zero,
+            MultiValueListenableBuilder( // search bar
+              listenables: [_addMealVisibilityNotifier],
+              builder: (context, values, child) {
+                double visibility = 1.0 - values[0];
+                if (_searchNotifier.value.isNotEmpty) visibility = 1.0;
+                
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).appBarTheme.backgroundColor,
+                  ),
+                  child: SearchField(
+                    textController: _searchController,
+                    hintText: 'Search meals',
+                    whiteMode: true,
+                    isDense: true,
+                    visibility: visibility,
+                    onChanged: (String value) {
+                      if (value != _searchNotifier.value) {
+                        _searchNotifier.value = value;
+                      }
+                    },
+                    foundMeals: _foundMealsNotifier.value,
+                    selectedMeal: _selectedMealNotifier.value,
+                    onMealSelected: (int mealId) {
+                      _selectedMealNotifier.value = mealId;
+                      int? mealIndex = mealIndices[mealId];
+                      if (mealIndex != null) _scrollMealIntoView(mealIndex);
+                    },
+                  ),
+                );
+              },
             ),
-            Positioned(
-              bottom: 16.0 * gsf,
-              left: 16.0 * gsf,
-              child: ValueListenableBuilder<bool>(
-                valueListenable: _isButtonVisible,
-                builder: (context, isVisible, child) {
-                  return SizedBox(
-                    width: 45 * gsf,
-                    height: 45 * gsf,
-                    child: Center(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: (isVisible ? 45 : 0) * gsf,
-                        height: (isVisible ? 45 : 0) * gsf,
-                        child: AnimatedOpacity(
-                          opacity: isVisible ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 300),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10) * gsf,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.8),
-                                  blurRadius: 4.0 * gsf,
-                                  spreadRadius: 0.0,
-                                  offset: const Offset(-0.3, 0.2) * gsf,
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton(
-                              style: lightButtonStyle.copyWith(
-                                shadowColor: WidgetStateProperty.all(Colors.black),
-                                padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
-                                backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 182, 188, 255)),
-                                foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 41, 1, 185)),
-                              ),
-                              onPressed: () {
-                                _scrollController.scrollTo(
-                                  index: 0,
-                                  duration: const Duration(milliseconds: 500),
-                                  curve: Curves.easeInOut,
-                                );
-                              },
-                              child: MultiOpacity(
-                                depth: 3,
+            Expanded(
+              child: Stack(
+                children: [
+                  ScrollablePositionedList.builder( // meal list
+                    itemCount: children.length,
+                    itemBuilder: (context, index) => children[index],
+                    itemScrollController: _scrollController,
+                    itemPositionsListener: _itemPositionsListener,
+                    scrollOffsetListener: _scrollOffsetListener,
+                    reverse: true,
+                    physics: const ClampingScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                  ),
+                  // sticky header displaying the date of the highest visible meal
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      color: Colors.red,
+                      height: 0,
+                    ),
+                  ),
+                  Positioned( // scroll to bottom button
+                    bottom: 16.0 * gsf,
+                    left: 16.0 * gsf,
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: _isButtonVisible,
+                      builder: (context, isVisible, child) {
+                        return SizedBox(
+                          width: 45 * gsf,
+                          height: 45 * gsf,
+                          child: Center(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: (isVisible ? 45 : 0) * gsf,
+                              height: (isVisible ? 45 : 0) * gsf,
+                              child: AnimatedOpacity(
                                 opacity: isVisible ? 1.0 : 0.0,
                                 duration: const Duration(milliseconds: 300),
-                                child: const Icon(Icons.keyboard_double_arrow_down, size: 24 * gsf),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10) * gsf,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.8),
+                                        blurRadius: 4.0 * gsf,
+                                        spreadRadius: 0.0,
+                                        offset: const Offset(-0.3, 0.2) * gsf,
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
+                                    style: lightButtonStyle.copyWith(
+                                      shadowColor: WidgetStateProperty.all(Colors.black),
+                                      padding: WidgetStateProperty.all(const EdgeInsets.all(0)),
+                                      backgroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 182, 188, 255)),
+                                      foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 41, 1, 185)),
+                                    ),
+                                    onPressed: () {
+                                      _scrollController.scrollTo(
+                                        index: 0,
+                                        duration: const Duration(milliseconds: 500),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
+                                    child: MultiOpacity(
+                                      depth: 3,
+                                      opacity: isVisible ? 1.0 : 0.0,
+                                      duration: const Duration(milliseconds: 300),
+                                      child: const Icon(Icons.keyboard_double_arrow_down, size: 24 * gsf),
+                                    ),
+                                  ),
+                                )
                               ),
                             ),
-                          )
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            // green search bar at the top
-            Positioned(
-              top: 0,
-              left: 0,  // Added left constraint
-              right: 0, // Added right constraint
-              child: MultiValueListenableBuilder(
-                listenables: [_addMealVisibilityNotifier],
-                builder: (context, values, child) {
-                  double visibility = 1.0 - values[0];
-                  if (_searchNotifier.value.isNotEmpty) visibility = 1.0;
-                  
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).appBarTheme.backgroundColor,
-                    ),
-                    child: SearchField(
-                      textController: _searchController,
-                      hintText: 'Search meals',
-                      whiteMode: true,
-                      isDense: true,
-                      visibility: visibility,
-                      onChanged: (String value) {
-                        if (value != _searchNotifier.value) {
-                          _searchNotifier.value = value;
-                        }
-                      },
-                      foundMeals: _foundMealsNotifier.value,
-                      selectedMeal: _selectedMealNotifier.value,
-                      onMealSelected: (int mealId) {
-                        _selectedMealNotifier.value = mealId;
-                        int? mealIndex = mealIndices[mealId];
-                        if (mealIndex != null) _scrollMealIntoView(mealIndex);
+                          ),
+                        );
                       },
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ],
@@ -367,16 +384,18 @@ class _MealListState extends State<MealList> {
         continue;
       }
       
+      bool newDate = i == meals.length - 1;
       if (lastHeader.isBefore(mealDate)) {
         devtools.log('MealList: meals are not sorted by date');
       } else if (lastHeader.isAfter(mealDate)) {
-        // use days of lastHeader since 1970 as the key
+        // meal belongs to an earlier date than current
         int daysSince1970 = daysBetween(d1970, lastHeader);
         newStripIndices[daysSince1970] = childCount;
         var result = getDateStrip(locale, lastHeader, dateStrings[daysSince1970]!, now);
-        children.add(result.$1);
+        children.add(result);
         childCount++;
         lastHeader = mealDate;
+        newDate = true;
       } else if (i < meals.length - 1) {
         children.add(_buildHorizontalLine());
         childCount++;
@@ -408,54 +427,73 @@ class _MealListState extends State<MealList> {
         if (!isSelected) pT[pId] = nameText;
       }
       
-      children.add(
-        ListTile(
-          title: Row(
-            children: [
-              const SizedBox(width: 12 * gsf),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 2.5 * gsf), // anti gsf
-                    nameText,
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(amountText, style: tsProd),//, height: 1)),
-                        Text(hourText, style: tsHour),//, height: 1)),
-                      ],
-                    ),
-                    const SizedBox(height: 2 * gsf), // anti gsf
-                  ],
-                ),
+      Widget newChild = ListTile(
+        title: Row(
+          children: [
+            const SizedBox(width: 12 * gsf),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 2.5 * gsf), // anti gsf
+                  nameText,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(amountText, style: tsProd),//, height: 1)),
+                      Text(hourText, style: tsHour),//, height: 1)),
+                    ],
+                  ),
+                  const SizedBox(height: 2 * gsf), // anti gsf
+                ],
               ),
-              PopupMenuButton(
-                iconSize: 24 * gsf,
-                style: popupButtonStyle,
-                itemBuilder: (context) => popupEntries,
-                onSelected: (int value) {
-                  if (value == 0) {
-                    // edit meal
-                    Navigator.pushNamed(context, editMealRoute, arguments: meal.id);
-                  } else if (value == 1) {
-                    // edit product
-                    var prodName = product?.name;
-                    if (prodName != null) Navigator.pushNamed(context, editProductRoute, arguments: (prodName, false));
-                  } else if (value == 2) {
-                    // delete
-                    dataService.deleteMeal(meal.id);
-                  }
-                },
-              ),
-              const SizedBox(width: kIsWeb ? 6 * gsf : 0),
-            ],
-          ),
-          minVerticalPadding: 0,
-          visualDensity: const VisualDensity(vertical: -4, horizontal: 0),
-          contentPadding: EdgeInsets.zero,
+            ),
+            PopupMenuButton(
+              iconSize: 24 * gsf,
+              style: popupButtonStyle,
+              itemBuilder: (context) => popupEntries,
+              onSelected: (int value) {
+                if (value == 0) {
+                  // edit meal
+                  Navigator.pushNamed(context, editMealRoute, arguments: meal.id);
+                } else if (value == 1) {
+                  // edit product
+                  var prodName = product?.name;
+                  if (prodName != null) Navigator.pushNamed(context, editProductRoute, arguments: (prodName, false));
+                } else if (value == 2) {
+                  // delete
+                  dataService.deleteMeal(meal.id);
+                }
+              },
+            ),
+            const SizedBox(width: kIsWeb ? 6 * gsf : 0),
+          ],
         ),
+        minVerticalPadding: 0,
+        visualDensity: const VisualDensity(vertical: -4, horizontal: 0),
+        contentPadding: EdgeInsets.zero,
       );
+      
+      if (newDate) {
+        newChild = VisibilityDetector(
+          key: Key("Meal $childCount"),
+          onVisibilityChanged: (VisibilityInfo info) {
+            var nowdt = DateTime.now().getDateOnly();
+            var daysSince2020 = daysBetween(DateTime(2020), mealDate);
+            var nowSince2020 = daysBetween(DateTime(2020), nowdt);
+            // if (nowSince2020 != daysSince2020) return;
+            // if part of the top is concealed, the strip is considered partially visible
+            // if part of the bottom is concealed, the strip is considered fully visible
+            double topConcealed = info.visibleBounds.top / info.size.height;
+            double bottomVisible = info.visibleBounds.bottom / info.size.height;
+            double visibleFraction = 1 - topConcealed;
+            if (bottomVisible == 0 || info.visibleFraction == 0) visibleFraction = 0;
+          },
+          child: newChild,
+        );
+      }
+      
+      children.add(newChild);
       childCount++;
       newMealIndices[meal.id] = childCount - 3;
     }
@@ -463,7 +501,7 @@ class _MealListState extends State<MealList> {
     if (meals.isNotEmpty) {
       int daysSince1970 = daysBetween(d1970, lastHeader);
       newStripIndices[daysSince1970] = childCount;
-      children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince1970]!, now).$1);
+      children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince1970]!, now));
       childCount++;
     }
     
@@ -491,36 +529,47 @@ class _MealListState extends State<MealList> {
       height: 1 * gsf,
       thickness: 1 * gsf,
     );
-
-  (Widget, double, double) getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now) {
+  
+  Widget getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now) {
     // Convert date to natural string
     String text;
     int relativeDays = dateTime.difference(DateTime.now().getDateOnly()).inDays.abs();
-    DateTime now1 = DateTime.now();
-    double dur1 = 0;
+    
     if (relativeDays <= 7) {
       text = "${relativeDaysNatural(dateTime, now)} ($dateString)";
     } else {
       text = dateString;
-      dur1 = DateTime.now().difference(now1).inMicroseconds.toDouble();
     }
-    now1 = DateTime.now();
+    var daysSince2020 = daysBetween(DateTime(2020), dateTime);
     
-    Widget p = Padding(
+    return Padding(
       padding: const EdgeInsets.only(top: 3, bottom: 1.5) * gsf,
       // key: key,
-      child: Container(
-        color: const Color.fromARGB(255, 200, 200, 200),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0) * gsf,
-            child: Text(text, style: const TextStyle(fontSize: 15.5 * gsf)),
+      child: VisibilityDetector(
+        key: Key("Date strip $daysSince2020"),
+        onVisibilityChanged: (VisibilityInfo info) {
+          var nowdt = DateTime.now().getDateOnly();
+          var nowSince2020 = daysBetween(DateTime(2020), nowdt);
+          // if (nowSince2020 != daysSince2020) return;
+          // if part of the top is concealed, the strip is considered partially visible
+          // if part of the bottom is concealed, the strip is considered fully visible
+          double topConcealed = info.visibleBounds.top / info.size.height;
+          double bottomVisible = info.visibleBounds.bottom / info.size.height;
+          double visibleFraction = 1 - topConcealed;
+          if (bottomVisible == 0 || info.visibleFraction == 0) visibleFraction = 0;
+          // devtools.log("$daysSince2020: $visibleFraction");
+        },
+        child: Container(
+          color: const Color.fromARGB(255, 200, 200, 200),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0) * gsf,
+              child: Text(text, style: const TextStyle(fontSize: 15.5 * gsf)),
+            ),
           ),
         ),
       ),
     );
-    double dur2 = DateTime.now().difference(now1).inMicroseconds.toDouble();
-    return (p, dur1, dur2);
   }
   
   void _scrollToSelectedDateStrip(DateTime targetDate) {
@@ -579,8 +628,9 @@ class _MealListState extends State<MealList> {
       if (position.index > highestIndex) highestIndex = position.index;
     }
     int span = highestIndex - lowestIndex;
-    double lowIndex = lowestIndex + min(0.3 * span, 1);
-    double highIndex = highestIndex - min(0.3 * span, 6);
+    double lowIndex = lowestIndex + min(0.15 * span, 1);
+    double highIndex = highestIndex - (0.15 * span).clamp(0, 2);
+    
     if (mealIndex > lowIndex && mealIndex < highIndex) return;
     
     _scrollController.scrollTo(

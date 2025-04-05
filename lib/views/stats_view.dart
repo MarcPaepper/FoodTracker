@@ -39,7 +39,7 @@ enum CalculationMethod {
 class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixin {
   late final DataService _dataService;
   Map<Target, bool> _activeTargets = {};
-  bool _isLineGraph = false;
+  // bool _isLineGraph = false;
   TimeFrame _timeFrame = TimeFrame.day;
   CalculationMethod _calculationMethod = CalculationMethod.avg;
   bool includeEmptyDays = false;

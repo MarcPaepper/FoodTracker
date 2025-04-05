@@ -74,7 +74,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // devtools.log("Building AddMealBox");
+    
     return ListTile(
       //tileColor: Colors.green,
       minVerticalPadding: 0,
@@ -85,8 +85,9 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
             key: const Key("Invisible Container"),
             onVisibilityChanged: (info) {
               double fraction = info.visibleFraction;
+              if (info.visibleBounds.left > 0) return;
               if (info.visibleBounds.top > 0) fraction = 1.0;
-              stripVisibilityNotifier.value = fraction;
+              if (stripVisibilityNotifier.value != fraction) stripVisibilityNotifier.value = fraction;
               if (columnVisibilityNotifier.value > 0.0) fraction = 1;
               widget.onVisibilityChanged(fraction);
             },
