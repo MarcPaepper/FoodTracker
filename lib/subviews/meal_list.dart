@@ -17,6 +17,7 @@ import "../utility/data_logic.dart";
 import "../utility/text_logic.dart";
 import "../utility/theme.dart";
 import "../widgets/add_meal_box.dart";
+import "../widgets/expanding_sliver.dart";
 import "../widgets/loading_page.dart";
 
 import "dart:developer" as devtools show log;
@@ -62,12 +63,12 @@ class _MealListState extends State<MealList> {
   final ValueNotifier<double> _addMealVisibilityNotifier = ValueNotifier(1.0);
   late ValueNotifier<DateTime> dateTimeNotifier;
   
-  Map<int, int> stripIndices = {}; // Key: days since 1970, Value: index of the strip in the list
+  Map<int, int> stripIndices = {}; // Key: days since 2000, Value: index of the strip in the list
   Map<int, int> mealIndices = {}; // Key: meal id, Value: index of the meal in the list
   
   // final ValueNotifier<(int, double)> _topStripNotifier = ValueNotifier((-1, 0.0)); // Which strip is currently shown as a sticky header
-  final ValueNotifier<Map<int, double>> _visibleDaysNotifier = ValueNotifier({});
-  // Key: days since 2020 (positive if referring to the bottom most meal of the date, negative if reffering to the date strip), Value: visible fraction of the element
+  final ValueNotifier<Map<int, (double, VisibilityInfo)>> _visibleDaysNotifier = ValueNotifier({});
+  // Key: days since 2000 (positive if referring to the bottom most meal of the date, negative if reffering to the date strip), Value: visible fraction of the element
   
   @override
   void initState() {
@@ -118,41 +119,11 @@ class _MealListState extends State<MealList> {
         children.addAll(getMealTiles(context, dataService, widget.productsMap, widget.meals, widget.mealsMap, widget.loaded));
         
         return Column(
+          verticalDirection: VerticalDirection.up,
           children: [
-            MultiValueListenableBuilder( // search bar
-              listenables: [_addMealVisibilityNotifier],
-              builder: (context, values, child) {
-                double visibility = 1.0 - values[0];
-                if (_searchNotifier.value.isNotEmpty) visibility = 1.0;
-                
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).appBarTheme.backgroundColor,
-                  ),
-                  child: SearchField(
-                    textController: _searchController,
-                    hintText: 'Search meals',
-                    whiteMode: true,
-                    isDense: true,
-                    visibility: visibility,
-                    onChanged: (String value) {
-                      if (value != _searchNotifier.value) {
-                        _searchNotifier.value = value;
-                      }
-                    },
-                    foundMeals: _foundMealsNotifier.value,
-                    selectedMeal: _selectedMealNotifier.value,
-                    onMealSelected: (int mealId) {
-                      _selectedMealNotifier.value = mealId;
-                      int? mealIndex = mealIndices[mealId];
-                      if (mealIndex != null) _scrollMealIntoView(mealIndex);
-                    },
-                  ),
-                );
-              },
-            ),
             Expanded(
               child: Stack(
+                clipBehavior: Clip.hardEdge,
                 children: [
                   ScrollablePositionedList.builder( // meal list
                     itemCount: children.length,
@@ -165,14 +136,71 @@ class _MealListState extends State<MealList> {
                     padding: EdgeInsets.zero,
                   ),
                   // sticky header displaying the date of the highest visible meal
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      color: Colors.red,
-                      height: 0,
-                    ),
+                  ValueListenableBuilder(
+                    valueListenable: _visibleDaysNotifier,
+                    builder: (context, value, child) {
+                      double scrollProgress = 1.0;
+                      double widthProgress = 0.0;
+                      
+                      if (value.isEmpty) return const SizedBox.shrink();
+                      // find lowest absolute value in the map. if there is a lowest positive and negative value, use the negative one
+                      const high = 100000000;
+                      int lowestAbsKey = high;
+                      int refDate2000 = high;
+                      for (int key in value.keys) {
+                        if (key.abs() < lowestAbsKey.abs()) {
+                          lowestAbsKey = key;
+                        } else if (key.abs() == lowestAbsKey.abs()) {
+                          if (key < 0) lowestAbsKey = key;
+                        }
+                        
+                        if (key < 0 && key.abs() < refDate2000.abs()) {
+                          refDate2000 = key.abs();
+                        }
+                      }
+                      devtools.log("keys ${value.keys}, lowestAbsKey $lowestAbsKey");
+                      if (lowestAbsKey < 0) {
+                        // the lowest visible widget is a date strip
+                        widthProgress = _visibleDaysNotifier.value[lowestAbsKey]!.$1 * 16.0 / 19.0;
+                      } else {
+                        // the lowest visible widget is a meal
+                        var info = value[lowestAbsKey]!.$2;
+                        double concealedAtTop = info.visibleBounds.top;
+                        double visibleAtBottom = info.size.height - concealedAtTop;
+                        if (visibleAtBottom < (4.66 * gsf)) {
+                          if (refDate2000 == high) return const SizedBox.shrink();
+                          widthProgress = (16.0 + 3.0 * visibleAtBottom / (4.66 * gsf)) / 19.0;
+                        } else {
+                          scrollProgress = (visibleAtBottom - 6.0 * gsf) / (info.size.height - 6.0 * gsf);
+                          refDate2000 = lowestAbsKey.abs();
+                        }
+                      }
+                      
+                      // convert days since 2000 to datetime
+                      DateTime dateTime = DateTime(2000).add(Duration(days: refDate2000));
+                      // convert date to natural string
+                      String dateString = conditionallyRemoveYear(
+                        context,
+                        [dateTime],
+                        showWeekDay: true,
+                        removeYear: YearMode.ifCurrent,
+                      ).first;
+                      
+                      DateTime now = DateTime.now();
+                      int relativeDays = dateTime.difference(now.getDateOnly()).inDays.abs();
+                      String text;
+                      // if (relativeDays < 4) {
+                      //   text = relativeDaysNatural(dateTime, now);
+                      // } else {
+                        text = convertToNaturalDateString(dateTime, dateString);
+                      // }
+                      
+                      return ExpandingSliver(
+                        text: text,
+                        widthProgress: widthProgress,
+                        scrollProgress: scrollProgress,
+                      );
+                    },
                   ),
                   Positioned( // scroll to bottom button
                     bottom: 16.0 * gsf,
@@ -234,6 +262,38 @@ class _MealListState extends State<MealList> {
                   ),
                 ],
               ),
+            ),
+            MultiValueListenableBuilder( // search bar
+              listenables: [_addMealVisibilityNotifier],
+              builder: (context, values, child) {
+                double visibility = 1.0 - values[0];
+                if (_searchNotifier.value.isNotEmpty) visibility = 1.0;
+                
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).appBarTheme.backgroundColor,
+                  ),
+                  child: SearchField(
+                    textController: _searchController,
+                    hintText: 'Search meals',
+                    whiteMode: true,
+                    isDense: true,
+                    visibility: visibility,
+                    onChanged: (String value) {
+                      if (value != _searchNotifier.value) {
+                        _searchNotifier.value = value;
+                      }
+                    },
+                    foundMeals: _foundMealsNotifier.value,
+                    selectedMeal: _selectedMealNotifier.value,
+                    onMealSelected: (int mealId) {
+                      _selectedMealNotifier.value = mealId;
+                      int? mealIndex = mealIndices[mealId];
+                      if (mealIndex != null) _scrollMealIntoView(mealIndex);
+                    },
+                  ),
+                );
+              },
             ),
           ],
         );
@@ -319,14 +379,14 @@ class _MealListState extends State<MealList> {
     
     String locale = kIsWeb ? Localizations.localeOf(context).toString() : Platform.localeName;
     Map<int, DateTime> dates = {};
-    DateTime d1970 = DateTime(1970);
+    DateTime d2000 = DateTime(2000);
     int lastYear = 0, lastMonth = 0, lastDay = 0;
     for (Meal meal in meals) {
       var mealDate = meal.dateTime;
       if (mealDate.year == lastYear && mealDate.month == lastMonth && mealDate.day == lastDay) continue;
       mealDate = mealDate.getDateOnly();
-      var daysSince1970 = daysBetween(d1970, mealDate);
-      dates[daysSince1970] = mealDate;
+      var daysSince2000 = daysBetween(d2000, mealDate);
+      dates[daysSince2000] = mealDate;
       lastYear = mealDate.year;
       lastMonth = mealDate.month;
       lastDay = mealDate.day;
@@ -373,6 +433,7 @@ class _MealListState extends State<MealList> {
       ),
     ];
     
+    // List<Widget> newDateChildren = [];
     for (int i = meals.length - 1; i >= 0; i--) {
       final meal = meals[i];
       final pId = meal.productQuantity.productId;
@@ -389,10 +450,11 @@ class _MealListState extends State<MealList> {
         devtools.log('MealList: meals are not sorted by date');
       } else if (lastHeader.isAfter(mealDate)) {
         // meal belongs to an earlier date than current
-        int daysSince1970 = daysBetween(d1970, lastHeader);
-        newStripIndices[daysSince1970] = childCount;
-        var result = getDateStrip(locale, lastHeader, dateStrings[daysSince1970]!, now);
-        children.add(result);
+        // children.addAll(newDateChildren);
+        // newDateChildren = [];
+        int daysSince2000 = daysBetween(d2000, lastHeader);
+        newStripIndices[daysSince2000] = childCount;
+        children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince2000]!, now, childCount));
         childCount++;
         lastHeader = mealDate;
         newDate = true;
@@ -474,20 +536,47 @@ class _MealListState extends State<MealList> {
         contentPadding: EdgeInsets.zero,
       );
       
+      final int mealIndex = childCount;
+      
       if (newDate) {
         newChild = VisibilityDetector(
-          key: Key("Meal $childCount"),
+          key: Key("Meal $mealIndex"),
           onVisibilityChanged: (VisibilityInfo info) {
-            var nowdt = DateTime.now().getDateOnly();
-            var daysSince2020 = daysBetween(DateTime(2020), mealDate);
-            var nowSince2020 = daysBetween(DateTime(2020), nowdt);
-            // if (nowSince2020 != daysSince2020) return;
+            if (info.visibleBounds.left > 0) return;
+            var daysSince2000 = daysBetween(DateTime(2000), mealDate);
             // if part of the top is concealed, the strip is considered partially visible
             // if part of the bottom is concealed, the strip is considered fully visible
             double topConcealed = info.visibleBounds.top / info.size.height;
-            double bottomVisible = info.visibleBounds.bottom / info.size.height;
+            double bottomBound = info.visibleBounds.bottom;
             double visibleFraction = 1 - topConcealed;
-            if (bottomVisible == 0 || info.visibleFraction == 0) visibleFraction = 0;
+            if (bottomBound == 0 || info.visibleFraction == 0) visibleFraction = 0;
+            
+            // update the visible days map
+            if (visibleFraction > 0) {
+              if (_visibleDaysNotifier.value[daysSince2000]?.$1 != visibleFraction) {
+                _visibleDaysNotifier.value[daysSince2000] = (visibleFraction, info);
+                _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+              }
+            } else {
+              var positions = _itemPositionsListener.itemPositions.value;
+              int lowestIndex = 10000000;
+              int highestIndex = 0;
+              for (var position in positions) {
+                if (position.index < lowestIndex) lowestIndex = position.index;
+                if (position.index > highestIndex) highestIndex = position.index;
+              }
+              // check whether item is below or above the middle
+              
+              double middleIndex = (lowestIndex + highestIndex) / 2;
+              
+              devtools.log("index $mealIndex middle $middleIndex, min $lowestIndex, max $highestIndex");
+              // remove if the meal is above the middle
+              if (mealIndex > middleIndex) {
+                _visibleDaysNotifier.value.remove(daysSince2000);
+                _visibleDaysNotifier.value.remove(-daysSince2000);
+                _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+              }
+            }
           },
           child: newChild,
         );
@@ -499,9 +588,10 @@ class _MealListState extends State<MealList> {
     }
     
     if (meals.isNotEmpty) {
-      int daysSince1970 = daysBetween(d1970, lastHeader);
-      newStripIndices[daysSince1970] = childCount;
-      children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince1970]!, now));
+      // children.addAll(newDateChildren);
+      int daysSince2000 = daysBetween(d2000, lastHeader);
+      newStripIndices[daysSince2000] = childCount;
+      children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince2000]!, now, childCount));
       childCount++;
     }
     
@@ -530,37 +620,52 @@ class _MealListState extends State<MealList> {
       thickness: 1 * gsf,
     );
   
-  Widget getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now) {
-    // Convert date to natural string
-    String text;
-    int relativeDays = dateTime.difference(DateTime.now().getDateOnly()).inDays.abs();
-    
-    if (relativeDays <= 7) {
-      text = "${relativeDaysNatural(dateTime, now)} ($dateString)";
-    } else {
-      text = dateString;
-    }
-    var daysSince2020 = daysBetween(DateTime(2020), dateTime);
+  Widget getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now, int index) {
+    // convert date to natural string
+    String text = convertToNaturalDateString(dateTime, dateString, now);
+    var daysSince2000 = daysBetween(DateTime(2000), dateTime);
     
     return Padding(
       padding: const EdgeInsets.only(top: 3, bottom: 1.5) * gsf,
       // key: key,
       child: VisibilityDetector(
-        key: Key("Date strip $daysSince2020"),
+        key: Key("Date strip $daysSince2000"),
         onVisibilityChanged: (VisibilityInfo info) {
-          var nowdt = DateTime.now().getDateOnly();
-          var nowSince2020 = daysBetween(DateTime(2020), nowdt);
-          // if (nowSince2020 != daysSince2020) return;
           // if part of the top is concealed, the strip is considered partially visible
           // if part of the bottom is concealed, the strip is considered fully visible
           double topConcealed = info.visibleBounds.top / info.size.height;
           double bottomVisible = info.visibleBounds.bottom / info.size.height;
           double visibleFraction = 1 - topConcealed;
           if (bottomVisible == 0 || info.visibleFraction == 0) visibleFraction = 0;
-          // devtools.log("$daysSince2020: $visibleFraction");
+          
+          // update the visible days map
+          if (visibleFraction > 0) {
+            if (_visibleDaysNotifier.value[-daysSince2000]?.$1 != visibleFraction) {
+              _visibleDaysNotifier.value[-daysSince2000] = (visibleFraction, info);
+              _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+            }
+          } else {
+            var positions = _itemPositionsListener.itemPositions.value;
+            int lowestIndex = 10000000;
+            int highestIndex = 0;
+            for (var position in positions) {
+              if (position.index < lowestIndex) lowestIndex = position.index;
+              if (position.index > highestIndex) highestIndex = position.index;
+            }
+            
+            // check whether item is below or above the middle
+            double middleIndex = (lowestIndex + highestIndex) / 2;
+            devtools.log("indDS $index middle $middleIndex, min $lowestIndex, max $highestIndex");
+            
+            // remove from the map
+            _visibleDaysNotifier.value.remove(-daysSince2000);
+            if (index < middleIndex) _visibleDaysNotifier.value.remove(daysSince2000);
+            _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+          }
         },
         child: Container(
           color: const Color.fromARGB(255, 200, 200, 200),
+          height: 32 * gsf,
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0) * gsf,
@@ -573,20 +678,20 @@ class _MealListState extends State<MealList> {
   }
   
   void _scrollToSelectedDateStrip(DateTime targetDate) {
-    // convert date to days since 1970
-    int daysSince1970 = daysBetween(DateTime(1970), targetDate);
-    devtools.log("Trying to scroll to $daysSince1970");
+    // convert date to days since 2000
+    int daysSince2000 = daysBetween(DateTime(2000), targetDate);
+    devtools.log("Trying to scroll to $daysSince2000");
     // find the nearest date in the stripKeys after the target date
     int? closestDate;
     for (int date in stripIndices.keys) {
-      if (date >= daysSince1970 && (closestDate == null || date < closestDate)) {
+      if (date >= daysSince2000 && (closestDate == null || date < closestDate)) {
         closestDate = date;
       }
     }
     // if none was found, find the nearest date before the target date
     if (closestDate == 0) {
       for (int date in stripIndices.keys) {
-        if (date < daysSince1970 && (closestDate == null || date > closestDate)) {
+        if (date < daysSince2000 && (closestDate == null || date > closestDate)) {
           closestDate = date;
         }
       }

@@ -135,6 +135,21 @@ String _truncateZeros(String text) {
 
 String truncateZeros(dynamic number) => _truncateZeros(number.toString());
 
+String convertToNaturalDateString(DateTime dateTime, String dateString, [DateTime? now]) {
+  now ??= DateTime.now();
+  
+  // Convert date to natural string
+  String text;
+  int relativeDays = dateTime.difference(now.getDateOnly()).inDays.abs();
+  
+  if (relativeDays <= 7) {
+    text = "${relativeDaysNatural(dateTime, now)} ($dateString)";
+  } else {
+    text = dateString;
+  }
+  return text;
+}
+
 // text should be yesterday / today / tomorrow / x days ago / in x days
 String relativeDaysNatural(DateTime date, [DateTime? now]) {
   date = date.getDateOnly();
