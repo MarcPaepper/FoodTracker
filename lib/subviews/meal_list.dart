@@ -186,8 +186,8 @@ class _MealListState extends State<MealList> {
                         removeYear: YearMode.ifCurrent,
                       ).first;
                       
-                      DateTime now = DateTime.now();
-                      int relativeDays = dateTime.difference(now.getDateOnly()).inDays.abs();
+                      // DateTime now = DateTime.now();
+                      // int relativeDays = dateTime.difference(now.getDateOnly()).inDays.abs();
                       String text;
                       // if (relativeDays < 4) {
                       //   text = relativeDaysNatural(dateTime, now);
