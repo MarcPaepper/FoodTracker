@@ -67,7 +67,7 @@ class _MealListState extends State<MealList> {
   Map<int, int> mealIndices = {}; // Key: meal id, Value: index of the meal in the list
   
   // final ValueNotifier<(int, double)> _topStripNotifier = ValueNotifier((-1, 0.0)); // Which strip is currently shown as a sticky header
-  final ValueNotifier<Map<int, (double, VisibilityInfo)>> _visibleDaysNotifier = ValueNotifier({});
+  final ValueNotifier<Map<int, (double, VisibilityInfo?)>> _visibleDaysNotifier = ValueNotifier({});
   // Key: days since 2000 (positive if referring to the bottom most meal of the date, negative if reffering to the date strip), Value: visible fraction of the element
   
   @override
@@ -158,21 +158,26 @@ class _MealListState extends State<MealList> {
                           refDate2000 = key.abs();
                         }
                       }
-                      devtools.log("keys ${value.keys}, lowestAbsKey $lowestAbsKey");
+                      
                       if (lowestAbsKey < 0) {
                         // the lowest visible widget is a date strip
                         widthProgress = _visibleDaysNotifier.value[lowestAbsKey]!.$1 * 16.0 / 19.0;
                       } else {
                         // the lowest visible widget is a meal
                         var info = value[lowestAbsKey]!.$2;
-                        double concealedAtTop = info.visibleBounds.top;
-                        double visibleAtBottom = info.size.height - concealedAtTop;
-                        if (visibleAtBottom < (4.66 * gsf)) {
-                          if (refDate2000 == high) return const SizedBox.shrink();
-                          widthProgress = (16.0 + 3.0 * visibleAtBottom / (4.66 * gsf)) / 19.0;
-                        } else {
-                          scrollProgress = (visibleAtBottom - 6.0 * gsf) / (info.size.height - 6.0 * gsf);
+                        
+                        if (info == null) {
                           refDate2000 = lowestAbsKey.abs();
+                        } else {
+                          double concealedAtTop = info.visibleBounds.top;
+                          double visibleAtBottom = info.size.height - concealedAtTop;
+                          if (visibleAtBottom < (4.66 * gsf)) {
+                            if (refDate2000 == high) return const SizedBox.shrink();
+                            widthProgress = (16.0 + 3.0 * visibleAtBottom / (4.66 * gsf)) / 19.0;
+                          } else {
+                            scrollProgress = (visibleAtBottom - 6.0 * gsf) / (info.size.height - 6.0 * gsf);
+                            refDate2000 = lowestAbsKey.abs();
+                          }
                         }
                       }
                       
@@ -569,7 +574,6 @@ class _MealListState extends State<MealList> {
               
               double middleIndex = (lowestIndex + highestIndex) / 2;
               
-              devtools.log("index $mealIndex middle $middleIndex, min $lowestIndex, max $highestIndex");
               // remove if the meal is above the middle
               if (mealIndex > middleIndex) {
                 _visibleDaysNotifier.value.remove(daysSince2000);
@@ -642,7 +646,11 @@ class _MealListState extends State<MealList> {
           if (visibleFraction > 0) {
             if (_visibleDaysNotifier.value[-daysSince2000]?.$1 != visibleFraction) {
               _visibleDaysNotifier.value[-daysSince2000] = (visibleFraction, info);
+              if (_visibleDaysNotifier.value[daysSince2000] == null) {
+                _visibleDaysNotifier.value[daysSince2000] = (1, null);
+              }
               _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+              // devtools.log("new visible days: ${_visibleDaysNotifier.value.map((key, value) => MapEntry(key, value.$1))}");
             }
           } else {
             var positions = _itemPositionsListener.itemPositions.value;
@@ -655,12 +663,12 @@ class _MealListState extends State<MealList> {
             
             // check whether item is below or above the middle
             double middleIndex = (lowestIndex + highestIndex) / 2;
-            devtools.log("indDS $index middle $middleIndex, min $lowestIndex, max $highestIndex");
             
             // remove from the map
             _visibleDaysNotifier.value.remove(-daysSince2000);
             if (index < middleIndex) _visibleDaysNotifier.value.remove(daysSince2000);
             _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+            // devtools.log("removed visible days: ${_visibleDaysNotifier.value.map((key, value) => MapEntry(key, value.$1))}");
           }
         },
         child: Container(
