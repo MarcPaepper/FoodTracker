@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import '../constants/ui.dart';
 import 'multi_opacity.dart';
 
-import 'dart:developer' as devtools show log;
+//import 'dart:developer' as devtools show log;
 
 class SearchField extends StatefulWidget {
   final TextEditingController textController;
