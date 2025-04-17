@@ -110,6 +110,7 @@ class _MealListState extends State<MealList> {
             onVisibilityChanged: (visibility) {
               if (_addMealVisibilityNotifier.value != visibility) {
                 _addMealVisibilityNotifier.value = visibility;
+                devtools.log("AddMealBox visibility: $visibility");
               }
             },
           ),
@@ -161,7 +162,7 @@ class _MealListState extends State<MealList> {
                       
                       if (lowestAbsKey < 0) {
                         // the lowest visible widget is a date strip
-                        widthProgress = _visibleDaysNotifier.value[lowestAbsKey]!.$1 * 16.0 / 19.0;
+                        widthProgress = _visibleDaysNotifier.value[lowestAbsKey]!.$1 * 17.5 / 19.0;
                       } else {
                         // the lowest visible widget is a meal
                         var info = value[lowestAbsKey]!.$2;
@@ -171,18 +172,18 @@ class _MealListState extends State<MealList> {
                         } else {
                           double concealedAtTop = info.visibleBounds.top;
                           double visibleAtBottom = info.size.height - concealedAtTop;
-                          if (visibleAtBottom < (4.66 * gsf)) {
+                          if (visibleAtBottom < (2.5 * gsf)) {
                             if (refDate2000 == high) return const SizedBox.shrink();
-                            widthProgress = (16.0 + 3.0 * visibleAtBottom / (4.66 * gsf)) / 19.0;
+                            widthProgress = (17.5 + 1.5 * visibleAtBottom / (2.5 * gsf)) / 19.0;
                           } else {
-                            scrollProgress = (visibleAtBottom - 6.0 * gsf) / (info.size.height - 6.0 * gsf);
+                            scrollProgress = (visibleAtBottom - 2.5 * gsf) / (info.size.height - 2.5 * gsf);
                             refDate2000 = lowestAbsKey.abs();
                           }
                         }
                       }
                       
                       // convert days since 2000 to datetime
-                      DateTime dateTime = DateTime(2000).add(Duration(days: refDate2000));
+                      DateTime dateTime = DateTime(2000).add(Duration(days: refDate2000)).getDateOnly();
                       // convert date to natural string
                       String dateString = conditionallyRemoveYear(
                         context,
@@ -197,7 +198,7 @@ class _MealListState extends State<MealList> {
                       // if (relativeDays < 4) {
                       //   text = relativeDaysNatural(dateTime, now);
                       // } else {
-                        text = convertToNaturalDateString(dateTime, dateString);
+                      text = convertToNaturalDateString(dateTime, dateString);
                       // }
                       
                       return ExpandingSliver(
@@ -576,9 +577,11 @@ class _MealListState extends State<MealList> {
               
               // remove if the meal is above the middle
               if (mealIndex > middleIndex) {
-                _visibleDaysNotifier.value.remove(daysSince2000);
-                _visibleDaysNotifier.value.remove(-daysSince2000);
+                // remove all entries at or below daysSince2000
+                _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() <= daysSince2000);
                 _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+              } else if (_visibleDaysNotifier.value.keys.any((days) => days.abs() > daysSince2000)) {
+                _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() > daysSince2000);
               }
             }
           },
@@ -664,9 +667,18 @@ class _MealListState extends State<MealList> {
             // check whether item is below or above the middle
             double middleIndex = (lowestIndex + highestIndex) / 2;
             
+            if (index < middleIndex) {
+              // strip exited the bottom
+              // remove all entries at or above daysSince2000
+              _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() >= daysSince2000);
+            } else {
+              // strip exited the top
+              // remove all entries below daysSince2000
+              _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() < daysSince2000);
+            }
+            
             // remove from the map
             _visibleDaysNotifier.value.remove(-daysSince2000);
-            if (index < middleIndex) _visibleDaysNotifier.value.remove(daysSince2000);
             _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
             // devtools.log("removed visible days: ${_visibleDaysNotifier.value.map((key, value) => MapEntry(key, value.$1))}");
           }

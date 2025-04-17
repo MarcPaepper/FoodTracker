@@ -84,11 +84,15 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
           VisibilityDetector(
             key: const Key("Invisible Container"),
             onVisibilityChanged: (info) {
-              double fraction = info.visibleFraction;
-              if (info.visibleBounds.left > 0) return;
+              // double fraction = info.visibleFraction;
+              // if (info.visibleBounds.left > 0) return;
+              // calculate the fraction how much of the strip is visible vertically, so divide the height of the visible bounds by the height of the container
+              double fraction = info.visibleBounds.height / info.size.height;
+              fraction = fraction.clamp(0.0, 1.0);
               if (info.visibleBounds.top > 0) fraction = 1.0;
               if (stripVisibilityNotifier.value != fraction) stripVisibilityNotifier.value = fraction;
               if (columnVisibilityNotifier.value > 0.0) fraction = 1;
+              devtools.log("Visibility info: $info");
               widget.onVisibilityChanged(fraction);
             },
             child: Container(
