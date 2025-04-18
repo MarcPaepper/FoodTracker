@@ -110,7 +110,6 @@ class _MealListState extends State<MealList> {
             onVisibilityChanged: (visibility) {
               if (_addMealVisibilityNotifier.value != visibility) {
                 _addMealVisibilityNotifier.value = visibility;
-                devtools.log("AddMealBox visibility: $visibility");
               }
             },
           ),
@@ -689,7 +688,17 @@ class _MealListState extends State<MealList> {
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0) * gsf,
-              child: Text(text, style: const TextStyle(fontSize: 15.5 * gsf)),
+              child: ValueListenableBuilder(
+                valueListenable: _visibleDaysNotifier,
+                builder: (context, value, child) {
+                  double visibleFraction = value[-daysSince2000]?.$1 ?? 1.0;
+                  if (visibleFraction > 0 && visibleFraction < 1.0) {
+                    return const Text("");
+                  }
+                  return Text(text, style: const TextStyle(fontSize: 15.5 * gsf));
+                },
+                child: Text(text, style: const TextStyle(fontSize: 15.5 * gsf))
+              ),
             ),
           ),
         ),

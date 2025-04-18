@@ -92,7 +92,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
               if (info.visibleBounds.top > 0) fraction = 1.0;
               if (stripVisibilityNotifier.value != fraction) stripVisibilityNotifier.value = fraction;
               if (columnVisibilityNotifier.value > 0.0) fraction = 1;
-              devtools.log("Visibility info: $info");
+              
               widget.onVisibilityChanged(fraction);
             },
             child: Container(
