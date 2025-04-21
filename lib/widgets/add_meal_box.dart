@@ -23,7 +23,7 @@ class AddMealBox extends StatefulWidget {
   final Function(DateTime) onDateTimeChanged;
   final Map<int, Product> productsMap;
   final Function() onScrollButtonClicked;
-  final Function(double) onVisibilityChanged;
+  final Function((double, bool)) onVisibilityChanged;
   
   const AddMealBox({
     // required this.copyDateTime,
@@ -49,6 +49,7 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
   final List<FocusNode> ingredientDropdownFocusNodes = [];
   final ValueNotifier<double> stripVisibilityNotifier = ValueNotifier(0.0);
   final ValueNotifier<double> columnVisibilityNotifier = ValueNotifier(0.0);
+  final ValueNotifier<bool> topVisibleNotifier = ValueNotifier(true);
     
   final _dataService = DataService.current();
   
@@ -79,122 +80,118 @@ class _AddMealBoxState extends State<AddMealBox> with AutomaticKeepAliveClientMi
       //tileColor: Colors.green,
       minVerticalPadding: 0,
       contentPadding: const EdgeInsets.all(0.0),
-      title: Stack(
-        children: [
-          VisibilityDetector(
-            key: const Key("Invisible Container"),
-            onVisibilityChanged: (info) {
-              // double fraction = info.visibleFraction;
-              // if (info.visibleBounds.left > 0) return;
-              // calculate the fraction how much of the strip is visible vertically, so divide the height of the visible bounds by the height of the container
-              double fraction = info.visibleBounds.height / info.size.height;
-              fraction = fraction.clamp(0.0, 1.0);
-              if (info.visibleBounds.top > 0) fraction = 1.0;
-              if (stripVisibilityNotifier.value != fraction) stripVisibilityNotifier.value = fraction;
-              if (columnVisibilityNotifier.value > 0.0) fraction = 1;
-              
-              widget.onVisibilityChanged(fraction);
-            },
-            child: Container(
-              height: 100 * gsf,
+      title: VisibilityDetector(
+        key: const Key("Add Meal Box"),
+        onVisibilityChanged: (info) {
+          // calculate how many pixels are visible
+          double fraction = info.visibleBounds.height / (100 * gsf);
+          if (fraction > 1) fraction = 1;
+          
+          // check whether part of the top is concealed
+          bool topHidden = info.visibleBounds.top > 0;
+          if (topHidden) fraction = 1;
+          
+          if (fraction != stripVisibilityNotifier.value) stripVisibilityNotifier.value = fraction;
+          if (fraction != columnVisibilityNotifier.value) columnVisibilityNotifier.value = fraction;
+          if ((!topHidden) != topVisibleNotifier.value) topVisibleNotifier.value = !topHidden;
+          
+          widget.onVisibilityChanged((fraction, !topHidden));
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container( // New Meal strip
+              decoration: const BoxDecoration(
+                // color: Color.fromARGB(255, 200, 200, 200),
+                color: Color.fromARGB(255, 197, 176, 202),
+              ),
+              child: const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 5 * gsf),
+                  child: Text("New Meal"),
+                ),
+              ),
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container( // New Meal strip
-                decoration: const BoxDecoration(
-                  // color: Color.fromARGB(255, 200, 200, 200),
-                  color: Color.fromARGB(255, 197, 176, 202),
-                ),
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 5 * gsf),
-                    child: Text("New Meal"),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14 * gsf),
-              Padding( // daily targets box
-                padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
-                child: MultiValueListenableBuilder(
-                  listenables: [widget.dateTimeNotifier, ingredientsNotifier],
-                  builder: (context, values, child) {
-                    DateTime dateTime = values[0];
-                    List<(ProductQuantity, Color)> ingredients = values[1];
-                    
-                    return DailyTargetsBox(
-                      dateTime,
-                      ingredients,
-                      null,
-                      (newIngredients) => ingredientsNotifier.value = newIngredients,
-                      FoldMode.startUnfolded,
-                      false,
-                      false,
-                    );
-                  },
-                ),
-              ),
-              VisibilityDetector(
-                key: const Key("Add Meal Column"),
-                onVisibilityChanged: (info) {
-                  double fraction = info.visibleFraction;
-                  columnVisibilityNotifier.value = fraction;
-                  fraction = fraction > 0 ? 1 : stripVisibilityNotifier.value;
-                  widget.onVisibilityChanged(fraction);
+            const SizedBox(height: 14 * gsf),
+            Padding( // daily targets box
+              padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+              child: MultiValueListenableBuilder(
+                listenables: [widget.dateTimeNotifier, ingredientsNotifier],
+                builder: (context, values, child) {
+                  DateTime dateTime = values[0];
+                  List<(ProductQuantity, Color)> ingredients = values[1];
+                  
+                  return DailyTargetsBox(
+                    dateTime,
+                    ingredients,
+                    null,
+                    (newIngredients) => ingredientsNotifier.value = newIngredients,
+                    FoldMode.startUnfolded,
+                    false,
+                    false,
+                  );
                 },
-                child: Column(
-                  children: [
-                    const SizedBox(height: 14 * gsf),
-                    Padding( // date and time selectors
-                      padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _buildScrollButton(
-                            widget.dateTimeNotifier,
-                          ),
-                          Expanded(
-                            child: DateAndTimeTable(
-                              dateTimeNotifier: widget.dateTimeNotifier,
-                              updateDateTime:   updateDateTime,
-                              scrollController: _scrollController,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6 * gsf),
-                    Padding( // food box
-                      padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
-                      child: ValueListenableBuilder(
-                        valueListenable: widget.dateTimeNotifier,
-                        builder: (context, dateTime, child) {
-                          return FoodBox(
-                            productsMap: widget.productsMap,
-                            ingredientsNotifier: ingredientsNotifier,
-                            ingredientAmountControllers: ingredientAmountControllers,
-                            ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
-                            requestIngredientFocus: _requestIngredientFocus,
-                            refDate: dateTime,
-                          );
-                        }
-                      ),
-                    ),
-                    const SizedBox(height: 12 * gsf),
-                    ValueListenableBuilder(
-                      valueListenable: ingredientsNotifier,
-                      builder: (context, ingredients, child) {
-                        return _buildAddMealButton(context, ingredients.isNotEmpty);
-                      },
-                    ),
-                  ],
-                ),
               ),
-            ],
-          ),
-        ],
+            ),
+            VisibilityDetector(
+              key: const Key("Add Meal Column"),
+              onVisibilityChanged: (info) {
+                double fraction = info.visibleFraction;
+                fraction = fraction > 0 ? 1 : stripVisibilityNotifier.value;
+                if (columnVisibilityNotifier.value != fraction) columnVisibilityNotifier.value = fraction;
+                widget.onVisibilityChanged((fraction, topVisibleNotifier.value));
+              },
+              child: Column(
+                children: [
+                  const SizedBox(height: 14 * gsf),
+                  Padding( // date and time selectors
+                    padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildScrollButton(
+                          widget.dateTimeNotifier,
+                        ),
+                        Expanded(
+                          child: DateAndTimeTable(
+                            dateTimeNotifier: widget.dateTimeNotifier,
+                            updateDateTime:   updateDateTime,
+                            scrollController: _scrollController,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6 * gsf),
+                  Padding( // food box
+                    padding: const EdgeInsets.symmetric(horizontal: 12 * gsf),
+                    child: ValueListenableBuilder(
+                      valueListenable: widget.dateTimeNotifier,
+                      builder: (context, dateTime, child) {
+                        return FoodBox(
+                          productsMap: widget.productsMap,
+                          ingredientsNotifier: ingredientsNotifier,
+                          ingredientAmountControllers: ingredientAmountControllers,
+                          ingredientDropdownFocusNodes: ingredientDropdownFocusNodes,
+                          requestIngredientFocus: _requestIngredientFocus,
+                          refDate: dateTime,
+                        );
+                      }
+                    ),
+                  ),
+                  const SizedBox(height: 12 * gsf),
+                  ValueListenableBuilder(
+                    valueListenable: ingredientsNotifier,
+                    builder: (context, ingredients, child) {
+                      return _buildAddMealButton(context, ingredients.isNotEmpty);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

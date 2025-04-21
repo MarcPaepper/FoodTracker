@@ -60,7 +60,8 @@ class _MealListState extends State<MealList> {
   final ValueNotifier<int?> _selectedMealNotifier = ValueNotifier(null); // If searching, contains the id of the highlighted meal
   final TextEditingController _searchController = TextEditingController();
   final ValueNotifier<String> _searchNotifier = ValueNotifier("");
-  final ValueNotifier<double> _addMealVisibilityNotifier = ValueNotifier(1.0);
+  final ValueNotifier<(double, bool)> _addMealVisibilityNotifier = ValueNotifier((1.0,  true)); //double = fraction of top 100 pixels that are visible, bool = whether the top is visible
+  final ValueNotifier<DateTime?> _scrollUpNotifier = ValueNotifier(null); // The datetime which the scroll to date button was pressed
   late ValueNotifier<DateTime> dateTimeNotifier;
   
   Map<int, int> stripIndices = {}; // Key: days since 2000, Value: index of the strip in the list
@@ -100,16 +101,19 @@ class _MealListState extends State<MealList> {
         _searchNotifier,
         _selectedMealNotifier,
       ],
-      builder: (context, value, child) {
+      builder: (context, values, child) {
         List<Widget> children = [
           AddMealBox(
             dateTimeNotifier: dateTimeNotifier,
             onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
             productsMap: widget.productsMap ?? {},
-            onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
-            onVisibilityChanged: (visibility) {
-              if (_addMealVisibilityNotifier.value != visibility) {
-                _addMealVisibilityNotifier.value = visibility;
+            onScrollButtonClicked: () {
+              _scrollUpNotifier.value = DateTime.now();
+              _scrollToSelectedDateStrip(dateTimeNotifier.value);
+            },
+            onVisibilityChanged: (visibilityInfo) {
+              if (_addMealVisibilityNotifier.value != visibilityInfo) {
+                _addMealVisibilityNotifier.value = visibilityInfo;
               }
             },
           ),
@@ -136,18 +140,31 @@ class _MealListState extends State<MealList> {
                     padding: EdgeInsets.zero,
                   ),
                   // sticky header displaying the date of the highest visible meal
-                  ValueListenableBuilder(
-                    valueListenable: _visibleDaysNotifier,
-                    builder: (context, value, child) {
+                  MultiValueListenableBuilder(
+                    listenables: [
+                      _visibleDaysNotifier,
+                      _addMealVisibilityNotifier,
+                    ],
+                    builder: (context, values, child) {
                       double scrollProgress = 1.0;
                       double widthProgress = 0.0;
                       
-                      if (value.isEmpty) return const SizedBox.shrink();
+                      if (values[0].isEmpty) return const SizedBox.shrink(); // if there are no visible days, show nothing
+                      if (!values[1].$2) {
+                         // If the user scrolled so far down, that the top of the add meal box is not fully visible anymore
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _visibleDaysNotifier.value = {};
+                        });
+                        
+                        return const SizedBox.shrink();
+                      }
+                      
                       // find lowest absolute value in the map. if there is a lowest positive and negative value, use the negative one
+                      
                       const high = 100000000;
                       int lowestAbsKey = high;
                       int refDate2000 = high;
-                      for (int key in value.keys) {
+                      for (int key in values[0].keys) {
                         if (key.abs() < lowestAbsKey.abs()) {
                           lowestAbsKey = key;
                         } else if (key.abs() == lowestAbsKey.abs()) {
@@ -164,7 +181,7 @@ class _MealListState extends State<MealList> {
                         widthProgress = _visibleDaysNotifier.value[lowestAbsKey]!.$1 * 17.5 / 19.0;
                       } else {
                         // the lowest visible widget is a meal
-                        var info = value[lowestAbsKey]!.$2;
+                        var info = values[0][lowestAbsKey]!.$2;
                         
                         if (info == null) {
                           refDate2000 = lowestAbsKey.abs();
@@ -271,7 +288,7 @@ class _MealListState extends State<MealList> {
             MultiValueListenableBuilder( // search bar
               listenables: [_addMealVisibilityNotifier],
               builder: (context, values, child) {
-                double visibility = 1.0 - values[0];
+                double visibility = 1.0 - values[0].$1;
                 if (_searchNotifier.value.isNotEmpty) visibility = 1.0;
                 
                 return Container(
@@ -434,6 +451,12 @@ class _MealListState extends State<MealList> {
         value: 2,
         height: 44 * gsf,
         padding: EdgeInsets.only(left: 12.0, right: 12.3),
+        child: Text("Copy datetime", style: tsNormal),
+      ),
+      PopupMenuItem(
+        value: 3,
+        height: 44 * gsf,
+        padding: EdgeInsets.only(left: 12.0, right: 12.3),
         child: Text("Delete meal", style: tsNormal),
       ),
     ];
@@ -528,6 +551,15 @@ class _MealListState extends State<MealList> {
                   var prodName = product?.name;
                   if (prodName != null) Navigator.pushNamed(context, editProductRoute, arguments: (prodName, false));
                 } else if (value == 2) {
+                  // copy datetime to notifier
+                  dateTimeNotifier.value = meal.dateTime;
+                  // jump to bottom of the list
+                  _scrollController.scrollTo(
+                    index: 0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                } else if (value == 3) {
                   // delete
                   dataService.deleteMeal(meal.id);
                 }
@@ -652,7 +684,6 @@ class _MealListState extends State<MealList> {
                 _visibleDaysNotifier.value[daysSince2000] = (1, null);
               }
               _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
-              // devtools.log("new visible days: ${_visibleDaysNotifier.value.map((key, value) => MapEntry(key, value.$1))}");
             }
           } else {
             var positions = _itemPositionsListener.itemPositions.value;
@@ -666,7 +697,13 @@ class _MealListState extends State<MealList> {
             // check whether item is below or above the middle
             double middleIndex = (lowestIndex + highestIndex) / 2;
             
-            if (index < middleIndex) {
+            
+            double? difference;
+            if (_scrollUpNotifier.value != null) {
+              difference = _scrollUpNotifier.value!.difference(DateTime.now()).inMilliseconds.toDouble() / 1000.0;
+            }
+            
+            if (index < middleIndex || (difference != null && difference < 1.5)) {
               // strip exited the bottom
               // remove all entries at or above daysSince2000
               _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() >= daysSince2000);
@@ -679,10 +716,9 @@ class _MealListState extends State<MealList> {
             // remove from the map
             _visibleDaysNotifier.value.remove(-daysSince2000);
             _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
-            // devtools.log("removed visible days: ${_visibleDaysNotifier.value.map((key, value) => MapEntry(key, value.$1))}");
           }
         },
-        child: Container(
+        child: Container( // floating date sliver
           color: const Color.fromARGB(255, 200, 200, 200),
           height: 32 * gsf,
           child: Center(
@@ -748,6 +784,7 @@ class _MealListState extends State<MealList> {
     _scrollController.scrollTo(
       index: scrollToIndex,
       duration: const Duration(milliseconds: 1000),
+      // curve: Curves.easeOut,
       curve: Curves.easeOut,
     );
   }
