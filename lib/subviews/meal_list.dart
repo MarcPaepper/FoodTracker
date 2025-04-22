@@ -61,15 +61,15 @@ class _MealListState extends State<MealList> {
   final TextEditingController _searchController = TextEditingController();
   final ValueNotifier<String> _searchNotifier = ValueNotifier("");
   final ValueNotifier<(double, bool)> _addMealVisibilityNotifier = ValueNotifier((1.0,  true)); //double = fraction of top 100 pixels that are visible, bool = whether the top is visible
-  final ValueNotifier<DateTime?> _scrollUpNotifier = ValueNotifier(null); // The datetime which the scroll to date button was pressed
+  final ValueNotifier<(DateTime, bool)?> _scrollNotifier = ValueNotifier(null); // The datetime which the scroll to date button was pressed + whether it was the scroll up button (true) or the scroll down button (false)
   late ValueNotifier<DateTime> dateTimeNotifier;
   
   Map<int, int> stripIndices = {}; // Key: days since 2000, Value: index of the strip in the list
   Map<int, int> mealIndices = {}; // Key: meal id, Value: index of the meal in the list
   
-  // final ValueNotifier<(int, double)> _topStripNotifier = ValueNotifier((-1, 0.0)); // Which strip is currently shown as a sticky header
   final ValueNotifier<Map<int, (double, VisibilityInfo?)>> _visibleDaysNotifier = ValueNotifier({});
   // Key: days since 2000 (positive if referring to the bottom most meal of the date, negative if reffering to the date strip), Value: visible fraction of the element
+  final ValueNotifier<List<int>> _allDaysNotifier = ValueNotifier([]);
   
   @override
   void initState() {
@@ -107,10 +107,7 @@ class _MealListState extends State<MealList> {
             dateTimeNotifier: dateTimeNotifier,
             onDateTimeChanged: (newDateTime) => Future.delayed(const Duration(milliseconds: 100), () => AsyncProvider.changeCompDT(newDateTime)),
             productsMap: widget.productsMap ?? {},
-            onScrollButtonClicked: () {
-              _scrollUpNotifier.value = DateTime.now();
-              _scrollToSelectedDateStrip(dateTimeNotifier.value);
-            },
+            onScrollButtonClicked: () => _scrollToSelectedDateStrip(dateTimeNotifier.value),
             onVisibilityChanged: (visibilityInfo) {
               if (_addMealVisibilityNotifier.value != visibilityInfo) {
                 _addMealVisibilityNotifier.value = visibilityInfo;
@@ -261,11 +258,19 @@ class _MealListState extends State<MealList> {
                                       foregroundColor: WidgetStateProperty.all(const Color.fromARGB(255, 41, 1, 185)),
                                     ),
                                     onPressed: () {
+                                      // set notifier
+                                      _scrollNotifier.value = (DateTime.now().add(const Duration(seconds: 5)), false);
                                       _scrollController.scrollTo(
                                         index: 0,
                                         duration: const Duration(milliseconds: 500),
                                         curve: Curves.easeInOut,
-                                      );
+                                      ).whenComplete(() {
+                                        _scrollNotifier.value = (DateTime.now(), false);
+                                        // reset after 5 seconds
+                                        Future.delayed(const Duration(seconds: 5), () {
+                                          _scrollNotifier.value = null;
+                                        });
+                                      });
                                     },
                                     child: MultiOpacity(
                                       depth: 3,
@@ -330,6 +335,7 @@ class _MealListState extends State<MealList> {
     if (!loaded) return const [LoadingPage()];
     List<Widget> children = [];
     int childCount = 2;
+    List<int> newDays = [];
     Map<int, int> newStripIndices = {};
     Map<int, int> newMealIndices = {};                                                                                                   
     DateTime lastHeader = DateTime(0);
@@ -482,6 +488,7 @@ class _MealListState extends State<MealList> {
         // newDateChildren = [];
         int daysSince2000 = daysBetween(d2000, lastHeader);
         newStripIndices[daysSince2000] = childCount;
+        newDays.add(daysSince2000);
         children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince2000]!, now, childCount));
         childCount++;
         lastHeader = mealDate;
@@ -591,8 +598,10 @@ class _MealListState extends State<MealList> {
             // update the visible days map
             if (visibleFraction > 0) {
               if (_visibleDaysNotifier.value[daysSince2000]?.$1 != visibleFraction) {
-                _visibleDaysNotifier.value[daysSince2000] = (visibleFraction, info);
-                _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+                Map<int, (double, VisibilityInfo?)> visibleDays = checkContinuity(daysSince2000, _visibleDaysNotifier.value);
+                
+                visibleDays[daysSince2000] = (visibleFraction, info);
+                _visibleDaysNotifier.value = Map.from(visibleDays);
               }
             } else {
               var positions = _itemPositionsListener.itemPositions.value;
@@ -613,6 +622,7 @@ class _MealListState extends State<MealList> {
                 _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
               } else if (_visibleDaysNotifier.value.keys.any((days) => days.abs() > daysSince2000)) {
                 _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() > daysSince2000);
+                _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
               }
             }
           },
@@ -629,6 +639,7 @@ class _MealListState extends State<MealList> {
       // children.addAll(newDateChildren);
       int daysSince2000 = daysBetween(d2000, lastHeader);
       newStripIndices[daysSince2000] = childCount;
+      newDays.add(daysSince2000);
       children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince2000]!, now, childCount));
       childCount++;
     }
@@ -640,6 +651,9 @@ class _MealListState extends State<MealList> {
       )
     );
     
+    if (!const ListEquality().equals(newDays, _allDaysNotifier.value)) {
+      _allDaysNotifier.value = newDays;
+    }
     if (!mapEquals(stripIndices, newStripIndices)) {
       stripIndices = newStripIndices;
     }
@@ -697,13 +711,14 @@ class _MealListState extends State<MealList> {
             // check whether item is below or above the middle
             double middleIndex = (lowestIndex + highestIndex) / 2;
             
-            
+            bool? scrolledUp;
             double? difference;
-            if (_scrollUpNotifier.value != null) {
-              difference = _scrollUpNotifier.value!.difference(DateTime.now()).inMilliseconds.toDouble() / 1000.0;
+            if (_scrollNotifier.value != null) {
+              difference = DateTime.now().difference(_scrollNotifier.value!.$1).inMilliseconds.toDouble() / 1000.0;
+              scrolledUp = _scrollNotifier.value!.$2;
             }
             
-            if (index < middleIndex || (difference != null && difference < 1.5)) {
+            if (index < middleIndex || (scrolledUp == true && difference! < 0.5)) {
               // strip exited the bottom
               // remove all entries at or above daysSince2000
               _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() >= daysSince2000);
@@ -742,7 +757,33 @@ class _MealListState extends State<MealList> {
     );
   }
   
+  Map<int, (double, VisibilityInfo?)> checkContinuity(int daysSince2000, Map<int, (double, VisibilityInfo?)> newMap) {
+    if (newMap[daysSince2000]?.$1 == null && _scrollNotifier.value?.$2 == false) {
+      // The scroll down button was pressed recently
+      double difference = DateTime.now().difference(_scrollNotifier.value!.$1).inMilliseconds.toDouble() / 1000.0;
+      if (difference < 0.5) {
+        // use the all days notifier to check if there are any days missing
+        int lowestConsecutiveVisibleDay = daysSince2000;
+        List<int> allDays = _allDaysNotifier.value;
+        List<int> visibleDays = newMap.keys.map((key) => key.abs()).toSet().toList();
+        for (int i = allDays.length - 1; i >= 0; i--) {
+          int day = allDays[i];
+          if (day > daysSince2000) continue;
+          if (visibleDays.contains(day)) {
+            lowestConsecutiveVisibleDay = day;
+          } else {
+            break;
+          }
+        }
+        // remove all entries below lowestConsecutiveVisibleDay
+        newMap.removeWhere((key, value) => key.abs() < lowestConsecutiveVisibleDay);
+      }
+    }
+    return newMap;
+  }
+  
   void _scrollToSelectedDateStrip(DateTime targetDate) {
+    _scrollNotifier.value = (DateTime.now().add(const Duration(seconds: 7)), true);
     // convert date to days since 2000
     int daysSince2000 = daysBetween(DateTime(2000), targetDate);
     devtools.log("Trying to scroll to $daysSince2000");
@@ -784,9 +825,14 @@ class _MealListState extends State<MealList> {
     _scrollController.scrollTo(
       index: scrollToIndex,
       duration: const Duration(milliseconds: 1000),
-      // curve: Curves.easeOut,
-      curve: Curves.easeOut,
-    );
+      curve: Curves.easeInOut,
+    ).whenComplete(() {
+      _scrollNotifier.value = (DateTime.now(), true);
+      // reset after 5 seconds
+      Future.delayed(const Duration(seconds: 5), () {
+        _scrollNotifier.value =  null;
+      });
+    });
   }
   
   void _scrollMealIntoView(int mealIndex) {
