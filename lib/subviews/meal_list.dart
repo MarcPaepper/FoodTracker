@@ -111,6 +111,21 @@ class _MealListState extends State<MealList> {
             onVisibilityChanged: (visibilityInfo) {
               if (_addMealVisibilityNotifier.value != visibilityInfo) {
                 _addMealVisibilityNotifier.value = visibilityInfo;
+                if (visibilityInfo.$1 > 0 && _scrollNotifier.value?.$2 == false) {
+                  // Check whether the scroll datetime is in the future
+                  DateTime now = DateTime.now();
+                  if (_scrollNotifier.value!.$1.isAfter(now)) {
+                    devtools.log("Add meal box visible after scroll down, resetting scroll notifier");
+                    _scrollNotifier.value = (now, false);
+                    // reset in 5 seconds
+                    Future.delayed(const Duration(seconds: 5), () {
+                      if (_scrollNotifier.value == (now, false)) {
+                        devtools.log("Scroll down timer completed, resetting scroll notifier to null");
+                        _scrollNotifier.value = null;
+                      }
+                    });
+                  }
+                }
               }
             },
           ),
@@ -259,18 +274,24 @@ class _MealListState extends State<MealList> {
                                     ),
                                     onPressed: () {
                                       // set notifier
-                                      _scrollNotifier.value = (DateTime.now().add(const Duration(seconds: 5)), false);
+                                      devtools.log("Scroll down pressed, setting scroll notifier");
+                                      _scrollNotifier.value = (DateTime.now().add(const Duration(seconds: 20)), false);
                                       _scrollController.scrollTo(
                                         index: 0,
                                         duration: const Duration(milliseconds: 500),
                                         curve: Curves.easeInOut,
-                                      ).whenComplete(() {
-                                        _scrollNotifier.value = (DateTime.now(), false);
-                                        // reset after 5 seconds
-                                        Future.delayed(const Duration(seconds: 5), () {
-                                          _scrollNotifier.value = null;
-                                        });
-                                      });
+                                      );//.whenComplete(() {
+                                      //   final now = DateTime.now();
+                                      //   devtools.log("Scroll down completed, setting scroll notifier to $now");
+                                      //   _scrollNotifier.value = (now, false);
+                                      //   // reset after 5 seconds
+                                      //   Future.delayed(const Duration(seconds: 5), () {
+                                      //     if (_scrollNotifier.value == (now, false)) {
+                                      //       devtools.log("Scroll down timer completed, resetting scroll notifier to null");
+                                      //       _scrollNotifier.value = null;
+                                      //     }
+                                      //   });
+                                      // });
                                     },
                                     child: MultiOpacity(
                                       depth: 3,
@@ -563,7 +584,7 @@ class _MealListState extends State<MealList> {
                   // jump to bottom of the list
                   _scrollController.scrollTo(
                     index: 0,
-                    duration: const Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 4500),
                     curve: Curves.easeInOut,
                   );
                 } else if (value == 3) {
@@ -586,7 +607,7 @@ class _MealListState extends State<MealList> {
         newChild = VisibilityDetector(
           key: Key("Meal $mealIndex"),
           onVisibilityChanged: (VisibilityInfo info) {
-            if (info.visibleBounds.left > 0) return;
+            // if (info.visibleBounds.left > 0) return;
             var daysSince2000 = daysBetween(DateTime(2000), mealDate);
             // if part of the top is concealed, the strip is considered partially visible
             // if part of the bottom is concealed, the strip is considered fully visible
@@ -599,6 +620,7 @@ class _MealListState extends State<MealList> {
             if (visibleFraction > 0) {
               if (_visibleDaysNotifier.value[daysSince2000]?.$1 != visibleFraction) {
                 Map<int, (double, VisibilityInfo?)> visibleDays = checkContinuity(daysSince2000, _visibleDaysNotifier.value);
+                devtools.log("meal $daysSince2000 is visible: $visibleFraction");
                 
                 visibleDays[daysSince2000] = (visibleFraction, info);
                 _visibleDaysNotifier.value = Map.from(visibleDays);
@@ -615,16 +637,31 @@ class _MealListState extends State<MealList> {
               
               double middleIndex = (lowestIndex + highestIndex) / 2;
               
+              bool? scrolledUp;
+              double? difference;
+              if (_scrollNotifier.value != null) {
+                difference = DateTime.now().difference(_scrollNotifier.value!.$1).inMilliseconds.toDouble() / 1000.0;
+                scrolledUp = _scrollNotifier.value!.$2;
+              }
+              int scroll = 0;
+              if (scrolledUp == true && difference! < 0.5) scroll = 1; // scrolled up
+              if (scrolledUp == false && difference! < 3) scroll = -1; // scrolled down
+              
               // remove if the meal is above the middle
-              if (mealIndex > middleIndex) {
-                // remove all entries at or below daysSince2000
-                _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() <= daysSince2000);
-                _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
-              } else if (_visibleDaysNotifier.value.keys.any((days) => days.abs() > daysSince2000)) {
+              if ((mealIndex < middleIndex && scroll == 0 || scroll == 1) && _visibleDaysNotifier.value.keys.any((days) => days.abs() > daysSince2000)) {
+                // meal exited the bottom
+                devtools.log("meal $daysSince2000 exited the bottom, removing all entries at or above $daysSince2000 scroll $scroll");
                 _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() > daysSince2000);
+                _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
+              } else if (mealIndex > middleIndex && scroll == 0 || scroll == -1) {
+                // meal exited the top
+                // remove all entries at or below daysSince2000
+                devtools.log("meal $daysSince2000 exited the top, removing all entries at or below $daysSince2000");
+                _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() <= daysSince2000);
                 _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
               }
             }
+            devtools.log("new visible days: ${_visibleDaysNotifier.value.map((key, value) => MapEntry(key, value.$1))}");
           },
           child: newChild,
         );
@@ -717,14 +754,21 @@ class _MealListState extends State<MealList> {
               difference = DateTime.now().difference(_scrollNotifier.value!.$1).inMilliseconds.toDouble() / 1000.0;
               scrolledUp = _scrollNotifier.value!.$2;
             }
+            int scroll = 0;
+            if (scrolledUp == true && difference! < 0.5) scroll = 1; // scrolled up
+            if (scrolledUp == false && difference! < 3) scroll = -1; // scrolled down
             
-            if (index < middleIndex || (scrolledUp == true && difference! < 0.5)) {
+            devtools.log("index $index, middleIndex $middleIndex, low $lowestIndex, high $highestIndex, difference $difference, scrolledUP $scrolledUp");
+            
+            if (index < middleIndex && scroll == 0 || scroll == 1) {
               // strip exited the bottom
               // remove all entries at or above daysSince2000
+              devtools.log("strip $daysSince2000 exited the bottom scroll $scroll");
               _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() >= daysSince2000);
             } else {
               // strip exited the top
               // remove all entries below daysSince2000
+              devtools.log("strip $daysSince2000 exited the top");
               _visibleDaysNotifier.value.removeWhere((key, value) => key.abs() < daysSince2000);
             }
             
@@ -732,6 +776,7 @@ class _MealListState extends State<MealList> {
             _visibleDaysNotifier.value.remove(-daysSince2000);
             _visibleDaysNotifier.value = Map.from(_visibleDaysNotifier.value);
           }
+          devtools.log("strip visible days${_visibleDaysNotifier.value.map((key, value) => MapEntry(key, value.$1))}");
         },
         child: Container( // floating date sliver
           color: const Color.fromARGB(255, 200, 200, 200),
@@ -758,10 +803,12 @@ class _MealListState extends State<MealList> {
   }
   
   Map<int, (double, VisibilityInfo?)> checkContinuity(int daysSince2000, Map<int, (double, VisibilityInfo?)> newMap) {
+    devtools.log("checkContinuity ${newMap[daysSince2000]?.$1} ${_scrollNotifier.value?.$2}");
     if (newMap[daysSince2000]?.$1 == null && _scrollNotifier.value?.$2 == false) {
       // The scroll down button was pressed recently
       double difference = DateTime.now().difference(_scrollNotifier.value!.$1).inMilliseconds.toDouble() / 1000.0;
-      if (difference < 0.5) {
+      devtools.log("! scroll down pressed recently, difference $difference");
+      if (difference < 3) {
         // use the all days notifier to check if there are any days missing
         int lowestConsecutiveVisibleDay = daysSince2000;
         List<int> allDays = _allDaysNotifier.value;
@@ -775,6 +822,10 @@ class _MealListState extends State<MealList> {
             break;
           }
         }
+        devtools.log("!! difference");
+        if (newMap.keys.any((key) => key.abs() < lowestConsecutiveVisibleDay)) {
+          devtools.log("!!!removing all entries below $lowestConsecutiveVisibleDay");
+        }
         // remove all entries below lowestConsecutiveVisibleDay
         newMap.removeWhere((key, value) => key.abs() < lowestConsecutiveVisibleDay);
       }
@@ -783,6 +834,7 @@ class _MealListState extends State<MealList> {
   }
   
   void _scrollToSelectedDateStrip(DateTime targetDate) {
+    devtools.log("setting up scroll up notifier");
     _scrollNotifier.value = (DateTime.now().add(const Duration(seconds: 7)), true);
     // convert date to days since 2000
     int daysSince2000 = daysBetween(DateTime(2000), targetDate);
@@ -827,10 +879,17 @@ class _MealListState extends State<MealList> {
       duration: const Duration(milliseconds: 1000),
       curve: Curves.easeInOut,
     ).whenComplete(() {
-      _scrollNotifier.value = (DateTime.now(), true);
+      final now = DateTime.now();
+      devtools.log("scroll up was completed, setting to null");
+      _scrollNotifier.value = (now, true);
       // reset after 5 seconds
       Future.delayed(const Duration(seconds: 5), () {
-        _scrollNotifier.value =  null;
+        if (_scrollNotifier.value == (now, true)) {
+          devtools.log("resetting scroll up notifier");
+          _scrollNotifier.value =  null;
+        } else {
+          devtools.log("scroll up notifier was changed, not resetting");
+        }
       });
     });
   }
