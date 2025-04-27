@@ -46,8 +46,8 @@ class TemporaryBox extends StatelessWidget {
         var end         = values[2] as DateTime?;
         
         if (isTemporary && (beginning == null || end == null)) {
-          beginning = DateTime.now();
-          end = DateTime.now().add(const Duration(days: 6));
+          beginning = DateTime.now().getDateOnly();
+          end = DateTime.now().add(const Duration(days: 6, hours: 23, minutes: 59));
           
           // test if there are meals using this product outside the interval
           for (var meal in meals) {

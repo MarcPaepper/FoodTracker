@@ -824,7 +824,7 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
   var temporaryRelevancy = 1.0;
   if (product.isTemporary) {
     if (product.temporaryBeginning != null && product.temporaryEnd != null) {
-      if (compDT.isAfter(product.temporaryBeginning!) && compDT.isBefore(product.temporaryEnd!)) {
+      if (isDateInsideInterval(compDT, product.temporaryBeginning!, product.temporaryEnd!) == 0) {
         temporaryRelevancy = 2;
       } else {
         temporaryRelevancy = 0.25;

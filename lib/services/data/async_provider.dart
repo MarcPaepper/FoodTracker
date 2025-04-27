@@ -87,11 +87,13 @@ class AsyncProvider {
       // // sort relevancies for value
       // newRelevancies = Map.fromEntries(newRelevancies.entries.toList()..sort((a, b) => b.value.compareTo(a.value)));
       // // only log first 10 products
-      // for (var i = 0; i < newRelevancies.length && i < 100; i++) {
+      // for (var i = 0; i < newRelevancies.length && i < 10; i++) {
       //   var key = newRelevancies.keys.elementAt(i);
       //   var product = productsMap[key];
       //   devtools.log("${product?.name}: ${roundDouble(newRelevancies[key] ?? 0)}");
       // }
+      // devtools.log("--- updated relevancies ${newRelevancies.length} / ${ids?.length} ---");
+      
       
       if (ids == null || _relevancies == null) {
         _relevancies = newRelevancies;

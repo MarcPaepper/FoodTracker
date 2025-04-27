@@ -4,6 +4,7 @@ const createProductTable = '''
 CREATE TABLE "product" (
 	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"name"	TEXT,
+	"description"	TEXT,
 	"density_conversion"	TEXT,
 	"quantity_conversion"	TEXT,
 	"temporary_beginning" TEXT,
@@ -77,6 +78,7 @@ const mealTableName = "meal";
 const productColumns = [
   '"id" INTEGER PRIMARY KEY AUTOINCREMENT',
   '"name" TEXT',
+  '"description" TEXT',
   '"density_conversion" TEXT',
   '"quantity_conversion" TEXT',
   '"temporary_beginning" TEXT',
@@ -135,6 +137,7 @@ const targetColumns = [
 ];
 
 var missingProductColumns = {
+  "description":    () => "UPDATE $productTableName SET description = '' WHERE description IS NULL;",
   "creation_date":  () => "UPDATE $productTableName SET creation_date = datetime('now') WHERE creation_date IS NULL;",
   "last_edit_date": () => "UPDATE $productTableName SET last_edit_date = datetime('now') WHERE last_edit_date IS NULL;",
 };

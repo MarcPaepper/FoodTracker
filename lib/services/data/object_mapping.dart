@@ -13,6 +13,7 @@ const unitColumn                  = "unit";
 
 // product table
 const nameColumn                  = "name";
+const descriptionColumn           = "description";
 const creationDateColumn          = "creation_date";
 const lastEditDateColumn          = "last_edit_date";
 const temporaryBeginningColumn    = "temporary_beginning";
@@ -63,6 +64,7 @@ Product mapToProduct(Map<String, dynamic> map) {
   return Product(
     id:                    map[idColumn] as int,
     name:                  map[nameColumn] as String,
+    description:           map[descriptionColumn] as String? ?? "",
     creationDate:          DateTime.parse(map[creationDateColumn] as String),
     lastEditDate:          DateTime.parse(map[lastEditDateColumn] as String),
     temporaryBeginning:    condParse(map[temporaryBeginningColumn] as String?),
@@ -149,6 +151,7 @@ Map<String, dynamic> productToMap(Product product) =>
   {
     idColumn:                   product.id,
     nameColumn:                 product.name,
+    descriptionColumn:          product.description,
     defaultUnitColumn:          unitToString(product.defaultUnit),
     creationDateColumn:         product.creationDate?.toIso8601String(),
     lastEditDateColumn:         product.lastEditDate?.toIso8601String(),

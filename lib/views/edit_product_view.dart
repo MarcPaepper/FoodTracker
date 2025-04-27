@@ -384,7 +384,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     key: _formKey,
                     child: Column(
                       children: [
-                        _buildNameField(products!),
+                        _buildNameWidget(products!),
                         const SizedBox(height: 5 * gsf),
                         _buildDefaultUnitDropdown(),
                         TemporaryBox(
@@ -689,8 +689,39 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       }
     );
   
+  Widget _buildNameWidget(List<Product> products) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _isDuplicateNotifier,
+      builder: (context, value, child) {
+        return Column(
+          children: [
+            if (widget.isCopy) _buildShowOrigButton(products),
+            IntrinsicHeight(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildNameField(products),
+                  ),
+                  Container(
+                    width: 40,
+                    color: Colors.green,
+                  ),
+                  Container(
+                    width: 8, 
+                    color: Colors.transparent,
+                  )
+                ]
+              ),
+            ),
+            if (value) _buildShowDuplicateButton(products),
+          ],
+        );
+      }
+    );
+  }
+  
   Widget _buildNameField(List<Product> products) {
-    var textField = Padding(
+    return Padding(
       padding: const EdgeInsets.all(8.0) * gsf,
       child: TextFormField(
         autofocus: !(_isEdit || widget.isCopy || _interimProduct != null),
@@ -725,19 +756,6 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         },
         autovalidateMode: AutovalidateMode.onUserInteraction,
       ),
-    );
-    
-    return ValueListenableBuilder<bool>(
-      valueListenable: _isDuplicateNotifier,
-      builder: (context, value, child) {
-        return Column(
-          children: [
-            if (widget.isCopy) _buildShowOrigButton(products),
-            textField,
-            if (value) _buildShowDuplicateButton(products),
-          ],
-        );
-      }
     );
   }
   
