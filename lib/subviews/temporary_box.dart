@@ -131,7 +131,7 @@ class TemporaryBox extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 12) * gsf,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal.shade50,
+                        backgroundColor: areaButtonColor,
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.all(Radius.circular(14 * gsf)),
                         ),

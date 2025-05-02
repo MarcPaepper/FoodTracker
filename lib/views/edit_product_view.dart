@@ -65,6 +65,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   late final TextEditingController _quantityNameController;
   late final TextEditingController _resultingAmountController;
   late final TextEditingController _nutrientAmountController;
+  late final TextEditingController _descriptionController;
   
   final List<TextEditingController> _ingredientAmountControllers = [];
   final List<TextEditingController> _nutrientAmountControllers = [];
@@ -122,6 +123,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _quantityNameController = TextEditingController();
     _resultingAmountController = TextEditingController();
     _nutrientAmountController = TextEditingController();
+    _descriptionController = TextEditingController();
     
     // reload product stream
     Future(() {
@@ -162,6 +164,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     _nutrientAmountNotifier.dispose();
     _nutrientsUnitNotifier.dispose();
     _nutrientsNotifier.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
   
@@ -282,6 +285,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                 }
               }
               
+              _descriptionController.text = copyProduct.description;
               _densityAmount1Controller.text = truncateZeros(copyProduct.densityConversion.amount1);
               _densityAmount2Controller.text = truncateZeros(copyProduct.densityConversion.amount2);
               _quantityAmount1Controller.text = truncateZeros(copyProduct.quantityConversion.amount1);
@@ -693,28 +697,24 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
     return ValueListenableBuilder<bool>(
       valueListenable: _isDuplicateNotifier,
       builder: (context, value, child) {
-        return Column(
-          children: [
-            if (widget.isCopy) _buildShowOrigButton(products),
-            IntrinsicHeight(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildNameField(products),
-                  ),
-                  Container(
-                    width: 40,
-                    color: Colors.green,
-                  ),
-                  Container(
-                    width: 8, 
-                    color: Colors.transparent,
-                  )
-                ]
+        return Padding(
+          padding: const EdgeInsets.all(8.0) * gsf,
+          child: Column(
+            children: [
+              if (widget.isCopy) _buildShowOrigButton(products),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: _buildNameField(products)),
+                    const SizedBox(width: 10 * gsf),
+                    _buildDescriptionButton(),
+                  ]
+                ),
               ),
-            ),
-            if (value) _buildShowDuplicateButton(products),
-          ],
+              if (value) _buildShowDuplicateButton(products),
+            ],
+          ),
         );
       }
     );
@@ -722,7 +722,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   Widget _buildNameField(List<Product> products) {
     return Padding(
-      padding: const EdgeInsets.all(8.0) * gsf,
+      padding: const EdgeInsets.only(bottom: 1 * gsf),
       child: TextFormField(
         autofocus: !(_isEdit || widget.isCopy || _interimProduct != null),
         controller: _productNameController,
@@ -800,6 +800,40 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       ),
     );
   }
+  
+Widget _buildDescriptionButton() {
+  return SizedBox(
+    width: 50 * gsf,
+    child: ValueListenableBuilder(
+      valueListenable: _descriptionController,
+      builder: (context, descValue, child) {
+        bool hasDescription = descValue.text.isNotEmpty;
+        return SizedBox.expand(
+          child: ElevatedButton(
+            style: lightButtonStyle.copyWith(
+              backgroundColor: WidgetStateProperty.all(
+                hasDescription ? areaButtonColor : Colors.grey.withAlpha(40),
+              ),
+              overlayColor: WidgetStateProperty.all(Colors.transparent),
+            ),
+            child: Icon(
+              hasDescription ? Icons.description : Icons.description_outlined,
+              color: hasDescription ? Theme.of(context).primaryColor : Colors.black54,
+              size: 21 * gsf,
+            ),
+            onPressed: () async {
+              String? newDescription = await showProductDescriptionDialog(context, _descriptionController.text, _productNameController.text);
+              if (newDescription != null) {
+                _descriptionController.text = newDescription;
+                _interimProduct = getProductFromForm().$1;
+              }
+            },
+          ),
+        );
+      }
+    ),
+  );
+}
   
   Widget _buildDefaultUnitDropdown() {
     return StatefulBuilder(
@@ -1073,6 +1107,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   (Product, bool) getProductFromForm() {
     final name = _productNameController.text.trim();
+    final description = _descriptionController.text.trim();
     final defUnit = _defaultUnitNotifier.value;
     final densityConversion = _densityConversionNotifier.value;
     final quantityConversion = _quantityConversionNotifier.value;
@@ -1129,6 +1164,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
       Product(
         id:                   _isEdit ? _id : -1,
         name:                 name,
+        description:          description,
         creationDate:         _isEdit ? _prevProduct.creationDate : null,
         lastEditDate:         DateTime.now(),
         temporaryBeginning:   temporaryBeginning,

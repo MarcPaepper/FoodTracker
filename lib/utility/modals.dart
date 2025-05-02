@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 import 'package:food_tracker/utility/text_logic.dart';
@@ -12,7 +14,6 @@ import '../widgets/sort_field.dart';
 import 'theme.dart';
 
 // import 'dart:developer' as devtools show log;
-
 
 void showErrorbar(BuildContext context, String msg) =>
   _showSnackbar(context: context, msg: msg, bgColor: const Color.fromARGB(255, 77, 22, 0), icon: const Icon(Icons.warning, color: Colors.white));
@@ -351,6 +352,127 @@ void showProductInfoDialog(BuildContext context, Product product) => showDialog(
     );
   }
 );
+
+Future<String?> showProductDescriptionDialog(BuildContext context, String currentDescription, String prodName) async {
+  final dialogDescriptionController = TextEditingController(text: currentDescription);
+  // return showDialog<String?>(
+  //   context: context,
+  //   builder: (context) {
+  //     return AlertDialog(
+  //       title: const Text("Product Description"),
+  //       content: TextField(
+  //         controller: dialogDescriptionController,
+  //         maxLines: null,
+  //         minLines: 3,
+  //         keyboardType: TextInputType.multiline,
+  //         textCapitalization: TextCapitalization.sentences,
+  //         decoration: const InputDecoration(
+  //           hintText: "Enter description...",
+  //           border: OutlineInputBorder(),
+  //         ),
+  //         autofocus: true,
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.of(context).pop(null),
+  //           child: const Text("Cancel"),
+  //         ),
+  //         TextButton(
+  //           onPressed: () {
+  //             Navigator.of(context).pop(dialogDescriptionController.text.trim());
+  //           },
+  //           child: const Text("Save"),
+  //         ),
+  //       ],
+  //     );
+  //   },
+  // );
+  
+  final maxHeight = max(MediaQuery.of(context).size.height * .75 - 150 * gsf, 200 * gsf);
+  
+  return showDialog<String?>(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        insetPadding: const EdgeInsets.all(28) * gsf,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            // maxHeight: maxHeight,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12 * gsf),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10 * gsf, vertical: 4 * gsf),
+                  child: Text(
+                    "Description for '$prodName'",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 18 * gsf, fontWeight: FontWeight.w400),
+                  ),
+                ),
+                const SizedBox(height: 12 * gsf),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: maxHeight,
+                  ),
+                  child: TextField(
+                    controller: dialogDescriptionController,
+                    maxLines: null,
+                    minLines: 5,
+                    // expands: true,
+                    keyboardType: TextInputType.multiline,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText: "Description / Notes",
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.all(11) * gsf,
+                      isDense: true,
+                    ),
+                    autofocus: true,
+                  ),
+                ),
+                const SizedBox(height: 10 * gsf),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: actionButtonStyle.copyWith(
+                          padding: WidgetStateProperty.all(EdgeInsets.zero),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(dialogDescriptionController.text.trim()),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 0 * gsf, vertical: 10.0 * gsf),
+                          child: Text('Save', style: TextStyle(fontSize: 16 * gsf)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16 * gsf),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: actionButtonStyle.copyWith(
+                          padding: WidgetStateProperty.all(EdgeInsets.zero),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(null),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 0 * gsf, vertical: 10.0 * gsf),
+                          child: Text('Cancel'),
+                        ),
+                      ),
+                    ),
+                  ]
+                ),
+              ]
+            ),
+          ),
+        )
+      );
+    },
+  );
+}
 
 void onAddProduct(
   BuildContext context,

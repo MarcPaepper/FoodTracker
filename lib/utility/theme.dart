@@ -14,25 +14,7 @@ const disabledBorderColor = Color.fromARGB(130, 158, 158, 158);
 
 const tsNormal = TextStyle(fontSize: 16 * gsf);
 
-var actionButtonStyle = ButtonStyle(
-  backgroundColor: WidgetStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
-  foregroundColor: WidgetStateProperty.all(Colors.white),
-  textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16 * gsf)),
-  padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 12, vertical: 12) * gsf),
-  shape: WidgetStateProperty.all(const RoundedRectangleBorder(
-    borderRadius: BorderRadius.all(Radius.circular(12 * gsf)),
-  )),
-);
-
-var lightButtonStyle = ElevatedButton.styleFrom(
-  backgroundColor: Colors.teal.shade100.withOpacity(0.6),
-  shadowColor: Colors.transparent,
-  surfaceTintColor: Colors.transparent,
-  shape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.all(Radius.circular(10 * gsf)),
-  ),
-  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 16 : 12) * gsf,
-);
+var areaButtonColor = Colors.teal.shade50;
 
 ThemeData getTheme() =>
   ThemeData(
@@ -43,9 +25,7 @@ ThemeData getTheme() =>
       bodySmall: TextStyle(fontSize: 16 * gsf),
       labelMedium: TextStyle(fontSize: 16 * gsf),
     ),
-    // red popup menu button
     popupMenuTheme: const PopupMenuThemeData(
-      // from hex
       color: Color.fromARGB(249, 242, 255, 250),
       surfaceTintColor: Colors.white,
     ),
@@ -73,7 +53,6 @@ ThemeData getTheme() =>
           color: Colors.white
         )
       ),
-      // bright press and hover color
       overlayColor: WidgetStateColor.resolveWith((Set<WidgetState> states) =>
         states.contains(WidgetState.pressed) ?
           Colors.white.withAlpha(50) :
@@ -132,20 +111,16 @@ ThemeData getTheme() =>
   );
 
 class CustomUnderlineTabIndicator extends UnderlineTabIndicator {
-  const CustomUnderlineTabIndicator({required BorderSide borderSide})
-      : super(borderSide: borderSide);
+  const CustomUnderlineTabIndicator({required BorderSide borderSide}) : super(borderSide: borderSide);
 
   @override
   BoxPainter createBoxPainter([VoidCallback? onChanged]) {
     return _CustomUnderlinePainter(this, onChanged);
   }
-  
-  
 }
 
 class _CustomUnderlinePainter extends BoxPainter {
-  _CustomUnderlinePainter(this.decoration, VoidCallback? onChanged)
-      : super(onChanged);
+  _CustomUnderlinePainter(this.decoration, VoidCallback? onChanged) : super(onChanged);
 
   final CustomUnderlineTabIndicator decoration;
 
@@ -162,6 +137,26 @@ class _CustomUnderlinePainter extends BoxPainter {
     canvas.drawLine(rect.topLeft, rect.topRight, paint);
   }
 }
+
+var actionButtonStyle = ButtonStyle(
+  backgroundColor: WidgetStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
+  foregroundColor: WidgetStateProperty.all(Colors.white),
+  textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16 * gsf)),
+  padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 12, vertical: 12) * gsf),
+  shape: WidgetStateProperty.all(const RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(12 * gsf)),
+  )),
+);
+
+var lightButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.teal.shade100.withOpacity(0.6),
+  shadowColor: Colors.transparent,
+  surfaceTintColor: Colors.transparent,
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(10 * gsf)),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: kIsWeb ? 16 : 12) * gsf,
+);
 
 var addButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: const Color.fromARGB(255, 210, 235, 198),
