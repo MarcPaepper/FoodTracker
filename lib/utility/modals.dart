@@ -15,17 +15,23 @@ import 'theme.dart';
 
 // import 'dart:developer' as devtools show log;
 
-void showErrorbar(BuildContext context, String msg) =>
-  _showSnackbar(context: context, msg: msg, bgColor: const Color.fromARGB(255, 77, 22, 0), icon: const Icon(Icons.warning, color: Colors.white));
+void showErrorbar(BuildContext context, String msg, {double? duration}) => _showSnackbar(
+  context: context,
+  msg: msg,
+  bgColor: const Color.fromARGB(255, 77, 22, 0),
+  icon: const Icon(Icons.warning, color: Colors.white),
+  duration: duration,
+);
 
-void showSnackbar(context, msg, {Color bgColor = Colors.teal, Icon? icon}) =>
-  _showSnackbar(context: context, msg: msg, bgColor: bgColor, icon: icon);
+void showSnackbar(context, msg, {Color bgColor = Colors.teal, Icon? icon, double? duration}) =>
+  _showSnackbar(context: context, msg: msg, bgColor: bgColor, icon: icon, duration: duration);
 
 void _showSnackbar({
   required BuildContext context,
   required String msg,
   required Color bgColor,
   Icon? icon,
+  double? duration,
 }) {
   var children = <Widget>[];
   if (icon != null) {
@@ -40,7 +46,95 @@ void _showSnackbar({
         children: children,
       ),
       backgroundColor: bgColor,
-    )
+      duration: Duration(milliseconds: ((duration ?? 4) * 1000).toInt()),
+    ),
+  );
+}
+
+Future<T?> showOptionDialog<T>({
+  required BuildContext context,
+  String? title,
+  Color? titleColor,
+  Widget? icon,
+  required Widget content,
+  required List<(String?, T Function()?)> options,
+  double insetPadding = 28 * gsf,
+  double contentPadding = 12 * gsf,
+}) {
+  Widget? titleWidget;
+  if (title != null) {
+    titleWidget = Text(
+      title,
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 18 * gsf, fontWeight: FontWeight.w400),
+    );
+    
+    if (icon != null) {
+      //
+    } else {
+      titleWidget = Container(
+        decoration: BoxDecoration(
+          color: titleColor ?? Colors.transparent,
+          borderRadius: BorderRadius.only(
+            topLeft:  Radius.circular(14),
+            topRight: Radius.circular(14),
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 4) * gsf,
+        child: titleWidget,
+      );
+    }
+  }
+  
+  List<Widget> optionButtons = [SizedBox(width: contentPadding)];
+  for (int i = 0; i < options.length; i++) {
+    optionButtons.add(
+      Expanded(
+        child: options[i].$1 == null ?
+          Container() :
+          ElevatedButton(
+            style: actionButtonStyle.copyWith(
+              padding: WidgetStateProperty.all(EdgeInsets.zero),
+            ),
+            onPressed: () => Navigator.of(context).pop(options[i].$2 != null ? options[i].$2!() : null),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0 * gsf, vertical: 10.0 * gsf),
+              child: Text(options[i].$1!),
+            ),
+          ),
+      )
+    );
+    if (i != options.length - 1) {
+      optionButtons.add(const SizedBox(width: 16 * gsf));
+    }
+  }
+  optionButtons.add(SizedBox(width: contentPadding));
+  
+  return showDialog(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        insetPadding: EdgeInsets.all(insetPadding),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            titleWidget ?? Container(),
+            SizedBox(height: title == null ? 0 : 12 * gsf),
+            Padding(
+              padding: EdgeInsets.all(contentPadding),
+              child: content,
+            ),
+            const SizedBox(height: 10 * gsf),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: optionButtons,
+            ),
+            SizedBox(height: contentPadding),
+          ],
+        ),
+      );
+    },
   );
 }
 
@@ -142,21 +236,22 @@ void showUsedAsIngredientDialog({
   required BuildContext context,
   required Map<int, Product> usedAsIngredientIn,
   required Function() beforeNavigate,
-}) => showDialog(
-  context: context,
-  builder: (context) => Dialog(
-    // surfaceTintColor: Colors.transparent,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+}) {
+  final maxHeight = max(MediaQuery.of(context).size.height * .75 - 350 * gsf, 100 * gsf);
+  
+  showOptionDialog(
+    context: context,
+    title: "Can not delete",
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12) * gsf,
-          child: Text(
-            '"$name" is used as an ingredient in:',
-            style: const TextStyle(fontSize: 16 * gsf),
+        Text('"$name" is used as an ingredient in:', style: TextStyle(fontSize: 16 * gsf)),
+        const SizedBox(height: 10 * gsf),
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
           ),
-        ),
-        Expanded(
           child: _MainList(
             onSelected: (product) {
               beforeNavigate();
@@ -169,30 +264,16 @@ void showUsedAsIngredientDialog({
             showSearch: false,
             colorFromTop: true,
             refDate: DateTime.now(),
-          )
+            expand: false,
+          ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12) * gsf,
-              child: ElevatedButton(
-                style: actionButtonStyle,
-                onPressed: () {
-                  Navigator.of(context).pop(null);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 40) * gsf,
-                  child: const Text('Cancel'),
-                ),
-              ),
-            ),
-          ],
-        )
       ],
     ),
-  )
-);
+    options: [
+      ("Close", null),
+    ],
+  );
+}
 
 // a dialog which lets you choose a product
 // a textfield on top lets you filter the products
@@ -281,196 +362,106 @@ void showProductDialog({
   );
 
 // show a dialog which lets you see the creation date and the last edit date of a product
-void showProductInfoDialog(BuildContext context, Product product) => showDialog(
-  context: context,
-  builder: (context) {
-    var dates = [product.creationDate!, product.lastEditDate!];
-    var datesStr = conditionallyRemoveYear(context, dates, showWeekDay: false, removeYear: YearMode.never);
-    
-    return AlertDialog(
-      title: const Text('Product Info'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Created on: ${datesStr[0]}"),
-          Text("Last Edit: ${datesStr[1]}"),
-          FutureBuilder(
-            future: DataService.current().getAllMeals(),
-            builder: (context, snapshot) {
-              String numberOfMeals = "???";
-              String amount = "???";
-              
-              if (!snapshot.hasError && snapshot.connectionState == ConnectionState.done) {
-                Unit defUnit = product.defaultUnit;
-                List<Meal> meals = snapshot.data as List<Meal>;
-                int count = 0;
-                double amountSum = 0;
-                for (var meal in meals) {
-                  var pQ = meal.productQuantity;
-                  if (product.id != pQ.productId) continue;
-                  count++;
-                  // convert from meal unit to default unit
-                  amountSum += convertToUnit(defUnit, pQ.unit, pQ.amount, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
-                }
-                numberOfMeals = count.toString();
-                amount = "${truncateZeros(roundDouble(amountSum))} ${defUnit == Unit.quantity ? product.quantityName : defUnit.name}";
-                List<UnitType> unitTypesUsed = [unitTypes[defUnit]!];
-                // if the product has conversions, give the amount in those units as well
-                // if (defUnit == Unit.quantity) {
-                //   if (product.quantityConversion.enabled) {
-                //     // convert to the other unit
-                //     var newAmount = convertToUnit(product.quantityConversion.unit2, defUnit, amountSum, product.densityConversion, product.quantityConversion);
-                //     amount += "= ${truncateZeros(roundDouble(newAmount))} ${product.quantityConversion.unit2.name}";
-                //   }
-                // }
-                if (product.quantityConversion.enabled) {
-                  bool forwards = unitTypesUsed.contains(UnitType.quantity);
-                  Unit targetUnit = forwards ? product.quantityConversion.unit2 : product.quantityConversion.unit1;
-                  var newAmount = convertToUnit(targetUnit, defUnit, amountSum, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
-                  amount += " = ${truncateZeros(roundDouble(newAmount))} ${forwards ? targetUnit.name : product.quantityName}";
-                }
-                if (product.densityConversion.enabled) {
-                  bool forwards = unitTypesUsed.contains(UnitType.volumetric);
-                  Unit targetUnit = forwards ? product.densityConversion.unit2 : product.densityConversion.unit1;
-                  var newAmount = convertToUnit(targetUnit, defUnit, amountSum, product.densityConversion, product.quantityConversion);
-                  amount += " = ${truncateZeros(roundDouble(newAmount))} ${targetUnit.name}";
-                }
+void showProductInfoDialog(BuildContext context, Product product) {
+  var dates = [product.creationDate!, product.lastEditDate!];
+  var datesStr = conditionallyRemoveYear(context, dates, showWeekDay: false, removeYear: YearMode.never);
+  
+  showOptionDialog(
+    context: context,
+    title: "Product Info",
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Created on: ${datesStr[0]}"),
+        Text("Last Edit: ${datesStr[1]}"),
+        FutureBuilder(
+          future: DataService.current().getAllMeals(),
+          builder: (context, snapshot) {
+            String numberOfMeals = "???";
+            String amount = "???";
+            
+            if (!snapshot.hasError && snapshot.connectionState == ConnectionState.done) {
+              Unit defUnit = product.defaultUnit;
+              List<Meal> meals = snapshot.data as List<Meal>;
+              int count = 0;
+              double amountSum = 0;
+              for (var meal in meals) {
+                var pQ = meal.productQuantity;
+                if (product.id != pQ.productId) continue;
+                count++;
+                // convert from meal unit to default unit
+                amountSum += convertToUnit(defUnit, pQ.unit, pQ.amount, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
               }
-              return Text("\nYou've used ${product.name} directly in $numberOfMeals meals, amounting to $amount. (This does not include products which contain ${product.name} as an ingredient)");
-            },
-          ),
-        ],
-      ),
-      actions: [
-        ElevatedButton(
-          style: actionButtonStyle,
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+              numberOfMeals = count.toString();
+              amount = "${truncateZeros(roundDouble(amountSum))} ${defUnit == Unit.quantity ? product.quantityName : defUnit.name}";
+              List<UnitType> unitTypesUsed = [unitTypes[defUnit]!];
+              // if the product has conversions, give the amount in those units as well
+              // if (defUnit == Unit.quantity) {
+              //   if (product.quantityConversion.enabled) {
+              //     // convert to the other unit
+              //     var newAmount = convertToUnit(product.quantityConversion.unit2, defUnit, amountSum, product.densityConversion, product.quantityConversion);
+              //     amount += "= ${truncateZeros(roundDouble(newAmount))} ${product.quantityConversion.unit2.name}";
+              //   }
+              // }
+              if (product.quantityConversion.enabled) {
+                bool forwards = unitTypesUsed.contains(UnitType.quantity);
+                Unit targetUnit = forwards ? product.quantityConversion.unit2 : product.quantityConversion.unit1;
+                var newAmount = convertToUnit(targetUnit, defUnit, amountSum, product.densityConversion, product.quantityConversion, enableTargetQuantity: true);
+                amount += " = ${truncateZeros(roundDouble(newAmount))} ${forwards ? targetUnit.name : product.quantityName}";
+              }
+              if (product.densityConversion.enabled) {
+                bool forwards = unitTypesUsed.contains(UnitType.volumetric);
+                Unit targetUnit = forwards ? product.densityConversion.unit2 : product.densityConversion.unit1;
+                var newAmount = convertToUnit(targetUnit, defUnit, amountSum, product.densityConversion, product.quantityConversion);
+                amount += " = ${truncateZeros(roundDouble(newAmount))} ${targetUnit.name}";
+              }
+            }
+            return Text("\nYou've used ${product.name} directly in $numberOfMeals meals, amounting to $amount.\n\n(This does not include products which contain ${product.name} as an ingredient)");
+          },
         ),
       ],
-    );
-  }
-);
+    ),
+    options: [
+      (null, null),
+      ("Close", null),
+    ],
+  );
+}
 
 Future<String?> showProductDescriptionDialog(BuildContext context, String currentDescription, String prodName) async {
   final dialogDescriptionController = TextEditingController(text: currentDescription);
-  // return showDialog<String?>(
-  //   context: context,
-  //   builder: (context) {
-  //     return AlertDialog(
-  //       title: const Text("Product Description"),
-  //       content: TextField(
-  //         controller: dialogDescriptionController,
-  //         maxLines: null,
-  //         minLines: 3,
-  //         keyboardType: TextInputType.multiline,
-  //         textCapitalization: TextCapitalization.sentences,
-  //         decoration: const InputDecoration(
-  //           hintText: "Enter description...",
-  //           border: OutlineInputBorder(),
-  //         ),
-  //         autofocus: true,
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.of(context).pop(null),
-  //           child: const Text("Cancel"),
-  //         ),
-  //         TextButton(
-  //           onPressed: () {
-  //             Navigator.of(context).pop(dialogDescriptionController.text.trim());
-  //           },
-  //           child: const Text("Save"),
-  //         ),
-  //       ],
-  //     );
-  //   },
-  // );
   
-  final maxHeight = max(MediaQuery.of(context).size.height * .75 - 150 * gsf, 200 * gsf);
+  final maxHeight = max(MediaQuery.of(context).size.height * .75 - 150 * gsf, 100 * gsf);
+  String title = prodName == "" ? "Product Description" : "Description for '$prodName'";
   
-  return showDialog<String?>(
+  return showOptionDialog<String?>(
     context: context,
-    builder: (context) {
-      return Dialog(
-        insetPadding: const EdgeInsets.all(28) * gsf,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            // maxHeight: maxHeight,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12 * gsf),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10 * gsf, vertical: 4 * gsf),
-                  child: Text(
-                    "Description for '$prodName'",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18 * gsf, fontWeight: FontWeight.w400),
-                  ),
-                ),
-                const SizedBox(height: 12 * gsf),
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: maxHeight,
-                  ),
-                  child: TextField(
-                    controller: dialogDescriptionController,
-                    maxLines: null,
-                    minLines: 5,
-                    // expands: true,
-                    keyboardType: TextInputType.multiline,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      hintText: "Description / Notes",
-                      border: const OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.all(11) * gsf,
-                      isDense: true,
-                    ),
-                    autofocus: true,
-                  ),
-                ),
-                const SizedBox(height: 10 * gsf),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: actionButtonStyle.copyWith(
-                          padding: WidgetStateProperty.all(EdgeInsets.zero),
-                        ),
-                        onPressed: () => Navigator.of(context).pop(dialogDescriptionController.text.trim()),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 0 * gsf, vertical: 10.0 * gsf),
-                          child: Text('Save', style: TextStyle(fontSize: 16 * gsf)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16 * gsf),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: actionButtonStyle.copyWith(
-                          padding: WidgetStateProperty.all(EdgeInsets.zero),
-                        ),
-                        onPressed: () => Navigator.of(context).pop(null),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 0 * gsf, vertical: 10.0 * gsf),
-                          child: Text('Cancel'),
-                        ),
-                      ),
-                    ),
-                  ]
-                ),
-              ]
-            ),
-          ),
-        )
-      );
-    },
+    title: title,
+    content: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: maxHeight,
+      ),
+      child: TextField(
+        controller: dialogDescriptionController,
+        maxLines: null,
+        minLines: 5,
+        // expands: true,
+        keyboardType: TextInputType.multiline,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(
+          hintText: "Description / Notes",
+          border: const OutlineInputBorder(),
+          contentPadding: const EdgeInsets.all(11) * gsf,
+          isDense: true,
+        ),
+        autofocus: true,
+      ),
+    ),
+    options: [
+      ("Save", () => dialogDescriptionController.text.trim()),
+      ("Cancel", null),
+    ],
   );
 }
 
@@ -497,6 +488,97 @@ void onAddProduct(
   });
 }
 
+Future<double?> showScaleModal({
+  required BuildContext context,
+  required double currentAmount,
+  required List<(String, double)> ingredients, // List of ingredient names and their current amounts
+  //required Function(double) onScaleConfirmed,
+}) async {
+  final TextEditingController scaleController = TextEditingController(text: "1.0");
+  double scaleFactor = 1.0;
+  
+  return showOptionDialog<double?>(
+    title: "Scale ingredients",
+    context: context,
+    content: StatefulBuilder(
+      builder: (context, setState) {
+        List<(String, double)> scaledIngredients = ingredients
+            .map((ingredient) => (ingredient.$1, ingredient.$2 * scaleFactor))
+            .toList();
+        double scaledResultingAmount = currentAmount * scaleFactor;
+        
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Enter a scaling factor to multiply all ingredient amounts and the resulting amount by the same value:"),
+            const SizedBox(height: 10),
+            TextField(
+              controller: scaleController,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: "Scaling Factor",
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                final newScaleFactor = double.tryParse(value) ?? 1.0;
+                setState(() {
+                  scaleFactor = newScaleFactor > 0 ? newScaleFactor : 1.0;
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Preview:",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            //Expanded(
+            //  child: ListView(
+            //    children: [
+            //      ListTile(
+            //        title: const Text("Resulting Amount"),
+            //        trailing: Text("${scaledResultingAmount.toStringAsFixed(2)}"),
+            //      ),
+            //      ...scaledIngredients.map((ingredient) => ListTile(
+            //            title: Text(ingredient.$1),
+            //            trailing: Text("${ingredient.$2.toStringAsFixed(2)}"),
+            //          )),
+            //    ],
+            //  ),
+            //),
+            
+          ],
+        );
+      }
+    ),
+    
+    options: [
+      ("Apply", () => double.tryParse(scaleController.text)),
+      ("Cancel", null),
+    ],
+    //actions: [
+    //  TextButton(
+    //    onPressed: () => Navigator.of(context).pop(),
+    //    child: const Text("Cancel"),
+    //  ),
+    //  ElevatedButton(
+    //    onPressed: () {
+    //      final finalScaleFactor = double.tryParse(scaleController.text);
+    //      if (finalScaleFactor != null && finalScaleFactor > 0) {
+    //        onScaleConfirmed(finalScaleFactor);
+    //        Navigator.of(context).pop();
+    //      } else {
+    //        ScaffoldMessenger.of(context).showSnackBar(
+    //          const SnackBar(content: Text("Please enter a valid scaling factor.")),
+    //        );
+    //      }
+    //    },
+    //    child: const Text("Apply"),
+    //  ),
+    //],
+  );
+}
+
 class _MainList extends StatefulWidget {
   final Map<int, Product> productsMap;
   final Map<int, double>? relevancies;
@@ -507,6 +589,7 @@ class _MainList extends StatefulWidget {
   final TextEditingController? searchController;
   final bool autofocus;
   final DateTime? refDate;
+  final bool expand;
   
   const _MainList({
     required this.productsMap,
@@ -518,6 +601,7 @@ class _MainList extends StatefulWidget {
     this.searchController,
     this.autofocus = false,
     this.refDate,
+    this.expand = true,
   });
 
   @override
@@ -548,7 +632,45 @@ class _MainListState extends State<_MainList> {
       );
     }
     
+    Widget list = ListView(
+      shrinkWrap: true,
+      children: getProductTiles(
+        context: context,
+        products: widget.productsMap.values.toList(),
+        sorting: (SortType.relevancy, SortOrder.descending),
+        relevancies: widget.relevancies,
+        search: _searchController.text,
+        colorFromTop: widget.colorFromTop,
+        onSelected: (name, id) {
+          var product = widget.productsMap[id]!;
+          Navigator.of(context).pop();
+          setState(() {
+            _searchController.clear();
+          });
+          widget.onSelected(product);
+        },
+        onLongPress: (name, id) {
+          if (widget.onLongPress != null) {
+            var product = widget.productsMap[id]!;
+            widget.onLongPress!(product);
+          }
+        },
+        refDate: widget.refDate,
+      ),
+    );
+    
+    if (widget.expand) {
+      list = Expanded(
+        child: list,
+      );
+    } else {
+      list = Flexible(
+        child: list,
+      );
+    }
+    
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         widget.showSearch ? Container(
           decoration: const BoxDecoration(
@@ -567,35 +689,7 @@ class _MainListState extends State<_MainList> {
             )
           )
         ) : const SizedBox(),
-        Expanded(
-          child: ListView(
-            children: getProductTiles(
-              context: context,
-              products: widget.productsMap.values.toList(),
-              sorting: (SortType.relevancy, SortOrder.descending),
-              relevancies: widget.relevancies,
-              search: _searchController.text,
-              colorFromTop: widget.colorFromTop,
-              onSelected: (name, id) {
-                var product = widget.productsMap[id]!;
-                Navigator.of(context).pop();
-                setState(() {
-                  _searchController.clear();
-                });
-                widget.onSelected(product);
-              },
-              onLongPress: (name, id) {
-                var product = widget.productsMap[id]!;
-                if (widget.onLongPress != null) {
-                  widget.onLongPress!(product);
-                } else {
-                  widget.onSelected(product);
-                }
-              },
-              refDate: widget.refDate,
-            ),
-          ),
-        ),
+        list,
       ],
     );
   }

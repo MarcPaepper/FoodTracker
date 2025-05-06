@@ -16,6 +16,8 @@ const tsNormal = TextStyle(fontSize: 16 * gsf);
 
 var areaButtonColor = Colors.teal.shade50;
 
+var altPrimaryColor = Colors.teal.shade400;
+
 ThemeData getTheme() =>
   ThemeData(
     // set default text font size to 16
@@ -62,6 +64,10 @@ ThemeData getTheme() =>
     inputDecorationTheme: InputDecorationTheme(
       isDense: true,
       filled: true,
+      hintStyle: const TextStyle(
+        fontSize: 16 * gsf,
+        color: Color.fromARGB(110, 0, 0, 0),
+      ),
       fillColor: WidgetStateColor.resolveWith((Set<WidgetState> states) =>
         states.contains(WidgetState.error) ?
           const Color.fromARGB(34, 255, 111, 0) :
@@ -148,8 +154,9 @@ var actionButtonStyle = ButtonStyle(
   )),
 );
 
+var lightButtonBgColor = Colors.teal.shade50.withOpacity(0.6);
 var lightButtonStyle = ElevatedButton.styleFrom(
-  backgroundColor: Colors.teal.shade100.withOpacity(0.6),
+  backgroundColor: lightButtonBgColor,
   shadowColor: Colors.transparent,
   surfaceTintColor: Colors.transparent,
   shape: const RoundedRectangleBorder(

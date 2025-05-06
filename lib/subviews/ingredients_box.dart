@@ -170,31 +170,115 @@ class _IngredientsBoxState extends State<IngredientsBox> {
           errorType = ErrorType.error;
         }
         
+        bool scaleBtnEnabled = errorType != ErrorType.error && valueIngredients.isNotEmpty;
+        if (scaleBtnEnabled && valueIngredients.any((pair) => pair.$1.productId == null)) scaleBtnEnabled = false;
+        
+        var scaleBtnStyle = lightButtonStyle.copyWith(
+          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 13, vertical: 10) * gsf),
+          shape: WidgetStateProperty.all(const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(9 * gsf)),
+          )),
+          minimumSize: WidgetStateProperty.all(null),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          backgroundColor: WidgetStateProperty.all(scaleBtnEnabled ? areaButtonColor : Colors.grey.withOpacity(0.12)), // const Color.fromARGB(255, 225, 248, 242)
+        );
+        
+        if (!scaleBtnEnabled) {
+          scaleBtnStyle = scaleBtnStyle.copyWith(
+          splashFactory: NoSplash.splashFactory,
+          );
+        }
+        
         return BorderBox(
           title: "Ingredients",
           borderColor: errorType == ErrorType.error ? errorBorderColor : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SwitchListTile(
-                value: valueAutoCalc,
-                controlAffinity: ListTileControlAffinity.leading,
-                visualDensity: VisualDensity.compact,
-                onChanged: (bool value) {
-                  widget.autoCalcAmountNotifier.value = value;
-                  widget.intermediateSave();
-                },
-                title: Padding(
-                  padding: const EdgeInsets.only(top: 2) * gsf,
-                  child: const Text(
-                    "Auto calculate the resulting amount",
-                    style: TextStyle(
-                      fontSize: 16 * gsf,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: SwitchListTile( // < this lines
+                      value: valueAutoCalc,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      visualDensity: VisualDensity.compact,
+                      onChanged: (bool value) {
+                        widget.autoCalcAmountNotifier.value = value;
+                        widget.intermediateSave();
+                      },
+                      title: Padding(
+                        padding: const EdgeInsets.only(top: 2) * gsf,
+                        child: const Text(
+                          "Autocalc amount",
+                          style: TextStyle(
+                            fontSize: 16 * gsf,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5 * gsf),
+                    child: IconButton(
+                      style: scaleBtnStyle,
+                      // custom icon 
+                      icon: Image.asset(
+                        "assets/scale.png",
+                        width: 21 * gsf,
+                        height: 21 * gsf,                      
+                        // primary color of theme
+                        color: scaleBtnEnabled ? const Color.fromARGB(255, 0, 141, 122) : Colors.grey.withOpacity(0.65),
+                      ),
+                      onPressed: () async {
+                        if (!scaleBtnEnabled) return;
+                        
+                        // convert the ingredients list to a list of tuples with the product name and amount
+                        List<(String, double)> ingredientList = valueIngredients.map((ingredient) => (
+                          widget.productsMap[ingredient.$1.productId]?.name ?? "Unknown",
+                          ingredient.$1.amount
+                        )).toList();
+                          
+                        double? scaleFactor = await showScaleModal(
+                          context: context,
+                          currentAmount: valueResultingAmount,
+                          ingredients: ingredientList,
+                        );
+                        
+                        if (scaleFactor == null || scaleFactor.isInfinite || scaleFactor.isNaN || scaleFactor <= 0) {
+                          if (context.mounted) {
+                            showErrorbar(
+                              context,
+                              "Invalid scale factor",
+                              duration: 2.5,
+                            );
+                          }
+                          return;
+                        }
+                        
+                        for (int i = 0; i < valueIngredients.length; i++) {
+                          var ingredient = valueIngredients[i];
+                          valueIngredients[i] = (
+                            ProductQuantity(
+                              productId: ingredient.$1.productId,
+                              amount: ingredient.$1.amount * scaleFactor,
+                              unit: ingredient.$1.unit,
+                            ),
+                            ingredient.$2,
+                          );
+                          widget.ingredientAmountControllers[i].text = truncateZeros(ingredient.$1.amount * scaleFactor);
+                        }
+                        widget.resultingAmountNotifier.value = valueResultingAmount * scaleFactor;
+                        widget.resultingAmountController.text = truncateZeros(valueResultingAmount * scaleFactor);
+                        widget.ingredientsNotifier.value = List.from(valueIngredients);
+                        widget.intermediateSave();
+                      }
+                    ),
+                  ),
+                  const SizedBox(width: 14 * gsf),
+                ],
               ),
-              const SizedBox(height: 10 * gsf),
+              const SizedBox(height: 7 * gsf),
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 8, 8) * gsf,
                 child: Row(

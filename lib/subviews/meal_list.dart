@@ -663,13 +663,6 @@ class _MealListState extends State<MealList> {
       childCount++;
     }
     
-    children.add(
-      Container(
-        height: 54 * gsf,
-        color: Colors.grey.shade300,
-      )
-    );
-    
     if (!const ListEquality().equals(newDays, _allDaysNotifier.value)) {
       _allDaysNotifier.value = newDays;
     }

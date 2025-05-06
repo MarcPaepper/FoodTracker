@@ -95,17 +95,26 @@ class _StatsViewState extends State<StatsView> with AutomaticKeepAliveClientMixi
                   LoadingPage(),
                 ],
               );
-            }
+            } 
             
-            if (msg != null) {
-              return msg;
-            }
+            if (msg != null) return msg;
             
             final products = snapshots[0].data as List<Product>;
             final productsMap = Map<int, Product>.fromEntries(products.map((product) => MapEntry(product.id, product)));
             final nutvalues = snapshots[1].data as List<NutritionalValue>;
             final targets = snapshots[2].data as List<Target>;
             final meals = snapshots[3].data as List<Meal>;
+            
+            if (meals.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16 * gsf, vertical: 50 * gsf),
+                child: Text(
+                  "Add meals to view their stats",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16 * gsf),
+                ),
+              );
+            }
             
             // check if there are new targets
             if (targets.any((target) => !_activeTargets.containsKey(target))) {

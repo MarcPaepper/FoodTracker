@@ -823,6 +823,7 @@ Widget _buildDescriptionButton() {
             ),
             onPressed: () async {
               String? newDescription = await showProductDescriptionDialog(context, _descriptionController.text, _productNameController.text);
+              devtools.log("nD $newDescription");
               if (newDescription != null) {
                 _descriptionController.text = newDescription;
                 _interimProduct = getProductFromForm().$1;
