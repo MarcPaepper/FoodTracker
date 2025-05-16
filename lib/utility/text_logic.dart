@@ -107,15 +107,31 @@ String? numberValidator(String? value, {bool canBeEmpty = false}) {
   return null;
 }
 
-String roundDouble(double value) {
+int? getPrecision(double value) {
+  // count the number of total digits in the amount
+  int? currentPrecision;
+  var str = value.toString();
+  // remove trailing zeros 
+  if (str.contains('.') && !str.endsWith('.0')) {
+    str = str.replaceAll(RegExp(r"0+$"), "");
+    str = str.replaceAll(RegExp(r"\.$"), "");
+    currentPrecision = str.length;
+    if (currentPrecision <= 3) currentPrecision = null;
+  }
+  return currentPrecision;
+}
+
+String roundDouble(double value, {int? precision}) {
+  precision ??= 3;
   if (value == 0) return "0";
   if (value.isNaN) return "NaN";
   if (value.isInfinite) return "∞";
   var order = (log(value) / ln10).floor();
-  if (order >= 3) {
+  if (order >= precision) {
+    // if >= 1000, round to int
     return value.toInt().toString();
   } else {
-    var str = value.toStringAsFixed(3 - order);
+    var str = value.toStringAsFixed(precision - order);
     
     // delete decimal point if only zeros follow
     str = str.replaceAll(RegExp(r"\.0+$"), "");

@@ -112,8 +112,8 @@ Meal mapToMeal(Map<String, Object?> map) =>
  Meal(
     id:               map[idColumn] as int,
     dateTime:         DateTime.parse(map[dateTimeColumn] as String),
-    creationDate:     DateTime.parse(map[creationDateColumn] as String),
-    lastEditDate:     DateTime.parse(map[lastEditDateColumn] as String),
+    creationDate:     DateTime.parse(map[creationDateColumn] as String? ?? map[dateTimeColumn] as String),
+    lastEditDate:     DateTime.parse(map[lastEditDateColumn] as String? ?? map[dateTimeColumn] as String),
     productQuantity:  ProductQuantity(
       productId:        map[productIdColumn] as int,
       amount:           toDouble(map[amountColumn]),

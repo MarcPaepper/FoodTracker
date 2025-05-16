@@ -139,12 +139,14 @@ class _IngredientsBoxState extends State<IngredientsBox> {
             valueDensityConversion,
             valueQuantityConversion,
           );
+          String roundedAmount = roundDouble(resultingAmount);
+          resultingAmount = double.parse(roundedAmount);
           
           if (!resultingAmount.isNaN && resultingAmount != valueResultingAmount) {
-            // after frame callback to avoid changing the value during build
+            // // after frame callback to avoid changing the value during build
             WidgetsBinding.instance.addPostFrameCallback((_) {
               widget.resultingAmountNotifier.value = resultingAmount;
-              widget.resultingAmountController.text = roundDouble(resultingAmount);
+              widget.resultingAmountController.text = roundedAmount;
             });
           }
         }
@@ -199,7 +201,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: SwitchListTile( // < this lines
+                    child: SwitchListTile(
                       value: valueAutoCalc,
                       controlAffinity: ListTileControlAffinity.leading,
                       visualDensity: VisualDensity.compact,
@@ -232,20 +234,18 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                       ),
                       onPressed: () async {
                         if (!scaleBtnEnabled) return;
-                        
-                        // convert the ingredients list to a list of tuples with the product name and amount
-                        List<(String, double)> ingredientList = valueIngredients.map((ingredient) => (
-                          widget.productsMap[ingredient.$1.productId]?.name ?? "Unknown",
-                          ingredient.$1.amount
-                        )).toList();
                           
                         double? scaleFactor = await showScaleModal(
                           context: context,
+                          productsMap: widget.productsMap,
                           currentAmount: valueResultingAmount,
-                          ingredients: ingredientList,
+                          unit: valueUnit,
+                          ingredients: valueIngredients.map((pair) => pair.$1).toList(),
+                          productName: productName,
                         );
                         
-                        if (scaleFactor == null || scaleFactor.isInfinite || scaleFactor.isNaN || scaleFactor <= 0) {
+                        if (scaleFactor == null) return;
+                        if (scaleFactor.isInfinite || scaleFactor.isNaN || scaleFactor <= 0) {
                           if (context.mounted) {
                             showErrorbar(
                               context,

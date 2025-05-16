@@ -389,7 +389,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
                     child: Column(
                       children: [
                         _buildNameWidget(products!),
-                        const SizedBox(height: 5 * gsf),
+                        // const SizedBox(height: 5 * gsf),
                         _buildDefaultUnitDropdown(),
                         TemporaryBox(
                           isTemporaryNotifier: _isTemporaryNotifier,
@@ -823,7 +823,6 @@ Widget _buildDescriptionButton() {
             ),
             onPressed: () async {
               String? newDescription = await showProductDescriptionDialog(context, _descriptionController.text, _productNameController.text);
-              devtools.log("nD $newDescription");
               if (newDescription != null) {
                 _descriptionController.text = newDescription;
                 _interimProduct = getProductFromForm().$1;

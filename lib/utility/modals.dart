@@ -6,6 +6,7 @@ import 'package:food_tracker/utility/text_logic.dart';
 
 import '../constants/ui.dart';
 import '../services/data/data_service.dart';
+import '../widgets/amount_field.dart';
 import '../widgets/search_field.dart';
 import '../constants/routes.dart';
 import '../services/data/data_objects.dart';
@@ -13,7 +14,7 @@ import '../widgets/products_list.dart';
 import '../widgets/sort_field.dart';
 import 'theme.dart';
 
-// import 'dart:developer' as devtools show log;
+import 'dart:developer' as devtools show log;
 
 void showErrorbar(BuildContext context, String msg, {double? duration}) => _showSnackbar(
   context: context,
@@ -54,36 +55,63 @@ void _showSnackbar({
 Future<T?> showOptionDialog<T>({
   required BuildContext context,
   String? title,
-  Color? titleColor,
+  Color? titleBgColor,
   Widget? icon,
+  double? iconWidth,
   required Widget content,
   required List<(String?, T Function()?)> options,
   double insetPadding = 28 * gsf,
   double contentPadding = 12 * gsf,
+  bool scrollContent = false,
 }) {
   Widget? titleWidget;
   if (title != null) {
+    var titleColor = Colors.black;
+    if (titleBgColor != null) {
+      var a = titleBgColor.alpha;
+      var r = titleBgColor.red;
+      var g = titleBgColor.green;
+      var b = titleBgColor.blue;
+      // geometric mean
+      var avg = pow(r * g * b, 1 / 3);
+      avg = a * avg / 255 + 255 - a;
+      if (avg < 100) {
+        titleColor = Colors.white;
+      } else {
+        titleColor = Colors.black;
+      }
+    }
+    
     titleWidget = Text(
       title,
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 18 * gsf, fontWeight: FontWeight.w400),
+      style: TextStyle(fontSize: 18 * gsf, fontWeight: FontWeight.w400, color: titleColor),
     );
     
     if (icon != null) {
-      //
-    } else {
-      titleWidget = Container(
-        decoration: BoxDecoration(
-          color: titleColor ?? Colors.transparent,
-          borderRadius: BorderRadius.only(
-            topLeft:  Radius.circular(14),
-            topRight: Radius.circular(14),
-          ),
-        ),
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 4) * gsf,
-        child: titleWidget,
+      titleWidget = Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          icon,
+          const SizedBox(width: 10 * gsf),
+          Expanded(child: titleWidget),
+          SizedBox(width: 10 * gsf + (iconWidth ?? 0)),
+        ],
       );
     }
+    
+    titleWidget = Container(
+      decoration: BoxDecoration(
+        color: titleBgColor ?? Colors.transparent,
+        borderRadius: const BorderRadius.only(
+          topLeft:  Radius.circular(14),
+          topRight: Radius.circular(14),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8) * gsf,
+      child: titleWidget,
+    );
   }
   
   List<Widget> optionButtons = [SizedBox(width: contentPadding)];
@@ -110,21 +138,34 @@ Future<T?> showOptionDialog<T>({
   }
   optionButtons.add(SizedBox(width: contentPadding));
   
+  if (contentPadding != 0) {
+    content = Padding(
+      padding: EdgeInsets.all(contentPadding),
+      child: content,
+    );
+  }
+  
+  if (scrollContent) {
+    content = Expanded(
+      child: SingleChildScrollView(
+        child: content,
+      ),
+    );
+  }
+  
   return showDialog(
     context: context,
     builder: (context) {
       return Dialog(
+        alignment: Alignment.center,
         insetPadding: EdgeInsets.all(insetPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             titleWidget ?? Container(),
-            SizedBox(height: title == null ? 0 : 12 * gsf),
-            Padding(
-              padding: EdgeInsets.all(contentPadding),
-              child: content,
-            ),
+            // SizedBox(height: title == null ? 0 : 12 * gsf),
+            content,
             const SizedBox(height: 10 * gsf),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -246,7 +287,7 @@ void showUsedAsIngredientDialog({
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('"$name" is used as an ingredient in:', style: TextStyle(fontSize: 16 * gsf)),
+        Text('"$name" is used as an ingredient in:'),
         const SizedBox(height: 10 * gsf),
         ConstrainedBox(
           constraints: BoxConstraints(
@@ -490,62 +531,107 @@ void onAddProduct(
 
 Future<double?> showScaleModal({
   required BuildContext context,
+  required Map<int, Product> productsMap,
   required double currentAmount,
-  required List<(String, double)> ingredients, // List of ingredient names and their current amounts
+  required Unit unit,
+  required List<ProductQuantity> ingredients, // List of ingredient names and their current amounts
+  required String productName,
   //required Function(double) onScaleConfirmed,
 }) async {
   final TextEditingController scaleController = TextEditingController(text: "1.0");
   double scaleFactor = 1.0;
   
   return showOptionDialog<double?>(
-    title: "Scale ingredients",
+    title: "Scale ingredient list",
     context: context,
+    titleBgColor: Color.lerp(Colors.teal.shade100, Colors.teal.shade200, 0.9)!,
+    icon: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 7) * gsf,
+      child: Image.asset(
+        "assets/scale.png",
+        width:  30 * gsf,
+        height: 30 * gsf,                      
+        // primary color of theme
+        color: Colors.teal.shade700,
+      ),
+    ),
+    iconWidth: (30 + 10) * gsf,
+    scrollContent: true,
+    contentPadding: 16 * gsf,
     content: StatefulBuilder(
       builder: (context, setState) {
-        List<(String, double)> scaledIngredients = ingredients
-            .map((ingredient) => (ingredient.$1, ingredient.$2 * scaleFactor))
-            .toList();
-        double scaledResultingAmount = currentAmount * scaleFactor;
+        List<ProductQuantity> scaledIngredients = ingredients.map((ingredient) {
+          int? precision = getPrecision(ingredient.amount);
+          var roundedAmount = double.parse(roundDouble(ingredient.amount * scaleFactor, precision: precision));
+          return ProductQuantity(
+            productId: ingredient.productId,
+            amount: roundedAmount,
+            unit: ingredient.unit,
+          );
+        }).toList();
+        int? precision = getPrecision(currentAmount);
+        var roundedAmount = double.parse(roundDouble(currentAmount * scaleFactor, precision: precision));
+        double scaledResultingAmount = roundedAmount;
         
         return Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text("Enter a scaling factor to multiply all ingredient amounts and the resulting amount by the same value:"),
-            const SizedBox(height: 10),
-            TextField(
+            const SizedBox(height: 15 * gsf),
+            AmountField(
               controller: scaleController,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: "Scaling Factor",
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                final newScaleFactor = double.tryParse(value) ?? 1.0;
-                setState(() {
-                  scaleFactor = newScaleFactor > 0 ? newScaleFactor : 1.0;
-                });
+              padding: 0,
+              autofocus: true,
+              onChangedAndParsed: (newAmount) {
+                setState(() => scaleFactor = newAmount);
               },
             ),
-            const SizedBox(height: 20),
-            Text(
-              "Preview:",
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            const SizedBox(height: 20 * gsf),
+            const Center(
+              child: Text(
+                " Preview:",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
+            const SizedBox(height: 10 * gsf),
+            const Divider(
+              // indent: 4 * gsf,
+              thickness: 1.5 * gsf,
+              // endIndent:  * gsf,
+            ),
+            // getTitledDivider("Preview:"),
             const SizedBox(height: 10),
-            //Expanded(
-            //  child: ListView(
-            //    children: [
-            //      ListTile(
-            //        title: const Text("Resulting Amount"),
-            //        trailing: Text("${scaledResultingAmount.toStringAsFixed(2)}"),
-            //      ),
-            //      ...scaledIngredients.map((ingredient) => ListTile(
-            //            title: Text(ingredient.$1),
-            //            trailing: Text("${ingredient.$2.toStringAsFixed(2)}"),
-            //          )),
-            //    ],
-            //  ),
-            //),
+            Column(
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  minVerticalPadding: 0,
+                  visualDensity: const VisualDensity(horizontal: 04, vertical: -2),
+                  title: Text(productName,
+                    style: const TextStyle(fontSize: 16 * gsf),
+                  ),
+                  trailing: Text(
+                    "${truncateZeros(roundDouble(scaledResultingAmount))} ${unitToString(unit)}",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16 * gsf),
+                  ),
+                ),
+                getTitledDivider("Contains:"),
+                ...ingredients.map((ingredient) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      minVerticalPadding: 0,
+                      visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
+                      title: Text(
+                        productsMap[ingredient.productId]?.name ?? "Unknown product", 
+                        style: const TextStyle(fontSize: 16 * gsf),
+                      ),
+                      trailing: Text(
+                        "${truncateZeros(roundDouble(ingredient.amount * scaleFactor))} ${unitToString(ingredient.unit)}",
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16 * gsf),
+                      ),
+                    )),
+              ],
+            ),
             
           ],
         );
@@ -556,26 +642,38 @@ Future<double?> showScaleModal({
       ("Apply", () => double.tryParse(scaleController.text)),
       ("Cancel", null),
     ],
-    //actions: [
-    //  TextButton(
-    //    onPressed: () => Navigator.of(context).pop(),
-    //    child: const Text("Cancel"),
-    //  ),
-    //  ElevatedButton(
-    //    onPressed: () {
-    //      final finalScaleFactor = double.tryParse(scaleController.text);
-    //      if (finalScaleFactor != null && finalScaleFactor > 0) {
-    //        onScaleConfirmed(finalScaleFactor);
-    //        Navigator.of(context).pop();
-    //      } else {
-    //        ScaffoldMessenger.of(context).showSnackBar(
-    //          const SnackBar(content: Text("Please enter a valid scaling factor.")),
-    //        );
-    //      }
-    //    },
-    //    child: const Text("Apply"),
-    //  ),
-    //],
+  );
+}
+
+Widget getTitledDivider(String title) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8.0),
+    child: Row(
+      children: [
+        const Expanded(
+          child: Divider(
+            // indent: 4 * gsf,
+            thickness: 1.5 * gsf,
+            endIndent: 8 * gsf,
+          ),
+        ),
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16.0 * gsf,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const Expanded(
+          child: Divider(
+            // endIndent: 8 * gsf,
+            thickness: 1.5 * gsf,
+            indent: 8 * gsf,
+          ),
+        ),
+      ],
+    ),
   );
 }
 
@@ -622,7 +720,7 @@ class _MainListState extends State<_MainList> {
     if (widget.productsMap.isEmpty) {
       return const Center(
         child: Text(
-          'No products found',
+          'No products yet',
           style: TextStyle(
             color: Colors.grey,
             fontStyle: FontStyle.italic,

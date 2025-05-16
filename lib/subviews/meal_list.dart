@@ -158,7 +158,7 @@ class _MealListState extends State<MealList> {
                     builder: (context, values, child) {
                       double scrollProgress = 1.0;
                       double widthProgress = 0.0;
-                      
+                      // devtools.log("Visible days: ${values[0]}");
                       if (values[0].isEmpty) return const SizedBox.shrink(); // if there are no visible days, show nothing
                       if (!values[1].$2) {
                          // If the user scrolled so far down, that the top of the add meal box is not fully visible anymore
@@ -200,7 +200,7 @@ class _MealListState extends State<MealList> {
                           double visibleAtBottom = info.size.height - concealedAtTop;
                           if (visibleAtBottom < (2.5 * gsf)) {
                             if (refDate2000 == high) return const SizedBox.shrink();
-                            widthProgress = (17.5 + 1.5 * visibleAtBottom / (2.5 * gsf)) / 19.0;
+                            widthProgress = (18 + 1 * visibleAtBottom / (2.5 * gsf)) / 19.0;
                           } else {
                             scrollProgress = (visibleAtBottom - 2.5 * gsf) / (info.size.height - 2.5 * gsf);
                             refDate2000 = lowestAbsKey.abs();
@@ -600,6 +600,7 @@ class _MealListState extends State<MealList> {
             double topConcealed = info.visibleBounds.top / info.size.height;
             double bottomBound = info.visibleBounds.bottom;
             double visibleFraction = 1 - topConcealed;
+            if (info.visibleFraction > visibleFraction) visibleFraction = info.visibleFraction;
             if (bottomBound == 0 || info.visibleFraction == 0) visibleFraction = 0;
             
             // update the visible days map

@@ -14,6 +14,7 @@ const disabledBorderColor = Color.fromARGB(130, 158, 158, 158);
 
 const tsNormal = TextStyle(fontSize: 16 * gsf);
 
+const actionButtonColor =  Color.fromARGB(163, 33, 197, 181);
 var areaButtonColor = Colors.teal.shade50;
 
 var altPrimaryColor = Colors.teal.shade400;
@@ -145,7 +146,7 @@ class _CustomUnderlinePainter extends BoxPainter {
 }
 
 var actionButtonStyle = ButtonStyle(
-  backgroundColor: WidgetStateProperty.all(const Color.fromARGB(163, 33, 197, 181)),
+  backgroundColor: WidgetStateProperty.all(actionButtonColor),
   foregroundColor: WidgetStateProperty.all(Colors.white),
   textStyle: WidgetStateProperty.all(const TextStyle(fontSize: 16 * gsf)),
   padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 12, vertical: 12) * gsf),

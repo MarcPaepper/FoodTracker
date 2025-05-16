@@ -453,7 +453,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                       var (productQuantity, color) = widget.ingredients![index];
                       var desiredColor = productColors[i % productColors.length];
                       if (color != desiredColor) {
-                        // devtools.log("changing color of ${contributingColored[i].name} from $color to $desiredColor");
+                        devtools.log("changing color of ${contributingColored[i].name} from $color to $desiredColor");
                         widget.ingredients![index] = (productQuantity, desiredColor);
                         colorChanged = true;
                         colorsUsed++;
@@ -467,7 +467,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                       var index = widget.ingredients!.indexWhere((element) => element.$1.productId == p!.id);
                       var (productQuantity, color) = widget.ingredients![index];
                       if (color != grey) {
-                        // devtools.log("changing color of ${p?.name} from $color to $grey because of non-contribution");
+                        devtools.log("changing color of ${p?.name} from $color to $grey because of non-contribution");
                         widget.ingredients![index] = (productQuantity, grey);
                         colorChanged = true;
                         colorsUsed++;
@@ -476,7 +476,7 @@ class _DailyTargetsBoxState extends State<DailyTargetsBox> {
                     
                     if (colorChanged) {
                       Future(() {
-                        widget.onIngredientsChanged(widget.ingredients!);
+                        widget.onIngredientsChanged(List.from(widget.ingredients!));
                       });
                     }
                   }

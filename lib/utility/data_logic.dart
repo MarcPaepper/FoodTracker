@@ -737,7 +737,7 @@ Future<void> importData(BuildContext context) async {
       }
       
       if(context.mounted) showSnackbar(context, "Data imported successfully");
-    } on Exception catch (e) {
+    } catch (e) {
      // log
      devtools.log("Error while importing the data: $e");
      if(context.mounted) showSnackbar(context, "Error while importing the data: $e");

@@ -15,6 +15,7 @@ class AmountField extends StatelessWidget {
   final FocusNode? focusNode;
   final bool enabled;
   final bool canBeEmpty;
+  final bool autofocus;
   final Function(double)? onChangedAndParsed;
   final Function()? onEmptied;
   final double? padding;
@@ -33,6 +34,7 @@ class AmountField extends StatelessWidget {
     this.padding,
     this.hintText,
     this.canBeEmpty = false,
+    this.autofocus = false,
     this.borderColor,
     this.fillColor,
     this.hintColor,
@@ -78,6 +80,7 @@ class AmountField extends StatelessWidget {
           decoration: inputDec,
           controller: controller,
           focusNode: focusNode,
+          autofocus: autofocus,
           keyboardType: TextInputType.number,
           textInputAction: textInputAction,
           validator: (String? value) => enabled ? numberValidator(value, canBeEmpty: canBeEmpty) : null,
