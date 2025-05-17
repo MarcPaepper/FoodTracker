@@ -413,12 +413,7 @@ class _FoodBoxState extends State<FoodBox> {
           onSelected: (Product? product) {
             if (product != null) {
               var defUnit = product.defaultUnit;
-              double amount;
-              if (defUnit == Unit.quantity || defUnit == Unit.l || defUnit == Unit.kg) {
-                amount = 1.0;
-              } else {
-                amount = 100.0;
-              }
+              double amount = AsyncProvider.getCommonAmount(product.id) ?? defaultUnitAmounts[defUnit] ?? 100;
               // list of all colors used in the ingredients
               var colorsUsed = ingredients.map((e) => e.$2).toSet();
               var color = productColors.firstWhere((c) => !colorsUsed.contains(c), orElse: () => productColors[colorsUsed.length % productColors.length]);

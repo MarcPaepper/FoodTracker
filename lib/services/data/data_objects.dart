@@ -350,6 +350,22 @@ const Map<Unit, double> unitTypeFactors = {
   Unit.l: 1000,
   Unit.ml: 1,
 };
+const Map<Unit, double> defaultUnitAmounts = {
+  Unit.kg: 1,
+  Unit.g: 100,
+  Unit.mg: 100,
+  Unit.l: 1,
+  Unit.ml: 100,
+  Unit.quantity: 1,
+};
+
+void _checkDefaultUnitAmounts() {
+  assert(Unit.values.toSet().difference(defaultUnitAmounts.keys.toSet()).isEmpty, "Set a default amount for all units");
+}
+
+// ignore: unused_element
+final _ = _checkDefaultUnitAmounts();
+
 const List<Unit> volumetricUnits = [Unit.l, Unit.ml];
 const List<Unit> weightUnits = [Unit.kg, Unit.g, Unit.mg];
 

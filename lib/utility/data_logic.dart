@@ -800,7 +800,7 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
 }
 
 // calculate how relevant a product currently is to the user
-double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) {
+(double, ProductQuantity?) calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) {
   var now = DateTime.now();
   // filter for the meals that contain the product
   meals = meals.where((m) => m.productQuantity.productId == product.id).toList();
@@ -848,7 +848,37 @@ double calcProductRelevancy(List<Meal> meals, Product product, DateTime compDT) 
     devtools.log("::: $name : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
   }
   
-  return mealRelevancy * productRelevancy * temporaryRelevancy;
+  double relevancy = mealRelevancy * productRelevancy * temporaryRelevancy;
+  
+  // A product has a common amount if it is used at least 65% of meals and has been used at least 5 times
+  List<ProductQuantity> productQuantities = meals.map((m) => m.productQuantity).toList();
+  Map<ProductQuantity, int> productQuantitiesMap = {};
+  for (var pq in productQuantities) {
+    if (productQuantitiesMap.containsKey(pq)) {
+      productQuantitiesMap[pq] = productQuantitiesMap[pq]! + 1;
+    } else {
+      productQuantitiesMap[pq] = 1;
+    }
+  }
+  // find most common among them
+  MapEntry<ProductQuantity, int>? commonQuantity;
+  if (productQuantitiesMap.isNotEmpty) commonQuantity = productQuantitiesMap.entries.reduce((a, b) => a.value > b.value ? a : b); // Fix: StateError (Bad state: No element)
+  
+  if (commonQuantity != null) {
+    Unit unit = commonQuantity.key.unit;
+    Unit defUnit = product.defaultUnit;
+    double defAmount = defaultUnitAmounts[unit]!;
+    if (
+      commonQuantity.key.unit != defUnit ||
+      commonQuantity.value < 5 ||
+      commonQuantity.value / meals.length < 0.65 ||
+      commonQuantity.key.amount == defAmount
+    ) {
+      commonQuantity = null;
+    }
+  }
+  
+  return (relevancy, commonQuantity?.key);
 }
 
 // daily target progress

@@ -570,7 +570,7 @@ class _MealListState extends State<MealList> {
                   // jump to bottom of the list
                   _scrollController.scrollTo(
                     index: 0,
-                    duration: const Duration(milliseconds: 4500),
+                    duration: const Duration(milliseconds: 500),
                     curve: Curves.easeInOut,
                   );
                 } else if (value == 3) {

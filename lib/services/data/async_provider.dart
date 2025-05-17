@@ -1,16 +1,18 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
 import 'package:collection/collection.dart';
+import 'package:food_tracker/services/data/data_objects.dart';
 import 'package:food_tracker/utility/data_logic.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'data_service.dart';
 
-// import 'dart:developer' as devtools;
+import 'dart:developer' as devtools;
 
 class AsyncProvider {
   static final DataService _dataService = DataService.current();
   static Map<int, double>? _relevancies;
+  static Map<int, ProductQuantity>? _commonQuantities;
   static DateTime _compDT = DateTime.now();
   static final _relevancyStreamController = BehaviorSubject<Map<int, double>>();
   
@@ -36,6 +38,10 @@ class AsyncProvider {
     return _relevancies ?? {};
   }
   
+  static Map<int, ProductQuantity>? getCommonAmounts() => _commonQuantities;
+  
+  static double? getCommonAmount(int productId) => _commonQuantities?[productId]?.amount;
+  
   static Future<void> updateRelevancyFor(List<int> productIds) async {
     // if the future is running cancel it
     if (currentFuture != null) {
@@ -57,12 +63,15 @@ class AsyncProvider {
       firstTry = false;
       restartFuture = false;
       Map<int, double> newRelevancies = {};
+      Map<int, ProductQuantity> newCommonAmounts = {};
       var products = await _dataService.getAllProducts();
       var meals = await _dataService.getAllMeals();
       if (restartFuture) continue;
       if (ids == null) {
         for (var product in products) {
-          newRelevancies[product.id] = calcProductRelevancy(meals.toList(), product, _compDT);
+          var (relevancy, commonQuantity) = calcProductRelevancy(meals.toList(), product, _compDT);
+          newRelevancies[product.id] = relevancy;
+          if (commonQuantity != null) newCommonAmounts[product.id] = commonQuantity;
           if (restartFuture) break;
         }
       } else if (_relevancies != null) {
@@ -72,7 +81,10 @@ class AsyncProvider {
             _relevancies?.remove(id);
             continue;
           }
-          _relevancies![id] = calcProductRelevancy(meals.toList(), product, _compDT);
+          // _relevancies![id] = calcProductRelevancy(meals.toList(), product, _compDT);
+          var (relevancy, commonQuantity) = calcProductRelevancy(meals.toList(), product, _compDT);
+          _relevancies![id] = relevancy;
+          if (_commonQuantities != null && commonQuantity != null) _commonQuantities![id] = commonQuantity;
           // newRelevancies[id] = _relevancies![id]!;
           if (restartFuture) break;
         }
@@ -95,10 +107,14 @@ class AsyncProvider {
       // devtools.log("--- updated relevancies ${newRelevancies.length} / ${ids?.length} ---");
       
       
-      if (ids == null || _relevancies == null) {
+      if (ids == null) {
         _relevancies = newRelevancies;
-      } else {
-        _relevancies?.addAll(newRelevancies);
+        _commonQuantities = newCommonAmounts;
+        devtools.log("!!! updated relevancies ");
+        for (MapEntry<int, ProductQuantity> entry in newCommonAmounts.entries) {
+          Product product = products.firstWhere((element) => element.id == entry.key);
+          devtools.log("!!! ${product.name}: ${entry.value.amount} ${entry.value.unit}");
+        }
       }
       _relevancyStreamController.add(_relevancies!);
     }
