@@ -674,7 +674,7 @@ class _IngredientsBoxState extends State<IngredientsBox> {
         var reducedProducts = reduceProducts(productsMap, ingredients.map((pair) => pair.$1).toList(), id);
         Map<int, double>? relevancies;
         try {
-          relevancies = await AsyncProvider.getRelevancies();
+          relevancies = await AsyncProvider.getRelevancies(useCached: CacheMode.cached);
         } finally {}
         
         // show product dialog

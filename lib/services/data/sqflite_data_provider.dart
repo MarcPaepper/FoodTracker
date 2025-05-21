@@ -132,7 +132,7 @@ class SqfliteDataProvider implements DataProvider {
       await getAllTargets(cache: false);
       await cleanUp();
       
-      Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.getRelevancies(useCached: false));
+      Future.delayed(const Duration(milliseconds: relevancyUpdateDelay), () => AsyncProvider.getRelevancies(useCached: CacheMode.notCached));
       
       return "data loaded";
     } on MissingPlatformDirectoryException {

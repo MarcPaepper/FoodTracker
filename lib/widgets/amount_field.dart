@@ -81,7 +81,7 @@ class AmountField extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           autofocus: autofocus,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
           textInputAction: textInputAction,
           validator: (String? value) => enabled ? numberValidator(value, canBeEmpty: canBeEmpty) : null,
           autovalidateMode: AutovalidateMode.always,

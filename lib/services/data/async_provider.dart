@@ -9,6 +9,12 @@ import 'data_service.dart';
 
 import 'dart:developer' as devtools;
 
+enum CacheMode {
+  notCached,
+  any,
+  cached,
+}
+
 class AsyncProvider {
   static final DataService _dataService = DataService.current();
   static Map<int, double>? _relevancies;
@@ -21,9 +27,10 @@ class AsyncProvider {
   
   static Stream<Map<int, double>> streamRelevancies() => _relevancyStreamController.stream;
   
-  static Future<Map<int, double>> getRelevancies({bool useCached = true}) async {
+  static Future<Map<int, double>> getRelevancies({CacheMode useCached = CacheMode.any}) async {
     if (!_dataService.isLoaded()) return {};
-    if (useCached && _relevancies != null) {
+    if (useCached == CacheMode.cached && _relevancies == null) return {};
+    if (useCached != CacheMode.notCached && _relevancies != null) {
       return _relevancies!;
     }
     
@@ -125,7 +132,7 @@ class AsyncProvider {
     // check if future is currently running and cancel it
     if (currentFuture == null) {
       // reload relevancies
-      getRelevancies(useCached: false);
+      getRelevancies(useCached: CacheMode.notCached);
     } else {
       restartFuture = true;
     }

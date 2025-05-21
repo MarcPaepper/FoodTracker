@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../constants/ui.dart';
+import '../services/data/async_provider.dart';
 import '../services/data/data_objects.dart';
 import '../utility/modals.dart';
 
@@ -100,14 +101,23 @@ class _ProductDropdownState extends State<ProductDropdown> {
             _hasFocus = hasFocus;
           });
         },
-        onTap: () {
+        onTap: () async {
           widget.beforeTap?.call();
           setState(() {
             FocusScope.of(context).requestFocus(_focusNode);
           });
+          
+          Map<int, double>? relevancies;
+          try {
+            relevancies = await AsyncProvider.getRelevancies(useCached: CacheMode.cached);
+          } finally {}
+          
+          if (!context.mounted) return;
+          
           showProductDialog(
             context: context,
             productsMap: widget.productsMap,
+            relevancies: relevancies,
             selectedProduct: widget.selectedProduct,
             onSelected:  (newProduct) => widget.onChanged(newProduct),
             autofocus: widget.autofocusSearch,

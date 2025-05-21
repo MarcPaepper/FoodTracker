@@ -272,3 +272,135 @@ List<String> conditionallyRemoveYear(dynamic localeOrContext, List<DateTime> dat
   }
   return texts;
 }
+
+class ExpressionParser {
+  final String _input;
+  int _pos = 0;
+  late String _currentToken;
+
+  ExpressionParser(this._input) {
+    _currentToken = _nextToken();
+  }
+
+  /// Parse the full expression and return the computed value.
+  double parse() {
+    final value = _parseExpression();
+    if (_currentToken != '') {
+      throw const FormatException('Unexpected token: \$_currentToken');
+    }
+    return value;
+  }
+
+  /// Parse addition and subtraction.
+  double _parseExpression() {
+    var value = _parseTerm();
+    while (_currentToken == '+' || _currentToken == '-') {
+      final op = _currentToken;
+      _eat(op);
+      final term = _parseTerm();
+      if (op == '+') {
+        value += term;
+      } else {
+        value -= term;
+      }
+    }
+    return value;
+  }
+
+  /// Parse multiplication and division.
+  double _parseTerm() {
+    var value = _parseFactor();
+    while (_currentToken == '*' || _currentToken == '/') {
+      final op = _currentToken;
+      _eat(op);
+      final factor = _parseFactor();
+      if (op == '*') {
+        value *= factor;
+      } else {
+        if (factor == 0) {
+          throw UnsupportedError('Division by zero');
+        }
+        value /= factor;
+      }
+    }
+    return value;
+  }
+
+  /// Parse numbers and parentheses.
+  double _parseFactor() {
+    if (_currentToken == '(') {
+      _eat('(');
+      final value = _parseExpression();
+      _eat(')');
+      return value;
+    } else {
+      return _parseNumber();
+    }
+  }
+
+  /// Parse a number token into a double.
+  double _parseNumber() {
+    final token = _currentToken;
+    final number = double.tryParse(token);
+    if (number == null) {
+      throw FormatException('Invalid number: $token');
+    }
+    _eat(token);
+    return number;
+  }
+
+  /// Consume the expected token.
+  void _eat(String token) {
+    if (_currentToken == token) {
+      _currentToken = _nextToken();
+    } else {
+      throw FormatException('Expected $token but found $_currentToken');
+    }
+  }
+
+  /// Tokenizer: returns the next token (number, operator, parenthesis) or '' when done.
+  String _nextToken() {
+    // Skip whitespace
+    while (_pos < _input.length && _isWhitespace(_input[_pos])) {
+      _pos++;
+    }
+    if (_pos >= _input.length) return '';
+
+    final char = _input[_pos];
+
+    // Operator or parenthesis
+    if ('+-*/()'.contains(char)) {
+      _pos++;
+      return char;
+    }
+
+    // Number (digits, optional decimal point)
+    if (_isDigit(char) || char == '.') {
+      final start = _pos;
+      // Leading digits
+      while (_pos < _input.length && _isDigit(_input[_pos])) {
+        _pos++;
+      }
+      // Decimal point
+      if (_pos < _input.length && _input[_pos] == '.') {
+        _pos++;
+        // Fractional digits
+        while (_pos < _input.length && _isDigit(_input[_pos])) {
+          _pos++;
+        }
+      }
+      return _input.substring(start, _pos);
+    }
+
+    throw FormatException('Unexpected character: $char');
+  }
+
+  bool _isWhitespace(String ch) => ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
+  bool _isDigit(String ch) => '0123456789'.contains(ch);
+}
+
+/// Utility function to evaluate an expression string.
+double evaluateNumberString(String expr) {
+  final parser = ExpressionParser(expr);
+  return parser.parse();
+}

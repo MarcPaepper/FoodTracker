@@ -96,6 +96,9 @@ class _MealListState extends State<MealList> {
   
   @override
   Widget build(BuildContext context) {
+    Meal? firstMeal = widget.meals.isEmpty ? null : widget.meals[0];
+    int? firstDaySince2000 = firstMeal != null ? daysBetween(DateTime(2000), firstMeal.dateTime) : null;
+    
     return MultiValueListenableBuilder(
       listenables: [
         _searchNotifier,
@@ -187,8 +190,8 @@ class _MealListState extends State<MealList> {
                       }
                       
                       if (lowestAbsKey < 0) {
-                        // the lowest visible widget is a date strip
-                        widthProgress = _visibleDaysNotifier.value[lowestAbsKey]!.$1 * 17.5 / 19.0;
+                        widthProgress = _visibleDaysNotifier.value[lowestAbsKey]!.$1;
+                        if (-lowestAbsKey != firstDaySince2000) widthProgress *= 17.5 / 19.0;
                       } else {
                         // the lowest visible widget is a meal
                         var info = values[0][lowestAbsKey]!.$2;
@@ -655,12 +658,13 @@ class _MealListState extends State<MealList> {
       newMealIndices[meal.id] = childCount - 3;
     }
     
+    // add the last date strip
     if (meals.isNotEmpty) {
       // children.addAll(newDateChildren);
       int daysSince2000 = daysBetween(d2000, lastHeader);
       newStripIndices[daysSince2000] = childCount;
       newDays.add(daysSince2000);
-      children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince2000]!, now, childCount));
+      children.add(getDateStrip(locale, lastHeader, dateStrings[daysSince2000]!, now, childCount, top: true));
       childCount++;
     }
     
@@ -685,13 +689,13 @@ class _MealListState extends State<MealList> {
       thickness: 1 * gsf,
     );
   
-  Widget getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now, int index) {
+  Widget getDateStrip(String locale, DateTime dateTime, String dateString, DateTime now, int index, {bool top = false}) {
     // convert date to natural string
     String text = convertToNaturalDateString(dateTime, dateString, now);
     var daysSince2000 = daysBetween(DateTime(2000), dateTime);
     
     return Padding(
-      padding: const EdgeInsets.only(top: 3, bottom: 1.5) * gsf,
+      padding: EdgeInsets.only(top: top ? 4 : 3, bottom: 1.5) * gsf,
       // key: key,
       child: VisibilityDetector(
         key: Key("Date strip $daysSince2000"),
