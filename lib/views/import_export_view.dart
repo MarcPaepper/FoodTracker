@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../constants/ui.dart';
 import '../utility/data_logic.dart';
+import '../utility/modals.dart';
 import '../utility/theme.dart';
 import '../widgets/loading_page.dart';
+
+// import "dart:developer" as devtools show log;
 
 class ImportExportView extends StatefulWidget {
   const ImportExportView({super.key});
@@ -53,15 +56,20 @@ class _ImportExportViewState extends State<ImportExportView> {
       child: ElevatedButton(
         style: lightButtonStyle,
         onPressed: () {
-          setState(() {
-            _loading = true;
-          });
-          var future = isExport ? exportData() : importData(context);
-          future.then((value) {
-            setState(() {
-              _loading = false;
-              Navigator.pop(context);
-            });
+          var dialogFuture = showImportExportDialog(context, isExport);
+          dialogFuture.then((value) {
+            if (value == 0) {
+              setState(() {
+                _loading = true;
+              });
+              var future = isExport ? exportData() : importData(context);
+              future.then((value) {
+                setState(() {
+                  _loading = false;
+                  Navigator.pop(context);
+                });
+              });
+            }
           });
         },
         child: Row(

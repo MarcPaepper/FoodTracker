@@ -14,7 +14,7 @@ import '../widgets/products_list.dart';
 import '../widgets/sort_field.dart';
 import 'theme.dart';
 
-import 'dart:developer' as devtools show log;
+// import 'dart:developer' as devtools show log;
 
 void showErrorbar(BuildContext context, String msg, {double? duration}) => _showSnackbar(
   context: context,
@@ -560,15 +560,6 @@ Future<double?> showScaleModal({
     contentPadding: 16 * gsf,
     content: StatefulBuilder(
       builder: (context, setState) {
-        List<ProductQuantity> scaledIngredients = ingredients.map((ingredient) {
-          int? precision = getPrecision(ingredient.amount);
-          var roundedAmount = double.parse(roundDouble(ingredient.amount * scaleFactor, precision: precision));
-          return ProductQuantity(
-            productId: ingredient.productId,
-            amount: roundedAmount,
-            unit: ingredient.unit,
-          );
-        }).toList();
         int? precision = getPrecision(currentAmount);
         var roundedAmount = double.parse(roundDouble(currentAmount * scaleFactor, precision: precision));
         double scaledResultingAmount = roundedAmount;
@@ -674,6 +665,31 @@ Widget getTitledDivider(String title) {
         ),
       ],
     ),
+  );
+}
+
+Future<int?> showImportExportDialog(BuildContext context, bool isExport) async {
+  return showOptionDialog(
+    context: context,
+    title: isExport ? "Export" : "Import",
+    contentPadding: 16 * gsf,
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ElevatedButton(
+          style: actionButtonStyle,
+          onPressed: () {
+            Navigator.of(context).pop(0);
+          },
+          child: Text(isExport ? "Export complete backup" : "Import entire backup"),
+        )
+      ],
+    ),
+    options: [
+      (null, null),
+      ("Cancel", null),
+    ],
   );
 }
 
