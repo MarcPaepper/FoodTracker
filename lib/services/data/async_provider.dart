@@ -7,7 +7,7 @@ import 'package:rxdart/rxdart.dart';
 
 import 'data_service.dart';
 
-import 'dart:developer' as devtools;
+// import 'dart:developer' as devtools;
 
 enum CacheMode {
   notCached,
@@ -70,7 +70,7 @@ class AsyncProvider {
       firstTry = false;
       restartFuture = false;
       Map<int, double> newRelevancies = {};
-      Map<int, ProductQuantity> newCommonAmounts = {};
+      Map<int, ProductQuantity> newCommonQuantities = {};
       var products = await _dataService.getAllProducts();
       var meals = await _dataService.getAllMeals();
       if (restartFuture) continue;
@@ -78,7 +78,7 @@ class AsyncProvider {
         for (var product in products) {
           var (relevancy, commonQuantity) = calcProductRelevancy(meals.toList(), product, _compDT);
           newRelevancies[product.id] = relevancy;
-          if (commonQuantity != null) newCommonAmounts[product.id] = commonQuantity;
+          if (commonQuantity != null) newCommonQuantities[product.id] = commonQuantity;
           if (restartFuture) break;
         }
       } else if (_relevancies != null) {
@@ -106,22 +106,17 @@ class AsyncProvider {
       // // sort relevancies for value
       // newRelevancies = Map.fromEntries(newRelevancies.entries.toList()..sort((a, b) => b.value.compareTo(a.value)));
       // // only log first 10 products
-      // for (var i = 0; i < newRelevancies.length && i < 10; i++) {
+      // for (var i = 0; i < newRelevancies.length && i < 20; i++) {
       //   var key = newRelevancies.keys.elementAt(i);
       //   var product = productsMap[key];
       //   devtools.log("${product?.name}: ${roundDouble(newRelevancies[key] ?? 0)}");
       // }
-      // devtools.log("--- updated relevancies ${newRelevancies.length} / ${ids?.length} ---");
+      // if (ids != null) devtools.log("--- updated relevancies ${newRelevancies.length} / ${ids.length} ---");
       
       
       if (ids == null) {
         _relevancies = newRelevancies;
-        _commonQuantities = newCommonAmounts;
-        devtools.log("!!! updated relevancies ");
-        for (MapEntry<int, ProductQuantity> entry in newCommonAmounts.entries) {
-          Product product = products.firstWhere((element) => element.id == entry.key);
-          devtools.log("!!! ${product.name}: ${entry.value.amount} ${entry.value.unit}");
-        }
+        _commonQuantities = newCommonQuantities;
       }
       _relevancyStreamController.add(_relevancies!);
     }

@@ -807,8 +807,16 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
   
   // make the meals more relevant if they have more recent meals
   compDT = DateTime(compDT.year, compDT.month, compDT.day, compDT.hour, compDT.minute);
-  var mealTimeDeltas = meals.map((m) => max(0, compDT.difference(m.dateTime).inHours / 24)).toList();
-  var mealRelevancy = 1 + mealTimeDeltas.fold(0.0, (prev, delta) => prev + 1 / (delta + 1));
+  var mealTimeDeltas     = meals.map((m) => max(0, compDT.difference(m.dateTime).inHours / 24)).toList();
+  var mealCreationDeltas = meals.map((m) => max(0, compDT.difference(m.creationDate ?? m.dateTime).inHours / 24)).toList();
+  var mealTuples = List.generate(mealTimeDeltas.length, (i) => (mealTimeDeltas[i], mealCreationDeltas[i]));
+  var mealRelevancy = 1 + mealTuples.fold(0.0, (prev, deltas) {
+    var dateTimeBonus = 1.0 / (deltas.$1 + 1);
+    var creationBonus = 0.5 / (deltas.$2 + 0.5);
+    if (deltas.$2 > 14) creationBonus = 0;
+    var bonus = max(dateTimeBonus, creationBonus);
+    return prev + bonus;
+  });
   
   // make the product more relevant if it was created or edited more recently
   double productRelevancy;
@@ -834,7 +842,7 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
   
   bool debugLog = false;
   
-  if (debugLog) {
+  if (debugLog && mealRelevancy * productRelevancy * temporaryRelevancy > 1.6) {
     // var total = mealRelevancy * productRelevancy * temporaryRelevancy;
     
     String name = product.name;
@@ -843,7 +851,6 @@ int findInsertIndex(List<Meal> meals, Meal newMeal) {
     String mealRelevancyStr = mealRelevancy.toStringAsFixed(3);
     String productRelevancyStr = productRelevancy.toStringAsFixed(3);
     String temporaryRelevancyStr = temporaryRelevancy.toStringAsFixed(3);
-    // String totalStr = total.toStringAsFixed(3);
     
     devtools.log("::: $name : $mealRelevancyStr : $productRelevancyStr : $temporaryRelevancyStr");
   }
