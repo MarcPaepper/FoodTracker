@@ -10,12 +10,13 @@ import '../utility/merge_input_decoration.dart';
 import '../utility/text_logic.dart';
 import '../utility/theme.dart';
 
-class AmountField extends StatelessWidget {
+class AmountField extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
   final bool enabled;
   final bool canBeEmpty;
   final bool autofocus;
+  final bool allowCalc;
   final Function(double)? onChangedAndParsed;
   final Function()? onEmptied;
   final double? padding;
@@ -35,6 +36,7 @@ class AmountField extends StatelessWidget {
     this.hintText,
     this.canBeEmpty = false,
     this.autofocus = false,
+    this.allowCalc = true,
     this.borderColor,
     this.fillColor,
     this.hintColor,
@@ -43,63 +45,73 @@ class AmountField extends StatelessWidget {
   });
 
   @override
+  State<AmountField> createState() => _AmountFieldState();
+}
+
+class _AmountFieldState extends State<AmountField> {
+  @override
   Widget build(BuildContext context) {
     var inputTheme = getTheme().inputDecorationTheme;
     
     var inputDec = InputDecoration(
       contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14) * gsf,
-      hintText: hintText,
-      hintStyle: TextStyle(color: hintColor ?? inputTheme.hintStyle?.color, fontSize: 16 * gsf),
-      fillColor: fillColor ?? inputTheme.fillColor,
+      hintText: widget.hintText,
+      hintStyle: TextStyle(color: widget.hintColor ?? inputTheme.hintStyle?.color, fontSize: 16 * gsf),
+      fillColor: widget.fillColor ?? inputTheme.fillColor,
     );
     
-    if (borderColor != null) {
+    if (widget.borderColor != null) {
       var borderTheme = inputTheme.enabledBorder as UnderlineInputBorder;
       inputDec = MergeInputDecoration.merge(inputDec, InputDecoration(
         enabledBorder: UnderlineInputBorder(
           borderRadius: borderTheme.borderRadius,
           borderSide: BorderSide(
             width: borderTheme.borderSide.width,
-            color: borderColor!,
+            color: widget.borderColor!,
           )
         ),
       ));
     }
     
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: padding ?? 12 * gsf),
+      padding: EdgeInsets.symmetric(horizontal: widget.padding ?? 12 * gsf),
       child: Focus(
         skipTraversal: true,
         onFocusChange: (bool hasFocus) {
           if (hasFocus) {
-            controller.selection = TextSelection(baseOffset: 0, extentOffset: controller.value.text.length);
+            widget.controller.selection = TextSelection(baseOffset: 0, extentOffset: widget.controller.value.text.length);
           }
         },
         child: TextFormField(
-          enabled: enabled,
+          enabled: widget.enabled,
           decoration: inputDec,
-          controller: controller,
-          focusNode: focusNode,
-          autofocus: autofocus,
+          controller: widget.controller,
+          focusNode: widget.focusNode,
+          autofocus: widget.autofocus,
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
-          textInputAction: textInputAction,
-          validator: (String? value) => enabled ? numberValidator(value, canBeEmpty: canBeEmpty) : null,
+          textInputAction: widget.textInputAction,
+          validator: (String? value) => widget.enabled ? numberValidator(value, canBeEmpty: widget.canBeEmpty) : null,
           autovalidateMode: AutovalidateMode.always,
           onChanged: (String? value) {
             if (value == null) return;
-            else if (value.isEmpty && onEmptied != null) {
-              onEmptied!();
+            else if (value.isEmpty && widget.onEmptied != null) {
+              widget.onEmptied!();
             }
             else if (value.isNotEmpty) {
               try {
                 value = value.replaceAll(",", ".");
-                var cursorPos = controller.selection.baseOffset;
-                controller.text = value;
-                controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
+                var cursorPos = widget.controller.selection.baseOffset;
+                widget.controller.text = value;
+                widget.controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
                 
-                var input = double.parse(value);
-                if (input.isFinite && onChangedAndParsed != null) {
-                  onChangedAndParsed!(input);
+                double input;
+                if (value.contains(RegExp(r'[\*\+\-\/]'))) {
+                  input = evaluateNumberString(value);
+                } else {
+                  input = double.parse(value);
+                }
+                if (input.isFinite && widget.onChangedAndParsed != null) {
+                  widget.onChangedAndParsed!(input);
                 }
               } catch (e) {
                 devtools.log("Error: Invalid number in amount field");
