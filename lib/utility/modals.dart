@@ -13,6 +13,7 @@ import '../services/data/data_objects.dart';
 import '../widgets/products_list.dart';
 import '../widgets/sort_field.dart';
 import 'theme.dart';
+import '../views/edit_product_view.dart';
 
 // import 'dart:developer' as devtools show log;
 
@@ -109,7 +110,7 @@ Future<T?> showOptionDialog<T>({
           topRight: Radius.circular(14),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8) * gsf,
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 8) * gsf,
       child: titleWidget,
     );
   }
@@ -295,11 +296,17 @@ void showUsedAsIngredientDialog({
           ),
           child: _MainList(
             onSelected: (product) {
-              beforeNavigate();
-              Navigator.of(context).pushNamed(
-                editProductRoute,
-                arguments: (product.name, false),
-              );
+              final alreadyOpen = EditProductView.isProductEditOpen(product.name);
+              if (alreadyOpen) {
+                showAlreadyEditingDialog(context, product.name);
+                return;
+              } else {
+                beforeNavigate();
+                Navigator.of(context).pushNamed(
+                  editProductRoute,
+                  arguments: (product.name, false),
+                );
+              }
             },
             productsMap: usedAsIngredientIn,
             showSearch: false,
@@ -313,6 +320,16 @@ void showUsedAsIngredientDialog({
     options: [
       ("Close", null),
     ],
+  );
+}
+
+void showAlreadyEditingDialog(BuildContext context, String productName) {
+  showOptionDialog(
+    context: context,
+    contentPadding: 17 * gsf,
+    title: "Already Editing",
+    content: Text("You're already editing '$productName'.\nNavigate back to continue editing it."),
+    options: [("Close", null)],
   );
 }
 

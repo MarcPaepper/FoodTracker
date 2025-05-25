@@ -16,6 +16,7 @@ import '../widgets/multi_value_listenable_builder.dart';
 import '../widgets/product_dropdown.dart';
 import '../widgets/slidable_list.dart';
 import '../widgets/unit_dropdown.dart';
+import '../views/edit_product_view.dart';
 
 import 'dart:developer' as devtools show log;
 
@@ -608,10 +609,16 @@ class _IngredientsBoxState extends State<IngredientsBox> {
                       // navigate to edit the product
                       if (product != null) {
                         widget.intermediateSave();
-                        Navigator.of(context).pushNamed(
-                          editProductRoute,
-                          arguments: (product.name, false),
-                        );
+                        final alreadyOpen = EditProductView.isProductEditOpen(product.name);
+                        if (alreadyOpen) {
+                          showAlreadyEditingDialog(context, product.name);
+                          return;
+                        } else {
+                          Navigator.of(context).pushNamed(
+                            editProductRoute,
+                            arguments: (product.name, false),
+                          );
+                        }
                       }
                     },
                   ),

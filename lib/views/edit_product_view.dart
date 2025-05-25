@@ -39,6 +39,11 @@ class EditProductView extends StatefulWidget {
     Key? key,
   }) : super(key: key);
 
+  // Global set to track currently edited products
+  static final Set<String> _currentlyEditedProducts = <String>{};
+
+  static bool isProductEditOpen(String productName) => _currentlyEditedProducts.contains(productName);
+
   @override
   State<EditProductView> createState() => _EditProductViewState();
 }
@@ -104,6 +109,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   @override
   void initState() {
+    // Register product as being edited
+    if (widget.productName != null) {
+      EditProductView._currentlyEditedProducts.add(widget.productName!);
+    }
+    
     if (widget.isEdit == null || (widget.isEdit! && widget.productName == null)) {
       Future(() {
         showErrorbar(context, "Error: Product not found");
@@ -142,6 +152,11 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
   
   @override
   void dispose() {
+    // Unregister product when edit page is closed
+    if (widget.productName != null) {
+      EditProductView._currentlyEditedProducts.remove(widget.productName!);
+    }
+    
     _productNameController.dispose();
     _densityAmount1Controller.dispose();
     _densityAmount2Controller.dispose();
@@ -574,7 +589,7 @@ class _EditProductViewState extends State<EditProductView> with AutomaticKeepAli
         showProductInfoDialog(context, _prevProduct);
       },
       icon: const Icon(Icons.info_outline, size: 21 * gsf),
-      padding: kIsWeb ? 
+      padding: kIsWeb ?
         const EdgeInsets.fromLTRB(5, 5, 10, 5) * gsf : 
         EdgeInsets.zero,
       constraints: const BoxConstraints(),
