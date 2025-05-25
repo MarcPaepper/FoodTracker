@@ -7,77 +7,84 @@ import 'package:intl/intl.dart';
 
 import 'dart:developer' as devtools show log;
   
-List<TextSpan> highlightOccurrences(String source, List<String> search, [TextStyle? normalStyle, TextStyle? highlightStyle]) {
+List<TextSpan> highlightOccurrences(String source, String? searchTerm, List<String>? searchList, [TextStyle? normalStyle, TextStyle? highlightStyle]) {
+  assert(searchTerm != null || searchList != null, "Either searchTerm or searchList must be provided");
   // normalStyle ??= const TextStyle(color: Colors.blue);
+  var exact = searchTerm != null;
   highlightStyle ??= const TextStyle(fontWeight: FontWeight.bold);
   if (source == "") return const [TextSpan(text: "")];
-  if (search.isEmpty) return [TextSpan(text: source, style: normalStyle)];
+  if (!exact && searchList!.isEmpty) return [TextSpan(text: source, style: normalStyle)];
   
   var spans = <TextSpan>[];
   var lowerSource = source.toLowerCase();
   
   // mark all characters of the word in the charMatch map
   Map<int, bool> charMatch = source.split("").asMap().map((key, value) => MapEntry(key, false));
-  for (var word in search) {
-    if (word == "") {
-      devtools.log("Empty search word");
-      continue;
-    }
-    var lowerWord = word.toLowerCase();
-    int startIndex = 0;
-    int safetyCounter = 0;
-    do {
-      var subSrc = lowerSource.substring(startIndex);
-      var wordIndex = subSrc.indexOf(lowerWord, 0);
-      if (wordIndex == -1) {
-        break;
+  if (exact) {
+    var match = lowerSource == searchTerm.toLowerCase();
+    return [TextSpan(text: source, style: match ? highlightStyle : normalStyle)];
+  } else {
+    for (var word in searchList!) {
+      if (word == "") {
+        devtools.log("Empty search word");
+        continue;
       }
-      for (var i = wordIndex + startIndex; i < wordIndex + startIndex + word.length; i++) {
+      var lowerWord = word.toLowerCase();
+      int startIndex = 0;
+      int safetyCounter = 0;
+      do {
+        var subSrc = lowerSource.substring(startIndex);
+        var wordIndex = subSrc.indexOf(lowerWord, 0);
+        if (wordIndex == -1) {
+          break;
+        }
+        for (var i = wordIndex + startIndex; i < wordIndex + startIndex + word.length; i++) {
+          charMatch[i] = true;
+        }
+        startIndex += wordIndex + word.length;
+        safetyCounter++;
+        if (safetyCounter > 127) {
+          devtools.log("Safety Counter exceeded when highlighting");
+          break;
+        }
+      } while (startIndex < lowerSource.length);
+    }
+    // fill in spaces between two highlighted characters
+    for (var i = 1; i < source.length - 1; i++) {
+      if (charMatch[i - 1] == true && charMatch[i + 1] == true && source[i] == " ") {
         charMatch[i] = true;
       }
-      startIndex += wordIndex + word.length;
-      safetyCounter++;
-      if (safetyCounter > 127) {
-        devtools.log("Safety Counter exceeded when highlighting");
-        break;
-      }
-    } while (startIndex < lowerSource.length);
-  }
-  // fill in spaces between two highlighted characters
-  for (var i = 1; i < source.length - 1; i++) {
-    if (charMatch[i - 1] == true && charMatch[i + 1] == true && source[i] == " ") {
-      charMatch[i] = true;
     }
-  }
-  
-  // split the source string into normal and highlighted parts
-  
-  String? currentNormal;
-  String? currentHighlight;
-  
-  for (var i = 0; i < source.length; i++) {
-    if (charMatch[i] == true) {
-      if (currentNormal != null) {
-        spans.add(TextSpan(text: currentNormal, style: normalStyle));
-        currentNormal = null;
+    
+    // split the source string into normal and highlighted parts
+    
+    String? currentNormal;
+    String? currentHighlight;
+    
+    for (var i = 0; i < source.length; i++) {
+      if (charMatch[i] == true) {
+        if (currentNormal != null) {
+          spans.add(TextSpan(text: currentNormal, style: normalStyle));
+          currentNormal = null;
+        }
+        currentHighlight = (currentHighlight ?? "") + source[i];
+      } else {
+        if (currentHighlight != null) {
+          spans.add(TextSpan(text: currentHighlight, style: highlightStyle));
+          currentHighlight = null;
+        }
+        currentNormal = (currentNormal ?? "") + source[i];
       }
-      currentHighlight = (currentHighlight ?? "") + source[i];
-    } else {
-      if (currentHighlight != null) {
-        spans.add(TextSpan(text: currentHighlight, style: highlightStyle));
-        currentHighlight = null;
-      }
-      currentNormal = (currentNormal ?? "") + source[i];
     }
+    if (currentNormal != null) {
+      spans.add(TextSpan(text: currentNormal, style: normalStyle));
+    }
+    if (currentHighlight != null) {
+      spans.add(TextSpan(text: currentHighlight, style: highlightStyle));
+    }
+    
+    return spans;
   }
-  if (currentNormal != null) {
-    spans.add(TextSpan(text: currentNormal, style: normalStyle));
-  }
-  if (currentHighlight != null) {
-    spans.add(TextSpan(text: currentHighlight, style: highlightStyle));
-  }
-  
-  return spans;
 }
 
 // convert a double or int to double

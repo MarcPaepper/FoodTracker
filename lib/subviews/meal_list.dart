@@ -356,7 +356,15 @@ class _MealListState extends State<MealList> {
     }
     
     String search = _searchNotifier.value.toLowerCase();
-    var searchWords = search.toLowerCase().split(" ")..removeWhere((element) => element == "");
+    String? searchTerm;
+    List<String>? searchWords;
+    if (search.startsWith('"') && search.endsWith('"')) {
+      // search for exact match
+      searchTerm = search.substring(1, search.length - 1);
+      devtools.log("Searching for exact match: $searchTerm");
+    } else {
+      searchWords = search.toLowerCase().split(" ")..removeWhere((element) => element == "");
+    }
     List<int>? foundMeals; // ids of the found meals
     
     // update the found meals list
@@ -370,7 +378,14 @@ class _MealListState extends State<MealList> {
         var meal = meals[i];
         var product = productsMap?[meal.productQuantity.productId];
         var name = product?.name.toLowerCase() ?? "";
-        if (searchWords.every((word) => name.contains(word))) {
+        bool isMatch;
+        if (searchTerm != null) {
+          isMatch = name == searchTerm;
+        } else {
+          isMatch = searchWords!.every((word) => name.contains(word));
+        }
+        
+        if (isMatch) {
           foundMeals.add(meal.id);
           if (_selectedMealNotifier.value == meal.id) selectedMealStillFound = true;
         }
@@ -518,11 +533,11 @@ class _MealListState extends State<MealList> {
       dynamic nameText = pT[pId];
       if (nameText == null || isSelected) {
         List<InlineSpan> spans;
-        if (searchWords.isEmpty || !(foundMeals?.contains(meal.id) ?? true)) {
+        if ((searchWords?.isEmpty ?? false) || !(foundMeals?.contains(meal.id) ?? true)) {
           spans = [TextSpan(text: productName, style: normalProductStyle)];
         } else {
           var style = isSelected ? selectedProductStyle : highlightProductStyle;
-          spans = highlightOccurrences(productName, searchWords, normalProductStyle, style);
+          spans = highlightOccurrences(productName, searchTerm, searchWords, normalProductStyle, style);
         }
         nameText = RichText(
           text: TextSpan(

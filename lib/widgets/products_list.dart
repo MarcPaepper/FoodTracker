@@ -143,7 +143,7 @@ class _ProductTileState extends State<ProductTile> {
     List<TextSpan> children;
     List<TextSpan> childrenColored;
     
-    children = highlightOccurrences(widget.product.name, widget.searchWords);
+    children = highlightOccurrences(widget.product.name, null, widget.searchWords);
     childrenColored = children.map((child) {
       var style = child.style ?? const TextStyle();
       
