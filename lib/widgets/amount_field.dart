@@ -16,7 +16,7 @@ class AmountField extends StatefulWidget {
   final bool enabled;
   final bool canBeEmpty;
   final bool autofocus;
-  final bool allowCalc;
+  final bool allowMath;
   final Function(double)? onChangedAndParsed;
   final Function()? onEmptied;
   final double? padding;
@@ -36,7 +36,7 @@ class AmountField extends StatefulWidget {
     this.hintText,
     this.canBeEmpty = false,
     this.autofocus = false,
-    this.allowCalc = true,
+    this.allowMath = true,
     this.borderColor,
     this.fillColor,
     this.hintColor,
@@ -49,6 +49,8 @@ class AmountField extends StatefulWidget {
 }
 
 class _AmountFieldState extends State<AmountField> {
+  String? _labelText;
+  
   @override
   Widget build(BuildContext context) {
     var inputTheme = getTheme().inputDecorationTheme;
@@ -57,8 +59,18 @@ class _AmountFieldState extends State<AmountField> {
       contentPadding: const EdgeInsets.symmetric(vertical: kIsWeb ? 13 : 9, horizontal: 14) * gsf,
       hintText: widget.hintText,
       hintStyle: TextStyle(color: widget.hintColor ?? inputTheme.hintStyle?.color, fontSize: 16 * gsf),
+      labelText: _labelText,
       fillColor: widget.fillColor ?? inputTheme.fillColor,
+      errorStyle: TextStyle(
+        color: Colors.blue,
+        fontSize: 14 * gsf,
+      ),
     );
+    if (_labelText != null) {
+      inputDec = MergeInputDecoration.merge(inputDec, InputDecoration(
+        contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 2) * gsf,
+      ));
+    }
     
     if (widget.borderColor != null) {
       var borderTheme = inputTheme.enabledBorder as UnderlineInputBorder;
@@ -90,7 +102,7 @@ class _AmountFieldState extends State<AmountField> {
           autofocus: widget.autofocus,
           keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
           textInputAction: widget.textInputAction,
-          validator: (String? value) => widget.enabled ? numberValidator(value, canBeEmpty: widget.canBeEmpty) : null,
+          validator: (String? value) => widget.enabled ? numberValidator(value, canBeEmpty: widget.canBeEmpty, allowMath: widget.allowMath) : null,
           autovalidateMode: AutovalidateMode.always,
           onChanged: (String? value) {
             if (value == null) return;
@@ -104,13 +116,25 @@ class _AmountFieldState extends State<AmountField> {
                 widget.controller.text = value;
                 widget.controller.selection = TextSelection.fromPosition(TextPosition(offset: cursorPos));
                 
-                double input;
-                if (value.contains(RegExp(r'[\*\+\-\/]'))) {
-                  input = evaluateNumberString(value);
+                double? input;
+                String? newText;
+                if (widget.allowMath && value.contains(RegExp(r'[\*\+\-\/]'))) {
+                  try {
+                    input = evaluateNumberString(value);
+                    newText = "= $input";
+                  } catch (e) {
+                    newText = "= ???";
+                  }
                 } else {
                   input = double.parse(value);
                 }
-                if (input.isFinite && widget.onChangedAndParsed != null) {
+                
+                if (_labelText != newText) {
+                  setState(() {
+                    _labelText = newText;
+                  });
+                }
+                if (input != null && input.isFinite && widget.onChangedAndParsed != null) {
                   widget.onChangedAndParsed!(input);
                 }
               } catch (e) {

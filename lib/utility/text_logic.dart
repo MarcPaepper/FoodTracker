@@ -99,19 +99,29 @@ double toDouble(dynamic value) {
   }
 }
 
-String? numberValidator(String? value, {bool canBeEmpty = false}) {
+String? numberValidator(String? value, {bool canBeEmpty = false, bool allowMath = false}) {
   if (value == null || (!canBeEmpty && value.isEmpty)) {
     return "Required Field";
   }
   if (canBeEmpty && value.isEmpty) {
     return null;
   }
-  try {
-    double.parse(value);
-  } catch (e) {
-    return "Invalid Number";
+  
+  if (allowMath && value.contains(RegExp(r'[\*\+\-\/]'))) {
+    try {
+      double? result = evaluateNumberString(value);
+      return result.isFinite ? null : "";
+    } catch (e) {
+      return "";
+    }
+  } else {
+    try {
+      double.parse(value);
+      return null;
+    } catch (e) {
+      return "Invalid Number";
+    }
   }
-  return null;
 }
 
 int? getPrecision(double value) {
